@@ -29,6 +29,8 @@ public class CompetitionEntity {
 
     private String type;
 
+    private String countingMethod;
+
     public Integer getNumberOfShots() {
         return numberOfShots;
     }
@@ -36,6 +38,7 @@ public class CompetitionEntity {
     public void setNumberOfShots(Integer numberOfShots) {
         this.numberOfShots = numberOfShots;
     }
+
     public String getUuid() {
         return uuid;
     }
@@ -63,5 +66,13 @@ public class CompetitionEntity {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getCountingMethod() {
+        return countingMethod;
+    }
+
+    public void setCountingMethod(String countingMethod) {
+        this.countingMethod = countingMethod;
     }
 }

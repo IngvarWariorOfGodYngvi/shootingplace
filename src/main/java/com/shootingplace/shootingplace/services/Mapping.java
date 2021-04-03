@@ -332,6 +332,9 @@ public class Mapping {
                 .attachedToTournament(c.getAttachedToTournament())
                 .scoreList(c.getScoreList().stream().map(Mapping::map).collect(Collectors.toList()))
                 .discipline(c.getDiscipline())
+                .countingMethod(c.getCountingMethod())
+                .type(c.getType())
+                .numberOfShots(c.getNumberOfShots())
                 .build();
     }
 

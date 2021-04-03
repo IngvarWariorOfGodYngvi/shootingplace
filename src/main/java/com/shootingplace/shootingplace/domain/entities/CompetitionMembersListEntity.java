@@ -29,6 +29,11 @@ public class CompetitionMembersListEntity {
     private LocalDate date;
 
     private String discipline;
+    private Integer numberOfShots;
+
+    private String type;
+
+    private String countingMethod;
 
     @ManyToMany
     private List<ScoreEntity> scoreList = new ArrayList<>();
@@ -77,5 +82,27 @@ public class CompetitionMembersListEntity {
         this.discipline = discipline;
     }
 
+    public Integer getNumberOfShots() {
+        return numberOfShots;
+    }
 
+    public void setNumberOfShots(Integer numberOfShots) {
+        this.numberOfShots = numberOfShots;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getCountingMethod() {
+        return countingMethod;
+    }
+
+    public void setCountingMethod(String countingMethod) {
+        this.countingMethod = countingMethod;
+    }
 }

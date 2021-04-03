@@ -507,6 +507,9 @@ public class TournamentService {
                         .attachedToTournament(tournamentEntity.getUuid())
                         .date(tournamentEntity.getDate())
                         .discipline(competition.getDiscipline())
+                        .countingMethod(competition.getCountingMethod())
+                        .type(competition.getType())
+                        .numberOfShots(competition.getNumberOfShots())
                         .build();
                 competitionMembersListRepository.saveAndFlush(competitionMembersList);
                 List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
