@@ -1,10 +1,12 @@
 package com.shootingplace.shootingplace.domain.entities;
 
+import com.shootingplace.shootingplace.domain.enums.GunType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -29,7 +31,8 @@ public class GunEntity {
 
     private String productionYear;
     @NotNull
-    private String gunType;
+    @Embedded
+    private GunTypeEntity gunType;
 
     private String numberOfMagazines;
     @NotNull
@@ -65,11 +68,11 @@ public class GunEntity {
         this.caliber = caliber;
     }
 
-    public String getGunType() {
+    public GunTypeEntity getGunType() {
         return gunType;
     }
 
-    public void setGunType(String gunType) {
+    public void setGunType(GunTypeEntity gunType) {
         this.gunType = gunType;
     }
 
