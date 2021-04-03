@@ -24,6 +24,10 @@ public class CompetitionEntity {
 
     private String discipline;
 
+    private int numberOfShots;
+
+    private String type;
+
     public String getUuid() {
         return uuid;
     }
@@ -42,5 +46,21 @@ public class CompetitionEntity {
 
     public void setDiscipline(String discipline) {
         this.discipline = discipline;
+    }
+
+    public int getNumberOfShots() {
+        return numberOfShots;
+    }
+
+    public void setNumberOfShots(int numberOfShots) {
+        this.numberOfShots = numberOfShots;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

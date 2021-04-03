@@ -1,19 +1,17 @@
 package com.shootingplace.shootingplace.domain.enums;
 
-public enum Discipline {
-    PISTOL("Pistolet"),
-    RIFLE("Karabin"),
-    SHOTGUN("Strzelba");
+public enum CompetitionType {
+    OPEN("OPEN"),
+    YOUTH("Młodzieżowa");
 
     private final String name;
 
-    Discipline(String name) {
+    CompetitionType(String name) {
         this.name = name;
     }
 
     public String getName() {
         return name;
     }
-
 
 }
