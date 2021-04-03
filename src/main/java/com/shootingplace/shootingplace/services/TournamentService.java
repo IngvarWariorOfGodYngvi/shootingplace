@@ -110,14 +110,12 @@ public class TournamentService {
             MemberDTO commissionRTSArbiter;
             if (tournamentEntity.getMainArbiter() != null) {
                 mainArbiterDTO = Mapping.map2(tournamentEntity.getMainArbiter());
-            }
-            else{
+            } else {
                 mainArbiterDTO = null;
             }
             if (tournamentEntity.getCommissionRTSArbiter() != null) {
-                commissionRTSArbiter=Mapping.map2(tournamentEntity.getCommissionRTSArbiter());
-            }
-            else {
+                commissionRTSArbiter = Mapping.map2(tournamentEntity.getCommissionRTSArbiter());
+            } else {
                 commissionRTSArbiter = null;
             }
 
@@ -168,7 +166,6 @@ public class TournamentService {
     public boolean removeArbiterFromTournament(String tournamentUUID, int legitimationNumber) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
-            String function = ArbiterWorkClass.HELP.getName();
 
             MemberEntity memberEntity = memberRepository
                     .findAll()
@@ -179,11 +176,11 @@ public class TournamentService {
 
             List<MemberEntity> list = tournamentEntity.getArbitersList();
 
+            historyService.removeJudgingRecord(memberEntity.getUuid(), tournamentUUID);
             list.remove(memberEntity);
 
             tournamentRepository.saveAndFlush(tournamentEntity);
 
-            historyService.removeJudgingRecord(memberEntity.getUuid(), tournamentUUID, function);
             return true;
         }
         return false;
@@ -244,7 +241,7 @@ public class TournamentService {
                         tournamentEntity.setMainArbiter(memberEntity);
 
                     } else {
-                        historyService.removeJudgingRecord(tournamentEntity.getMainArbiter().getUuid(), tournamentUUID, function);
+                        historyService.removeJudgingRecord(tournamentEntity.getMainArbiter().getUuid(), tournamentUUID);
                         tournamentEntity.setMainArbiter(memberEntity);
                         tournamentEntity.setOtherMainArbiter(null);
 
@@ -289,13 +286,13 @@ public class TournamentService {
                     if (tournamentEntity.getOtherMainArbiter() == null) {
                         if (tournamentEntity.getMainArbiter() != null) {
 
-                            historyService.removeJudgingRecord(tournamentEntity.getMainArbiter().getUuid(), tournamentUUID, function);
+                            historyService.removeJudgingRecord(tournamentEntity.getMainArbiter().getUuid(), tournamentUUID);
                         }
                         tournamentEntity.setOtherMainArbiter(otherPersonEntity);
                         tournamentEntity.setMainArbiter(null);
 
                     } else {
-                        historyService.removeJudgingRecord(tournamentEntity.getMainArbiter().getUuid(), tournamentUUID, function);
+                        historyService.removeJudgingRecord(tournamentEntity.getMainArbiter().getUuid(), tournamentUUID);
                         tournamentEntity.setMainArbiter(null);
                         tournamentEntity.setOtherMainArbiter(otherPersonEntity);
                     }
@@ -340,7 +337,7 @@ public class TournamentService {
             if (!memberEntity.getMemberPermissions().getArbiterNumber().isEmpty()) {
                 if (tournamentEntity.getCommissionRTSArbiter() == null || tournamentEntity.getCommissionRTSArbiter() != memberEntity) {
                     if (tournamentEntity.getCommissionRTSArbiter() != null) {
-                        historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentUUID, function);
+                        historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentUUID);
                     }
                     tournamentEntity.setCommissionRTSArbiter(memberEntity);
                     tournamentRepository.saveAndFlush(tournamentEntity);
@@ -358,8 +355,6 @@ public class TournamentService {
     public boolean addOtherRTSArbiter(String tournamentUUID, int id) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
-
-            String function = ArbiterWorkClass.RTS_ARBITER.getName();
 
             OtherPersonEntity otherPersonEntity = otherPersonRepository
                     .findAll()
@@ -383,11 +378,11 @@ public class TournamentService {
                 if (tournamentEntity.getOtherCommissionRTSArbiter() == null || tournamentEntity.getOtherCommissionRTSArbiter() != otherPersonEntity) {
                     if (tournamentEntity.getOtherCommissionRTSArbiter() == null) {
                         if (tournamentEntity.getCommissionRTSArbiter() != null) {
-                            historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentUUID, function);
+                            historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentUUID);
                         }
 
                     } else {
-                        historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentUUID, function);
+                        historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentUUID);
                     }
                     tournamentEntity.setOtherCommissionRTSArbiter(otherPersonEntity);
                     tournamentEntity.setCommissionRTSArbiter(null);
@@ -541,13 +536,13 @@ public class TournamentService {
                         .forEach(a -> historyService.removeCompetitionRecord(a.getMember().getUuid(), competitionMembersListRepository.findById(a.getCompetitionMembersListEntityUUID()).orElseThrow(EntityNotFoundException::new))));
             }
             if (tournamentEntity.getMainArbiter() != null) {
-                historyService.removeJudgingRecord(tournamentEntity.getMainArbiter().getUuid(), tournamentEntity.getUuid(), ArbiterWorkClass.MAIN_ARBITER.getName());
+                historyService.removeJudgingRecord(tournamentEntity.getMainArbiter().getUuid(), tournamentEntity.getUuid());
             }
             if (tournamentEntity.getCommissionRTSArbiter() != null) {
-                historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentEntity.getUuid(), ArbiterWorkClass.RTS_ARBITER.getName());
+                historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentEntity.getUuid());
             }
             if (!tournamentEntity.getArbitersList().isEmpty()) {
-                tournamentEntity.getArbitersList().forEach(e -> historyService.removeJudgingRecord(e.getUuid(), tournamentEntity.getUuid(), ArbiterWorkClass.HELP.getName()));
+                tournamentEntity.getArbitersList().forEach(e -> historyService.removeJudgingRecord(e.getUuid(), tournamentEntity.getUuid()));
             }
             tournamentRepository.delete(tournamentEntity);
             return true;
@@ -568,7 +563,7 @@ public class TournamentService {
     public boolean addOthersRTSArbiters(String tournamentUUID, int legitimationNumber) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
-            String function = ArbiterWorkClass.RTS_ARBITER.getName();
+            String function = ArbiterWorkClass.RTS_HELP.getName();
 
             MemberEntity memberEntity = memberRepository
                     .findAll()
@@ -604,7 +599,7 @@ public class TournamentService {
 
                 tournamentEntity.setArbitersRTSList(list);
                 tournamentRepository.saveAndFlush(tournamentEntity);
-                LOG.info("Dodano sędziego pomocniczego");
+                LOG.info("Dodano sędziego biura obliczeń");
                 historyService.addJudgingRecord(memberEntity.getUuid(), tournamentUUID, function);
             }
             return true;
@@ -650,7 +645,7 @@ public class TournamentService {
 
                 tournamentEntity.setOtherArbitersRTSList(list);
                 tournamentRepository.saveAndFlush(tournamentEntity);
-                LOG.info("Dodano sędziego pomocniczego");
+                LOG.info("Dodano sędziego biura obliczeń");
             }
             return true;
         }
@@ -660,7 +655,6 @@ public class TournamentService {
     public boolean removeRTSArbiterFromTournament(String tournamentUUID, int legitimationNumber) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
-            String function = ArbiterWorkClass.RTS_ARBITER.getName();
 
             MemberEntity memberEntity = memberRepository
                     .findAll()
@@ -671,11 +665,11 @@ public class TournamentService {
 
             List<MemberEntity> list = tournamentEntity.getArbitersRTSList();
 
+            historyService.removeJudgingRecord(memberEntity.getUuid(), tournamentUUID);
             list.remove(memberEntity);
 
             tournamentRepository.saveAndFlush(tournamentEntity);
 
-            historyService.removeJudgingRecord(memberEntity.getUuid(), tournamentUUID, function);
             return true;
         }
         return false;

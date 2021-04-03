@@ -132,17 +132,19 @@ public class StatisticsService {
 
             for (int i = 0; i < 12; i++) {
                 int finalI = i;
-                List<MemberDTO> collect = memberRepository.findAll().stream()
+                List<MemberDTO> members = memberRepository.findAll().stream()
                         .filter(f -> f.getJoinDate().getYear() == year)
                         .filter(f -> f.getJoinDate().getMonth().getValue() == finalI + 1)
                         .map(Mapping::map2)
                         .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName))
                         .collect(Collectors.toList());
-                if (!collect.isEmpty()) {
-                    list.add(collect);
+                if (!members.isEmpty()) {
+                    list.add(members);
                 }
             }
-            count = list.size();
+            for (List<MemberDTO> memberDTOS : list) {
+                count += memberDTOS.size();
+            }
         }
         return String.valueOf(count);
     }

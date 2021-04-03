@@ -343,7 +343,7 @@ public class HistoryService {
         historyRepository.saveAndFlush(historyEntity);
     }
 
-    void removeJudgingRecord(String memberUUID, String tournamentUUID, String function) {
+    void removeJudgingRecord(String memberUUID, String tournamentUUID) {
 
         List<JudgingHistoryEntity> judgingHistoryEntityList = memberRepository.findById(memberUUID)
                 .orElseThrow(EntityNotFoundException::new)
@@ -352,7 +352,6 @@ public class HistoryService {
         JudgingHistoryEntity any = judgingHistoryEntityList
                 .stream()
                 .filter(e -> e.getTournamentUUID().equals(tournamentUUID))
-                .filter(e -> e.getJudgingFunction().equals(function))
                 .findFirst().orElseThrow(EntityNotFoundException::new);
         judgingHistoryEntityList.remove(any);
         HistoryEntity historyEntity = memberRepository
@@ -361,6 +360,7 @@ public class HistoryService {
                 .getHistory();
         historyEntity.setJudgingHistory(judgingHistoryEntityList);
         historyRepository.saveAndFlush(historyEntity);
+        judgingHistoryRepository.delete(any);
 
     }
 

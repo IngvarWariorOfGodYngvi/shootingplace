@@ -54,16 +54,19 @@ public class TournamentController {
         if (number > 0) {
             if (tournamentService.removeArbiterFromTournament(tournamentUUID, number)) {
                 return ResponseEntity.ok().build();
+            } else {
+                return ResponseEntity.status(418).body("I'm a teapot");
             }
         }
         if (id > 0) {
             if (tournamentService.removeOtherArbiterFromTournament(tournamentUUID, id)) {
                 return ResponseEntity.ok().build();
+            } else {
+                return ResponseEntity.status(418).body("I'm a teapot");
             }
+        } else {
+            return ResponseEntity.status(418).body("I'm a teapot");
         }
-
-        return ResponseEntity.status(418).body("I'm a teapot");
-
     }
 
     @PostMapping("/removeRTSArbiter/{tournamentUUID}")
@@ -72,16 +75,19 @@ public class TournamentController {
         if (number > 0) {
             if (tournamentService.removeRTSArbiterFromTournament(tournamentUUID, number)) {
                 return ResponseEntity.ok().build();
+            } else {
+                return ResponseEntity.status(418).body("I'm a teapot");
             }
         }
         if (id > 0) {
             if (tournamentService.removeRTSOtherArbiterFromTournament(tournamentUUID, id)) {
                 return ResponseEntity.ok().build();
+            } else {
+                return ResponseEntity.status(418).body("I'm a teapot");
             }
+        } else {
+            return ResponseEntity.status(418).body("I'm a teapot");
         }
-
-        return ResponseEntity.status(418).body("I'm a teapot");
-
     }
 
     @PatchMapping("/{tournamentUUID}")
@@ -94,9 +100,9 @@ public class TournamentController {
     }
 
     @PatchMapping("/open/{tournamentUUID}")
-    public ResponseEntity<?> openTournament(@PathVariable String tournamentUUID,@RequestParam String pinCode) {
+    public ResponseEntity<?> openTournament(@PathVariable String tournamentUUID, @RequestParam String pinCode) {
         if (changeHistoryService.comparePinCode(pinCode)) {
-            if (tournamentService.openTournament(tournamentUUID,pinCode)) {
+            if (tournamentService.openTournament(tournamentUUID, pinCode)) {
                 return ResponseEntity.ok().build();
             } else {
                 return ResponseEntity.status(418).body("I'm a teapot");

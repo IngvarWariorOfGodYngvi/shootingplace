@@ -2,11 +2,11 @@ package com.shootingplace.shootingplace.domain.enums;
 
 public enum ArbiterWorkClass {
     MAIN_ARBITER("Sędzia Główny Zawodów"),
-    RTS_ARBITER("Sędzia Komisji Obliczeniowej"),
+    RTS_ARBITER("Przewodniczący Komisji RTS"),
     HELP("Sędzia Stanowiskowy"),
     RTS_HELP("Sędzia Biura Obliczeń");
 
-    private String name;
+    private final String name;
 
     ArbiterWorkClass(String name) {
         this.name = name;

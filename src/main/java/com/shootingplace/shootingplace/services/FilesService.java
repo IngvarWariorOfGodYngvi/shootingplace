@@ -2141,7 +2141,7 @@ public class FilesService {
             if (memberEntity.getErasedEntity() != null) {
                 erasedReasonCell = new PdfPCell(new Paragraph(memberEntity.getErasedEntity().getErasedType() + " " + memberEntity.getErasedEntity().getDate(), font(12, 0)));
             }
-
+            Paragraph p111 = new Paragraph("coś", font(10,2));
             memberTable.setWidthPercentage(100);
 
             memberTable.addCell(lpCell);
@@ -2209,12 +2209,17 @@ public class FilesService {
 
     }
 
-    private Font font(int size, int style_1_bold_2_italic_3_bolditalic) throws IOException, DocumentException {
-//        1 - BOLD
-//        2 - ITALIC
-//        3 - BOLDITALIC
+    /**
+     * 1 - BOLD , 2 - ITALIC, 3 - BOLDITALIC
+     * @param size set font size
+     * @param style set style Bold/Italic/Bolditalic
+     * @return returns new font
+     * @throws IOException
+     * @throws DocumentException
+     */
+    private Font font(int size, int style) throws IOException, DocumentException {
         BaseFont czcionka = BaseFont.createFont(BaseFont.TIMES_ROMAN, BaseFont.CP1250, BaseFont.CACHED);
-        return new Font(czcionka, size, style_1_bold_2_italic_3_bolditalic);
+        return new Font(czcionka, size, style);
     }
 
     private String dateFormat(LocalDate date) {
