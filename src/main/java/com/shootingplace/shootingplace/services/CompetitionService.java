@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.services;
 import com.shootingplace.shootingplace.domain.entities.CompetitionEntity;
 import com.shootingplace.shootingplace.domain.enums.CompetitionType;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
+import com.shootingplace.shootingplace.domain.models.Competition;
 import com.shootingplace.shootingplace.repositories.CompetitionRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -103,23 +104,25 @@ public class CompetitionService {
         LOG.info("Stworzono encje konkurencji");
     }
 
-    public boolean createNewCompetition(String name, String discipline) {
+    public boolean createNewCompetition(Competition competition) {
         List<String> list = new ArrayList<>();
         competitionRepository.findAll().forEach(e -> list.add(e.getName()));
         if (list.isEmpty()) {
             createCompetitions();
         }
-        if (list.contains(name)) {
+        if (list.contains(competition.getName())) {
             LOG.info("Taka konkurencja już istnieje");
             return false;
         }
-        if (discipline.equals(Discipline.PISTOL.getName()) || discipline.equals(Discipline.RIFLE.getName()) || discipline.equals(Discipline.SHOTGUN.getName())) {
+        if (competition.getDiscipline().equals(Discipline.PISTOL.getName()) || competition.getDiscipline().equals(Discipline.RIFLE.getName()) || competition.getDiscipline().equals(Discipline.SHOTGUN.getName())) {
             CompetitionEntity competitionEntity = CompetitionEntity.builder()
-                    .name(name)
-                    .discipline(discipline)
+                    .name(competition.getName())
+                    .numberOfShots(competition.getNumberOfShots())
+                    .discipline(competition.getDiscipline())
+                    .type(competition.getType())
                     .build();
             competitionRepository.saveAndFlush(competitionEntity);
-            LOG.info("Utworzono nową konkurencję \"" + name + "\"");
+            LOG.info("Utworzono nową konkurencję \"" + competition.getName() + "\"");
             return true;
         } else {
             return false;

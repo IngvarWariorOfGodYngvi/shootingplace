@@ -24,6 +24,11 @@ public class CompetitionEntity {
 
     private String discipline;
 
+
+    private Integer numberOfShots;
+
+    private String type;
+
     public Integer getNumberOfShots() {
         return numberOfShots;
     }
@@ -31,11 +36,6 @@ public class CompetitionEntity {
     public void setNumberOfShots(Integer numberOfShots) {
         this.numberOfShots = numberOfShots;
     }
-
-    private Integer numberOfShots;
-
-    private String type;
-
     public String getUuid() {
         return uuid;
     }
