@@ -19,11 +19,23 @@ public class CompetitionEntity {
     @GeneratedValue(generator = "id")
     @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
     private String uuid;
-    
+
     private String name;
 
     private String discipline;
 
+
+    private Integer numberOfShots;
+
+    private String type;
+
+    public Integer getNumberOfShots() {
+        return numberOfShots;
+    }
+
+    public void setNumberOfShots(Integer numberOfShots) {
+        this.numberOfShots = numberOfShots;
+    }
     public String getUuid() {
         return uuid;
     }
@@ -42,5 +54,14 @@ public class CompetitionEntity {
 
     public void setDiscipline(String discipline) {
         this.discipline = discipline;
+    }
+
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

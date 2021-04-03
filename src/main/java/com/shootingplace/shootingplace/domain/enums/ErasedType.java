@@ -7,7 +7,7 @@ public enum ErasedType {
     CLUB_DECISION("Decyzja klubu"),
     OTHER("Inne");
 
-    private String name;
+    private final String name;
 
     ErasedType(String name) {
         this.name = name;

@@ -8,7 +8,7 @@ public enum ArbiterClass {
     CLASS_STATE("Klasa Państwowa"),
     CLASS_INTERNATIONAL("Klasa Międzynarodowa");
 
-    private String name;
+    private final String name;
 
     ArbiterClass(String name) {
         this.name = name;
