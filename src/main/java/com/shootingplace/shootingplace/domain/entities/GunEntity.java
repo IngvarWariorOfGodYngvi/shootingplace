@@ -30,9 +30,9 @@ public class GunEntity {
     private String serialNumber;
 
     private String productionYear;
+
     @NotNull
-    @Embedded
-    private GunTypeEntity gunType;
+    private String gunType;
 
     private String numberOfMagazines;
     @NotNull
@@ -68,11 +68,11 @@ public class GunEntity {
         this.caliber = caliber;
     }
 
-    public GunTypeEntity getGunType() {
+    public String getGunType() {
         return gunType;
     }
 
-    public void setGunType(GunTypeEntity gunType) {
+    public void setGunType(String gunType) {
         this.gunType = gunType;
     }
 

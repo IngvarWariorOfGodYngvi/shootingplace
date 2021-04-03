@@ -20,6 +20,19 @@ public class GunTypeEntity {
     @GeneratedValue(generator = "id")
     @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
     private String uuid;
+
     @Enumerated (value = EnumType.STRING)
     private GunType gunType;
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setGunType(GunType gunType) {
+        this.gunType = gunType;
+    }
+
+    public GunType getGunType() {
+        return gunType;
+    }
 }

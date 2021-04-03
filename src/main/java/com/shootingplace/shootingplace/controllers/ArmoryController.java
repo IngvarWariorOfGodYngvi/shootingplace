@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.controllers;
 
 import com.shootingplace.shootingplace.domain.entities.CaliberEntity;
 import com.shootingplace.shootingplace.domain.entities.GunEntity;
+import com.shootingplace.shootingplace.domain.entities.GunTypeEntity;
 import com.shootingplace.shootingplace.services.ArmoryService;
 import com.shootingplace.shootingplace.services.CaliberService;
 import com.shootingplace.shootingplace.services.ChangeHistoryService;
