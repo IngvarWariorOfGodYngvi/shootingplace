@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.services;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import com.shootingplace.shootingplace.domain.entities.*;
+import com.shootingplace.shootingplace.domain.enums.CountingMethod;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
 import com.shootingplace.shootingplace.domain.enums.GunType;
 import com.shootingplace.shootingplace.domain.models.FilesModel;
@@ -778,14 +779,24 @@ public class FilesService {
                 Paragraph competition = new Paragraph(competitionMembersListEntity.getName(), font(14, 1));
                 competition.add("\n");
                 document.add(competition);
-                float[] pointColumnWidths = {25F, 150F, 150F, 25F, 25F, 25F};
+                float[] pointColumnWidths = {25F, 150F, 125F, 50F, 25F, 25F};
                 PdfPTable tableLabel = new PdfPTable(pointColumnWidths);
+                String p1 = "10 x", p2 = "10 /";
+                if (competitionMembersListEntity.getCountingMethod() != null) {
+                    if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+                        p1 = "";
+                        p2 = "";
+                    } else {
+                        p1 = "10 x";
+                        p2 = "10 /";
+                    }
+                }
                 PdfPCell cellLabel = new PdfPCell(new Paragraph("M-ce", font(10, 1)));
                 PdfPCell cellLabel1 = new PdfPCell(new Paragraph("Imię i Nazwisko", font(10, 1)));
                 PdfPCell cellLabel2 = new PdfPCell(new Paragraph("Klub", font(10, 1)));
                 PdfPCell cellLabel3 = new PdfPCell(new Paragraph("Wynik", font(10, 1)));
-                PdfPCell cellLabel4 = new PdfPCell(new Paragraph("10 x", font(10, 1)));
-                PdfPCell cellLabel5 = new PdfPCell(new Paragraph("10 /", font(10, 1)));
+                PdfPCell cellLabel4 = new PdfPCell(new Paragraph(p1, font(10, 1)));
+                PdfPCell cellLabel5 = new PdfPCell(new Paragraph(p2, font(10, 1)));
 
                 document.add(newLine);
 
@@ -833,19 +844,30 @@ public class FilesService {
                     float score = competitionMembersListEntity.getScoreList().get(j).getScore();
                     String scoreIn = String.valueOf(competitionMembersListEntity.getScoreList().get(j).getInnerTen());
                     String scoreOut = String.valueOf(competitionMembersListEntity.getScoreList().get(j).getOuterTen());
+                    String o1 = scoreIn.replace(".0", ""), o2 = scoreOut.replace(".0", "");
                     if (competitionMembersListEntity.getScoreList().get(j).getInnerTen() == 0) {
-                        scoreIn = "";
+                        o1 = scoreIn = "";
                     }
                     if (competitionMembersListEntity.getScoreList().get(j).getOuterTen() == 0) {
-                        scoreOut = "";
+                        o2 = scoreOut = "";
+                    }
+                    if (competitionMembersListEntity.getCountingMethod() != null) {
+
+                        if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+                            o1 = "";
+                            o2 = "";
+                        } else {
+                            o1 = scoreIn.replace(".0", "");
+                            o2 = scoreOut.replace(".0", "");
+                        }
                     }
                     PdfPTable playerTableLabel = new PdfPTable(pointColumnWidths);
                     PdfPCell playerCellLabel = new PdfPCell(new Paragraph(String.valueOf(j + 1), font(11, 0)));
                     PdfPCell playerCellLabel1 = new PdfPCell(new Paragraph(secondName + " " + firstName, font(11, 0)));
                     PdfPCell playerCellLabel2 = new PdfPCell(new Paragraph(club, font(11, 0)));
                     PdfPCell playerCellLabel3 = new PdfPCell(new Paragraph(String.valueOf(score).replace(".0", ""), font(11, 1)));
-                    PdfPCell playerCellLabel4 = new PdfPCell(new Paragraph(scoreIn.replace(".0", ""), font(9, 2)));
-                    PdfPCell playerCellLabel5 = new PdfPCell(new Paragraph(scoreOut.replace(".0", ""), font(9, 2)));
+                    PdfPCell playerCellLabel4 = new PdfPCell(new Paragraph(o1, font(9, 2)));
+                    PdfPCell playerCellLabel5 = new PdfPCell(new Paragraph(o2, font(9, 2)));
 
 
                     playerCellLabel.setBorder(0);
@@ -2141,7 +2163,7 @@ public class FilesService {
             if (memberEntity.getErasedEntity() != null) {
                 erasedReasonCell = new PdfPCell(new Paragraph(memberEntity.getErasedEntity().getErasedType() + " " + memberEntity.getErasedEntity().getDate(), font(12, 0)));
             }
-            Paragraph p111 = new Paragraph("coś", font(10,2));
+            Paragraph p111 = new Paragraph("coś", font(10, 2));
             memberTable.setWidthPercentage(100);
 
             memberTable.addCell(lpCell);
@@ -2211,7 +2233,8 @@ public class FilesService {
 
     /**
      * 1 - BOLD , 2 - ITALIC, 3 - BOLDITALIC
-     * @param size set font size
+     *
+     * @param size  set font size
      * @param style set style Bold/Italic/Bolditalic
      * @return returns new font
      * @throws IOException
