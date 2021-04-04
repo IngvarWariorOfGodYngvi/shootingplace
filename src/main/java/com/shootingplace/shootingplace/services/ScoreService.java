@@ -132,6 +132,7 @@ public class ScoreService {
                         .reversed()
                         .thenComparing(Comparator.comparing(ScoreEntity::getInnerTen)
                                 .reversed()));
+                competitionMembersListEntity.setScoreList(scoreList);
 
             }
         } else {
@@ -156,6 +157,7 @@ public class ScoreService {
                             .thenComparing(Comparator.comparing(ScoreEntity::getOuterTen)
                                     .reversed())
                     ));
+            competitionMembersListEntity.setScoreList(scoreList);
         }
         competitionMembersListRepository.saveAndFlush(competitionMembersListEntity);
         return true;
