@@ -1,13 +1,16 @@
 package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.*;
+import com.shootingplace.shootingplace.domain.enums.CountingMethod;
 import com.shootingplace.shootingplace.repositories.CompetitionMembersListRepository;
 import com.shootingplace.shootingplace.repositories.ScoreRepository;
 import com.shootingplace.shootingplace.repositories.TournamentRepository;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class ScoreService {
@@ -90,29 +93,70 @@ public class ScoreService {
 
     public boolean setScore(String scoreUUID, float score, float innerTen, float outerTen) {
         ScoreEntity scoreEntity = scoreRepository.findById(scoreUUID).orElseThrow(EntityNotFoundException::new);
-        if (score == -1) {
-            score = scoreEntity.getScore();
-        }
-        if (innerTen == -1) {
-            innerTen = scoreEntity.getInnerTen();
-        }
-        if (outerTen == -1) {
-            outerTen = scoreEntity.getOuterTen();
-        }
-        scoreEntity.setScore(score);
-        scoreEntity.setInnerTen(innerTen);
-        scoreEntity.setOuterTen(outerTen);
-        scoreRepository.saveAndFlush(scoreEntity);
         String competitionMembersListEntityUUID = scoreEntity.getCompetitionMembersListEntityUUID();
         CompetitionMembersListEntity competitionMembersListEntity = competitionMembersListRepository.findById(competitionMembersListEntityUUID).orElseThrow(EntityNotFoundException::new);
-        List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList();
-        scoreList.sort(Comparator.comparing(ScoreEntity::getScore)
-                .reversed()
-                .thenComparing(Comparator.comparing(ScoreEntity::getOuterTen)
+        if (competitionMembersListEntity.getCountingMethod() != null) {
+            if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+                // Metoda COMSTOCK
+                int numberOfShots = competitionMembersListEntity.getNumberOfShots();
+                float penalties = numberOfShots - outerTen/*shots*/;
+                scoreEntity.setOuterTen(outerTen);
+                int points = (int) ((outerTen/*shots*/ * 5) + (penalties * -10));
+                if (points < 0) {
+                    points = 0;
+                }
+                float hf = points / innerTen /*time*/;
+                scoreEntity.setInnerTen(innerTen);
+                List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList();
+                float hf1;
+                if (scoreList.size() > 1) {
+                    hf1 = scoreList.stream().max(Comparator.comparing(ScoreEntity::getHf)).orElseThrow(EntityNotFoundException::new).getHf();
+                } else {
+                    hf1 = hf;
+                }
+                scoreEntity.setHf(hf);
+                if (hf < hf1) {
+                    scoreEntity.setScore((hf / hf1) * 100);
+                } else {
+                    scoreEntity.setScore(100);
+                }
+                scoreRepository.saveAndFlush(scoreEntity);
+                scoreList.forEach(e -> {
+                    if (e.getHf() > 0) {
+                        float hf2 = scoreList.stream().max(Comparator.comparing(ScoreEntity::getHf)).orElseThrow(EntityNotFoundException::new).getHf();
+                        e.setScore((e.getHf() / hf2) * 100);
+                        scoreRepository.saveAndFlush(e);
+                    }
+                });
+                scoreList.sort(Comparator.comparing(ScoreEntity::getScore)
                         .reversed()
                         .thenComparing(Comparator.comparing(ScoreEntity::getInnerTen)
-                                .reversed())
-                ));
+                                .reversed()));
+
+            }
+        } else {
+            if (score < 0) {
+                score = scoreEntity.getScore();
+            }
+            if (innerTen < 0) {
+                innerTen = scoreEntity.getInnerTen();
+            }
+            if (outerTen < 0) {
+                outerTen = scoreEntity.getOuterTen();
+            }
+            scoreEntity.setScore(score);
+            scoreEntity.setInnerTen(innerTen);
+            scoreEntity.setOuterTen(outerTen);
+            scoreRepository.saveAndFlush(scoreEntity);
+            List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList();
+            scoreList.sort(Comparator.comparing(ScoreEntity::getScore)
+                    .reversed()
+                    .thenComparing(Comparator.comparing(ScoreEntity::getInnerTen)
+                            .reversed()
+                            .thenComparing(Comparator.comparing(ScoreEntity::getOuterTen)
+                                    .reversed())
+                    ));
+        }
         competitionMembersListRepository.saveAndFlush(competitionMembersListEntity);
         return true;
     }

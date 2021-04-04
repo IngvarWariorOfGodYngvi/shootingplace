@@ -25,6 +25,7 @@ public class ScoreEntity {
 
     private float innerTen;
     private float outerTen;
+    private float hf;
 
     private String name;
 
@@ -121,5 +122,13 @@ public class ScoreEntity {
 
     public void setMetricNumber(int metricNumber) {
         this.metricNumber = metricNumber;
+    }
+
+    public float getHf() {
+        return hf;
+    }
+
+    public void setHf(float hf) {
+        this.hf = hf;
     }
 }

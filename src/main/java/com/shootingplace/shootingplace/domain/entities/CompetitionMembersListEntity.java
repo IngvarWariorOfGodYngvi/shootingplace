@@ -5,10 +5,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToMany;
+import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +26,11 @@ public class CompetitionMembersListEntity {
     private LocalDate date;
 
     private String discipline;
+    private Integer numberOfShots;
+
+    private String type;
+
+    private String countingMethod;
 
     @ManyToMany
     private List<ScoreEntity> scoreList = new ArrayList<>();
@@ -77,5 +79,27 @@ public class CompetitionMembersListEntity {
         this.discipline = discipline;
     }
 
+    public Integer getNumberOfShots() {
+        return numberOfShots;
+    }
 
+    public void setNumberOfShots(Integer numberOfShots) {
+        this.numberOfShots = numberOfShots;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getCountingMethod() {
+        return countingMethod;
+    }
+
+    public void setCountingMethod(String countingMethod) {
+        this.countingMethod = countingMethod;
+    }
 }

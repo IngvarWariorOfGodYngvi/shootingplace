@@ -17,6 +17,16 @@ public class Competition {
 
     private String type;
 
+    private String countingMethod;
+
+    public String getCountingMethod() {
+        return countingMethod;
+    }
+
+    public void setCountingMethod(String countingMethod) {
+        this.countingMethod = countingMethod;
+    }
+
     public String getName() {
         return name;
     }

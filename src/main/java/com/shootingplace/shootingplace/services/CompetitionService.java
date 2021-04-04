@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.CompetitionEntity;
 import com.shootingplace.shootingplace.domain.enums.CompetitionType;
+import com.shootingplace.shootingplace.domain.enums.CountingMethod;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
 import com.shootingplace.shootingplace.domain.models.Competition;
 import com.shootingplace.shootingplace.repositories.CompetitionRepository;
@@ -121,10 +122,19 @@ public class CompetitionService {
                     .discipline(competition.getDiscipline())
                     .type(competition.getType())
                     .build();
+            if (competition.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
+                competitionEntity.setCountingMethod(CountingMethod.NORMAL.getName());
+                LOG.info("Ustawiono metodę liczenia " + CountingMethod.NORMAL.getName());
+            }
+            if (competition.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+                LOG.info("Ustawiono metodę liczenia " + CountingMethod.COMSTOCK.getName());
+                competitionEntity.setCountingMethod(CountingMethod.COMSTOCK.getName());
+            }
             competitionRepository.saveAndFlush(competitionEntity);
             LOG.info("Utworzono nową konkurencję \"" + competition.getName() + "\"");
             return true;
         } else {
+            LOG.info("Po prostu się nie udało");
             return false;
         }
     }
