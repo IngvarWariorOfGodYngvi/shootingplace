@@ -20,12 +20,13 @@ public class CompetitionMembersListController {
     }
 
     @GetMapping("/getID")
-    public ResponseEntity<String> getIDByName(@RequestParam String name,@RequestParam String tournamentUUID) {
-        return ResponseEntity.ok(competitionMembersListService.getIDByName(name,tournamentUUID));
+    public ResponseEntity<String> getIDByName(@RequestParam String name, @RequestParam String tournamentUUID) {
+        return ResponseEntity.ok(competitionMembersListService.getIDByName(name, tournamentUUID));
     }
+
     @GetMapping("/getMemberStarts")
-    public ResponseEntity<List<String>> getMemberStartsInTournament(@RequestParam String memberUUID,@RequestParam int otherID, @RequestParam String tournamentUUID){
-        return ResponseEntity.ok(competitionMembersListService.getMemberStartsInTournament(memberUUID,otherID,tournamentUUID));
+    public ResponseEntity<List<String>> getMemberStartsInTournament(@RequestParam String memberUUID, @RequestParam int otherID, @RequestParam String tournamentUUID) {
+        return ResponseEntity.ok(competitionMembersListService.getMemberStartsInTournament(memberUUID, otherID, tournamentUUID));
     }
 
     @Transactional
@@ -37,6 +38,7 @@ public class CompetitionMembersListController {
             return ResponseEntity.badRequest().build();
     }
 
+    @Transactional
     @PostMapping("/removeMember")
     public ResponseEntity<?> removeMemberFromList(@RequestParam String competitionUUID, @RequestParam int legitimationNumber, @RequestParam @Nullable int otherPerson) {
         if (competitionMembersListService.removeScoreFromList(competitionUUID, legitimationNumber, otherPerson)) {
@@ -44,15 +46,6 @@ public class CompetitionMembersListController {
         } else
             return ResponseEntity.badRequest().build();
     }
-
-//    @PatchMapping("/sort")
-//    public ResponseEntity<?> sortScoreByNameOrScore(@RequestParam String competitionUUID, @RequestParam boolean sort) {
-//        if (competitionMembersListService.sortScore(competitionUUID, sort)) {
-//            return ResponseEntity.ok().build();
-//        } else {
-//            return ResponseEntity.badRequest().build();
-//        }
-//    }
 
     @DeleteMapping("/delete")
     public ResponseEntity<?> removeMembersListFromTournament(@RequestParam String competitionUUID, @RequestParam String tournamentUUID) {

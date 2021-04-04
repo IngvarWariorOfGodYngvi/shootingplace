@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.OneToOne;
+
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,6 +18,8 @@ public class Score {
 
     private float innerTen;
     private float outerTen;
+    private float hf;
+
 
     private String name;
 
@@ -117,5 +120,13 @@ public class Score {
 
     public void setOtherPersonEntity(OtherPersonEntity otherPersonEntity) {
         this.otherPersonEntity = otherPersonEntity;
+    }
+
+    public float getHf() {
+        return hf;
+    }
+
+    public void setHf(float hf) {
+        this.hf = hf;
     }
 }
