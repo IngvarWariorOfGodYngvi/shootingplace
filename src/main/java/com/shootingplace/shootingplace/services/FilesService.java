@@ -1080,8 +1080,8 @@ public class FilesService {
         document.addTitle(fileName);
         document.addCreationDate();
 
-        List<String> comp = competitions.stream().filter(value -> !value.contains(" pneumatyczny ")||!value.contains(" pneumatyczna ")).sorted().collect(Collectors.toList());
-        competitions.stream().filter(competition -> competition.contains("pneumatyczny")|| competition.contains(" pneumatyczna ")).sorted().forEach(comp::add);
+        List<String> comp = competitions.stream().filter(value -> !value.contains(" pneumatyczny ") || !value.contains(" pneumatyczna ")).sorted().collect(Collectors.toList());
+        competitions.stream().filter(competition -> competition.contains("pneumatyczny") || competition.contains(" pneumatyczna ")).sorted().forEach(comp::add);
         Paragraph newLine = new Paragraph("\n", font(12, 0));
         for (int j = 0; j < comp.size(); j++) {
 
@@ -1099,7 +1099,7 @@ public class FilesService {
                     .findFirst().orElseThrow(EntityNotFoundException::new);
 
             CompetitionEntity competitionEntity = competitionRepository.findAll().stream().filter(f -> f.getName().equals(comp.get(finalJ))).findFirst().orElseThrow(EntityNotFoundException::new);
-
+            int compShots = competitionEntity.getNumberOfShots();
             int numberOfShots;
             if (competitionEntity.getNumberOfShots() > 10) {
                 numberOfShots = 10;
@@ -1146,6 +1146,7 @@ public class FilesService {
             }
             PdfPTable table = new PdfPTable(pointColumnWidths);
             PdfPTable table1 = new PdfPTable(pointColumnWidths);
+            PdfPTable table2 = new PdfPTable(pointColumnWidths);
 
             document.add(par1);
             document.add(par2);
@@ -1154,15 +1155,12 @@ public class FilesService {
 
             for (int i = 0; i <= numberOfShots; i++) {
                 Paragraph p;
-                System.out.println(i + " pierwsza pętla");
                 if (i < numberOfShots) {
                     p = new Paragraph(String.valueOf(i + 1), font(14, 0));
                 } else {
                     if (competitionEntity.getCountingMethod() != null && competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-                        System.out.println("p ustawione na CZAS");
                         p = new Paragraph("CZAS", font(14, 1));
                     } else {
-                        System.out.println("p ustawione na SUMA");
                         p = new Paragraph("SUMA", font(14, 1));
                     }
                 }
@@ -1170,32 +1168,55 @@ public class FilesService {
                 cell.setHorizontalAlignment(1);
                 table.addCell(cell);
                 if (i >= 10) {
-                    System.out.println("dodaję pierwszą tabelę");
                     document.add(table);
-                    System.out.println("zamykam pętlę");
                     break;
                 }
             }
             if (numberOfShots < 10) {
-                System.out.println("dodaję tabelę bo strzałów jest mniej niż 10");
                 document.add(table);
 
             }
-            for (int i = 0; i <= competitionEntity.getNumberOfShots() + (competitionEntity.getNumberOfShots() / 10); i++) {
-                System.out.println(i + " druga pętla");
+            int loopLength = competitionEntity.getNumberOfShots() + (competitionEntity.getNumberOfShots() / 10),
+                    secondLoopLength = 0;
+            System.out.println("długość drugiej pętli " + loopLength);
+            for (int i = 0; i <= loopLength; i++) {
                 String s = " ";
                 Chunk c = new Chunk(s, font(28, 0));
                 Paragraph p = new Paragraph(c);
                 PdfPCell cell = new PdfPCell(p);
                 table1.addCell(cell);
-// tutaj zostawiam pracę bo się dzieje coś ciekawego i muszę rozkminić dlaczego ( dodaje na pewno drugi raz tabelę)
-//                if (i > 0 && i % 10 == 0) {
-//                    System.out.println("dodaję tabelę");
-//                    document.add(table1);
-//                    System.out.println("ustawiam pustą tabelę w miejsce poprzedniej");
-//                }
+                if (i == loopLength) {
+                    System.out.println("wchodzę do wewnętrznego ifa");
+                    for (int k = i; k > 0; k--) {
+                        secondLoopLength++;
+                        if (k % 10 == 1) {
+                            System.out.println("k % 10 = " + (k % 10) + " przerywam pętle");
+                            break;
+                        }
+                    }
+                }
             }
             document.add(table1);
+            System.out.println("długość drugiego " + secondLoopLength);
+            System.out.println("numberOfShots " + compShots);
+            System.out.println("numberOfShots % 10 = " + (compShots % 10));
+            if (compShots > 10) {
+                if (compShots % 10 != 0) {
+                    for (int i = 0; i <= 10; i++) {
+                        System.out.println(i + " trzecia pętla");
+                        String s = " ";
+                        Chunk c = new Chunk(s, font(28, 0));
+                        Paragraph p = new Paragraph(c);
+                        PdfPCell cell = new PdfPCell(p);
+                        if (i >= secondLoopLength - 1 && i < 10) {
+                            System.out.println("Usuwam krawędzie");
+                            cell.setBorderWidth(0);
+                        }
+                        table2.addCell(cell);
+                    }
+                    document.add(table2);
+                }
+            }
 //            if (numberOfShots < 10) {
 //                System.out.println("dodaję tabelę1 bo strzałów jest mniej niż 10");
 //                document.add(table1);
