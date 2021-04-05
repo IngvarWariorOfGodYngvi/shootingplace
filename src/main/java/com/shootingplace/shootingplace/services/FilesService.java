@@ -20,9 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,10 +35,11 @@ public class FilesService {
     private final OtherPersonRepository otherPersonRepository;
     private final GunRepository gunRepository;
     private final ContributionRepository contributionRepository;
+    private final CompetitionRepository competitionRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository) {
+    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository) {
         this.memberRepository = memberRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.filesRepository = filesRepository;
@@ -49,6 +48,7 @@ public class FilesService {
         this.otherPersonRepository = otherPersonRepository;
         this.gunRepository = gunRepository;
         this.contributionRepository = contributionRepository;
+        this.competitionRepository = competitionRepository;
     }
 
     private FilesEntity createFileEntity(FilesModel filesModel) {
@@ -1080,8 +1080,8 @@ public class FilesService {
         document.addTitle(fileName);
         document.addCreationDate();
 
-        List<String> comp = competitions.stream().filter(value -> !value.contains(" pneumatyczny ")).sorted().collect(Collectors.toList());
-        competitions.stream().filter(competition -> competition.contains(" pneumatyczny ")).sorted().forEach(comp::add);
+        List<String> comp = competitions.stream().filter(value -> !value.contains(" pneumatyczny ")||!value.contains(" pneumatyczna ")).sorted().collect(Collectors.toList());
+        competitions.stream().filter(competition -> competition.contains("pneumatyczny")|| competition.contains(" pneumatyczna ")).sorted().forEach(comp::add);
         Paragraph newLine = new Paragraph("\n", font(12, 0));
         for (int j = 0; j < comp.size(); j++) {
 
@@ -1089,11 +1089,27 @@ public class FilesService {
 
             int finalJ = j;
 
-            ScoreEntity score = tournamentEntity.getCompetitionsList().stream().filter(f -> f.getName().equals(comp.get(finalJ))).findFirst().orElseThrow(EntityNotFoundException::new).getScoreList().stream().filter(f -> f.getMetricNumber() == d).findFirst().orElseThrow(EntityNotFoundException::new);
+            ScoreEntity score = tournamentEntity.getCompetitionsList()
+                    .stream()
+                    .filter(f -> f.getName().equals(comp.get(finalJ)))
+                    .findFirst().orElseThrow(EntityNotFoundException::new)
+                    .getScoreList()
+                    .stream()
+                    .filter(f -> f.getMetricNumber() == d)
+                    .findFirst().orElseThrow(EntityNotFoundException::new);
+
+            CompetitionEntity competitionEntity = competitionRepository.findAll().stream().filter(f -> f.getName().equals(comp.get(finalJ))).findFirst().orElseThrow(EntityNotFoundException::new);
+
+            int numberOfShots;
+            if (competitionEntity.getNumberOfShots() > 10) {
+                numberOfShots = 10;
+            } else {
+                numberOfShots = competitionEntity.getNumberOfShots();
+            }
 
             Paragraph par1 = new Paragraph(tournamentEntity.getName().toUpperCase() + " " + clubEntity.getName(), font(12, 1));
             par1.setAlignment(1);
-
+            System.out.println(competitionEntity.getName());
             Paragraph par2 = new Paragraph(name.toUpperCase(), font(13, 1));
             par2.setAlignment(1);
             String a = "";
@@ -1120,40 +1136,73 @@ public class FilesService {
             par4.add(chunk1);
             par4.add(chunk2);
 
-            float[] pointColumnWidths = {25F, 25F, 25F, 25F, 25F, 25F, 25F, 25F, 25F, 25F, 60F};
+            float[] pointColumnWidths = new float[numberOfShots + 1];
+            for (int i = 0; i <= numberOfShots; i++) {
+                if (i < pointColumnWidths.length - 1) {
+                    pointColumnWidths[i] = 25F;
+                } else {
+                    pointColumnWidths[i] = 60F;
+                }
+            }
             PdfPTable table = new PdfPTable(pointColumnWidths);
             PdfPTable table1 = new PdfPTable(pointColumnWidths);
-
-            for (int i = 0; i <= 11; i++) {
-                Paragraph p;
-                if (i < 10) {
-                    p = new Paragraph(String.valueOf(i + 1), font(14, 0));
-                } else {
-                    p = new Paragraph("SUMA", font(14, 1));
-
-                }
-                PdfPCell cell = new PdfPCell(p);
-                cell.setHorizontalAlignment(1);
-                table.addCell(cell);
-
-            }
-            for (int i = 0; i <= 11; i++) {
-                String s = " ";
-                Chunk c = new Chunk(s, font(28, 0));
-                Paragraph p = new Paragraph(c);
-                PdfPCell cell = new PdfPCell(p);
-                table1.addCell(cell);
-
-            }
-
-            Paragraph par5 = new Paragraph("_______________________________________________________________________________________", font(12, 0));
 
             document.add(par1);
             document.add(par2);
             document.add(par3);
             document.add(newLine);
-            document.add(table);
+
+            for (int i = 0; i <= numberOfShots; i++) {
+                Paragraph p;
+                System.out.println(i + " pierwsza pętla");
+                if (i < numberOfShots) {
+                    p = new Paragraph(String.valueOf(i + 1), font(14, 0));
+                } else {
+                    if (competitionEntity.getCountingMethod() != null && competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+                        System.out.println("p ustawione na CZAS");
+                        p = new Paragraph("CZAS", font(14, 1));
+                    } else {
+                        System.out.println("p ustawione na SUMA");
+                        p = new Paragraph("SUMA", font(14, 1));
+                    }
+                }
+                PdfPCell cell = new PdfPCell(p);
+                cell.setHorizontalAlignment(1);
+                table.addCell(cell);
+                if (i >= 10) {
+                    System.out.println("dodaję pierwszą tabelę");
+                    document.add(table);
+                    System.out.println("zamykam pętlę");
+                    break;
+                }
+            }
+            if (numberOfShots < 10) {
+                System.out.println("dodaję tabelę bo strzałów jest mniej niż 10");
+                document.add(table);
+
+            }
+            for (int i = 0; i <= competitionEntity.getNumberOfShots() + (competitionEntity.getNumberOfShots() / 10); i++) {
+                System.out.println(i + " druga pętla");
+                String s = " ";
+                Chunk c = new Chunk(s, font(28, 0));
+                Paragraph p = new Paragraph(c);
+                PdfPCell cell = new PdfPCell(p);
+                table1.addCell(cell);
+// tutaj zostawiam pracę bo się dzieje coś ciekawego i muszę rozkminić dlaczego ( dodaje na pewno drugi raz tabelę)
+//                if (i > 0 && i % 10 == 0) {
+//                    System.out.println("dodaję tabelę");
+//                    document.add(table1);
+//                    System.out.println("ustawiam pustą tabelę w miejsce poprzedniej");
+//                }
+            }
             document.add(table1);
+//            if (numberOfShots < 10) {
+//                System.out.println("dodaję tabelę1 bo strzałów jest mniej niż 10");
+//                document.add(table1);
+//            }
+
+            Paragraph par5 = new Paragraph("_______________________________________________________________________________________", font(12, 0));
+
             document.add(newLine);
             document.add(par4);
             if (j < 7) {
