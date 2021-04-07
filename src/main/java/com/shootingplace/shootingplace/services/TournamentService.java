@@ -261,7 +261,6 @@ public class TournamentService {
     public boolean addOtherMainArbiter(String tournamentUUID, int id) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
-            String function = ArbiterWorkClass.MAIN_ARBITER.getName();
 
             OtherPersonEntity otherPersonEntity = otherPersonRepository
                     .findAll()
@@ -705,23 +704,39 @@ public class TournamentService {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         List<String> list = new ArrayList<>();
 
-        List<Integer> list1 = new ArrayList<>();
-        tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().forEach(g -> list1.add(g.getMetricNumber())));
-        int i = list1.stream().mapToInt(v -> v).max().orElseThrow(NoSuchElementException::new);
+//        List<Integer> list1 = new ArrayList<>();
+        List<String> list1 = new ArrayList<>();
+        List<Integer> list2 = new ArrayList<>();
+        tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().forEach(g -> {
+            if (g.getMember() != null) {
+                if (!list1.contains(g.getMember().getUuid())) {
+                    System.out.println(g.getMember().getUuid());
+                    list1.add(g.getMember().getUuid());
+                }
+            }
+            if (g.getOtherPersonEntity() != null) {
+                if (!list1.contains(String.valueOf(g.getOtherPersonEntity().getId()))) {
+                    System.out.println(g.getOtherPersonEntity().getId());
+                    list1.add(String.valueOf(g.getOtherPersonEntity().getId()));
+                }
+            }
+        }));
+        tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().forEach(g -> list2.add(g.getMetricNumber())));
+//        int i = list2.stream().mapToInt(v->v).max().orElseThrow(NoSuchElementException::new);
 
-
-        List<ScoreEntity> list2 = new ArrayList<>();
-        tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(ScoreEntity::isAmmunition).forEach(list2::add));
 
         List<ScoreEntity> list3 = new ArrayList<>();
-        tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(ScoreEntity::isGun).forEach(list3::add));
+        tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(ScoreEntity::isAmmunition).forEach(list3::add));
+
+        List<ScoreEntity> list4 = new ArrayList<>();
+        tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(ScoreEntity::isGun).forEach(list4::add));
 
 
         list.add(String.valueOf(tournamentEntity.getCompetitionsList().size()));
-        list.add(String.valueOf(i));
         list.add(String.valueOf(list1.size()));
         list.add(String.valueOf(list2.size()));
         list.add(String.valueOf(list3.size()));
+        list.add(String.valueOf(list4.size()));
         return list;
     }
 

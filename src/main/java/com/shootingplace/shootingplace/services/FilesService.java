@@ -851,21 +851,25 @@ public class FilesService {
                     if (competitionMembersListEntity.getScoreList().get(j).getOuterTen() == 0) {
                         o2 = scoreOut = "";
                     }
+                    String result = String.valueOf(score);
                     if (competitionMembersListEntity.getCountingMethod() != null) {
 
                         if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
                             o1 = "";
                             o2 = "";
+
                         } else {
                             o1 = scoreIn.replace(".0", "");
                             o2 = scoreOut.replace(".0", "");
+                            result = result.replace(".0", "");
+
                         }
                     }
                     PdfPTable playerTableLabel = new PdfPTable(pointColumnWidths);
                     PdfPCell playerCellLabel = new PdfPCell(new Paragraph(String.valueOf(j + 1), font(11, 0)));
                     PdfPCell playerCellLabel1 = new PdfPCell(new Paragraph(secondName + " " + firstName, font(11, 0)));
                     PdfPCell playerCellLabel2 = new PdfPCell(new Paragraph(club, font(11, 0)));
-                    PdfPCell playerCellLabel3 = new PdfPCell(new Paragraph(String.valueOf(score).replace(".0", ""), font(11, 1)));
+                    PdfPCell playerCellLabel3 = new PdfPCell(new Paragraph(result, font(11, 1)));
                     PdfPCell playerCellLabel4 = new PdfPCell(new Paragraph(o1, font(9, 2)));
                     PdfPCell playerCellLabel5 = new PdfPCell(new Paragraph(o2, font(9, 2)));
 
@@ -1080,7 +1084,7 @@ public class FilesService {
         document.addTitle(fileName);
         document.addCreationDate();
 
-        List<String> comp = competitions.stream().filter(value -> !value.contains(" pneumatyczny ") || !value.contains(" pneumatyczna ")).sorted().collect(Collectors.toList());
+        List<String> comp = competitions.stream().filter(value -> !value.contains(" pneumatyczny ") && !value.contains(" pneumatyczna ")).sorted().collect(Collectors.toList());
         competitions.stream().filter(competition -> competition.contains("pneumatyczny") || competition.contains(" pneumatyczna ")).sorted().forEach(comp::add);
         Paragraph newLine = new Paragraph("\n", font(12, 0));
         for (int j = 0; j < comp.size(); j++) {
@@ -1178,7 +1182,6 @@ public class FilesService {
             }
             int loopLength = competitionEntity.getNumberOfShots() + (competitionEntity.getNumberOfShots() / 10),
                     secondLoopLength = 0;
-            System.out.println("długość drugiej pętli " + loopLength);
             for (int i = 0; i <= loopLength; i++) {
                 String s = " ";
                 Chunk c = new Chunk(s, font(28, 0));
@@ -1186,30 +1189,23 @@ public class FilesService {
                 PdfPCell cell = new PdfPCell(p);
                 table1.addCell(cell);
                 if (i == loopLength) {
-                    System.out.println("wchodzę do wewnętrznego ifa");
                     for (int k = i; k > 0; k--) {
                         secondLoopLength++;
                         if (k % 10 == 1) {
-                            System.out.println("k % 10 = " + (k % 10) + " przerywam pętle");
                             break;
                         }
                     }
                 }
             }
             document.add(table1);
-            System.out.println("długość drugiego " + secondLoopLength);
-            System.out.println("numberOfShots " + compShots);
-            System.out.println("numberOfShots % 10 = " + (compShots % 10));
             if (compShots > 10) {
                 if (compShots % 10 != 0) {
                     for (int i = 0; i <= 10; i++) {
-                        System.out.println(i + " trzecia pętla");
                         String s = " ";
                         Chunk c = new Chunk(s, font(28, 0));
                         Paragraph p = new Paragraph(c);
                         PdfPCell cell = new PdfPCell(p);
                         if (i >= secondLoopLength - 1 && i < 10) {
-                            System.out.println("Usuwam krawędzie");
                             cell.setBorderWidth(0);
                         }
                         table2.addCell(cell);
@@ -1217,10 +1213,6 @@ public class FilesService {
                     document.add(table2);
                 }
             }
-//            if (numberOfShots < 10) {
-//                System.out.println("dodaję tabelę1 bo strzałów jest mniej niż 10");
-//                document.add(table1);
-//            }
 
             Paragraph par5 = new Paragraph("_______________________________________________________________________________________", font(12, 0));
 
@@ -1382,9 +1374,13 @@ public class FilesService {
         String mainArbiter;
 
         if (tournamentEntity.getMainArbiter() != null) {
-            mainArbiter = tournamentEntity.getMainArbiter().getSecondName().concat(" " + tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass());
+            if (tournamentEntity.getMainArbiter() != null) {
+                mainArbiter = tournamentEntity.getMainArbiter().getSecondName().concat(" " + tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass());
+            } else {
+                mainArbiter = tournamentEntity.getOtherMainArbiter().getSecondName().concat(" " + tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass());
+            }
         } else {
-            mainArbiter = tournamentEntity.getOtherMainArbiter().getSecondName().concat(" " + tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass());
+            mainArbiter = "Nie wskazano";
         }
 
         Paragraph mainArbiterOnTournament = new Paragraph(mainArbiter, font(12, 0));
@@ -1392,9 +1388,13 @@ public class FilesService {
         String commissionRTSArbiter;
 
         if (tournamentEntity.getMainArbiter() != null) {
-            commissionRTSArbiter = tournamentEntity.getCommissionRTSArbiter().getSecondName().concat(" " + tournamentEntity.getCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getCommissionRTSArbiter().getMemberPermissions().getArbiterClass());
+            if (tournamentEntity.getCommissionRTSArbiter() != null) {
+                commissionRTSArbiter = tournamentEntity.getCommissionRTSArbiter().getSecondName().concat(" " + tournamentEntity.getCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getCommissionRTSArbiter().getMemberPermissions().getArbiterClass());
+            } else {
+                commissionRTSArbiter = tournamentEntity.getOtherCommissionRTSArbiter().getSecondName().concat(" " + tournamentEntity.getOtherCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getOtherCommissionRTSArbiter().getPermissionsEntity().getArbiterClass());
+            }
         } else {
-            commissionRTSArbiter = tournamentEntity.getOtherCommissionRTSArbiter().getSecondName().concat(" " + tournamentEntity.getOtherCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getOtherCommissionRTSArbiter().getPermissionsEntity().getArbiterClass());
+            commissionRTSArbiter = "Nie wskazano";
         }
 
         Paragraph commissionRTSArbiterOnTournament = new Paragraph(commissionRTSArbiter, font(12, 0));
@@ -1474,7 +1474,8 @@ public class FilesService {
 
     }
 
-    public FilesEntity getAllMembersWithLicenceNotValidAndContributionNotValid() throws IOException, DocumentException {
+    public FilesEntity getAllMembersWithLicenceNotValidAndContributionNotValid() throws
+            IOException, DocumentException {
 
         String fileName = "Lista_osób_bez_składek_z_nieważnymi_licencjami_na_dzień" + LocalDate.now() + ".pdf";
 
@@ -1831,7 +1832,7 @@ public class FilesService {
         document.add(title);
         document.add(newLine);
 
-        float[] pointColumnWidths = {4F, 16F, 10F, 10F, 10F, 10F, 10F, 10F};
+        float[] pointColumnWidths = {4F, 16F, 10F, 10F, 10F, 10F, 10F};
 
         Paragraph lp = new Paragraph("Lp", font(12, 0));
         Paragraph modelName = new Paragraph("Marka i Model", font(12, 0));
@@ -1840,7 +1841,6 @@ public class FilesService {
         Paragraph recordInEvidenceBook = new Paragraph("Poz. z książki ewidencji", font(12, 0));
         Paragraph numberOfMagazines = new Paragraph("Magazynki", font(12, 0));
         Paragraph gunCertificateSerialNumber = new Paragraph("Numer świadectwa", font(12, 0));
-        Paragraph basisForPurchaseOrAssignment = new Paragraph("Podstawa wpisu", font(12, 0));
 
 
         PdfPTable titleTable = new PdfPTable(pointColumnWidths);
@@ -1853,7 +1853,6 @@ public class FilesService {
         PdfPCell recordInEvidenceBookCell = new PdfPCell(recordInEvidenceBook);
         PdfPCell numberOfMagazinesCell = new PdfPCell(numberOfMagazines);
         PdfPCell gunCertificateSerialNumberCell = new PdfPCell(gunCertificateSerialNumber);
-        PdfPCell basisForPurchaseOrAssignmentCell = new PdfPCell(basisForPurchaseOrAssignment);
 
         lpCell.setHorizontalAlignment(1);
         lpCell.setVerticalAlignment(1);
@@ -1869,8 +1868,6 @@ public class FilesService {
         numberOfMagazinesCell.setVerticalAlignment(1);
         gunCertificateSerialNumberCell.setHorizontalAlignment(1);
         gunCertificateSerialNumberCell.setVerticalAlignment(1);
-        basisForPurchaseOrAssignmentCell.setHorizontalAlignment(1);
-        basisForPurchaseOrAssignmentCell.setVerticalAlignment(1);
 
 
         titleTable.addCell(lpCell);
@@ -1880,7 +1877,6 @@ public class FilesService {
         titleTable.addCell(recordInEvidenceBookCell);
         titleTable.addCell(numberOfMagazinesCell);
         titleTable.addCell(gunCertificateSerialNumberCell);
-        titleTable.addCell(basisForPurchaseOrAssignmentCell);
 
         document.add(titleTable);
 
@@ -1923,7 +1919,6 @@ public class FilesService {
                     Paragraph recordInEvidenceBookGun = new Paragraph(gun.getRecordInEvidenceBook(), font(12, 0));
                     Paragraph numberOfMagazinesGun = new Paragraph(gun.getNumberOfMagazines(), font(12, 0));
                     Paragraph gunCertificateSerialNumberGun = new Paragraph(gun.getGunCertificateSerialNumber(), font(12, 0));
-                    Paragraph basisForPurchaseOrAssignmentGun = new Paragraph(gun.getBasisForPurchaseOrAssignment(), font(12, 0));
 
                     PdfPCell lpGunCell = new PdfPCell(lpGun);
                     PdfPCell modelNameGunCell = new PdfPCell(modelNameGun);
@@ -1932,7 +1927,6 @@ public class FilesService {
                     PdfPCell recordInEvidenceBookGunCell = new PdfPCell(recordInEvidenceBookGun);
                     PdfPCell numberOfMagazinesGunCell = new PdfPCell(numberOfMagazinesGun);
                     PdfPCell gunCertificateSerialNumberGunCell = new PdfPCell(gunCertificateSerialNumberGun);
-                    PdfPCell basisForPurchaseOrAssignmentGunCell = new PdfPCell(basisForPurchaseOrAssignmentGun);
 
                     lpGunCell.setHorizontalAlignment(1);
                     lpGunCell.setVerticalAlignment(1);
@@ -1948,8 +1942,6 @@ public class FilesService {
                     numberOfMagazinesGunCell.setVerticalAlignment(1);
                     gunCertificateSerialNumberGunCell.setHorizontalAlignment(1);
                     gunCertificateSerialNumberGunCell.setVerticalAlignment(1);
-                    basisForPurchaseOrAssignmentGunCell.setHorizontalAlignment(1);
-                    basisForPurchaseOrAssignmentGunCell.setVerticalAlignment(1);
 
                     gunTable.addCell(lpGunCell);
                     gunTable.addCell(modelNameGunCell);
@@ -1958,7 +1950,6 @@ public class FilesService {
                     gunTable.addCell(recordInEvidenceBookGunCell);
                     gunTable.addCell(numberOfMagazinesGunCell);
                     gunTable.addCell(gunCertificateSerialNumberGunCell);
-                    gunTable.addCell(basisForPurchaseOrAssignmentGunCell);
 
                     document.add(gunTable);
                 }
@@ -1988,7 +1979,8 @@ public class FilesService {
 
     }
 
-    public FilesEntity getGunTransportCertificate(List<String> guns, LocalDate date, LocalDate date1) throws IOException, DocumentException {
+    public FilesEntity getGunTransportCertificate(List<String> guns, LocalDate date, LocalDate date1) throws
+            IOException, DocumentException {
 
 
         String fileName = "Lista_broni_do_przewozu_na_dzień" + LocalDate.now() + ".pdf";

@@ -115,6 +115,7 @@ public class CompetitionService {
             LOG.info("Taka konkurencja już istnieje");
             return false;
         }
+        System.out.println(competition.getName());
         if (competition.getDiscipline().equals(Discipline.PISTOL.getName()) || competition.getDiscipline().equals(Discipline.RIFLE.getName()) || competition.getDiscipline().equals(Discipline.SHOTGUN.getName())) {
             CompetitionEntity competitionEntity = CompetitionEntity.builder()
                     .name(competition.getName())
