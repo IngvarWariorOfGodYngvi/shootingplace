@@ -24,7 +24,6 @@ public class CompetitionEntity {
 
     private String discipline;
 
-
     private Integer numberOfShots;
 
     private String type;

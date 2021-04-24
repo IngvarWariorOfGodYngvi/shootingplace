@@ -7,6 +7,8 @@ import com.shootingplace.shootingplace.domain.enums.CountingMethod;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
 import com.shootingplace.shootingplace.domain.enums.GunType;
 import com.shootingplace.shootingplace.domain.models.FilesModel;
+import com.shootingplace.shootingplace.domain.models.MemberRanking;
+import com.shootingplace.shootingplace.domain.models.Score;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,10 +38,11 @@ public class FilesService {
     private final GunRepository gunRepository;
     private final ContributionRepository contributionRepository;
     private final CompetitionRepository competitionRepository;
+    private final CompetitionMembersListRepository competitionMembersListRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository) {
+    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, CompetitionMembersListRepository competitionMembersListRepository) {
         this.memberRepository = memberRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.filesRepository = filesRepository;
@@ -49,6 +52,7 @@ public class FilesService {
         this.gunRepository = gunRepository;
         this.contributionRepository = contributionRepository;
         this.competitionRepository = competitionRepository;
+        this.competitionMembersListRepository = competitionMembersListRepository;
     }
 
     private FilesEntity createFileEntity(FilesModel filesModel) {
@@ -842,14 +846,14 @@ public class FilesService {
 
                     }
                     float score = competitionMembersListEntity.getScoreList().get(j).getScore();
-                    String scoreIn = String.valueOf(competitionMembersListEntity.getScoreList().get(j).getInnerTen());
-                    String scoreOut = String.valueOf(competitionMembersListEntity.getScoreList().get(j).getOuterTen());
-                    String o1 = scoreIn.replace(".0", ""), o2 = scoreOut.replace(".0", "");
+                    String scoreOuterTen = String.valueOf(competitionMembersListEntity.getScoreList().get(j).getOuterTen() - competitionMembersListEntity.getScoreList().get(j).getInnerTen());
+                    String scoreInnerTen = String.valueOf(competitionMembersListEntity.getScoreList().get(j).getInnerTen());
+                    String o1 = scoreInnerTen.replace(".0", ""), o2 = scoreOuterTen.replace(".0", "");
                     if (competitionMembersListEntity.getScoreList().get(j).getInnerTen() == 0) {
-                        o1 = scoreIn = "";
+                        o1 = scoreInnerTen = "";
                     }
                     if (competitionMembersListEntity.getScoreList().get(j).getOuterTen() == 0) {
-                        o2 = scoreOut = "";
+                        o2 = scoreOuterTen = "";
                     }
                     String result = String.valueOf(score);
                     if (competitionMembersListEntity.getCountingMethod() != null) {
@@ -859,8 +863,8 @@ public class FilesService {
                             o2 = "";
 
                         } else {
-                            o1 = scoreIn.replace(".0", "");
-                            o2 = scoreOut.replace(".0", "");
+                            o1 = scoreInnerTen.replace(".0", "");
+                            o2 = scoreOuterTen.replace(".0", "");
                             result = result.replace(".0", "");
 
                         }
@@ -1180,7 +1184,7 @@ public class FilesService {
                 document.add(table);
 
             }
-            int loopLength = competitionEntity.getNumberOfShots() + (competitionEntity.getNumberOfShots() / 10),
+            int loopLength = competitionEntity.getNumberOfShots() + 1,
                     secondLoopLength = 0;
             for (int i = 0; i <= loopLength; i++) {
                 String s = " ";
@@ -2261,6 +2265,211 @@ public class FilesService {
 
     }
 
+    public FilesEntity getRankingCompetitions() throws IOException, DocumentException {
+        String fileName = "Lista_rankingowa.pdf";
+        ClubEntity club = clubRepository.getOne(1);
+        Document document = new Document(PageSize.A4.rotate());
+        PdfWriter writer = PdfWriter.getInstance(document,
+                new FileOutputStream(fileName));
+        document.open();
+        document.addTitle(fileName);
+        document.addCreationDate();
+
+        Paragraph title = new Paragraph("Lista Rankingowa " + club.getName(), font(13, 1));
+        Paragraph date = new Paragraph(String.valueOf(LocalDate.now().getYear()), font(10, 2));
+        Paragraph newLine = new Paragraph("\n", font(10, 0));
+
+        document.add(title);
+        document.add(date);
+        document.add(newLine);
+
+        PdfPTable mainTable = new PdfPTable(1);
+        mainTable.setWidthPercentage(100);
+
+        List<TournamentEntity> all = tournamentRepository.findAll().stream().filter(TournamentEntity::isRanking).collect(Collectors.toList());
+
+        CompetitionMembersListEntity competitionMembersListEntity = all.get(0).getCompetitionsList().get(0);
+
+        List<List<MemberRanking>> ranking = new ArrayList<>();
+
+        for (int i = 0; i < all.size(); i++) {
+            List<MemberRanking> innerRanking = new ArrayList<>();
+
+            for (int j = 0; j < all.get(i).getCompetitionsList().size(); j++) {
+                List<ScoreEntity> scoreList = all.get(i).getCompetitionsList().get(j).getScoreList();
+                for (int k = 0; k < scoreList.size(); k++) {
+
+                    ScoreEntity scoreEntity = scoreList.get(k);
+                    if (scoreEntity.getMember() != null) {
+
+                        List<Score> scores = new ArrayList<>();
+                        MemberEntity member = scoreEntity.getMember();
+                        scores.add(Mapping.map(scoreEntity));
+                        MemberRanking mr = MemberRanking.builder()
+                                .uuid(member.getUuid())
+                                .competitionName(all.get(i).getCompetitionsList().get(j).getName())
+                                .firstName(member.getFirstName())
+                                .secondName(member.getSecondName())
+                                .scores(scores)
+                                .build();
+                        if (i == 0) {
+                            innerRanking.add(mr);
+                            ranking.add(innerRanking);
+                        }
+//                        if(i>0){
+//                            MemberRanking memberRanking = innerRanking.stream().filter(f -> f.getUuid().equals(mr.getUuid())).findFirst().get();
+//                            List<Score> scores1 = memberRanking.getScores();
+//                            scores1.add(Mapping.map(scoreEntity));
+//                            memberRanking.setScores(scores1);
+//                        }
+//                        if (i > 0) {
+//                            if (ranking.get(i - 1).get(j).getCompetitionName().equals(innerRanking.get(j).getCompetitionName())) {
+//                                int finalI1 = i;
+//                                MemberRanking memberRanking = innerRanking.stream().filter(f -> f.getUuid().equals(innerRanking.get(finalI1 - 1).getUuid())).findFirst().orElseThrow(EntityNotFoundException::new);
+//                                List<Score> scores1 = memberRanking.getScores();
+//                                scores1.add(Mapping.map(scoreEntity));
+//
+//                                innerRanking.add(mr);
+//                                ranking.add(innerRanking);
+//                            }
+//                        }
+
+                    }
+                }
+            }
+        }
+
+        for (int l = 0; l < all.size(); l++) {
+            List<MemberRanking> memberRankingList = ranking.get(l);
+            for (int m = 0; m < memberRankingList.size(); m++) {
+                MemberRanking mr = memberRankingList.get(m);
+                for (int n = 0; l < mr.getScores().size(); n++) {
+                    Score score = mr.getScores().get(l);
+                    System.out.println(l + " " + mr.getCompetitionName() + " " + mr.getSecondName() + " " + score.getScore());
+                }
+            }
+        }
+
+        //        List<CompetitionMembersListEntity> comp = new ArrayList<>();
+//
+//        all.forEach(e -> comp.addAll(e.getCompetitionsList()));
+//        List<MemberRanking> memberRankingList = new ArrayList<>();
+//        comp.forEach(e->e.getScoreList().forEach(f->{
+//            if(f.getMember()!=null){
+//
+//            }
+//        }));
+//        List<ScoreEntity> scores = new ArrayList<>();
+//
+//        comp.forEach(e -> e.getScoreList().forEach(f -> {
+//            if (f.getMember() != null) {
+//                scores.add(f);
+//            }
+//        }));
+        float[] pointColumnWidths = {10F, 30F, 50F, 10F};
+        PdfPTable tableLabel = new PdfPTable(pointColumnWidths);
+        int size = all.size();
+        PdfPTable innerTable = new PdfPTable(size);
+        for (
+                int i = 0;
+                i < size; i++) {
+            PdfPCell cell = new PdfPCell(new Paragraph(String.valueOf(all.get(i).getDate()), font(10, 1)));
+            cell.setBorderWidth(0);
+            cell.setHorizontalAlignment(1);
+            innerTable.addCell(cell);
+        }
+
+        PdfPCell cellLabel = new PdfPCell(new Paragraph("M-ce", font(10, 1)));
+        PdfPCell cellLabel1 = new PdfPCell(new Paragraph("Imię i Nazwisko", font(10, 1)));
+        PdfPCell cellLabel2 = new PdfPCell(innerTable);
+        PdfPCell cellLabel3 = new PdfPCell(new Paragraph("Wynik", font(10, 1)));
+
+        document.add(newLine);
+        cellLabel.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cellLabel1.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cellLabel2.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cellLabel3.setHorizontalAlignment(Element.ALIGN_CENTER);
+
+        cellLabel.setBorderWidth(0);
+        cellLabel1.setBorderWidth(0);
+        cellLabel2.setBorderWidth(0);
+        cellLabel3.setBorderWidth(0);
+
+        tableLabel.setWidthPercentage(100F);
+        tableLabel.addCell(cellLabel);
+        tableLabel.addCell(cellLabel1);
+        tableLabel.addCell(cellLabel2);
+        tableLabel.addCell(cellLabel3);
+
+        document.add(tableLabel);
+        document.add(newLine);
+        for (
+                int i = 0; i < all.size(); i++) {
+
+            for (int j = 0; j < all.get(i).getCompetitionsList().size(); j++) {
+//                System.out.println(all.get(i).getCompetitionsList().get(j).getName());
+                List<ScoreEntity> scoreList = all.get(i).getCompetitionsList().get(j).getScoreList();
+                for (int h = 0; h < scoreList.size(); h++) {
+                    List<ScoreEntity> scores = all.get(i).getCompetitionsList().get(j).getScoreList();
+
+                    PdfPTable memberTable = new PdfPTable(pointColumnWidths);
+                    PdfPTable innerMemberTable = new PdfPTable(all.size());
+
+                    memberTable.setWidthPercentage(100);
+                    innerMemberTable.setWidthPercentage(100);
+
+                    Paragraph place = new Paragraph(String.valueOf(j), font(10, 0));
+                    Paragraph fullScore = new Paragraph("pełen wynik", font(10, 0));
+
+                    PdfPCell cell = new PdfPCell(place);
+                    PdfPCell cell1;
+                    PdfPCell cell2 = new PdfPCell(innerMemberTable);
+                    PdfPCell cell3 = new PdfPCell(fullScore);
+                    cell.setBorderWidth(0);
+                    cell2.setBorderWidth(0);
+                    cell3.setBorderWidth(0);
+                    MemberEntity member = scores.get(h).getMember();
+                    if (member != null) {
+                        Paragraph member1 = new Paragraph(member.getSecondName().concat(" " + member.getFirstName()), font(10, 0));
+                        cell1 = new PdfPCell(member1);
+                        cell1.setBorderWidth(0);
+                        memberTable.addCell(cell);
+                        memberTable.addCell(cell1);
+                        PdfPCell cell4 = new PdfPCell();
+                        for (int g = 0; g < all.size(); g++) {
+                            if (g == i) {
+                                Paragraph score = new Paragraph(String.valueOf(scoreList.get(h).getScore()), font(10, 0));
+                                cell4 = new PdfPCell(score);
+                            }
+                            innerMemberTable.addCell(cell4);
+                        }
+                        memberTable.addCell(cell2);
+                        memberTable.addCell(cell3);
+                        document.add(memberTable);
+                    }
+                }
+            }
+        }
+
+        document.close();
+
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+
+        File file = new File(fileName);
+
+        file.delete();
+        return filesEntity;
+    }
+
 
     private String getSex(String pesel) {
         int i = pesel.charAt(9);
@@ -2355,7 +2564,6 @@ public class FilesService {
 
 
     }
-
 
     static class PageStamper extends PdfPageEventHelper {
         @Override

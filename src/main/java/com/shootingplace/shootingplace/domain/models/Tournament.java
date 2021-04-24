@@ -41,6 +41,8 @@ public class Tournament {
     private List<CompetitionMembersList> competitionsList = new ArrayList<>();
     private boolean open;
     private boolean wzss;
+    private boolean ranking;
+    private boolean dynamic;
 
     public boolean isWzss() {
         return wzss;
@@ -152,5 +154,21 @@ public class Tournament {
 
     public void setCompetitionsList(List<CompetitionMembersList> competitionsList) {
         this.competitionsList = competitionsList;
+    }
+
+    public boolean isRanking() {
+        return ranking;
+    }
+
+    public void setRanking(boolean ranking) {
+        this.ranking = ranking;
+    }
+
+    public boolean isDynamic() {
+        return dynamic;
+    }
+
+    public void setDynamic(boolean dynamic) {
+        this.dynamic = dynamic;
     }
 }

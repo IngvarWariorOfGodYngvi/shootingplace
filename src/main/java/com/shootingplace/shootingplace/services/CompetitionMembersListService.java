@@ -19,18 +19,16 @@ public class CompetitionMembersListService {
     private final HistoryService historyService;
     private final OtherPersonRepository otherPersonRepository;
     private final ScoreService scoreService;
-    private final ScoreRepository scoreRepository;
     private final TournamentRepository tournamentRepository;
     private final Logger LOG = LogManager.getLogger();
 
 
-    public CompetitionMembersListService(MemberRepository memberRepository, CompetitionMembersListRepository competitionMembersListRepository, HistoryService historyService, OtherPersonRepository otherPersonRepository, ScoreService scoreService, ScoreRepository scoreRepository, TournamentRepository tournamentRepository) {
+    public CompetitionMembersListService(MemberRepository memberRepository, CompetitionMembersListRepository competitionMembersListRepository, HistoryService historyService, OtherPersonRepository otherPersonRepository, ScoreService scoreService, TournamentRepository tournamentRepository) {
         this.memberRepository = memberRepository;
         this.competitionMembersListRepository = competitionMembersListRepository;
         this.historyService = historyService;
         this.otherPersonRepository = otherPersonRepository;
         this.scoreService = scoreService;
-        this.scoreRepository = scoreRepository;
         this.tournamentRepository = tournamentRepository;
     }
 
@@ -46,9 +44,12 @@ public class CompetitionMembersListService {
                 LOG.info("Nie można dodać bo osoba już się znajduje na liście");
                 return false;
             } else {
-                ScoreEntity score = scoreService.createScore(0, 0, 0, competitionUUID, member, null);
+                ScoreEntity score = scoreService.createScore(0, 0, 0,0, competitionUUID, member, null);
                 scoreList.add(score);
-                scoreList.sort(Comparator.comparing(ScoreEntity::getScore).reversed().thenComparing(ScoreEntity::getInnerTen).reversed().thenComparing(ScoreEntity::getOuterTen).reversed());
+                scoreList.sort(Comparator.comparing(ScoreEntity::getScore)
+                        .reversed().thenComparing(ScoreEntity::getInnerTen)
+                        .reversed().thenComparing(ScoreEntity::getOuterTen)
+                        .reversed());
                 competitionMembersListRepository.saveAndFlush(list);
                 LOG.info("Dodano Klubowicza do Listy");
                 if (member != null) {
@@ -65,9 +66,12 @@ public class CompetitionMembersListService {
                     LOG.info("Nie można dodać bo osoba już się znajduje na liście");
                     return false;
                 } else {
-                    ScoreEntity score = scoreService.createScore(0, 0, 0, competitionUUID, null, otherPersonEntity);
+                    ScoreEntity score = scoreService.createScore(0, 0, 0,0, competitionUUID, null, otherPersonEntity);
                     scoreList.add(score);
-                    scoreList.sort(Comparator.comparing(ScoreEntity::getScore).reversed().thenComparing(ScoreEntity::getInnerTen).reversed().thenComparing(ScoreEntity::getOuterTen).reversed());
+                    scoreList.sort(Comparator.comparing(ScoreEntity::getScore)
+                            .reversed().thenComparing(ScoreEntity::getInnerTen)
+                            .reversed().thenComparing(ScoreEntity::getOuterTen)
+                            .reversed());
                     LOG.info("Dodano Obcego Zawodnika do Listy");
                     competitionMembersListRepository.saveAndFlush(list);
                     return true;
@@ -82,41 +86,21 @@ public class CompetitionMembersListService {
 
     public boolean removeScoreFromList(String competitionUUID, int legitimationNumber, int otherPerson) {
         CompetitionMembersListEntity list = competitionMembersListRepository.findById(competitionUUID).orElseThrow(EntityNotFoundException::new);
-        MemberEntity member = memberRepository.findAll().stream().filter(f -> f.getLegitimationNumber().equals(legitimationNumber)).findFirst().orElse(null);
-        OtherPersonEntity otherPersonEntity = otherPersonRepository.findAll().stream().filter(f -> f.getId().equals(otherPerson)).findFirst().orElse(null);
         List<ScoreEntity> scoreList = list.getScoreList();
-        ScoreEntity score = null;
+        ScoreEntity score;
         if (legitimationNumber > 0) {
-            if (scoreList.stream().anyMatch(f -> f.getMember() == member)) {
-                score = scoreList.stream().filter(f -> f.getMember() == member).findFirst().orElseThrow(EntityNotFoundException::new);
-                scoreList.remove(score);
-                competitionMembersListRepository.saveAndFlush(list);
-                LOG.info("Usunięto osobę do Listy");
-                historyService.removeCompetitionRecord(member.getUuid(), list);
-
-            } else {
-                return false;
-            }
+            MemberEntity member = memberRepository.findAll().stream().filter(f -> f.getLegitimationNumber().equals(legitimationNumber)).findFirst().orElseThrow(EntityNotFoundException::new);
+            score = scoreList.stream().filter(f -> f.getMember() == member).findFirst().orElseThrow(EntityNotFoundException::new);
+        } else {
+            OtherPersonEntity otherPersonEntity = otherPersonRepository.findAll().stream().filter(f -> f.getId().equals(otherPerson)).findFirst().orElseThrow(EntityNotFoundException::new);
+            score = scoreList.stream().filter(f -> f.getOtherPersonEntity() == otherPersonEntity).findFirst().orElseThrow(EntityNotFoundException::new);
         }
-        if (otherPerson > 0) {
-            if (scoreList.stream().anyMatch(f -> f.getOtherPersonEntity() == otherPersonEntity)) {
-                score = scoreList.stream().filter(f -> f.getOtherPersonEntity() == otherPersonEntity).findFirst().orElseThrow(EntityNotFoundException::new);
-                scoreList.remove(score);
-
-                competitionMembersListRepository.saveAndFlush(list);
-
-                LOG.info("Usunięto osobę z Listy");
-
-            } else {
-                return false;
-            }
+        scoreList.remove(score);
+        competitionMembersListRepository.saveAndFlush(list);
+        LOG.info("Usunięto osobę do Listy");
+        if (score.getMember() != null) {
+            historyService.removeCompetitionRecord(score.getMember().getUuid(), list);
         }
-//            dlaczego nie chce się to usunąć?
-//        if (score != null) {
-//            score.setMember(null);
-//            score.setOtherPersonEntity(null);
-//            scoreRepository.saveAndFlush(score);
-//        }
         return true;
     }
 

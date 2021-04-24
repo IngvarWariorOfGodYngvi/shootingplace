@@ -48,6 +48,8 @@ public class TournamentEntity {
     private List<CompetitionMembersListEntity> competitionsList = new ArrayList<>();
     private boolean open;
     private boolean WZSS;
+    private boolean ranking;
+    private boolean dynamic;
 
     public String getUuid() {
         return uuid;
@@ -155,5 +157,21 @@ public class TournamentEntity {
 
     public void setWZSS(boolean WZSS) {
         this.WZSS = WZSS;
+    }
+
+    public boolean isRanking() {
+        return ranking;
+    }
+
+    public void setRanking(boolean ranking) {
+        this.ranking = ranking;
+    }
+
+    public boolean isDynamic() {
+        return dynamic;
+    }
+
+    public void setDynamic(boolean dynamic) {
+        this.dynamic = dynamic;
     }
 }

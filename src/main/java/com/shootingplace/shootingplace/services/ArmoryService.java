@@ -1,17 +1,19 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.*;
+import com.shootingplace.shootingplace.domain.entities.CaliberEntity;
+import com.shootingplace.shootingplace.domain.entities.CaliberUsedEntity;
+import com.shootingplace.shootingplace.domain.entities.CalibersAddedEntity;
+import com.shootingplace.shootingplace.domain.entities.GunEntity;
 import com.shootingplace.shootingplace.domain.enums.GunType;
 import com.shootingplace.shootingplace.domain.models.Caliber;
 import com.shootingplace.shootingplace.repositories.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +26,9 @@ public class ArmoryService {
     private final CalibersAddedRepository calibersAddedRepository;
     private final GunRepository gunRepository;
     private final ChangeHistoryService changeHistoryService;
+
+    private final Logger LOG = LogManager.getLogger();
+
 
     public ArmoryService(AmmoEvidenceRepository ammoEvidenceRepository, CaliberService caliberService, CaliberRepository caliberRepository, CaliberUsedRepository caliberUsedRepository, CalibersAddedRepository calibersAddedRepository, GunRepository gunRepository, ChangeHistoryService changeHistoryService) {
         this.ammoEvidenceRepository = ammoEvidenceRepository;
@@ -142,7 +147,8 @@ public class ArmoryService {
                                 String comment,
                                 String basisForPurchaseOrAssignment) {
 
-        if (modelName.isEmpty() || caliber.isEmpty() || gunType.isEmpty() || serialNumber.isEmpty() || gunCertificateSerialNumber.isEmpty() || recordInEvidenceBook.isEmpty()) {
+        if ((modelName.isEmpty() || modelName.equals("null")) || (caliber.isEmpty() || caliber.equals("null")) || (gunType.isEmpty() || gunType.equals("null")) || (serialNumber.isEmpty() || serialNumber.equals("null")) || (gunCertificateSerialNumber.isEmpty() || gunCertificateSerialNumber.equals("null")) || (recordInEvidenceBook.isEmpty() || recordInEvidenceBook.equals("null"))) {
+            LOG.info("Nie podano wszystkich informacji");
             return false;
         }
         if (productionYear.isEmpty() || productionYear.equals("null")) {
@@ -158,6 +164,7 @@ public class ArmoryService {
         List<GunEntity> all = gunRepository.findAll();
 
         if (all.stream().anyMatch(e -> e.getGunCertificateSerialNumber().equals(gunCertificateSerialNumber) || e.getSerialNumber().equals(serialNumber) || e.getRecordInEvidenceBook().equals(recordInEvidenceBook))) {
+            LOG.info("Nie można dodać broni. Upewnij się, że numer seryjny, numer świadectwa lub numer z książki ewidencji się nie powtarza");
             return false;
         } else {
 

@@ -40,9 +40,9 @@ public class CompetitionController {
     }
 
     @PutMapping("")
-    public ResponseEntity<?> setScore(@RequestParam String scoreUUID, @RequestParam float score, @RequestParam float innerTen, @RequestParam float outerTen) {
+    public ResponseEntity<?> setScore(@RequestParam String scoreUUID, @RequestParam float score, @RequestParam float innerTen, @RequestParam float outerTen, @RequestParam int procedures) {
 
-        if (scoreService.setScore(scoreUUID, score, innerTen, outerTen)) {
+        if (scoreService.setScore(scoreUUID, score, innerTen, outerTen,procedures)) {
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.badRequest().build();

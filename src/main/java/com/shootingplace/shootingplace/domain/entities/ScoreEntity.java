@@ -26,6 +26,7 @@ public class ScoreEntity {
     private float innerTen;
     private float outerTen;
     private float hf;
+    private int procedures;
 
     private String name;
 
@@ -130,5 +131,13 @@ public class ScoreEntity {
 
     public void setHf(float hf) {
         this.hf = hf;
+    }
+
+    public int getProcedures() {
+        return procedures;
+    }
+
+    public void setProcedures(int procedures) {
+        this.procedures = procedures;
     }
 }

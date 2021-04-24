@@ -61,7 +61,7 @@ public class CompetitionService {
         }
 
         LOG.info("Wyświetlono listę Konkurencji");
-        competitionEntityList.sort(Comparator.comparing(CompetitionEntity::getDiscipline));
+        competitionEntityList.sort(Comparator.comparing(CompetitionEntity::getName));
         return competitionEntityList;
     }
 
@@ -73,6 +73,7 @@ public class CompetitionService {
                 .numberOfShots(10)
                 .type(CompetitionType.OPEN.getName())
                 .discipline(Discipline.PISTOL.getName())
+                .countingMethod(CountingMethod.NORMAL.getName())
                 .build());
         competitionRepository.saveAndFlush(CompetitionEntity.builder()
                 .uuid(UUID.randomUUID().toString())
@@ -80,6 +81,7 @@ public class CompetitionService {
                 .numberOfShots(10)
                 .type(CompetitionType.OPEN.getName())
                 .discipline(Discipline.PISTOL.getName())
+                .countingMethod(CountingMethod.NORMAL.getName())
                 .build());
         competitionRepository.saveAndFlush(CompetitionEntity.builder()
                 .uuid(UUID.randomUUID().toString())
@@ -87,6 +89,7 @@ public class CompetitionService {
                 .numberOfShots(10)
                 .type(CompetitionType.OPEN.getName())
                 .discipline(Discipline.PISTOL.getName())
+                .countingMethod(CountingMethod.NORMAL.getName())
                 .build());
         competitionRepository.saveAndFlush(CompetitionEntity.builder()
                 .uuid(UUID.randomUUID().toString())
@@ -94,6 +97,7 @@ public class CompetitionService {
                 .numberOfShots(10)
                 .type(CompetitionType.OPEN.getName())
                 .discipline(Discipline.PISTOL.getName())
+                .countingMethod(CountingMethod.NORMAL.getName())
                 .build());
         competitionRepository.saveAndFlush(CompetitionEntity.builder()
                 .uuid(UUID.randomUUID().toString())
@@ -101,6 +105,7 @@ public class CompetitionService {
                 .numberOfShots(10)
                 .type(CompetitionType.OPEN.getName())
                 .discipline(Discipline.RIFLE.getName())
+                .countingMethod(CountingMethod.NORMAL.getName())
                 .build());
         LOG.info("Stworzono encje konkurencji");
     }
