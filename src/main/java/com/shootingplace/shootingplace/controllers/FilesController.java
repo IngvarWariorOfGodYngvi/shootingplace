@@ -85,6 +85,19 @@ public class FilesController {
         }
     }
 
+    @GetMapping("/downloadRanking")
+    public ResponseEntity<byte[]> getRankingCompetitions() throws IOException, DocumentException {
+        FilesEntity filesEntity = filesService.getRankingCompetitions();
+        try {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                    .body(filesEntity.getData());
+        } finally {
+//            filesService.delete(filesEntity);
+        }
+    }
+
     @GetMapping("/downloadAllMembers")
     public ResponseEntity<byte[]> getAllMembersToTable(@RequestParam boolean condition) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.getAllMembersToTable(condition);

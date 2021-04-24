@@ -341,12 +341,14 @@ public class Mapping {
     static Score map(ScoreEntity s) {
         if (s.getMember() != null) {
             return Score.builder()
+                    .name(s.getName())
                     .member(map2(s.getMember()))
                     .ammunition(s.isAmmunition())
                     .gun(s.isGun())
                     .metricNumber(s.getMetricNumber())
                     .innerTen(s.getInnerTen())
                     .outerTen(s.getOuterTen())
+                    .procedures(s.getProcedures())
                     .hf(s.getHf())
                     .otherPersonEntity(s.getOtherPersonEntity())
                     .score(s.getScore())
@@ -355,6 +357,7 @@ public class Mapping {
                     .build();
         } else {
             return Score.builder()
+                    .name(s.getName())
                     .member(null)
                     .ammunition(s.isAmmunition())
                     .gun(s.isGun())
@@ -362,6 +365,7 @@ public class Mapping {
                     .innerTen(s.getInnerTen())
                     .outerTen(s.getOuterTen())
                     .hf(s.getHf())
+                    .procedures(s.getProcedures())
                     .otherPersonEntity(s.getOtherPersonEntity())
                     .score(s.getScore())
                     .competitionMembersListEntityUUID(s.getCompetitionMembersListEntityUUID())

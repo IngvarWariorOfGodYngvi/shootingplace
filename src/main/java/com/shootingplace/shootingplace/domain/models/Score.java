@@ -19,6 +19,7 @@ public class Score {
     private float innerTen;
     private float outerTen;
     private float hf;
+    private int procedures;
 
 
     private String name;
@@ -128,5 +129,13 @@ public class Score {
 
     public void setHf(float hf) {
         this.hf = hf;
+    }
+
+    public int getProcedures() {
+        return procedures;
+    }
+
+    public void setProcedures(int procedures) {
+        this.procedures = procedures;
     }
 }
