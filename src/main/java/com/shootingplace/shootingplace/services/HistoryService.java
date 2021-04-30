@@ -214,9 +214,11 @@ public class HistoryService {
 
     //  Tournament
     private CompetitionHistoryEntity createCompetitionHistoryEntity(String tournamentUUID, LocalDate date, String discipline, String attachedTo) {
-        String name = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new).getName();
+        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+        String name = tournamentEntity.getName();
         return CompetitionHistoryEntity.builder()
                 .name(name)
+                .WZSS(tournamentEntity.isWZSS())
                 .date(date)
                 .discipline(discipline)
                 .attachedToList(attachedTo)

@@ -31,9 +31,8 @@ public class AmmoEvidenceService {
         return ammoEvidenceRepository.findAll().stream().filter(f -> f.isOpen() == state).sorted(Comparator.comparing(AmmoEvidenceEntity::getDate).reversed()).collect(Collectors.toList());
     }
 
-    public AmmoEvidenceEntity getEvidence() {
-        List<AmmoEvidenceEntity> collect = ammoEvidenceRepository.findAll().stream().sorted(Comparator.comparing(AmmoEvidenceEntity::getDate).reversed()).collect(Collectors.toList());
-        return collect.stream().findFirst().orElseThrow(EntityNotFoundException::new);
+    public AmmoEvidenceEntity getEvidence(String uuid) {
+        return ammoEvidenceRepository.getOne(uuid);
     }
 
     public boolean closeEvidence(String evidenceUUID) {
@@ -54,7 +53,7 @@ public class AmmoEvidenceService {
         return allDTO;
     }
 
-    public boolean openEvidence(String evidenceUUID,String pinCode) {
+    public boolean openEvidence(String evidenceUUID, String pinCode) {
         if (ammoEvidenceRepository.findAll().stream().anyMatch(AmmoEvidenceEntity::isOpen)) {
             return false;
 

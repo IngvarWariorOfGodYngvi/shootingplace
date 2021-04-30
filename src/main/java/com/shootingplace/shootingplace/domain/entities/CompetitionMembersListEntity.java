@@ -32,6 +32,8 @@ public class CompetitionMembersListEntity {
 
     private String countingMethod;
 
+    private boolean WZSS;
+
     @ManyToMany
     private List<ScoreEntity> scoreList = new ArrayList<>();
 
@@ -101,5 +103,13 @@ public class CompetitionMembersListEntity {
 
     public void setCountingMethod(String countingMethod) {
         this.countingMethod = countingMethod;
+    }
+
+    public boolean isWZSS() {
+        return WZSS;
+    }
+
+    public void setWZSS(boolean WZSS) {
+        this.WZSS = WZSS;
     }
 }

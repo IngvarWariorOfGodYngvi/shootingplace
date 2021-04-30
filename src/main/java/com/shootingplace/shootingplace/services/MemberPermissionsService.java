@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -70,7 +71,7 @@ public class MemberPermissionsService {
                 if (collect.stream().noneMatch(e -> e.getMemberPermissions().getArbiterNumber().equals(memberPermissions.getArbiterNumber()))) {
                     memberPermissionsEntity.setArbiterNumber(memberPermissions.getArbiterNumber());
                     LOG.info("Zmieniono numer sędziego");
-                }else {
+                } else {
                     LOG.info("Nie można nadać uprawnień");
                     return false;
                 }
@@ -105,4 +106,35 @@ public class MemberPermissionsService {
     }
 
 
+    public boolean updateMemberArbiterClass(String memberUUID) {
+        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberPermissionsEntity memberPermissions = memberEntity.getMemberPermissions();
+        String arbiterClass = memberPermissions.getArbiterClass();
+
+        if(memberPermissions.getArbiterNumber()==null || memberPermissions.getArbiterNumber().isEmpty()){
+            System.out.println("nie można zaktualizować");
+            return false;
+        }
+
+        String finalArbiterClass = arbiterClass;
+        ArbiterClass arbiterClass1 = Arrays.stream(ArbiterClass.values()).filter(f -> f.getName().equals(finalArbiterClass)).findFirst().orElseThrow(EntityNotFoundException::new);
+        if (arbiterClass1.equals(ArbiterClass.CLASS_3)) {
+            arbiterClass = ArbiterClass.CLASS_2.getName();
+        }
+        if (arbiterClass1.equals(ArbiterClass.CLASS_2)) {
+            arbiterClass = ArbiterClass.CLASS_1.getName();
+        }
+        if (arbiterClass1.equals(ArbiterClass.CLASS_1)) {
+            arbiterClass = ArbiterClass.CLASS_STATE.getName();
+        }
+        if (arbiterClass1.equals(ArbiterClass.CLASS_STATE)) {
+            arbiterClass = ArbiterClass.CLASS_INTERNATIONAL.getName();
+        }
+        memberPermissions.setArbiterClass(arbiterClass);
+        memberPermissionsRepository.saveAndFlush(memberPermissions);
+        System.out.println("zaktualizowano");
+        return true;
+
+
+    }
 }

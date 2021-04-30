@@ -2,6 +2,8 @@ package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.UserEntity;
 import com.shootingplace.shootingplace.repositories.UserRepository;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final ChangeHistoryService changeHistoryService;
+    private final Logger LOG = LogManager.getLogger(getClass());
+
 
     public UserService(UserRepository userRepository, ChangeHistoryService changeHistoryService) {
         this.userRepository = userRepository;
@@ -49,13 +53,13 @@ public class UserService {
             }
             String trim1 = pinCode.trim();
             if (trim1.toCharArray().length < 4) {
-                System.out.println("Kod jest za krótki. Musi posiadać 4 cyfry.");
+                LOG.info("Kod jest za krótki. Musi posiadać 4 cyfry.");
                 return ResponseEntity.status(409).body("\"Kod jest za krótki. Musi posiadać 4 cyfry.\"");
             }
             String[] failCode = {"0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999"};
             for (int i = 0; i < trim1.toCharArray().length; i++) {
                 if (trim1.equals(failCode[i])) {
-                    System.out.println("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
+                    LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                     return ResponseEntity.status(409).body("\"Kod jest zbyt prosty - wymyśl coś trudniejszego.\"");
                 }
             }
@@ -102,7 +106,7 @@ public class UserService {
             String[] failCode = {"0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999"};
             for (int i = 0; i < trim1.toCharArray().length; i++) {
                 if (trim1.equals(failCode[i])) {
-                    System.out.println("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
+                    LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                     return ResponseEntity.status(409).body("\"Kod jest zbyt prosty - wymyśl coś trudniejszego.\"");
                 }
             }

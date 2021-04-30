@@ -327,8 +327,10 @@ public class Mapping {
 
     static CompetitionMembersList map(CompetitionMembersListEntity c) {
         return CompetitionMembersList.builder()
+                .uuid(c.getUuid())
                 .name(c.getName())
                 .date(c.getDate())
+                .WZSS(c.isWZSS())
                 .attachedToTournament(c.getAttachedToTournament())
                 .scoreList(c.getScoreList().stream().map(Mapping::map).collect(Collectors.toList()))
                 .discipline(c.getDiscipline())
@@ -417,12 +419,14 @@ public class Mapping {
 
     public static AmmoEvidenceEntity map(AmmoEvidence a) {
         return Optional.ofNullable(a).map(e -> AmmoEvidenceEntity.builder()
+                .number(e.getNumber())
                 .date(e.getDate())
                 .build()).orElse(null);
     }
 
     public static AmmoEvidence map(AmmoEvidenceEntity a) {
         return Optional.ofNullable(a).map(e -> AmmoEvidence.builder()
+                .number(e.getNumber())
                 .date(e.getDate())
                 .build()).orElse(null);
     }
@@ -483,6 +487,7 @@ public class Mapping {
         return AmmoDTO.builder()
                 .evidenceUUID(a.getUuid())
                 .date(a.getDate())
+                .number(a.getNumber())
                 .build();
 
     }

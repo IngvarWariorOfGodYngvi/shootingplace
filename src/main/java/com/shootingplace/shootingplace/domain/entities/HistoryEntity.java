@@ -23,12 +23,9 @@ public class HistoryEntity {
     @OrderBy("paymentDay DESC,validThru DESC")
     private List<ContributionEntity> contributionList;
     private String[] licenseHistory;
-//    to należy przerobić na jakąś normalną encję
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("date DESC")
     private List<LicensePaymentHistoryEntity> licensePaymentHistory;
-//    ---> musi posiadać pola uuid, date, memberUUID, validForYear
-//    private LocalDate[] licensePaymentHistory;
 
     private Boolean patentFirstRecord = false;
     private LocalDate[] patentDay;

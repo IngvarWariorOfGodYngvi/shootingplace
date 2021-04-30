@@ -14,6 +14,7 @@ import java.util.List;
 @Builder
 public class CompetitionMembersList {
 
+    private String uuid;
     private String name;
     private String attachedToTournament;
     private LocalDate date;
@@ -25,8 +26,18 @@ public class CompetitionMembersList {
 
     private String countingMethod;
 
+    private boolean WZSS;
+
     @ManyToMany
     private List<Score> scoreList = new ArrayList<>();
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 
     public String getName() {
         return name;
@@ -90,5 +101,13 @@ public class CompetitionMembersList {
 
     public void setCountingMethod(String countingMethod) {
         this.countingMethod = countingMethod;
+    }
+
+    public boolean isWZSS() {
+        return WZSS;
+    }
+
+    public void setWZSS(boolean WZSS) {
+        this.WZSS = WZSS;
     }
 }

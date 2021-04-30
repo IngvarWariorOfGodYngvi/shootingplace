@@ -101,6 +101,16 @@ public class MemberController {
         return ResponseEntity.ok(memberService.getMembersEmails(condition));
     }
 
+    @GetMapping("/membersEmailsNoPatent")
+    public ResponseEntity<?> getMembersEmailsWithNoPatent() {
+        return ResponseEntity.ok(memberService.getMembersEmailsWithNoPatent());
+    }
+
+    @GetMapping("/phoneNumbersNoPatent")
+    public ResponseEntity<?> getMembersPhoneNumbersWithNoPatent() {
+        return ResponseEntity.ok(memberService.getMembersPhoneNumbersWithNoPatent());
+    }
+
     @GetMapping("/membersToEraseEmails")
     public ResponseEntity<?> getMembersToEraseEmails() {
         return ResponseEntity.ok(memberService.getMembersToEraseEmails());
@@ -120,7 +130,6 @@ public class MemberController {
     public ResponseEntity<?> getMembersToPolicePhoneNumbers() {
         return ResponseEntity.ok(memberService.getMembersToPolicePhoneNumbers());
     }
-
 
     @GetMapping("/phoneNumbers")
     public ResponseEntity<?> getMembersPhoneNumbers(@RequestParam Boolean condition) {

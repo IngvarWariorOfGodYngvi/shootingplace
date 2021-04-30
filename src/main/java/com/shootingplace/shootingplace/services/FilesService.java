@@ -18,11 +18,15 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityNotFoundException;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -226,6 +230,13 @@ public class FilesService {
                 "ul. Chocimska 14, 00-791 Warszawa w celach związanych z moim członkostwem w KS „Dziesiątka” LOK Łódź.";
 
 
+        String sex = getSex(memberEntity.getPesel());
+        if (sex.equals("Pani")) {
+            sex = "córki";
+        } else {
+            sex = "syna";
+        }
+        String adultAcceptation = "- Wyrażam zgodę na udział i członkostwo " + sex + " w Klubie";
         Paragraph p = new Paragraph(club.getFullName() + "\n", font(14, 1));
         // setAlignment(0) = left setAlignment(1) = center setAlignment(2) = right
         p.setAlignment(1);
@@ -253,7 +264,15 @@ public class FilesService {
         Paragraph p16 = new Paragraph("\n\nAdres Zamieszkania", font(11, 0));
         Paragraph p17 = new Paragraph("", font(11, 0));
         Paragraph p18 = new Paragraph("\n\n" + statement, font(11, 0));
-        Paragraph p19 = new Paragraph("\n\n\n\n\n\n.............................................", font(11, 0));
+        Paragraph p19;
+        if (memberEntity.getAdult()) {
+            p19 = new Paragraph("\n\n\n\n\n\n.............................................", font(11, 0));
+        } else {
+            p18 = new Paragraph("\n\n" + statement + "\n" + adultAcceptation + "\n\n     Podpis Rodzica / Opiekuna Prawnego\n         ..................................................", font(11, 0));
+
+            p19 = new Paragraph("\n\n\n\n.............................................", font(11, 0));
+
+        }
         Phrase p20 = new Phrase("                                                              ");
         Phrase p21 = new Phrase("............................................................");
         Paragraph p22 = new Paragraph("miejscowość, data i podpis Klubowicza", font(11, 0));
@@ -543,16 +562,19 @@ public class FilesService {
         int pistol = 0;
         List<CompetitionHistoryEntity> collectPistol = memberEntity.getHistory().getCompetitionHistory()
                 .stream()
+                .filter(CompetitionHistoryEntity::isWZSS)
                 .filter(f -> f.getDate().getYear() == (memberEntity.getLicense().getValidThru().getYear()))
                 .filter(f -> f.getDiscipline().equals(Discipline.values()[0].getName()))
                 .collect(Collectors.toList());
         List<CompetitionHistoryEntity> collectRifle = memberEntity.getHistory().getCompetitionHistory()
                 .stream()
+                .filter(CompetitionHistoryEntity::isWZSS)
                 .filter(f -> f.getDate().getYear() == (memberEntity.getLicense().getValidThru().getYear()))
                 .filter(f -> f.getDiscipline().equals(Discipline.values()[1].getName()))
                 .collect(Collectors.toList());
         List<CompetitionHistoryEntity> collectShotgun = memberEntity.getHistory().getCompetitionHistory()
                 .stream()
+                .filter(CompetitionHistoryEntity::isWZSS)
                 .filter(f -> f.getDate().getYear() == (memberEntity.getLicense().getValidThru().getYear()))
                 .filter(f -> f.getDiscipline().equals(Discipline.values()[2].getName()))
                 .collect(Collectors.toList());
@@ -596,8 +618,6 @@ public class FilesService {
             shotgun = 4;
 
         }
-        // zapisać tylko tyle ile potrzeba
-
 
         Paragraph patentNumber = new Paragraph(memberEntity.getShootingPatent().getPatentNumber() + "                                                       " + licenseNumber, font(12, 0));
 
@@ -752,9 +772,9 @@ public class FilesService {
 
     public FilesEntity createAnnouncementFromCompetition(String tournamentUUID) throws IOException, DocumentException {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+        ClubEntity c = clubRepository.getOne(1);
 
-
-        String fileName = "Zawody_" + tournamentEntity.getName() + "_" + tournamentEntity.getDate() + ".pdf";
+        String fileName = tournamentEntity.getDate() + " " + c.getName() + " " + tournamentEntity.getName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
         PdfWriter writer = PdfWriter.getInstance(document,
@@ -763,7 +783,16 @@ public class FilesService {
         document.addTitle(fileName);
         document.addCreationDate();
 
-        Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase() + "\n" + "„DZIESIĄTKA” ŁÓDŹ", font(13, 1));
+        String hour = String.valueOf(LocalTime.now().getHour());
+        String minute = String.valueOf(LocalTime.now().getMinute());
+        if (Integer.parseInt(minute) < 10) {
+            minute = "0" + minute;
+        }
+
+        String now = hour + ":" + minute;
+
+
+        Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase() + "\n" + c.getName(), font(13, 1));
         Paragraph date = new Paragraph("Łódź, " + dateFormat(tournamentEntity.getDate()), font(10, 2));
         Paragraph newLine = new Paragraph("\n", font(10, 0));
 
@@ -855,7 +884,11 @@ public class FilesService {
                     if (competitionMembersListEntity.getScoreList().get(j).getOuterTen() == 0) {
                         o2 = scoreOuterTen = "";
                     }
-                    String result = String.valueOf(score);
+                    DecimalFormat myFormatter = new DecimalFormat("###.####");
+                    String result = myFormatter.format(score);
+                    if (score == 100) {
+                        result = "100.0000";
+                    }
                     if (competitionMembersListEntity.getCountingMethod() != null) {
 
                         if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
@@ -865,7 +898,7 @@ public class FilesService {
                         } else {
                             o1 = scoreInnerTen.replace(".0", "");
                             o2 = scoreOuterTen.replace(".0", "");
-                            result = result.replace(".0", "");
+//                            result = result.replace(".0", "");
 
                         }
                     }
@@ -963,7 +996,9 @@ public class FilesService {
         document.add(newLine);
 
         document.add(arbiterTableLabel);
-
+        if (tournamentEntity.isOpen()) {
+            document.add(new Paragraph("Sporządzono " + now, font(14, 0)));
+        }
         document.close();
 
 
@@ -1062,6 +1097,55 @@ public class FilesService {
         return filesEntity;
     }
 
+    public FilesEntity getMemberCSVFile(String memberUUID) throws IOException {
+        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        String fileName = "Plik_" + memberEntity.getFirstName().trim().concat(" " + memberEntity.getSecondName().trim()) + ".csv";
+        File file = new File(fileName);
+        String[] tab = new String[5];
+
+        LocalDate localDate = birthDay(memberEntity.getPesel());
+        String monthValue = String.valueOf(localDate.getMonthValue());
+        if (Integer.parseInt(monthValue) < 10) {
+            monthValue = "0" + monthValue;
+        }
+        String dayOfMonth = String.valueOf(localDate.getDayOfMonth());
+        if (Integer.parseInt(dayOfMonth) < 10) {
+            dayOfMonth = "0" + dayOfMonth;
+        }
+        String date = localDate.getYear() + "-" + monthValue + "-" + dayOfMonth;
+        tab[0] = memberEntity.getPesel();
+        tab[1] = memberEntity.getFirstName().trim();
+        tab[2] = memberEntity.getSecondName().trim();
+        tab[3] = date;
+        tab[4] = memberEntity.getEmail();
+
+        FileWriter fileWriter = new FileWriter(fileName);
+        System.out.println(fileWriter.getEncoding());
+        String coma = ";";
+        for (String s : tab) {
+
+            fileWriter.write(s + coma);
+        }
+
+        fileWriter.close();
+
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.TEXT_PLAIN))
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+
+
+        file.delete();
+        return filesEntity;
+    }
+
+
     public FilesEntity getStartsMetric(String memberUUID, String otherID, String tournamentUUID, List<String> competitions, String startNumber) throws IOException, DocumentException {
         String name;
         String club;
@@ -1117,7 +1201,6 @@ public class FilesService {
 
             Paragraph par1 = new Paragraph(tournamentEntity.getName().toUpperCase() + " " + clubEntity.getName(), font(12, 1));
             par1.setAlignment(1);
-            System.out.println(competitionEntity.getName());
             Paragraph par2 = new Paragraph(name.toUpperCase(), font(13, 1));
             par2.setAlignment(1);
             String a = "";
@@ -1149,12 +1232,16 @@ public class FilesService {
                 if (i < pointColumnWidths.length - 1) {
                     pointColumnWidths[i] = 25F;
                 } else {
-                    pointColumnWidths[i] = 60F;
+                    pointColumnWidths[i] = 80F;
                 }
             }
             PdfPTable table = new PdfPTable(pointColumnWidths);
             PdfPTable table1 = new PdfPTable(pointColumnWidths);
             PdfPTable table2 = new PdfPTable(pointColumnWidths);
+
+            table.setWidthPercentage(100F);
+            table1.setWidthPercentage(100F);
+            table2.setWidthPercentage(100F);
 
             document.add(par1);
             document.add(par2);
@@ -1167,7 +1254,7 @@ public class FilesService {
                     p = new Paragraph(String.valueOf(i + 1), font(14, 0));
                 } else {
                     if (competitionEntity.getCountingMethod() != null && competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-                        p = new Paragraph("CZAS", font(14, 1));
+                        p = new Paragraph("CZAS / PROCEDURY", font(14, 1));
                     } else {
                         p = new Paragraph("SUMA", font(14, 1));
                     }
@@ -1263,9 +1350,7 @@ public class FilesService {
         String hour = String.valueOf(LocalTime.now().getHour());
         String minute = String.valueOf(LocalTime.now().getMinute());
         if (Integer.parseInt(minute) < 10) {
-
             minute = "0" + minute;
-
         }
 
         String now = hour + ":" + minute;
@@ -1456,7 +1541,6 @@ public class FilesService {
                 document.add(otherPersonRTSArbiter);
             }
         }
-
 
         document.close();
 
@@ -2512,7 +2596,7 @@ public class FilesService {
      * @throws DocumentException
      */
     private Font font(int size, int style) throws IOException, DocumentException {
-        BaseFont czcionka = BaseFont.createFont(BaseFont.TIMES_ROMAN, BaseFont.CP1250, BaseFont.CACHED);
+        BaseFont czcionka = BaseFont.createFont("font/times.ttf", BaseFont.IDENTITY_H, BaseFont.CACHED);
         return new Font(czcionka, size, style);
     }
 

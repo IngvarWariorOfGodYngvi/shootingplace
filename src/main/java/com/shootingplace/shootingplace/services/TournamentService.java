@@ -509,6 +509,7 @@ public class TournamentService {
                         .countingMethod(competition.getCountingMethod())
                         .type(competition.getType())
                         .numberOfShots(competition.getNumberOfShots())
+                        .WZSS(tournamentEntity.isWZSS())
                         .build();
                 competitionMembersListRepository.saveAndFlush(competitionMembersList);
                 List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
@@ -710,13 +711,11 @@ public class TournamentService {
         tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().forEach(g -> {
             if (g.getMember() != null) {
                 if (!list1.contains(g.getMember().getUuid())) {
-                    System.out.println(g.getMember().getUuid());
                     list1.add(g.getMember().getUuid());
                 }
             }
             if (g.getOtherPersonEntity() != null) {
                 if (!list1.contains(String.valueOf(g.getOtherPersonEntity().getId()))) {
-                    System.out.println(g.getOtherPersonEntity().getId());
                     list1.add(String.valueOf(g.getOtherPersonEntity().getId()));
                 }
             }

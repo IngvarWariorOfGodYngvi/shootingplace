@@ -2,7 +2,6 @@ package com.shootingplace.shootingplace.domain.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
@@ -14,7 +13,7 @@ import java.util.List;
 @Builder
 public class AmmoEvidence {
 
-    private String label;
+    private String number;
 
     private LocalDate date;
 
@@ -22,12 +21,12 @@ public class AmmoEvidence {
 
     private FilesModel file;
 
-    public String getLabel() {
-        return label;
+    public String getNumber() {
+        return number;
     }
 
-    public void setLabel(String label) {
-        this.label = label;
+    public void setNumber(String number) {
+        this.number = number;
     }
 
     public LocalDate getDate() {
