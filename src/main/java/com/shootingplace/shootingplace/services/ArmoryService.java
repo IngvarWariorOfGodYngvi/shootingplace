@@ -1,9 +1,6 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.CaliberEntity;
-import com.shootingplace.shootingplace.domain.entities.CaliberUsedEntity;
-import com.shootingplace.shootingplace.domain.entities.CalibersAddedEntity;
-import com.shootingplace.shootingplace.domain.entities.GunEntity;
+import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.GunType;
 import com.shootingplace.shootingplace.domain.models.Caliber;
 import com.shootingplace.shootingplace.repositories.*;
@@ -26,11 +23,12 @@ public class ArmoryService {
     private final CalibersAddedRepository calibersAddedRepository;
     private final GunRepository gunRepository;
     private final ChangeHistoryService changeHistoryService;
+    private final GunStoreRepository gunStoreRepository;
 
     private final Logger LOG = LogManager.getLogger();
 
 
-    public ArmoryService(AmmoEvidenceRepository ammoEvidenceRepository, CaliberService caliberService, CaliberRepository caliberRepository, CaliberUsedRepository caliberUsedRepository, CalibersAddedRepository calibersAddedRepository, GunRepository gunRepository, ChangeHistoryService changeHistoryService) {
+    public ArmoryService(AmmoEvidenceRepository ammoEvidenceRepository, CaliberService caliberService, CaliberRepository caliberRepository, CaliberUsedRepository caliberUsedRepository, CalibersAddedRepository calibersAddedRepository, GunRepository gunRepository, ChangeHistoryService changeHistoryService, GunStoreRepository gunStoreRepository) {
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.caliberService = caliberService;
         this.caliberRepository = caliberRepository;
@@ -38,6 +36,7 @@ public class ArmoryService {
         this.calibersAddedRepository = calibersAddedRepository;
         this.gunRepository = gunRepository;
         this.changeHistoryService = changeHistoryService;
+        this.gunStoreRepository = gunStoreRepository;
     }
 
 
@@ -274,6 +273,16 @@ public class ArmoryService {
         gunEntity.setInStock(false);
         gunRepository.saveAndFlush(gunEntity);
         changeHistoryService.addRecordToChangeHistory(pinCode, gunEntity.getClass().getSimpleName() + " removeGun", gunEntity.getUuid());
+        return true;
+    }
+
+    public boolean createNewGunStore(String nameType) {
+        List<GunEntity> collect = gunRepository.findAll().stream().filter(f -> f.getGunType().equals(nameType)).collect(Collectors.toList());
+        GunStoreEntity build = GunStoreEntity.builder()
+                .typeName(nameType)
+                .gunEntityList(collect)
+                .build();
+        gunStoreRepository.saveAndFlush(build);
         return true;
     }
 }

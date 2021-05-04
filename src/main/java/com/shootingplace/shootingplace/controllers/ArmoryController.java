@@ -136,5 +136,16 @@ public class ArmoryController {
             return ResponseEntity.badRequest().build();
     }
 
+    @PostMapping("/newGunTypeName")
+    public ResponseEntity<?> createNewGunStore(@RequestParam String nameType) {
+        if (nameType.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (armoryService.createNewGunStore(nameType)) {
+            return ResponseEntity.status(201).build();
+        } else
+            return ResponseEntity.badRequest().build();
+    }
+
 
 }
