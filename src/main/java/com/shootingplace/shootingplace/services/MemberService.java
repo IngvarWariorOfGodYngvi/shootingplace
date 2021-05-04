@@ -788,7 +788,7 @@ public class MemberService {
         List<MemberEntity> collect = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getActive())
-                .filter(f -> !f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
+                .filter(f -> (!f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))||f.getHistory().getContributionList().isEmpty())
                 .sorted(Comparator.comparing(MemberEntity::getSecondName))
                 .collect(Collectors.toList());
         collect.forEach(e -> {
@@ -808,7 +808,7 @@ public class MemberService {
         List<MemberEntity> collect = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getActive())
-                .filter(f -> !f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
+                .filter(f -> (!f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))||f.getHistory().getContributionList().isEmpty())
                 .sorted(Comparator.comparing(MemberEntity::getSecondName))
                 .collect(Collectors.toList());
         collect.forEach(e -> {

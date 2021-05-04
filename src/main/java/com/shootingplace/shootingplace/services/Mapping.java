@@ -337,6 +337,7 @@ public class Mapping {
                 .countingMethod(c.getCountingMethod())
                 .type(c.getType())
                 .numberOfShots(c.getNumberOfShots())
+                .ordering(c.getOrdering())
                 .build();
     }
 

@@ -122,4 +122,29 @@ public class OtherPersonService {
         LOG.info("Dezaktywowano Nie-Klubowicza");
         return true;
     }
+
+    public boolean updatePerson(String id, OtherPerson otherPerson) {
+        OtherPersonEntity one = otherPersonRepository.getOne(Integer.valueOf(id));
+        if (otherPerson.getEmail() != null && !otherPerson.getEmail().isEmpty()) {
+            LOG.info("Zmieniono email");
+            one.setEmail(otherPerson.getEmail());
+        }
+        if (otherPerson.getPhoneNumber() != null && !otherPerson.getPhoneNumber().isEmpty()) {
+            LOG.info("Zmieniono numer telefonu");
+            one.setPhoneNumber(otherPerson.getPhoneNumber());
+        }
+        if (otherPerson.getFirstName() != null && !otherPerson.getFirstName().isEmpty()) {
+            LOG.info("Zmieniono Imię");
+            one.setFirstName(otherPerson.getFirstName());
+        }
+        if (otherPerson.getSecondName() != null && !otherPerson.getSecondName().isEmpty()) {
+            LOG.info("Zmieniono nazwisko");
+            one.setSecondName(otherPerson.getSecondName());
+        }
+//        if(!otherPerson.getClub().getName().isEmpty() || !otherPerson.getClub().getName().equals("null")){
+//            one.setClub(clubRepository.findAll().stream().filter(f->f.getName().equals(otherPerson.getClub().getName())).findFirst().orElse(null));
+//        }
+        otherPersonRepository.saveAndFlush(one);
+        return true;
+    }
 }

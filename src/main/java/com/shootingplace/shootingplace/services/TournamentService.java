@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -510,10 +512,12 @@ public class TournamentService {
                         .type(competition.getType())
                         .numberOfShots(competition.getNumberOfShots())
                         .WZSS(tournamentEntity.isWZSS())
+                        .ordering(competition.getOrdering())
                         .build();
                 competitionMembersListRepository.saveAndFlush(competitionMembersList);
                 List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
                 competitionsList.add(competitionMembersList);
+                competitionsList.sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
                 tournamentRepository.saveAndFlush(tournamentEntity);
                 LOG.info("Dodano konkurencję do zawodów");
 
@@ -558,7 +562,18 @@ public class TournamentService {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         List<String> list = new ArrayList<>();
 
-        tournamentEntity.getCompetitionsList().forEach(e -> list.add(e.getName()));
+        List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
+        competitionsList.sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
+        competitionsList.forEach(e ->
+        {
+            if (e.getOrdering() == null) {
+                System.out.println(e.getName());
+                CompetitionEntity competitionEntity = competitionRepository.findAll().stream().filter(f -> f.getName().equals(e.getName())).findFirst().orElseThrow(EntityNotFoundException::new);
+                e.setOrdering(competitionEntity.getOrdering());
+                competitionMembersListRepository.saveAndFlush(e);
+            }
+            list.add(e.getName());
+        });
 
         return list;
     }

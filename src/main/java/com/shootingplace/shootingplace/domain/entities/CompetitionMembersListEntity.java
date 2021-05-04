@@ -34,6 +34,8 @@ public class CompetitionMembersListEntity {
 
     private boolean WZSS;
 
+    private Integer ordering;
+
     @ManyToMany
     private List<ScoreEntity> scoreList = new ArrayList<>();
 
@@ -111,5 +113,13 @@ public class CompetitionMembersListEntity {
 
     public void setWZSS(boolean WZSS) {
         this.WZSS = WZSS;
+    }
+
+    public Integer getOrdering() {
+        return ordering;
+    }
+
+    public void setOrdering(Integer ordering) {
+        this.ordering = ordering;
     }
 }

@@ -1695,7 +1695,8 @@ public class FilesService {
         List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getActive())
-                .filter(f -> !f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
+//                .filter(f -> (!f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))||f.getHistory().getContributionList().isEmpty())
+                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName))
                 .collect(Collectors.toList());
         float[] pointColumnWidths = {4F, 42F, 14F, 14F, 14F, 14F};
@@ -1906,6 +1907,8 @@ public class FilesService {
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
+        int pageNumber = 0;
+
         String minute;
         if (LocalTime.now().getMinute() < 10) {
             minute = "0" + LocalTime.now().getMinute();
@@ -1913,7 +1916,7 @@ public class FilesService {
             minute = String.valueOf(LocalTime.now().getMinute());
         }
         String now = LocalTime.now().getHour() + ":" + minute;
-        Paragraph title = new Paragraph("Lista jednostek broni w magazynie na dzień " + LocalDate.now() + " " + now, font(14, 1));
+        Paragraph title = new Paragraph("Lista Broni w Magazynie".toUpperCase(), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
 
@@ -2038,7 +2041,9 @@ public class FilesService {
                     gunTable.addCell(recordInEvidenceBookGunCell);
                     gunTable.addCell(numberOfMagazinesGunCell);
                     gunTable.addCell(gunCertificateSerialNumberGunCell);
-
+                    if (writer.getPageNumber() > pageNumber) {
+                        writer.setPageEvent(new PageStamper());
+                    }
                     document.add(gunTable);
                 }
                 document.add(newLine);
@@ -2046,7 +2051,7 @@ public class FilesService {
             }
 
         }
-
+        writer.setPageEvent(new PageStamper());
         document.close();
 
 
@@ -2313,7 +2318,6 @@ public class FilesService {
             if (memberEntity.getErasedEntity() != null) {
                 erasedReasonCell = new PdfPCell(new Paragraph(memberEntity.getErasedEntity().getErasedType() + " " + memberEntity.getErasedEntity().getDate(), font(12, 0)));
             }
-            Paragraph p111 = new Paragraph("coś", font(10, 2));
             memberTable.setWidthPercentage(100);
 
             memberTable.addCell(lpCell);
@@ -2372,8 +2376,6 @@ public class FilesService {
 
         List<TournamentEntity> all = tournamentRepository.findAll().stream().filter(TournamentEntity::isRanking).collect(Collectors.toList());
 
-        CompetitionMembersListEntity competitionMembersListEntity = all.get(0).getCompetitionsList().get(0);
-
         List<List<MemberRanking>> ranking = new ArrayList<>();
 
         for (int i = 0; i < all.size(); i++) {
@@ -2381,9 +2383,8 @@ public class FilesService {
 
             for (int j = 0; j < all.get(i).getCompetitionsList().size(); j++) {
                 List<ScoreEntity> scoreList = all.get(i).getCompetitionsList().get(j).getScoreList();
-                for (int k = 0; k < scoreList.size(); k++) {
+                for (ScoreEntity scoreEntity : scoreList) {
 
-                    ScoreEntity scoreEntity = scoreList.get(k);
                     if (scoreEntity.getMember() != null) {
 
                         List<Score> scores = new ArrayList<>();
@@ -2400,24 +2401,6 @@ public class FilesService {
                             innerRanking.add(mr);
                             ranking.add(innerRanking);
                         }
-//                        if(i>0){
-//                            MemberRanking memberRanking = innerRanking.stream().filter(f -> f.getUuid().equals(mr.getUuid())).findFirst().get();
-//                            List<Score> scores1 = memberRanking.getScores();
-//                            scores1.add(Mapping.map(scoreEntity));
-//                            memberRanking.setScores(scores1);
-//                        }
-//                        if (i > 0) {
-//                            if (ranking.get(i - 1).get(j).getCompetitionName().equals(innerRanking.get(j).getCompetitionName())) {
-//                                int finalI1 = i;
-//                                MemberRanking memberRanking = innerRanking.stream().filter(f -> f.getUuid().equals(innerRanking.get(finalI1 - 1).getUuid())).findFirst().orElseThrow(EntityNotFoundException::new);
-//                                List<Score> scores1 = memberRanking.getScores();
-//                                scores1.add(Mapping.map(scoreEntity));
-//
-//                                innerRanking.add(mr);
-//                                ranking.add(innerRanking);
-//                            }
-//                        }
-
                     }
                 }
             }
@@ -2425,8 +2408,7 @@ public class FilesService {
 
         for (int l = 0; l < all.size(); l++) {
             List<MemberRanking> memberRankingList = ranking.get(l);
-            for (int m = 0; m < memberRankingList.size(); m++) {
-                MemberRanking mr = memberRankingList.get(m);
+            for (MemberRanking mr : memberRankingList) {
                 for (int n = 0; l < mr.getScores().size(); n++) {
                     Score score = mr.getScores().get(l);
                     System.out.println(l + " " + mr.getCompetitionName() + " " + mr.getSecondName() + " " + score.getScore());
@@ -2434,30 +2416,12 @@ public class FilesService {
             }
         }
 
-        //        List<CompetitionMembersListEntity> comp = new ArrayList<>();
-//
-//        all.forEach(e -> comp.addAll(e.getCompetitionsList()));
-//        List<MemberRanking> memberRankingList = new ArrayList<>();
-//        comp.forEach(e->e.getScoreList().forEach(f->{
-//            if(f.getMember()!=null){
-//
-//            }
-//        }));
-//        List<ScoreEntity> scores = new ArrayList<>();
-//
-//        comp.forEach(e -> e.getScoreList().forEach(f -> {
-//            if (f.getMember() != null) {
-//                scores.add(f);
-//            }
-//        }));
         float[] pointColumnWidths = {10F, 30F, 50F, 10F};
         PdfPTable tableLabel = new PdfPTable(pointColumnWidths);
         int size = all.size();
         PdfPTable innerTable = new PdfPTable(size);
-        for (
-                int i = 0;
-                i < size; i++) {
-            PdfPCell cell = new PdfPCell(new Paragraph(String.valueOf(all.get(i).getDate()), font(10, 1)));
+        for (TournamentEntity tournamentEntity : all) {
+            PdfPCell cell = new PdfPCell(new Paragraph(String.valueOf(tournamentEntity.getDate()), font(10, 1)));
             cell.setBorderWidth(0);
             cell.setHorizontalAlignment(1);
             innerTable.addCell(cell);
@@ -2658,10 +2622,10 @@ public class FilesService {
                 final Rectangle pageSize = document.getPageSize();
                 final PdfContentByte directContent = writer.getDirectContent();
 
-                directContent.setColorFill(BaseColor.GRAY);
+                directContent.setColorFill(BaseColor.BLACK);
                 directContent.setFontAndSize(BaseFont.createFont(), 10);
 
-                directContent.setTextMatrix(pageSize.getRight(40), pageSize.getBottom(30));
+                directContent.setTextMatrix(pageSize.getRight(40), pageSize.getBottom(25));
                 directContent.showText(String.valueOf(currentPageNumber));
 
             } catch (DocumentException | IOException e) {

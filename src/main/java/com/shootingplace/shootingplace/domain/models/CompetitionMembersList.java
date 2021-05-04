@@ -28,8 +28,18 @@ public class CompetitionMembersList {
 
     private boolean WZSS;
 
+    private Integer ordering;
+
     @ManyToMany
     private List<Score> scoreList = new ArrayList<>();
+
+    public Integer getOrdering() {
+        return ordering;
+    }
+
+    public void setOrdering(Integer ordering) {
+        this.ordering = ordering;
+    }
 
     public String getUuid() {
         return uuid;
