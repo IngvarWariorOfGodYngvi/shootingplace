@@ -37,4 +37,13 @@ public class MemberPermissionsController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @PutMapping("arbiter/{memberUUID}")
+    public ResponseEntity<?> updateMemberArbiterClass(@PathVariable String memberUUID) {
+        if (memberPermissionsService.updateMemberArbiterClass(memberUUID)) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

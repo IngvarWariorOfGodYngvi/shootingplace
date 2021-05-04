@@ -18,7 +18,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class MemberEntity {
 
     @Id

@@ -59,7 +59,7 @@ public class OtherPersonController {
                     .instructorNumber(null)
                     .build();
         }
-        if (club.isEmpty()){
+        if (club.isEmpty()) {
             club = "BRAK";
         }
 
@@ -89,6 +89,14 @@ public class OtherPersonController {
     @PostMapping("/")
     public ResponseEntity<?> deactivatePerson(@RequestParam int id) {
         if (otherPersonService.deactivatePerson(id)) {
+            return ResponseEntity.ok().build();
+        } else
+            return ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/")
+    public ResponseEntity<?> updatePerson(@RequestParam String id,@RequestBody OtherPerson otherPerson) {
+        if (otherPersonService.updatePerson(id,otherPerson)) {
             return ResponseEntity.ok().build();
         } else
             return ResponseEntity.notFound().build();

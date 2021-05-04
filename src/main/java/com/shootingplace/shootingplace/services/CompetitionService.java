@@ -5,6 +5,7 @@ import com.shootingplace.shootingplace.domain.enums.CompetitionType;
 import com.shootingplace.shootingplace.domain.enums.CountingMethod;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
 import com.shootingplace.shootingplace.domain.models.Competition;
+import com.shootingplace.shootingplace.repositories.CompetitionMembersListRepository;
 import com.shootingplace.shootingplace.repositories.CompetitionRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,11 +20,13 @@ import java.util.UUID;
 public class CompetitionService {
 
     private final CompetitionRepository competitionRepository;
+    private final CompetitionMembersListRepository competitionMembersListRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public CompetitionService(CompetitionRepository competitionRepository) {
+    public CompetitionService(CompetitionRepository competitionRepository, CompetitionMembersListRepository competitionMembersListRepository) {
         this.competitionRepository = competitionRepository;
+        this.competitionMembersListRepository = competitionMembersListRepository;
     }
 
     public List<CompetitionEntity> getAllCompetitions() {
@@ -61,7 +64,7 @@ public class CompetitionService {
         }
 
         LOG.info("Wyświetlono listę Konkurencji");
-        competitionEntityList.sort(Comparator.comparing(CompetitionEntity::getName));
+        competitionEntityList.sort(Comparator.comparing(CompetitionEntity::getOrdering));
         return competitionEntityList;
     }
 
@@ -74,6 +77,7 @@ public class CompetitionService {
                 .type(CompetitionType.OPEN.getName())
                 .discipline(Discipline.PISTOL.getName())
                 .countingMethod(CountingMethod.NORMAL.getName())
+                .ordering(3)
                 .build());
         competitionRepository.saveAndFlush(CompetitionEntity.builder()
                 .uuid(UUID.randomUUID().toString())
@@ -82,6 +86,7 @@ public class CompetitionService {
                 .type(CompetitionType.OPEN.getName())
                 .discipline(Discipline.PISTOL.getName())
                 .countingMethod(CountingMethod.NORMAL.getName())
+                .ordering(4)
                 .build());
         competitionRepository.saveAndFlush(CompetitionEntity.builder()
                 .uuid(UUID.randomUUID().toString())
@@ -90,6 +95,7 @@ public class CompetitionService {
                 .type(CompetitionType.OPEN.getName())
                 .discipline(Discipline.PISTOL.getName())
                 .countingMethod(CountingMethod.NORMAL.getName())
+                .ordering(2)
                 .build());
         competitionRepository.saveAndFlush(CompetitionEntity.builder()
                 .uuid(UUID.randomUUID().toString())
@@ -98,6 +104,7 @@ public class CompetitionService {
                 .type(CompetitionType.OPEN.getName())
                 .discipline(Discipline.PISTOL.getName())
                 .countingMethod(CountingMethod.NORMAL.getName())
+                .ordering(5)
                 .build());
         competitionRepository.saveAndFlush(CompetitionEntity.builder()
                 .uuid(UUID.randomUUID().toString())
@@ -106,12 +113,14 @@ public class CompetitionService {
                 .type(CompetitionType.OPEN.getName())
                 .discipline(Discipline.RIFLE.getName())
                 .countingMethod(CountingMethod.NORMAL.getName())
+                .ordering(1)
                 .build());
         LOG.info("Stworzono encje konkurencji");
     }
 
     public boolean createNewCompetition(Competition competition) {
         List<String> list = new ArrayList<>();
+        int size = competitionRepository.findAll().size() + 1 ;
         competitionRepository.findAll().forEach(e -> list.add(e.getName()));
         if (list.isEmpty()) {
             createCompetitions();
@@ -120,13 +129,13 @@ public class CompetitionService {
             LOG.info("Taka konkurencja już istnieje");
             return false;
         }
-        System.out.println(competition.getName());
         if (competition.getDiscipline().equals(Discipline.PISTOL.getName()) || competition.getDiscipline().equals(Discipline.RIFLE.getName()) || competition.getDiscipline().equals(Discipline.SHOTGUN.getName())) {
             CompetitionEntity competitionEntity = CompetitionEntity.builder()
                     .name(competition.getName())
                     .numberOfShots(competition.getNumberOfShots())
                     .discipline(competition.getDiscipline())
                     .type(competition.getType())
+                    .ordering(size)
                     .build();
             if (competition.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                 competitionEntity.setCountingMethod(CountingMethod.NORMAL.getName());
@@ -145,4 +154,26 @@ public class CompetitionService {
         }
     }
 
+    public boolean updateOrderingNumber(String uuid, String orderNumber) {
+
+        List<CompetitionEntity> all = competitionRepository.findAll();
+
+        CompetitionEntity competitionEntity = all.stream().filter(f -> f.getOrdering().equals(Integer.parseInt(orderNumber))).findFirst().orElse(null);
+
+        CompetitionEntity one = competitionRepository.getOne(uuid);
+        if (competitionEntity != null) {
+            competitionEntity.setOrdering(one.getOrdering());
+        }
+        one.setOrdering(Integer.valueOf(orderNumber));
+
+        competitionRepository.saveAndFlush(one);
+        if (competitionEntity != null) {
+            competitionRepository.saveAndFlush(competitionEntity);
+        }
+        competitionMembersListRepository.findAll().stream().filter(f -> f.getName().equals(one.getName())).forEach(e -> {
+            e.setOrdering(Integer.valueOf(orderNumber));
+            competitionMembersListRepository.saveAndFlush(e);
+        });
+        return true;
+    }
 }

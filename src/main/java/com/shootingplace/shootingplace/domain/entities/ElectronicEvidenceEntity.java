@@ -2,10 +2,12 @@ package com.shootingplace.shootingplace.domain.entities;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,7 +22,6 @@ public class ElectronicEvidenceEntity {
     @GeneratedValue
     private Integer id;
     @OneToMany
-    @JoinColumn(name="member_id")
     private Set<MemberEntity> members = new HashSet<>();
     private String others;
     private LocalDate date;

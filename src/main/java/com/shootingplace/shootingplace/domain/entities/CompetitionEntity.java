@@ -30,6 +30,8 @@ public class CompetitionEntity {
 
     private String countingMethod;
 
+    private Integer ordering;
+
     public Integer getNumberOfShots() {
         return numberOfShots;
     }
@@ -73,5 +75,13 @@ public class CompetitionEntity {
 
     public void setCountingMethod(String countingMethod) {
         this.countingMethod = countingMethod;
+    }
+
+    public Integer getOrdering() {
+        return ordering;
+    }
+
+    public void setOrdering(Integer ordering) {
+        this.ordering = ordering;
     }
 }

@@ -8,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -22,7 +24,19 @@ public class ClubService {
 
     public List<ClubEntity> getAllClubs() {
         LOG.info("Wywołano listę klubów");
-        return clubRepository.findAll();
+        List<ClubEntity> all = clubRepository.findAll();
+        all.sort(Comparator.comparing(ClubEntity::getName));
+        return all;
+    }
+
+    public List<String> getAllClubsToTournament() {
+        LOG.info("Wywołano listę klubów do zawodów");
+        List<String> list = new ArrayList<>();
+        clubRepository.findAll().stream()
+                .filter(f -> f.getId() != 1 && f.getId() != 2)
+                .forEach(e -> list.add(e.getName()));
+        list.sort(String::compareTo);
+        return list;
     }
 
     public boolean updateClub(int id, Club club) {

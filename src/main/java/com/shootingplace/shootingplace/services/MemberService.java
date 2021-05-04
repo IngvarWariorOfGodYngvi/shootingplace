@@ -559,6 +559,40 @@ public class MemberService {
         return list;
     }
 
+    public List<String> getMembersEmailsWithNoPatent() {
+        List<String> list = new ArrayList<>();
+        List<MemberEntity> all = memberRepository.findAll();
+        all.sort(Comparator.comparing(MemberEntity::getSecondName).thenComparing(MemberEntity::getFirstName));
+        all.stream()
+                .filter(MemberEntity::getAdult)
+                .filter(f -> f.getShootingPatent().getPatentNumber() == null || f.getShootingPatent().getPatentNumber().isEmpty()).forEach(e -> {
+            if ((e.getEmail() != null && !e.getEmail().isEmpty()) && !e.getErased()) {
+                list.add(e.getEmail().concat(";"));
+            }
+        });
+        return list;
+    }
+
+    public List<String> getMembersPhoneNumbersWithNoPatent() {
+        List<String> list = new ArrayList<>();
+        List<MemberEntity> all = memberRepository.findAll();
+        all.sort(Comparator.comparing(MemberEntity::getSecondName).thenComparing(MemberEntity::getFirstName));
+        all.stream()
+                .filter(MemberEntity::getAdult)
+                .filter(f -> f.getShootingPatent().getPatentNumber() == null || f.getShootingPatent().getPatentNumber().isEmpty()).forEach(e -> {
+            if ((e.getPhoneNumber() != null && !e.getPhoneNumber().isEmpty()) && !e.getErased()) {
+                String phone = e.getPhoneNumber();
+                String split = phone.substring(0, 3) + " ";
+                String split1 = phone.substring(3, 6) + " ";
+                String split2 = phone.substring(6, 9) + " ";
+                String split3 = phone.substring(9, 12) + " ";
+                String phoneSplit = split + split1 + split2 + split3;
+                list.add(phoneSplit.concat(" " + e.getSecondName() + " " + e.getFirstName() + ";"));
+            }
+        });
+        return list;
+    }
+
     public List<String> getMembersPhoneNumbers(Boolean condition) {
         List<String> list = new ArrayList<>();
         List<MemberEntity> all = memberRepository.findAll();
@@ -754,7 +788,7 @@ public class MemberService {
         List<MemberEntity> collect = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getActive())
-                .filter(f -> !f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
+                .filter(f -> (!f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))||f.getHistory().getContributionList().isEmpty())
                 .sorted(Comparator.comparing(MemberEntity::getSecondName))
                 .collect(Collectors.toList());
         collect.forEach(e -> {
@@ -774,7 +808,7 @@ public class MemberService {
         List<MemberEntity> collect = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getActive())
-                .filter(f -> !f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
+                .filter(f -> (!f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))||f.getHistory().getContributionList().isEmpty())
                 .sorted(Comparator.comparing(MemberEntity::getSecondName))
                 .collect(Collectors.toList());
         collect.forEach(e -> {

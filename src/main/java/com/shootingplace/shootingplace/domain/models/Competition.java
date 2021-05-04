@@ -19,6 +19,8 @@ public class Competition {
 
     private String countingMethod;
 
+    private Integer ordering;
+
     public String getCountingMethod() {
         return countingMethod;
     }
@@ -57,5 +59,13 @@ public class Competition {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public Integer getOrdering() {
+        return ordering;
+    }
+
+    public void setOrdering(Integer ordering) {
+        this.ordering = ordering;
     }
 }

@@ -78,10 +78,6 @@ public class LicenseService {
                 .getLicense()
                 .getUuid())
                 .orElseThrow(EntityNotFoundException::new);
-        if (memberEntity.getActive().equals(false)) {
-            LOG.error("Klubowicz nie aktywny");
-            return false;
-        }
         if (memberEntity.getShootingPatent().getPatentNumber() == null && memberEntity.getAdult()) {
             LOG.error("Brak patentu");
             return false;

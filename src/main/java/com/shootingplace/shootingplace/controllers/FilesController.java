@@ -25,17 +25,30 @@ public class FilesController {
     }
 
     @GetMapping("/downloadContribution/{memberUUID}")
-    public ResponseEntity<byte[]> getContributionFile(@PathVariable String memberUUID,@RequestParam String contributionUUID) throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.contributionConfirm(memberUUID,contributionUUID);
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
+    public ResponseEntity<byte[]> getContributionFile(@PathVariable String memberUUID, @RequestParam String contributionUUID) throws IOException, DocumentException {
+        FilesEntity filesEntity = filesService.contributionConfirm(memberUUID, contributionUUID);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadPersonalCard/{memberUUID}")
     public ResponseEntity<byte[]> getPersonalCardFile(@PathVariable String memberUUID) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.personalCardFile(memberUUID);
+        try {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                    .body(filesEntity.getData());
+        } finally {
+//            filesService.delete(filesEntity);
+        }
+    }
+
+    @GetMapping("/downloadCSVFile/{memberUUID}")
+    public ResponseEntity<byte[]> getMemberCSVFile(@PathVariable String memberUUID) throws IOException, DocumentException {
+        FilesEntity filesEntity = filesService.getMemberCSVFile(memberUUID);
         try {
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(filesEntity.getType()))
@@ -210,6 +223,9 @@ public class FilesController {
             otherID = null;
         } else {
             memberUUID = null;
+        }
+        if (competitions.isEmpty()) {
+            return ResponseEntity.badRequest().build();
         }
 
         FilesEntity filesEntity = filesService.getStartsMetric(memberUUID, otherID, tournamentUUID, competitions, startNumber);

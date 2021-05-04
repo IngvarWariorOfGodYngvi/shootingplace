@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -509,10 +511,13 @@ public class TournamentService {
                         .countingMethod(competition.getCountingMethod())
                         .type(competition.getType())
                         .numberOfShots(competition.getNumberOfShots())
+                        .WZSS(tournamentEntity.isWZSS())
+                        .ordering(competition.getOrdering())
                         .build();
                 competitionMembersListRepository.saveAndFlush(competitionMembersList);
                 List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
                 competitionsList.add(competitionMembersList);
+                competitionsList.sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
                 tournamentRepository.saveAndFlush(tournamentEntity);
                 LOG.info("Dodano konkurencję do zawodów");
 
@@ -557,7 +562,18 @@ public class TournamentService {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         List<String> list = new ArrayList<>();
 
-        tournamentEntity.getCompetitionsList().forEach(e -> list.add(e.getName()));
+        List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
+        competitionsList.sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
+        competitionsList.forEach(e ->
+        {
+            if (e.getOrdering() == null) {
+                System.out.println(e.getName());
+                CompetitionEntity competitionEntity = competitionRepository.findAll().stream().filter(f -> f.getName().equals(e.getName())).findFirst().orElseThrow(EntityNotFoundException::new);
+                e.setOrdering(competitionEntity.getOrdering());
+                competitionMembersListRepository.saveAndFlush(e);
+            }
+            list.add(e.getName());
+        });
 
         return list;
     }
@@ -710,13 +726,11 @@ public class TournamentService {
         tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().forEach(g -> {
             if (g.getMember() != null) {
                 if (!list1.contains(g.getMember().getUuid())) {
-                    System.out.println(g.getMember().getUuid());
                     list1.add(g.getMember().getUuid());
                 }
             }
             if (g.getOtherPersonEntity() != null) {
                 if (!list1.contains(String.valueOf(g.getOtherPersonEntity().getId()))) {
-                    System.out.println(g.getOtherPersonEntity().getId());
                     list1.add(String.valueOf(g.getOtherPersonEntity().getId()));
                 }
             }

@@ -11,6 +11,7 @@ import java.time.LocalDate;
 @Builder
 public class AmmoDTO {
 
+    private String number;
     private String evidenceUUID;
     private LocalDate date;
 
@@ -28,5 +29,13 @@ public class AmmoDTO {
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public String getNumber() {
+        return number;
+    }
+
+    public void setNumber(String number) {
+        this.number = number;
     }
 }

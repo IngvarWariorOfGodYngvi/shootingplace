@@ -28,6 +28,8 @@ public class CompetitionHistoryEntity {
 
     private LocalDate date;
 
+    private boolean WZSS;
+
     public String getUuid() {
         return uuid;
     }
@@ -62,5 +64,13 @@ public class CompetitionHistoryEntity {
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public boolean isWZSS() {
+        return WZSS;
+    }
+
+    public void setWZSS(boolean WZSS) {
+        this.WZSS = WZSS;
     }
 }

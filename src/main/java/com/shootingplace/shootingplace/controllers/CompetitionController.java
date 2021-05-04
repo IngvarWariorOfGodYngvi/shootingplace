@@ -39,6 +39,16 @@ public class CompetitionController {
         }
     }
 
+    @PutMapping("/ordering")
+    public ResponseEntity<?> updateOrderingNumber(@RequestParam String uuid,@RequestParam String orderNumber) {
+
+        if (competitionService.updateOrderingNumber(uuid,orderNumber)) {
+            return ResponseEntity.status(200).build();
+        } else {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+    }
+
     @PutMapping("")
     public ResponseEntity<?> setScore(@RequestParam String scoreUUID, @RequestParam float score, @RequestParam float innerTen, @RequestParam float outerTen, @RequestParam int procedures) {
 
