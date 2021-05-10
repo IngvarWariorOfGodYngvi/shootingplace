@@ -5,9 +5,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -24,7 +22,8 @@ public class GunStoreEntity {
     @NotNull
     private String typeName;
 
-
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("gunType DESC")
     private List<GunEntity> gunEntityList;
 
     public String getUuid() {

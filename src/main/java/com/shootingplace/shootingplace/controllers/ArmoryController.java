@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.controllers;
 
 import com.shootingplace.shootingplace.domain.entities.CaliberEntity;
-import com.shootingplace.shootingplace.domain.entities.GunEntity;
+import com.shootingplace.shootingplace.domain.entities.GunStoreEntity;
 import com.shootingplace.shootingplace.services.ArmoryService;
 import com.shootingplace.shootingplace.services.CaliberService;
 import com.shootingplace.shootingplace.services.ChangeHistoryService;
@@ -54,7 +54,7 @@ public class ArmoryController {
     }
 
     @GetMapping("/getGuns")
-    public ResponseEntity<List<GunEntity>> getAllGuns() {
+    public ResponseEntity<List<GunStoreEntity>> getAllGuns() {
         return ResponseEntity.ok(armoryService.getAllGuns());
     }
 
@@ -142,7 +142,7 @@ public class ArmoryController {
             return ResponseEntity.badRequest().build();
         }
         if (armoryService.createNewGunStore(nameType)) {
-            return ResponseEntity.status(201).build();
+            return ResponseEntity.status(200).build();
         } else
             return ResponseEntity.badRequest().build();
     }

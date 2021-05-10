@@ -177,8 +177,8 @@ public class FilesController {
     }
 
     @GetMapping("/downloadCertificateOfClubMembership/{memberUUID}")
-    public ResponseEntity<byte[]> CertificateOfClubMembership(@PathVariable String memberUUID) throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.CertificateOfClubMembership(memberUUID);
+    public ResponseEntity<byte[]> CertificateOfClubMembership(@PathVariable String memberUUID,@RequestParam String reason) throws IOException, DocumentException {
+        FilesEntity filesEntity = filesService.CertificateOfClubMembership(memberUUID,reason);
         try {
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(filesEntity.getType()))

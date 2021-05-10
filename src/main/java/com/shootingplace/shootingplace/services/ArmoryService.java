@@ -1,7 +1,6 @@
 package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.*;
-import com.shootingplace.shootingplace.domain.enums.GunType;
 import com.shootingplace.shootingplace.domain.models.Caliber;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
@@ -10,7 +9,9 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -107,7 +108,6 @@ public class ArmoryService {
 
         CaliberEntity caliberEntity = caliberRepository.findById(caliberUUID).orElseThrow(EntityNotFoundException::new);
         if (caliberEntity.getQuantity() - quantity < 0) {
-//            throw new IllegalArgumentException();
             return false;
         }
         CaliberUsedEntity caliberUsedEntity = CaliberUsedEntity.builder()
@@ -182,23 +182,28 @@ public class ArmoryService {
                     .inStock(true).build();
 
             gunRepository.saveAndFlush(gunEntity);
+            GunStoreEntity gunStoreEntity = gunStoreRepository.findAll().stream().filter(f -> f.getTypeName().equals(gunType)).findFirst().orElseThrow(EntityNotFoundException::new);
+            List<GunEntity> gunEntityList = gunStoreEntity.getGunEntityList();
+            gunEntityList.add(gunEntity);
+
+            gunStoreRepository.saveAndFlush(gunStoreEntity);
 
             return true;
         }
     }
 
     public List<String> getGunTypeList() {
+        List<GunStoreEntity> all = gunStoreRepository.findAll();
+        all.sort(Comparator.comparing(GunStoreEntity::getTypeName));
         List<String> list = new ArrayList<>();
-
-        GunType[] values = GunType.values();
-
-        Arrays.stream(values).forEach(e -> list.add(e.getName()));
+        all.forEach(e->list.add(e.getTypeName()));
         return list;
     }
 
-    public List<GunEntity> getAllGuns() {
-        List<GunEntity> all = gunRepository.findAll();
-        return all.stream().filter(GunEntity::isInStock).sorted(Comparator.comparing(GunEntity::getCaliber).thenComparing(GunEntity::getModelName)).collect(Collectors.toList());
+    public List<GunStoreEntity> getAllGuns() {
+        List<GunStoreEntity> all = gunStoreRepository.findAll();
+        all.sort(Comparator.comparing(GunStoreEntity::getTypeName));
+        return all;
     }
 
     public boolean editGunEntity(String gunUUID,
@@ -272,17 +277,38 @@ public class ArmoryService {
         }
         gunEntity.setInStock(false);
         gunRepository.saveAndFlush(gunEntity);
+        GunStoreEntity gunStoreEntity = gunStoreRepository.findAll().stream().filter(f -> f.getTypeName().equals(gunEntity.getGunType())).findFirst().orElseThrow(EntityNotFoundException::new);
+
+        List<GunEntity> gunEntityList = gunStoreEntity.getGunEntityList();
+        gunEntityList.add(gunEntity);
+        gunStoreRepository.saveAndFlush(gunStoreEntity);
+
         changeHistoryService.addRecordToChangeHistory(pinCode, gunEntity.getClass().getSimpleName() + " removeGun", gunEntity.getUuid());
         return true;
     }
 
     public boolean createNewGunStore(String nameType) {
-        List<GunEntity> collect = gunRepository.findAll().stream().filter(f -> f.getGunType().equals(nameType)).collect(Collectors.toList());
-        GunStoreEntity build = GunStoreEntity.builder()
-                .typeName(nameType)
-                .gunEntityList(collect)
-                .build();
-        gunStoreRepository.saveAndFlush(build);
-        return true;
+        GunStoreEntity gunStoreEntity = gunStoreRepository.findAll().stream().filter(f -> f.getTypeName().equals(nameType)).findFirst().orElse(null);
+        if (gunStoreEntity == null) {
+            List<GunEntity> collect = gunRepository.findAll().stream().filter(f -> f.getGunType().equals(nameType)).collect(Collectors.toList());
+
+            String[] s1 = nameType.split(" ");
+            StringBuilder name = new StringBuilder();
+            for (String value : s1) {
+                String splinted = value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase() + " ";
+                name.append(splinted);
+            }
+
+            GunStoreEntity build = GunStoreEntity.builder()
+                    .typeName(name.toString())
+                    .gunEntityList(collect)
+                    .build();
+            LOG.info("dodaję nowy rodzaj broni");
+            gunStoreRepository.saveAndFlush(build);
+            return true;
+        } else {
+            LOG.info("nie dodaję nowego rodzaju broni");
+            return false;
+        }
     }
 }

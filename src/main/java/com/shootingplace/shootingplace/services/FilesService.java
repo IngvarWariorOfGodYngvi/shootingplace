@@ -5,7 +5,6 @@ import com.itextpdf.text.pdf.*;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.CountingMethod;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
-import com.shootingplace.shootingplace.domain.enums.GunType;
 import com.shootingplace.shootingplace.domain.models.FilesModel;
 import com.shootingplace.shootingplace.domain.models.MemberRanking;
 import com.shootingplace.shootingplace.domain.models.Score;
@@ -25,7 +24,6 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,11 +40,11 @@ public class FilesService {
     private final GunRepository gunRepository;
     private final ContributionRepository contributionRepository;
     private final CompetitionRepository competitionRepository;
-    private final CompetitionMembersListRepository competitionMembersListRepository;
+    private final GunStoreRepository gunStoreRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, CompetitionMembersListRepository competitionMembersListRepository) {
+    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository) {
         this.memberRepository = memberRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.filesRepository = filesRepository;
@@ -56,13 +54,13 @@ public class FilesService {
         this.gunRepository = gunRepository;
         this.contributionRepository = contributionRepository;
         this.competitionRepository = competitionRepository;
-        this.competitionMembersListRepository = competitionMembersListRepository;
+        this.gunStoreRepository = gunStoreRepository;
     }
 
     private FilesEntity createFileEntity(FilesModel filesModel) {
 
         FilesEntity filesEntity = Mapping.map(filesModel);
-        LOG.info("Encja została zapisana");
+        LOG.info(filesModel.getName() + " Encja została zapisana");
         return filesRepository.saveAndFlush(filesEntity);
 
     }
@@ -1018,24 +1016,30 @@ public class FilesService {
         return filesEntity;
     }
 
-    public FilesEntity CertificateOfClubMembership(String memberUUID) throws IOException, DocumentException {
+    public FilesEntity CertificateOfClubMembership(String memberUUID, String reason) throws IOException, DocumentException {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         ClubEntity club = clubRepository.getOne(1);
-        String fileName = "Zaświadczenie_" + memberEntity.getFirstName().trim().concat(" " + memberEntity.getSecondName().trim()) + ".pdf";
+        String fileName = reason + " " + memberEntity.getFirstName().trim().concat(" " + memberEntity.getSecondName().trim()) + ".pdf";
 
         Document document = new Document(PageSize.A4);
+        FileOutputStream fileOutputStream = new FileOutputStream(fileName);
         PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
+                fileOutputStream);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
+
+        Paragraph newLine = new Paragraph("\n", font(12, 0));
+
         PdfPTable mainTable = new PdfPTable(1);
 
         document.add(mainTable);
-
+        String[] choice = {"ZAŚWIADCZENIE ZWYKŁE", "ZAŚWIADCZENIE DO POLICJI"};
         // pobieranie z ustawień
-
-        String policeAddress = "\nKomendant Wojewódzki Policji w Łodzi\nWydział Postępowań Administracyjnych\n 90-144 Łódź, ul. Sienkiewicza 26";
+        String policeAddress = "";
+        if (reason.equals(choice[1])) {
+            policeAddress = "\nKomendant Wojewódzki Policji w Łodzi\nWydział Postępowań Administracyjnych\n 90-144 Łódź, ul. Sienkiewicza 26";
+        }
 
         Paragraph date = new Paragraph("Łódź, " + LocalDate.now(), font(12, 0));
         date.setAlignment(2);
@@ -1046,25 +1050,29 @@ public class FilesService {
 
         Paragraph title = new Paragraph("\n\nZaświadczenie\n\n", font(14, 1));
         title.setAlignment(1);
-
-        Paragraph par1 = new Paragraph("" + getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " PESEL: " + memberEntity.getPesel() + " jest czynnym członkiem Klubu Strzeleckiego „Dziesiątka” LOK w Łodzi. Numer legitymacji klubowej : " + memberEntity.getLegitimationNumber() + " ." +
+        String pesel = "";
+        if (reason.equals(choice[1])) {
+            pesel = " PESEL: " + memberEntity.getPesel();
+        }
+        Paragraph par1 = new Paragraph("" + getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + pesel + " jest czynnym członkiem Klubu Strzeleckiego „Dziesiątka” LOK w Łodzi. Numer legitymacji klubowej : " + memberEntity.getLegitimationNumber() + " . " +
                 "Uczestniczy w zawodach i treningach strzeleckich osiągając bardzo dobre wyniki. " +
                 "Czynnie uczestniczy w życiu Klubu. ", font(12, 0));
         par1.setFirstLineIndent(40);
 
         Paragraph par2 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " wyraża chęć pogłębiania swojej wiedzy i umiejętności w sporcie strzeleckim przez współzawodnictwo w różnych konkurencjach strzeleckich.", font(12, 0));
         par2.setFirstLineIndent(40);
-
-        Paragraph par3 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " posiada Patent Strzelecki PZSS oraz ważną Licencję Zawodniczą PZSS na rok " + club.getLicenseNumber().substring(5), font(12, 0));
+        String[] split = club.getLicenseNumber().split("/");
+        String s = split[1];
+        Paragraph par3 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " posiada Patent Strzelecki PZSS oraz ważną Licencję Zawodniczą PZSS na rok " + s, font(12, 0));
         par3.setFirstLineIndent(40);
 
         Paragraph par4 = new Paragraph(club.getFullName() + " jest członkiem Polskiego Związku Strzelectwa Sportowego i posiada Licencję Klubową nr LK-" + club.getLicenseNumber() + ", jest również Członkiem Łódzkiego Związku Strzelectwa Sportowego, zarejestrowany pod numerem ewidencyjnym 6.", font(12, 0));
         par4.setFirstLineIndent(40);
 
-        Paragraph par5 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " wystąpił z prośbą o wydanie niniejszego zaświadczenia, skutkiem którego będzie złożenie wniosku o pozwolenie na broń sportową do celów sportowych. \n\n\n", font(12, 0));
+        Paragraph par5 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " wystąpił z prośbą o wydanie niniejszego zaświadczenia, skutkiem którego będzie złożenie wniosku o pozwolenie na broń sportową do celów sportowych. ", font(12, 0));
         par5.setFirstLineIndent(40);
 
-        Paragraph par6 = new Paragraph("Sporządzono w 2 egz. \n\n", font(12, 0));
+        Paragraph par6 = new Paragraph("Sporządzono w 2 egz.", font(12, 0));
 
         Paragraph par7 = new Paragraph("Egz. Nr 1 – a/a\n" +
                 "Egz. Nr 2 – Adresat", font(12, 0));
@@ -1072,10 +1080,19 @@ public class FilesService {
         document.add(title);
         document.add(par1);
         document.add(par2);
-        document.add(par3);
-        document.add(par4);
-        document.add(par5);
+        if (memberEntity.getLicense().getNumber() != null && memberEntity.getMemberPermissions().getArbiterNumber() != null) {
+            document.add(par3);
+        }
+        if (reason.equals(choice[1])) {
+            document.add(par4);
+            document.add(par5);
+        }
+        document.add(newLine);
+        document.add(newLine);
+        document.add(newLine);
         document.add(par6);
+        document.add(newLine);
+        document.add(newLine);
         document.add(par7);
 
         document.close();
@@ -1972,9 +1989,9 @@ public class FilesService {
         document.add(titleTable);
 
         List<String> list = new ArrayList<>();
-
-        GunType[] values = GunType.values();
-        Arrays.stream(values).forEach(e -> list.add(e.getName()));
+        List<GunStoreEntity> all = gunStoreRepository.findAll();
+        all.sort(Comparator.comparing(GunStoreEntity::getTypeName));
+        all.forEach(e -> list.add(e.getTypeName()));
 
         for (int i = 0; i < list.size(); i++) {
 
@@ -2556,8 +2573,6 @@ public class FilesService {
      * @param size  set font size
      * @param style set style Bold/Italic/Bolditalic
      * @return returns new font
-     * @throws IOException
-     * @throws DocumentException
      */
     private Font font(int size, int style) throws IOException, DocumentException {
         BaseFont czcionka = BaseFont.createFont("font/times.ttf", BaseFont.IDENTITY_H, BaseFont.CACHED);
