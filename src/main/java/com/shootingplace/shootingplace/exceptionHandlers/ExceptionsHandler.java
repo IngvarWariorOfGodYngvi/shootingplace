@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 
 @RestControllerAdvice
@@ -26,6 +27,13 @@ public class ExceptionsHandler {
     public String handleConstraintViolationException(Exception ex) {
         LOG.error(ex.getMessage() + "Wprowadzono nieprawidłowe dane");
         return "Wprowadzono nieprawidłowe dane";
+    }
+
+    @ExceptionHandler(value = EntityNotFoundException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String handleEntityNotFoundException(Exception ex) {
+        LOG.error(ex.getMessage() + "Nie znaleziono encji więc nie można wykonać żądania");
+        return "Nie znaleziono encji więc nie można wykonać żądania";
     }
 
 }

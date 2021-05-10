@@ -101,6 +101,16 @@ public class MemberController {
         return ResponseEntity.ok(memberService.getMembersEmails(condition));
     }
 
+    @GetMapping("/membersEmailsNoActive")
+    public ResponseEntity<?> getMembersEmailsNoActive() {
+        return ResponseEntity.ok(memberService.getMembersEmailsNoActive());
+    }
+
+    @GetMapping("/phoneNumbersNoActive")
+    public ResponseEntity<?> getMembersPhoneNumbersNoActive() {
+        return ResponseEntity.ok(memberService.getMembersPhoneNumbersNoActive());
+    }
+
     @GetMapping("/membersEmailsNoPatent")
     public ResponseEntity<?> getMembersEmailsWithNoPatent() {
         return ResponseEntity.ok(memberService.getMembersEmailsWithNoPatent());
