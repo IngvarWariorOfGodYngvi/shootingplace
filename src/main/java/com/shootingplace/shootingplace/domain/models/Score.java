@@ -21,6 +21,9 @@ public class Score {
     private float hf;
     private int procedures;
 
+    private float alfa;
+    private float charlie;
+    private float delta;
 
     private String name;
 
@@ -34,6 +37,30 @@ public class Score {
     private MemberDTO member;
     @OneToOne(orphanRemoval = true)
     private OtherPersonEntity otherPersonEntity;
+
+    public float getAlfa() {
+        return alfa;
+    }
+
+    public void setAlfa(float alfa) {
+        this.alfa = alfa;
+    }
+
+    public float getCharlie() {
+        return charlie;
+    }
+
+    public void setCharlie(float charlie) {
+        this.charlie = charlie;
+    }
+
+    public float getDelta() {
+        return delta;
+    }
+
+    public void setDelta(float delta) {
+        this.delta = delta;
+    }
 
     public String getUuid() {
         return uuid;

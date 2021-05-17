@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.controllers;
 
 import com.shootingplace.shootingplace.domain.entities.CaliberEntity;
 import com.shootingplace.shootingplace.domain.entities.GunStoreEntity;
+import com.shootingplace.shootingplace.domain.models.Gun;
 import com.shootingplace.shootingplace.services.ArmoryService;
 import com.shootingplace.shootingplace.services.CaliberService;
 import com.shootingplace.shootingplace.services.ChangeHistoryService;
@@ -72,18 +73,8 @@ public class ArmoryController {
 
     @Transactional
     @PostMapping("/addGun")
-    public ResponseEntity<?> addGunEntity(@RequestParam String modelName,
-                                          @RequestParam String caliber,
-                                          @RequestParam String gunType,
-                                          @RequestParam String serialNumber,
-                                          @RequestParam String productionYear,
-                                          @RequestParam String numberOfMagazines,
-                                          @RequestParam String gunCertificateSerialNumber,
-                                          @RequestParam String additionalEquipment,
-                                          @RequestParam String recordInEvidenceBook,
-                                          @RequestParam String comment,
-                                          @RequestParam String basisForPurchaseOrAssignment) {
-        if (armoryService.addGunEntity(modelName, caliber, gunType, serialNumber, productionYear, numberOfMagazines, gunCertificateSerialNumber, additionalEquipment, recordInEvidenceBook, comment, basisForPurchaseOrAssignment)) {
+    public ResponseEntity<?> addGunEntity(@RequestBody Gun gun) {
+        if (armoryService.addGunEntity(gun)) {
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.badRequest().build();
@@ -92,19 +83,8 @@ public class ArmoryController {
 
     @Transactional
     @PostMapping("/editGun")
-    public ResponseEntity<?> editGunEntity(@RequestParam String gunUUID,
-                                           @RequestParam String modelName,
-                                           @RequestParam String caliber,
-                                           @RequestParam String gunType,
-                                           @RequestParam String serialNumber,
-                                           @RequestParam String productionYear,
-                                           @RequestParam String numberOfMagazines,
-                                           @RequestParam String gunCertificateSerialNumber,
-                                           @RequestParam String additionalEquipment,
-                                           @RequestParam String recordInEvidenceBook,
-                                           @RequestParam String comment,
-                                           @RequestParam String basisForPurchaseOrAssignment) {
-        if (armoryService.editGunEntity(gunUUID, modelName, caliber, gunType, serialNumber, productionYear, numberOfMagazines, gunCertificateSerialNumber, additionalEquipment, recordInEvidenceBook, comment, basisForPurchaseOrAssignment)) {
+    public ResponseEntity<?> editGunEntity(@RequestBody Gun gun) {
+        if (armoryService.editGunEntity(gun)) {
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.badRequest().build();

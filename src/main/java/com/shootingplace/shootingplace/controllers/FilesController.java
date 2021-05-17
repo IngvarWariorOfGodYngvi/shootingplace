@@ -36,170 +36,118 @@ public class FilesController {
     @GetMapping("/downloadPersonalCard/{memberUUID}")
     public ResponseEntity<byte[]> getPersonalCardFile(@PathVariable String memberUUID) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.personalCardFile(memberUUID);
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadCSVFile/{memberUUID}")
     public ResponseEntity<byte[]> getMemberCSVFile(@PathVariable String memberUUID) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.getMemberCSVFile(memberUUID);
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadAmmunitionList/{ammoEvidenceUUID}")
     public ResponseEntity<byte[]> getAmmoListFile(@PathVariable String ammoEvidenceUUID) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.createAmmunitionListDocument(ammoEvidenceUUID);
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadApplication/{memberUUID}")
     public ResponseEntity<byte[]> getApplicationForExtensionOfTheCompetitorsLicense(@PathVariable String memberUUID) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.createApplicationForExtensionOfTheCompetitorsLicense(memberUUID);
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadAnnouncementFromCompetition/{tournamentUUID}")
     public ResponseEntity<byte[]> getAnnouncementFromCompetition(@PathVariable String tournamentUUID) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.createAnnouncementFromCompetition(tournamentUUID);
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadRanking")
     public ResponseEntity<byte[]> getRankingCompetitions() throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.getRankingCompetitions();
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadAllMembers")
     public ResponseEntity<byte[]> getAllMembersToTable(@RequestParam boolean condition) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.getAllMembersToTable(condition);
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadAllMembersWithNoValidLicenseNoContribution")
     public ResponseEntity<byte[]> getAllMembersWithLicenceNotValidAndContributionNotValid() throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.getAllMembersWithLicenceNotValidAndContributionNotValid();
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadAllErasedMembers")
     public ResponseEntity<byte[]> getAllErasedMembers() throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.getAllErasedMembers();
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadAllMembersWithValidLicenseNoContribution")
     public ResponseEntity<byte[]> getAllMembersWithLicenceValidAndContributionNotValid() throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.getAllMembersWithLicenceValidAndContributionNotValid();
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadAllMembersToErased")
     public ResponseEntity<byte[]> getAllMembersToErased() throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.getAllMembersToErased();
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadCertificateOfClubMembership/{memberUUID}")
     public ResponseEntity<byte[]> CertificateOfClubMembership(@PathVariable String memberUUID,@RequestParam String reason) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.CertificateOfClubMembership(memberUUID,reason);
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadGunRegistry")
     public ResponseEntity<byte[]> getGunRegistry() throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.getGunRegistry();
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadGunTransportCertificate")
@@ -207,14 +155,10 @@ public class FilesController {
         LocalDate parse = LocalDate.parse(date);
         LocalDate parse1 = LocalDate.parse(date1);
         FilesEntity filesEntity = filesService.getGunTransportCertificate(guns, parse, parse1);
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadMetric/{tournamentUUID}")
@@ -229,28 +173,20 @@ public class FilesController {
         }
 
         FilesEntity filesEntity = filesService.getStartsMetric(memberUUID, otherID, tournamentUUID, competitions, startNumber);
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @GetMapping("/downloadJudge/{tournamentUUID}")
     public ResponseEntity<byte[]> getJudge(@PathVariable String tournamentUUID) throws IOException, DocumentException {
 
         FilesEntity filesEntity = filesService.getJudge(tournamentUUID);
-        try {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                    .body(filesEntity.getData());
-        } finally {
-//            filesService.delete(filesEntity);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
 

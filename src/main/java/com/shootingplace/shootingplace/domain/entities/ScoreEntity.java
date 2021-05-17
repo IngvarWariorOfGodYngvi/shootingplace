@@ -23,6 +23,10 @@ public class ScoreEntity {
 
     private float score;
 
+    private float alfa;
+    private float charlie;
+    private float delta;
+
     private float innerTen;
     private float outerTen;
     private float hf;
@@ -139,5 +143,29 @@ public class ScoreEntity {
 
     public void setProcedures(int procedures) {
         this.procedures = procedures;
+    }
+
+    public float getAlfa() {
+        return alfa;
+    }
+
+    public void setAlfa(float alfa) {
+        this.alfa = alfa;
+    }
+
+    public float getCharlie() {
+        return charlie;
+    }
+
+    public void setCharlie(float charlie) {
+        this.charlie = charlie;
+    }
+
+    public float getDelta() {
+        return delta;
+    }
+
+    public void setDelta(float delta) {
+        this.delta = delta;
     }
 }

@@ -25,15 +25,15 @@ public class ExceptionsHandler {
     @ExceptionHandler(value = ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public String handleConstraintViolationException(Exception ex) {
-        LOG.error(ex.getMessage() + "Wprowadzono nieprawidłowe dane");
-        return "Wprowadzono nieprawidłowe dane";
+        LOG.error(ex.getMessage() + " Wprowadzono nieprawidłowe dane");
+        return " Wprowadzono nieprawidłowe dane";
     }
 
     @ExceptionHandler(value = EntityNotFoundException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public String handleEntityNotFoundException(Exception ex) {
-        LOG.error(ex.getMessage() + "Nie znaleziono encji więc nie można wykonać żądania");
-        return "Nie znaleziono encji więc nie można wykonać żądania";
+        LOG.error(ex.getMessage() + " Nie znaleziono encji więc nie można wykonać żądania");
+        return " Nie znaleziono encji więc nie można wykonać żądania";
     }
 
 }

@@ -82,6 +82,9 @@ public class ScoreService {
                 .otherPersonEntity(otherPersonEntity)
                 .score(score)
                 .innerTen(innerTen)
+                .alfa(0)
+                .charlie(0)
+                .delta(0)
                 .outerTen(outerTen)
                 .procedures(procedures)
                 .ammunition(false)
@@ -92,28 +95,48 @@ public class ScoreService {
 
     }
 
-    public boolean setScore(String scoreUUID, float score, float innerTen, float outerTen, int procedures) {
+    public boolean setScore(String scoreUUID, float score, float innerTen, float outerTen, Float alfa, Float charlie, Float delta, int procedures) {
         ScoreEntity scoreEntity = scoreRepository.findById(scoreUUID).orElseThrow(EntityNotFoundException::new);
         String competitionMembersListEntityUUID = scoreEntity.getCompetitionMembersListEntityUUID();
         CompetitionMembersListEntity competitionMembersListEntity = competitionMembersListRepository.findById(competitionMembersListEntityUUID).orElseThrow(EntityNotFoundException::new);
         if (competitionMembersListEntity.getCountingMethod() != null && competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
             // Metoda COMSTOCK
             if (innerTen == -1) {
+                //czas
                 innerTen = scoreEntity.getInnerTen();
             }
             if (outerTen == -1) {
+                //trafienia
                 outerTen = scoreEntity.getOuterTen();
             }
             if (procedures == -1) {
+                //procedury
                 procedures = scoreEntity.getProcedures();
             }
+            if (alfa == -1) {
+                alfa = (float) 0;
+            }
+            if (charlie == -1) {
+                charlie = (float) 0;
+            }
+            if (delta == -1) {
+                delta = (float) 0;
+            }
+
             int numberOfShots = competitionMembersListEntity.getNumberOfShots();
+            int points;
+            float penalties = numberOfShots - outerTen/*shots*/;
+
+            if (alfa > 0 || charlie > 0 || delta > 0) {
+                outerTen = alfa + charlie + delta;
+                points = (int) ((alfa/*shots*/ * 5) + (charlie * 3) + (delta * 1) + (penalties * -10));
+            } else {
+                points = (int) ((outerTen * 5) + (penalties * -10));
+            }
             if (outerTen > numberOfShots) {
                 return false;
             }
-            float penalties = numberOfShots - outerTen/*shots*/;
             scoreEntity.setOuterTen(outerTen);
-            int points = (int) ((outerTen/*shots*/ * 5) + (penalties * -10));
             if (points < 0) {
                 points = 0;
             }
@@ -131,6 +154,9 @@ public class ScoreService {
             }
             scoreEntity.setHf(hf);
             scoreEntity.setProcedures(procedures);
+            scoreEntity.setAlfa(alfa);
+            scoreEntity.setCharlie(charlie);
+            scoreEntity.setDelta(delta);
             if (hf < hf1) {
                 scoreEntity.setScore((hf / hf1) * 100);
             } else {
@@ -156,6 +182,7 @@ public class ScoreService {
 
 
         } else {
+            // Liczenie normalne
             if (score == -1) {
                 score = scoreEntity.getScore();
             }
