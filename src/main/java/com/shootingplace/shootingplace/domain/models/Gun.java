@@ -1,34 +1,20 @@
-package com.shootingplace.shootingplace.domain.entities;
+package com.shootingplace.shootingplace.domain.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.validation.constraints.NotNull;
-
-@Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class GunEntity {
+public class Gun {
 
-    @Id
-    @GeneratedValue(generator = "id")
-    @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
     private String uuid;
-    @NotNull
     private String modelName;
-    @NotNull
     private String caliber;
-    @NotNull
     private String serialNumber;
 
     private String productionYear;
-    @NotNull
     private String gunType;
 
     private String numberOfMagazines;
@@ -47,6 +33,10 @@ public class GunEntity {
         return uuid;
     }
 
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
     public String getModelName() {
         return modelName;
     }
@@ -61,14 +51,6 @@ public class GunEntity {
 
     public void setCaliber(String caliber) {
         this.caliber = caliber;
-    }
-
-    public String getGunType() {
-        return gunType;
-    }
-
-    public void setGunType(String gunType) {
-        this.gunType = gunType;
     }
 
     public String getSerialNumber() {
@@ -87,6 +69,13 @@ public class GunEntity {
         this.productionYear = productionYear;
     }
 
+    public String getGunType() {
+        return gunType;
+    }
+
+    public void setGunType(String gunType) {
+        this.gunType = gunType;
+    }
 
     public String getNumberOfMagazines() {
         return numberOfMagazines;
@@ -120,6 +109,14 @@ public class GunEntity {
         this.recordInEvidenceBook = recordInEvidenceBook;
     }
 
+    public String getBasisForPurchaseOrAssignment() {
+        return basisForPurchaseOrAssignment;
+    }
+
+    public void setBasisForPurchaseOrAssignment(String basisForPurchaseOrAssignment) {
+        this.basisForPurchaseOrAssignment = basisForPurchaseOrAssignment;
+    }
+
     public String getComment() {
         return comment;
     }
@@ -134,13 +131,5 @@ public class GunEntity {
 
     public void setInStock(boolean inStock) {
         this.inStock = inStock;
-    }
-
-    public String getBasisForPurchaseOrAssignment() {
-        return basisForPurchaseOrAssignment;
-    }
-
-    public void setBasisForPurchaseOrAssignment(String basisForPurchaseOrAssignment) {
-        this.basisForPurchaseOrAssignment = basisForPurchaseOrAssignment;
     }
 }

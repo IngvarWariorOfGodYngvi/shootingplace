@@ -23,6 +23,10 @@ public class ScoreEntity {
 
     private float score;
 
+    private float alfa;
+    private float charlie;
+    private float delta;
+
     private float innerTen;
     private float outerTen;
     private float hf;
@@ -35,6 +39,9 @@ public class ScoreEntity {
     private boolean ammunition;
     private boolean gun;
 
+    private boolean dnf;
+    private boolean dsq;
+
     private String competitionMembersListEntityUUID;
     @OneToOne(orphanRemoval = true)
     private MemberEntity member;
@@ -43,6 +50,22 @@ public class ScoreEntity {
 
     public String getUuid() {
         return uuid;
+    }
+
+    public boolean isDnf() {
+        return dnf;
+    }
+
+    public void setDnf(boolean dnf) {
+        this.dnf = dnf;
+    }
+
+    public boolean isDsq() {
+        return dsq;
+    }
+
+    public void setDsq(boolean dsq) {
+        this.dsq = dsq;
     }
 
     public float getScore() {
@@ -109,6 +132,14 @@ public class ScoreEntity {
         this.gun = !this.gun;
     }
 
+    public void toggleDnf() {
+        this.dnf = !this.dnf;
+    }
+
+    public void toggleDsq() {
+        this.dsq = !this.dsq;
+    }
+
     public String getName() {
         return name;
     }
@@ -139,5 +170,29 @@ public class ScoreEntity {
 
     public void setProcedures(int procedures) {
         this.procedures = procedures;
+    }
+
+    public float getAlfa() {
+        return alfa;
+    }
+
+    public void setAlfa(float alfa) {
+        this.alfa = alfa;
+    }
+
+    public float getCharlie() {
+        return charlie;
+    }
+
+    public void setCharlie(float charlie) {
+        this.charlie = charlie;
+    }
+
+    public float getDelta() {
+        return delta;
+    }
+
+    public void setDelta(float delta) {
+        this.delta = delta;
     }
 }

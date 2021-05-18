@@ -21,6 +21,9 @@ public class Score {
     private float hf;
     private int procedures;
 
+    private float alfa;
+    private float charlie;
+    private float delta;
 
     private String name;
 
@@ -29,11 +32,56 @@ public class Score {
     private boolean ammunition;
     private boolean gun;
 
+    private boolean dnf;
+    private boolean dsq;
+
+
     private String competitionMembersListEntityUUID;
     @OneToOne(orphanRemoval = true)
     private MemberDTO member;
     @OneToOne(orphanRemoval = true)
     private OtherPersonEntity otherPersonEntity;
+
+
+    public boolean isDnf() {
+        return dnf;
+    }
+
+    public void setDnf(boolean dnf) {
+        this.dnf = dnf;
+    }
+
+    public boolean isDsq() {
+        return dsq;
+    }
+
+    public void setDsq(boolean dsq) {
+        this.dsq = dsq;
+    }
+
+    public float getAlfa() {
+        return alfa;
+    }
+
+    public void setAlfa(float alfa) {
+        this.alfa = alfa;
+    }
+
+    public float getCharlie() {
+        return charlie;
+    }
+
+    public void setCharlie(float charlie) {
+        this.charlie = charlie;
+    }
+
+    public float getDelta() {
+        return delta;
+    }
+
+    public void setDelta(float delta) {
+        this.delta = delta;
+    }
 
     public String getUuid() {
         return uuid;

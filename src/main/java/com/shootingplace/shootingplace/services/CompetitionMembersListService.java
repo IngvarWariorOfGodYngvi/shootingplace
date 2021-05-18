@@ -1,7 +1,10 @@
 package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.*;
-import com.shootingplace.shootingplace.repositories.*;
+import com.shootingplace.shootingplace.repositories.CompetitionMembersListRepository;
+import com.shootingplace.shootingplace.repositories.MemberRepository;
+import com.shootingplace.shootingplace.repositories.OtherPersonRepository;
+import com.shootingplace.shootingplace.repositories.TournamentRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -49,7 +52,8 @@ public class CompetitionMembersListService {
                 scoreList.sort(Comparator.comparing(ScoreEntity::getScore)
                         .reversed().thenComparing(ScoreEntity::getInnerTen)
                         .reversed().thenComparing(ScoreEntity::getOuterTen)
-                        .reversed());
+                        .reversed().thenComparing(ScoreEntity::isDnf)
+                        .thenComparing(ScoreEntity::isDsq));
                 competitionMembersListRepository.saveAndFlush(list);
                 LOG.info("Dodano Klubowicza do Listy");
                 if (member != null) {

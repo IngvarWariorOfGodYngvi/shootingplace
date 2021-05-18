@@ -911,4 +911,16 @@ public class MemberService {
         });
         return list;
     }
+
+    public Boolean getMemberPeselIsPresent(String pesel) {
+        return memberRepository.findByPesel(pesel).isPresent();
+    }
+
+    public Boolean getMemberIDCardPresent(String idCard) {
+        return memberRepository.findByIDCard(idCard).isPresent();
+    }
+
+    public Boolean getMemberEmailPresent(String email) {
+        return memberRepository.findByEmail(email).isPresent();
+    }
 }

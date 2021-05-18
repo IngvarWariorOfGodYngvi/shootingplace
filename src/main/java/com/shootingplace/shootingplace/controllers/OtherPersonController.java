@@ -95,8 +95,8 @@ public class OtherPersonController {
     }
 
     @PutMapping("/")
-    public ResponseEntity<?> updatePerson(@RequestParam String id,@RequestBody OtherPerson otherPerson) {
-        if (otherPersonService.updatePerson(id,otherPerson)) {
+    public ResponseEntity<?> updatePerson(@RequestParam String id,@RequestBody OtherPerson otherPerson,@RequestParam String clubName) {
+        if (otherPersonService.updatePerson(id,otherPerson,clubName)) {
             return ResponseEntity.ok().build();
         } else
             return ResponseEntity.notFound().build();

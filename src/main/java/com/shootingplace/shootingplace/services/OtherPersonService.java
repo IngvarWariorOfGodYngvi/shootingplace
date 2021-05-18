@@ -123,7 +123,7 @@ public class OtherPersonService {
         return true;
     }
 
-    public boolean updatePerson(String id, OtherPerson otherPerson) {
+    public boolean updatePerson(String id, OtherPerson otherPerson, String clubName) {
         OtherPersonEntity one = otherPersonRepository.getOne(Integer.valueOf(id));
         if (otherPerson.getEmail() != null && !otherPerson.getEmail().isEmpty()) {
             LOG.info("Zmieniono email");
@@ -141,9 +141,22 @@ public class OtherPersonService {
             LOG.info("Zmieniono nazwisko");
             one.setSecondName(otherPerson.getSecondName());
         }
-//        if(!otherPerson.getClub().getName().isEmpty() || !otherPerson.getClub().getName().equals("null")){
-//            one.setClub(clubRepository.findAll().stream().filter(f->f.getName().equals(otherPerson.getClub().getName())).findFirst().orElse(null));
-//        }
+        if (!one.getClub().getName().equals(clubName)) {
+            ClubEntity clubEntity = clubRepository.findAll().stream().filter(f -> f.getName().equals(clubName)).findFirst().orElse(null);
+            if(clubEntity== null){
+                {
+                    List<ClubEntity> all = clubRepository.findAll();
+                    all.sort(Comparator.comparing(ClubEntity::getId).reversed());
+                    Integer clubID = (all.get(0).getId()) + 1;
+                    clubEntity = ClubEntity.builder()
+                            .id(clubID)
+                            .name(clubName).build();
+                    clubRepository.saveAndFlush(clubEntity);
+                }
+            }
+            LOG.info("Zmieniono Klub");
+            one.setClub(clubEntity);
+        }
         otherPersonRepository.saveAndFlush(one);
         return true;
     }
