@@ -146,6 +146,21 @@ public class MemberController {
         return ResponseEntity.ok(memberService.getMembersPhoneNumbers(condition));
     }
 
+    @GetMapping("/pesel")
+    public ResponseEntity<?> getMemberPeselIsPresent(@RequestParam String pesel) {
+        return ResponseEntity.ok(memberService.getMemberPeselIsPresent(pesel));
+    }
+
+    @GetMapping("/IDCard")
+    public ResponseEntity<?> getMemberIDCardPresent(@RequestParam String IDCard) {
+        return ResponseEntity.ok(memberService.getMemberIDCardPresent(IDCard));
+    }
+
+    @GetMapping("/email")
+    public ResponseEntity<?> getMemberEmailPresent(@RequestParam String email) {
+        return ResponseEntity.ok(memberService.getMemberEmailPresent(email));
+    }
+
     @GetMapping("/erasedType")
     public ResponseEntity<?> getErasedType() {
         return ResponseEntity.ok(memberService.getErasedType());

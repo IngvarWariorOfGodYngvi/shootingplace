@@ -24,6 +24,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -808,7 +809,7 @@ public class FilesService {
 
                 List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream().filter(f -> !f.isDsq()).filter(f -> !f.isDnf()).sorted(Comparator.comparing(ScoreEntity::getScore).reversed()).collect(Collectors.toList());
 
-                List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream().filter(f->f.isDnf()||f.isDsq()).collect(Collectors.toList());
+                List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream().filter(f -> f.isDnf() || f.isDsq()).collect(Collectors.toList());
                 scoreList.addAll(collect);
                 Paragraph competition = new Paragraph(competitionMembersListEntity.getName(), font(14, 1));
                 competition.add("\n");
@@ -1002,6 +1003,18 @@ public class FilesService {
         document.add(newLine);
         document.add(newLine);
 
+        Paragraph state = new Paragraph("Zawody odbyły się zgodnie z przepisami bezpieczeństwa i regulaminem zawodów,",font(10,0));
+        Paragraph state1 = new Paragraph("oraz liczba sklasyfikowanych zawodników",font(10,0));
+        Paragraph state2 = new Paragraph("była zgodna ze stanem faktycznym.",font(10,0));
+        state.setAlignment(0);
+        state1.setAlignment(0);
+        state2.setAlignment(0);
+        if (!tournamentEntity.isOpen()) {
+            document.add(state);
+            document.add(state1);
+            document.add(state2);
+            document.add(newLine);
+        }
         document.add(arbiterTableLabel);
         if (tournamentEntity.isOpen()) {
             document.add(new Paragraph("Sporządzono " + now, font(14, 0)));
@@ -1200,7 +1213,7 @@ public class FilesService {
 
         List<String> comp = competitions.stream().filter(value -> !value.contains(" pneumatyczny ") && !value.contains(" pneumatyczna ")).sorted().collect(Collectors.toList());
         competitions.stream().filter(competition -> competition.contains("pneumatyczny") || competition.contains(" pneumatyczna ")).sorted().forEach(comp::add);
-        Paragraph newLine = new Paragraph("\n", font(12, 0));
+        Paragraph newLine = new Paragraph("\n", font(11, 0));
         for (int j = 0; j < comp.size(); j++) {
 
             int d = Integer.parseInt(startNumber);
@@ -1254,12 +1267,19 @@ public class FilesService {
             par4.add(chunk2);
 
             float[] pointColumnWidths = new float[numberOfShots + 1];
-            for (int i = 0; i <= numberOfShots; i++) {
-                if (i < pointColumnWidths.length - 1) {
-                    pointColumnWidths[i] = 25F;
-                } else {
-                    pointColumnWidths[i] = 80F;
+            if (competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+                pointColumnWidths = new float[6];
+            }
+            if (!competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+                for (int i = 0; i <= numberOfShots; i++) {
+                    if (i < pointColumnWidths.length - 1) {
+                        pointColumnWidths[i] = 25F;
+                    } else {
+                        pointColumnWidths[i] = 80F;
+                    }
                 }
+            } else {
+                Arrays.fill(pointColumnWidths, 25F);
             }
             PdfPTable table = new PdfPTable(pointColumnWidths);
             PdfPTable table1 = new PdfPTable(pointColumnWidths);
@@ -1273,64 +1293,115 @@ public class FilesService {
             document.add(par2);
             document.add(par3);
             document.add(newLine);
-
-            for (int i = 0; i <= numberOfShots; i++) {
-                Paragraph p;
-                if (i < numberOfShots) {
-                    p = new Paragraph(String.valueOf(i + 1), font(14, 0));
-                } else {
-                    if (competitionEntity.getCountingMethod() != null && competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-                        p = new Paragraph("CZAS / PROCEDURY", font(14, 1));
+            if (!competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+                for (int i = 0; i <= numberOfShots; i++) {
+                    Paragraph p;
+                    if (i < numberOfShots) {
+                        p = new Paragraph(String.valueOf(i + 1), font(14, 0));
                     } else {
-                        p = new Paragraph("SUMA", font(14, 1));
+                        if (competitionEntity.getCountingMethod() != null && competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+                            p = new Paragraph("CZAS / PROCEDURY", font(14, 1));
+                        } else {
+                            p = new Paragraph("SUMA", font(14, 1));
+                        }
+                    }
+                    PdfPCell cell = new PdfPCell(p);
+                    cell.setHorizontalAlignment(1);
+                    table.addCell(cell);
+                    if (i >= 10) {
+                        document.add(table);
+                        break;
                     }
                 }
-                PdfPCell cell = new PdfPCell(p);
-                cell.setHorizontalAlignment(1);
-                table.addCell(cell);
-                if (i >= 10) {
+                if (numberOfShots < 10) {
                     document.add(table);
-                    break;
+
                 }
-            }
-            if (numberOfShots < 10) {
+                int loopLength = competitionEntity.getNumberOfShots() + 1,
+                        secondLoopLength = 0;
+                for (int i = 0; i <= loopLength; i++) {
+                    String s = " ";
+                    Chunk c = new Chunk(s, font(28, 0));
+                    Paragraph p = new Paragraph(c);
+                    PdfPCell cell = new PdfPCell(p);
+                    table1.addCell(cell);
+                    if (i == loopLength) {
+                        for (int k = i; k > 0; k--) {
+                            secondLoopLength++;
+                            if (k % 10 == 1) {
+                                break;
+                            }
+                        }
+                    }
+                }
+                document.add(table1);
+                if (compShots > 10) {
+                    if (compShots % 10 != 0) {
+                        for (int i = 0; i <= 10; i++) {
+                            String s = " ";
+                            Chunk c = new Chunk(s, font(28, 0));
+                            Paragraph p = new Paragraph(c);
+                            PdfPCell cell = new PdfPCell(p);
+                            if (i >= secondLoopLength - 1 && i < 10) {
+                                cell.setBorderWidth(0);
+                            }
+                            table2.addCell(cell);
+                        }
+                        document.add(table2);
+                    }
+                }
+            } else {
+                for (int i = 0; i < pointColumnWidths.length; i++) {
+                    Paragraph p = new Paragraph();
+                    if (i == 0) {
+                        p = new Paragraph("ALFA", font(12, 0));
+                    }
+                    if (i == 1) {
+                        p = new Paragraph("CHARLIE", font(12, 0));
+                    }
+                    if (i == 2) {
+                        p = new Paragraph("DELTA", font(12, 0));
+                    }
+                    if (i == 3) {
+                        p = new Paragraph("PROCEDURY", font(12, 0));
+                    }
+                    if (i == 4) {
+                        p = new Paragraph("CZAS", font(12, 0));
+                    }
+                    if (i == 5) {
+                        p = new Paragraph("UWAGI", font(12, 0));
+                    }
+                    PdfPCell cell = new PdfPCell(p);
+                    cell.setHorizontalAlignment(1);
+                    table.addCell(cell);
+                }
                 document.add(table);
-
-            }
-            int loopLength = competitionEntity.getNumberOfShots() + 1,
-                    secondLoopLength = 0;
-            for (int i = 0; i <= loopLength; i++) {
-                String s = " ";
-                Chunk c = new Chunk(s, font(28, 0));
-                Paragraph p = new Paragraph(c);
-                PdfPCell cell = new PdfPCell(p);
-                table1.addCell(cell);
-                if (i == loopLength) {
-                    for (int k = i; k > 0; k--) {
-                        secondLoopLength++;
-                        if (k % 10 == 1) {
-                            break;
-                        }
+                for (int i = 0; i < pointColumnWidths.length; i++) {
+                    Paragraph p = new Paragraph();
+                    if (i == 0) {
+                        p = new Paragraph(" ", font(28, 0));
                     }
-                }
-            }
-            document.add(table1);
-            if (compShots > 10) {
-                if (compShots % 10 != 0) {
-                    for (int i = 0; i <= 10; i++) {
-                        String s = " ";
-                        Chunk c = new Chunk(s, font(28, 0));
-                        Paragraph p = new Paragraph(c);
-                        PdfPCell cell = new PdfPCell(p);
-                        if (i >= secondLoopLength - 1 && i < 10) {
-                            cell.setBorderWidth(0);
-                        }
-                        table2.addCell(cell);
+                    if (i == 1) {
+                        p = new Paragraph(" ", font(28, 0));
                     }
-                    document.add(table2);
+                    if (i == 2) {
+                        p = new Paragraph(" ", font(28, 0));
+                    }
+                    if (i == 3) {
+                        p = new Paragraph(" ", font(28, 0));
+                    }
+                    if (i == 4) {
+                        p = new Paragraph(" ", font(28, 0));
+                    }
+                    if (i == 5) {
+                        p = new Paragraph(" ", font(28, 0));
+                    }
+                    PdfPCell cell = new PdfPCell(p);
+                    cell.setHorizontalAlignment(1);
+                    table1.addCell(cell);
                 }
+                document.add(table1);
             }
-
             Paragraph par5 = new Paragraph("_______________________________________________________________________________________", font(12, 0));
 
             document.add(newLine);
