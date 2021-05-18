@@ -39,6 +39,9 @@ public class ScoreEntity {
     private boolean ammunition;
     private boolean gun;
 
+    private boolean dnf;
+    private boolean dsq;
+
     private String competitionMembersListEntityUUID;
     @OneToOne(orphanRemoval = true)
     private MemberEntity member;
@@ -47,6 +50,22 @@ public class ScoreEntity {
 
     public String getUuid() {
         return uuid;
+    }
+
+    public boolean isDnf() {
+        return dnf;
+    }
+
+    public void setDnf(boolean dnf) {
+        this.dnf = dnf;
+    }
+
+    public boolean isDsq() {
+        return dsq;
+    }
+
+    public void setDsq(boolean dsq) {
+        this.dsq = dsq;
     }
 
     public float getScore() {
@@ -111,6 +130,14 @@ public class ScoreEntity {
 
     public void toggleGun() {
         this.gun = !this.gun;
+    }
+
+    public void toggleDnf() {
+        this.dnf = !this.dnf;
+    }
+
+    public void toggleDsq() {
+        this.dsq = !this.dsq;
     }
 
     public String getName() {

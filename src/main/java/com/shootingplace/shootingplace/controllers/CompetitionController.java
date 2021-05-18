@@ -79,4 +79,24 @@ public class CompetitionController {
         }
     }
 
+    @PatchMapping("/dnf")
+    public ResponseEntity<?> toggleDnfScore(@RequestParam String scoreUUID) {
+
+        if (scoreService.toggleDnfScore(scoreUUID)) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PatchMapping("/dsq")
+    public ResponseEntity<?> toggleDsqScore(@RequestParam String scoreUUID) {
+
+        if (scoreService.toggleDsqScore(scoreUUID)) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
 }

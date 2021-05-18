@@ -805,8 +805,11 @@ public class FilesService {
         for (int i = 0; i < tournamentEntity.getCompetitionsList().size(); i++) {
             if (!tournamentEntity.getCompetitionsList().get(i).getScoreList().isEmpty()) {
                 CompetitionMembersListEntity competitionMembersListEntity = tournamentEntity.getCompetitionsList().get(i);
-                competitionMembersListEntity.getScoreList().sort(Comparator.comparing(ScoreEntity::getScore).reversed());
 
+                List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream().filter(f -> !f.isDsq()).filter(f -> !f.isDnf()).sorted(Comparator.comparing(ScoreEntity::getScore).reversed()).collect(Collectors.toList());
+
+                List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream().filter(f->f.isDnf()||f.isDsq()).collect(Collectors.toList());
+                scoreList.addAll(collect);
                 Paragraph competition = new Paragraph(competitionMembersListEntity.getName(), font(14, 1));
                 competition.add("\n");
                 document.add(competition);
@@ -856,36 +859,42 @@ public class FilesService {
                 document.add(tableLabel);
 
 
-                for (int j = 0; j < competitionMembersListEntity.getScoreList().size(); j++) {
+                for (int j = 0; j < scoreList.size(); j++) {
 
                     String secondName;
                     String firstName;
                     String club;
-                    if (competitionMembersListEntity.getScoreList().get(j).getMember() != null) {
-                        secondName = competitionMembersListEntity.getScoreList().get(j).getMember().getSecondName();
-                        firstName = competitionMembersListEntity.getScoreList().get(j).getMember().getFirstName();
-                        club = competitionMembersListEntity.getScoreList().get(j).getMember().getClub().getName();
+                    if (scoreList.get(j).getMember() != null) {
+                        secondName = scoreList.get(j).getMember().getSecondName();
+                        firstName = scoreList.get(j).getMember().getFirstName();
+                        club = scoreList.get(j).getMember().getClub().getName();
 
                     } else {
-                        secondName = competitionMembersListEntity.getScoreList().get(j).getOtherPersonEntity().getSecondName();
-                        firstName = competitionMembersListEntity.getScoreList().get(j).getOtherPersonEntity().getFirstName();
-                        club = competitionMembersListEntity.getScoreList().get(j).getOtherPersonEntity().getClub().getName();
+                        secondName = scoreList.get(j).getOtherPersonEntity().getSecondName();
+                        firstName = scoreList.get(j).getOtherPersonEntity().getFirstName();
+                        club = scoreList.get(j).getOtherPersonEntity().getClub().getName();
 
                     }
-                    float score = competitionMembersListEntity.getScoreList().get(j).getScore();
-                    String scoreOuterTen = String.valueOf(competitionMembersListEntity.getScoreList().get(j).getOuterTen() - competitionMembersListEntity.getScoreList().get(j).getInnerTen());
-                    String scoreInnerTen = String.valueOf(competitionMembersListEntity.getScoreList().get(j).getInnerTen());
+                    float score = scoreList.get(j).getScore();
+                    String scoreOuterTen = String.valueOf(scoreList.get(j).getOuterTen() - scoreList.get(j).getInnerTen());
+                    String scoreInnerTen = String.valueOf(scoreList.get(j).getInnerTen());
                     String o1 = scoreInnerTen.replace(".0", ""), o2 = scoreOuterTen.replace(".0", "");
-                    if (competitionMembersListEntity.getScoreList().get(j).getInnerTen() == 0) {
+                    if (scoreList.get(j).getInnerTen() == 0) {
                         o1 = scoreInnerTen = "";
                     }
-                    if (competitionMembersListEntity.getScoreList().get(j).getOuterTen() == 0) {
+                    if (scoreList.get(j).getOuterTen() == 0) {
                         o2 = scoreOuterTen = "";
                     }
                     DecimalFormat myFormatter = new DecimalFormat("###.####");
                     String result = myFormatter.format(score);
                     if (score == 100) {
                         result = "100.0000";
+                    }
+                    if (scoreList.get(j).isDnf()) {
+                        result = "DNF";
+                    }
+                    if (scoreList.get(j).isDsq()) {
+                        result = "DSQ";
                     }
                     if (competitionMembersListEntity.getCountingMethod() != null) {
 
