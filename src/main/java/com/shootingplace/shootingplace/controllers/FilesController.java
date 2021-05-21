@@ -142,8 +142,8 @@ public class FilesController {
     }
 
     @GetMapping("/downloadGunRegistry")
-    public ResponseEntity<byte[]> getGunRegistry() throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.getGunRegistry();
+    public ResponseEntity<byte[]> getGunRegistry(@RequestParam List<String> guns) throws IOException, DocumentException {
+        FilesEntity filesEntity = filesService.getGunRegistry(guns);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")

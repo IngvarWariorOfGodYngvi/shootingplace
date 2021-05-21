@@ -1003,9 +1003,9 @@ public class FilesService {
         document.add(newLine);
         document.add(newLine);
 
-        Paragraph state = new Paragraph("Zawody odbyły się zgodnie z przepisami bezpieczeństwa i regulaminem zawodów,",font(10,0));
-        Paragraph state1 = new Paragraph("oraz liczba sklasyfikowanych zawodników",font(10,0));
-        Paragraph state2 = new Paragraph("była zgodna ze stanem faktycznym.",font(10,0));
+        Paragraph state = new Paragraph("Zawody odbyły się zgodnie z przepisami bezpieczeństwa i regulaminem zawodów,", font(10, 0));
+        Paragraph state1 = new Paragraph("oraz liczba sklasyfikowanych zawodników", font(10, 0));
+        Paragraph state2 = new Paragraph("była zgodna ze stanem faktycznym.", font(10, 0));
         state.setAlignment(0);
         state1.setAlignment(0);
         state2.setAlignment(0);
@@ -1993,12 +1993,12 @@ public class FilesService {
 
     }
 
-    public FilesEntity getGunRegistry() throws IOException, DocumentException {
+    public FilesEntity getGunRegistry(List<String> guns) throws IOException, DocumentException {
 
 
         String fileName = "Lista_broni_w_magazynie_na_dzień" + LocalDate.now() + ".pdf";
 
-        Document document = new Document(PageSize.A4.rotate());
+        Document document = new Document(PageSize.A4);
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         document.open();
@@ -2006,13 +2006,6 @@ public class FilesService {
         document.addCreationDate();
         int pageNumber = 0;
 
-        String minute;
-        if (LocalTime.now().getMinute() < 10) {
-            minute = "0" + LocalTime.now().getMinute();
-        } else {
-            minute = String.valueOf(LocalTime.now().getMinute());
-        }
-        String now = LocalTime.now().getHour() + ":" + minute;
         Paragraph title = new Paragraph("Lista Broni w Magazynie".toUpperCase(), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
@@ -2066,14 +2059,24 @@ public class FilesService {
         titleTable.addCell(numberOfMagazinesCell);
         titleTable.addCell(gunCertificateSerialNumberCell);
 
-        document.add(titleTable);
 
         List<String> list = new ArrayList<>();
-        List<GunStoreEntity> all = gunStoreRepository.findAll();
-        all.sort(Comparator.comparing(GunStoreEntity::getTypeName));
-        all.forEach(e -> list.add(e.getTypeName()));
+
+        for (int i = 0; i < guns.size(); i++) {
+            int finalI = i;
+            GunStoreEntity gunStoreEntity = gunStoreRepository.findAll().stream().filter(f -> f.getUuid().equals(guns.get(finalI))).findFirst().orElseThrow(EntityNotFoundException::new);
+            if (!gunStoreEntity.getGunEntityList().isEmpty()) {
+                list.add(gunStoreEntity.getTypeName());
+            }
+            list.sort(String::compareTo);
+        }
 
         for (int i = 0; i < list.size(); i++) {
+            Paragraph gunTypeName = new Paragraph(list.get(i), font(12, 1));
+            gunTypeName.setAlignment(1);
+            document.add(gunTypeName);
+            document.add(newLine);
+            document.add(titleTable);
 
             int finalI = i;
             List<GunEntity> collect = gunRepository.findAll()
@@ -2082,10 +2085,6 @@ public class FilesService {
                     .sorted(Comparator.comparing(GunEntity::getCaliber).thenComparing(GunEntity::getModelName))
                     .collect(Collectors.toList());
             if (collect.size() > 0) {
-                Paragraph gunTypeName = new Paragraph(list.get(i), font(12, 1));
-                gunTypeName.setAlignment(1);
-                document.add(gunTypeName);
-                document.add(newLine);
 
                 for (int j = 0; j < collect.size(); j++) {
 
@@ -2094,19 +2093,19 @@ public class FilesService {
                     PdfPTable gunTable = new PdfPTable(pointColumnWidths);
                     gunTable.setWidthPercentage(100);
 
-                    Paragraph lpGun = new Paragraph(String.valueOf(j + 1), font(12, 0));
-                    Paragraph modelNameGun = new Paragraph(gun.getModelName(), font(12, 0));
+                    Paragraph lpGun = new Paragraph(String.valueOf(j + 1), font(11, 0));
+                    Paragraph modelNameGun = new Paragraph(gun.getModelName(), font(11, 0));
                     Paragraph caliberAndProductionYearGun;
                     if (gun.getProductionYear() != null && !gun.getProductionYear().isEmpty() && !gun.getProductionYear().equals("null")) {
-                        caliberAndProductionYearGun = new Paragraph(gun.getCaliber() + "\nrok " + gun.getProductionYear(), font(12, 0));
+                        caliberAndProductionYearGun = new Paragraph(gun.getCaliber() + "\nrok " + gun.getProductionYear(), font(11, 0));
 
                     } else {
-                        caliberAndProductionYearGun = new Paragraph(gun.getCaliber(), font(12, 0));
+                        caliberAndProductionYearGun = new Paragraph(gun.getCaliber(), font(11, 0));
                     }
-                    Paragraph serialNumberGun = new Paragraph(gun.getSerialNumber(), font(12, 0));
-                    Paragraph recordInEvidenceBookGun = new Paragraph(gun.getRecordInEvidenceBook(), font(12, 0));
-                    Paragraph numberOfMagazinesGun = new Paragraph(gun.getNumberOfMagazines(), font(12, 0));
-                    Paragraph gunCertificateSerialNumberGun = new Paragraph(gun.getGunCertificateSerialNumber(), font(12, 0));
+                    Paragraph serialNumberGun = new Paragraph(gun.getSerialNumber(), font(11, 0));
+                    Paragraph recordInEvidenceBookGun = new Paragraph(gun.getRecordInEvidenceBook(), font(11, 0));
+                    Paragraph numberOfMagazinesGun = new Paragraph(gun.getNumberOfMagazines(), font(11, 0));
+                    Paragraph gunCertificateSerialNumberGun = new Paragraph(gun.getGunCertificateSerialNumber(), font(11, 0));
 
                     PdfPCell lpGunCell = new PdfPCell(lpGun);
                     PdfPCell modelNameGunCell = new PdfPCell(modelNameGun);
@@ -2138,9 +2137,7 @@ public class FilesService {
                     gunTable.addCell(recordInEvidenceBookGunCell);
                     gunTable.addCell(numberOfMagazinesGunCell);
                     gunTable.addCell(gunCertificateSerialNumberGunCell);
-                    if (writer.getPageNumber() > pageNumber) {
-                        writer.setPageEvent(new PageStamper());
-                    }
+
                     document.add(gunTable);
                 }
                 document.add(newLine);
@@ -2148,7 +2145,6 @@ public class FilesService {
             }
 
         }
-        writer.setPageEvent(new PageStamper());
         document.close();
 
 
