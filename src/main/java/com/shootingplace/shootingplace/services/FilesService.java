@@ -11,6 +11,7 @@ import com.shootingplace.shootingplace.domain.models.Score;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
@@ -59,9 +60,9 @@ public class FilesService {
     }
 
     private FilesEntity createFileEntity(FilesModel filesModel) {
-
+        filesModel.setDate(LocalDate.now());
         FilesEntity filesEntity = Mapping.map(filesModel);
-        LOG.info(filesModel.getName() + " Encja została zapisana");
+        LOG.info(filesModel.getName().trim() + " Encja została zapisana");
         return filesRepository.saveAndFlush(filesEntity);
 
     }
@@ -954,10 +955,12 @@ public class FilesService {
         if (tournamentEntity.getMainArbiter() != null) {
             mainArbiter = tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getSecondName();
             mainArbiterClass = tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass();
+            mainArbiterClass = getArbiterClass(mainArbiterClass);
         } else {
             if (tournamentEntity.getOtherMainArbiter() != null) {
                 mainArbiter = tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getSecondName();
                 mainArbiterClass = tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass();
+                mainArbiterClass = getArbiterClass(mainArbiterClass);
             } else {
                 mainArbiter = "Nie Wskazano";
                 mainArbiterClass = "";
@@ -969,10 +972,12 @@ public class FilesService {
         if (tournamentEntity.getCommissionRTSArbiter() != null) {
             arbiterRTS = tournamentEntity.getCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getCommissionRTSArbiter().getSecondName();
             arbiterRTSClass = tournamentEntity.getCommissionRTSArbiter().getMemberPermissions().getArbiterClass();
+            arbiterRTSClass = getArbiterClass(arbiterRTSClass);
         } else {
             if (tournamentEntity.getOtherCommissionRTSArbiter() != null) {
                 arbiterRTS = tournamentEntity.getOtherCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getOtherCommissionRTSArbiter().getSecondName();
                 arbiterRTSClass = tournamentEntity.getOtherCommissionRTSArbiter().getPermissionsEntity().getArbiterClass();
+                arbiterRTSClass = getArbiterClass(arbiterRTSClass);
             } else {
                 arbiterRTS = "Nie Wskazano";
                 arbiterRTSClass = "";
@@ -1558,32 +1563,59 @@ public class FilesService {
         Paragraph subTitle1 = new Paragraph("\nPrzewodniczący Komisji RTS", font(13, 0));
 
         String mainArbiter;
+        String mainArbiterClass;
 
         if (tournamentEntity.getMainArbiter() != null) {
-            if (tournamentEntity.getMainArbiter() != null) {
-                mainArbiter = tournamentEntity.getMainArbiter().getSecondName().concat(" " + tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass());
-            } else {
-                mainArbiter = tournamentEntity.getOtherMainArbiter().getSecondName().concat(" " + tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass());
-            }
+            mainArbiter = tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getSecondName();
+            mainArbiterClass = tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass();
+            mainArbiterClass = getArbiterClass(mainArbiterClass);
         } else {
-            mainArbiter = "Nie wskazano";
+            if (tournamentEntity.getOtherMainArbiter() != null) {
+                mainArbiter = tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getSecondName();
+                mainArbiterClass = tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass();
+                mainArbiterClass = getArbiterClass(mainArbiterClass);
+            } else {
+                mainArbiter = "Nie Wskazano";
+                mainArbiterClass = "";
+            }
         }
 
-        Paragraph mainArbiterOnTournament = new Paragraph(mainArbiter, font(12, 0));
+        Paragraph mainArbiterOnTournament = new Paragraph(mainArbiter + " " + mainArbiterClass, font(12, 0));
 
         String commissionRTSArbiter;
+        String commissionRTSArbiterClass;
 
-        if (tournamentEntity.getMainArbiter() != null) {
-            if (tournamentEntity.getCommissionRTSArbiter() != null) {
-                commissionRTSArbiter = tournamentEntity.getCommissionRTSArbiter().getSecondName().concat(" " + tournamentEntity.getCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getCommissionRTSArbiter().getMemberPermissions().getArbiterClass());
-            } else {
-                commissionRTSArbiter = tournamentEntity.getOtherCommissionRTSArbiter().getSecondName().concat(" " + tournamentEntity.getOtherCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getOtherCommissionRTSArbiter().getPermissionsEntity().getArbiterClass());
-            }
+//        if (tournamentEntity.getCommissionRTSArbiter() != null) {
+//            if (tournamentEntity.getCommissionRTSArbiter() != null) {
+//                commissionRTSArbiter = tournamentEntity.getCommissionRTSArbiter().getFirstName().concat(" " + tournamentEntity.getCommissionRTSArbiter().getSecondName());
+//                commissionRTSArbiterClass = tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass();
+//                commissionRTSArbiterClass = getArbiterClass(commissionRTSArbiterClass);
+//            } else {
+//                commissionRTSArbiter = tournamentEntity.getOtherCommissionRTSArbiter().getFirstName().concat(" " + tournamentEntity.getOtherCommissionRTSArbiter().getSecondName());
+//                commissionRTSArbiterClass = tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass();
+//                commissionRTSArbiterClass = getArbiterClass(mainArbiterClass);
+//            }
+//        } else {
+//            commissionRTSArbiter = "Nie wskazano";
+//            commissionRTSArbiterClass = "";
+//        }
+
+        if (tournamentEntity.getCommissionRTSArbiter() != null) {
+            commissionRTSArbiter = tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getSecondName();
+            commissionRTSArbiterClass = tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass();
+            commissionRTSArbiterClass = getArbiterClass(commissionRTSArbiterClass);
         } else {
-            commissionRTSArbiter = "Nie wskazano";
+            if (tournamentEntity.getOtherCommissionRTSArbiter() != null) {
+                commissionRTSArbiter = tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getSecondName();
+                commissionRTSArbiterClass = tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass();
+                commissionRTSArbiterClass = getArbiterClass(commissionRTSArbiterClass);
+            } else {
+                commissionRTSArbiter = "Nie Wskazano";
+                commissionRTSArbiterClass = "";
+            }
         }
 
-        Paragraph commissionRTSArbiterOnTournament = new Paragraph(commissionRTSArbiter, font(12, 0));
+        Paragraph commissionRTSArbiterOnTournament = new Paragraph(commissionRTSArbiter + " " + commissionRTSArbiterClass, font(12, 0));
 
         Paragraph others = new Paragraph("\nSędziowie Stanowiskowi\n", font(12, 0));
         Paragraph others1 = new Paragraph("\nSędziowie Biura Obliczeń\n", font(12, 0));
@@ -1604,7 +1636,9 @@ public class FilesService {
         List<MemberEntity> arbitersList = tournamentEntity.getArbitersList();
         if (arbitersList.size() > 0) {
             for (MemberEntity entity : arbitersList) {
-                Paragraph otherArbiter = new Paragraph(entity.getSecondName().concat(" " + entity.getFirstName() + " " + entity.getMemberPermissions().getArbiterClass()), font(12, 0));
+                String arbiterClass = entity.getMemberPermissions().getArbiterClass();
+                arbiterClass = getArbiterClass(arbiterClass);
+                Paragraph otherArbiter = new Paragraph(entity.getFirstName().concat(" " + entity.getSecondName() + " " + arbiterClass), font(12, 0));
                 document.add(otherArbiter);
             }
         }
@@ -1613,8 +1647,10 @@ public class FilesService {
         if (otherArbitersList.size() > 0) {
 
             for (OtherPersonEntity personEntity : otherArbitersList) {
-                Paragraph otherPersonArbiter = new Paragraph(personEntity.getSecondName().concat(" " + personEntity.getFirstName() + " " + personEntity.getPermissionsEntity().getArbiterClass()), font(12, 0));
-                document.add(otherPersonArbiter);
+                String arbiterClass = personEntity.getPermissionsEntity().getArbiterClass();
+                arbiterClass = getArbiterClass(arbiterClass);
+                Paragraph otherArbiters = new Paragraph(personEntity.getFirstName().concat(" " + personEntity.getSecondName() + " " + arbiterClass), font(12, 0));
+                document.add(otherArbiters);
             }
 
         }
@@ -1626,7 +1662,9 @@ public class FilesService {
         List<MemberEntity> arbitersRTSList = tournamentEntity.getArbitersRTSList();
         if (arbitersRTSList.size() > 0) {
             for (MemberEntity entity : arbitersRTSList) {
-                Paragraph otherRTSArbiter = new Paragraph(entity.getSecondName().concat(" " + entity.getFirstName() + " " + entity.getMemberPermissions().getArbiterClass()), font(12, 0));
+                String arbiterClass = entity.getMemberPermissions().getArbiterClass();
+                arbiterClass = getArbiterClass(arbiterClass);
+                Paragraph otherRTSArbiter = new Paragraph(entity.getFirstName().concat(" " + entity.getSecondName() + " " + arbiterClass), font(12, 0));
                 document.add(otherRTSArbiter);
             }
         }
@@ -1634,7 +1672,9 @@ public class FilesService {
         List<OtherPersonEntity> otherArbitersRTSList = tournamentEntity.getOtherArbitersRTSList();
         if (otherArbitersRTSList.size() > 0) {
             for (OtherPersonEntity personEntity : otherArbitersRTSList) {
-                Paragraph otherPersonRTSArbiter = new Paragraph(personEntity.getSecondName().concat(" " + personEntity.getFirstName() + " " + personEntity.getPermissionsEntity().getArbiterClass()), font(12, 0));
+                String arbiterClass = personEntity.getPermissionsEntity().getArbiterClass();
+                arbiterClass = getArbiterClass(arbiterClass);
+                Paragraph otherPersonRTSArbiter = new Paragraph(personEntity.getFirstName().concat(" " + personEntity.getSecondName() + " " + arbiterClass), font(12, 0));
                 document.add(otherPersonRTSArbiter);
             }
         }
@@ -2004,7 +2044,6 @@ public class FilesService {
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
-        int pageNumber = 0;
 
         Paragraph title = new Paragraph("Lista Broni w Magazynie".toUpperCase(), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
@@ -2014,14 +2053,14 @@ public class FilesService {
         document.add(newLine);
 
         float[] pointColumnWidths = {4F, 16F, 10F, 10F, 10F, 10F, 10F};
-
-        Paragraph lp = new Paragraph("Lp", font(12, 0));
-        Paragraph modelName = new Paragraph("Marka i Model", font(12, 0));
-        Paragraph caliberAndProductionYear = new Paragraph("Kaliber i rok produkcji", font(12, 0));
-        Paragraph serialNumber = new Paragraph("Numer i seria", font(12, 0));
-        Paragraph recordInEvidenceBook = new Paragraph("Poz. z książki ewidencji", font(12, 0));
-        Paragraph numberOfMagazines = new Paragraph("Magazynki", font(12, 0));
-        Paragraph gunCertificateSerialNumber = new Paragraph("Numer świadectwa", font(12, 0));
+        int tableContentSize = 10;
+        Paragraph lp = new Paragraph("Lp", font(tableContentSize, 0));
+        Paragraph modelName = new Paragraph("Marka i Model", font(tableContentSize, 0));
+        Paragraph caliberAndProductionYear = new Paragraph("Kaliber i rok produkcji", font(tableContentSize, 0));
+        Paragraph serialNumber = new Paragraph("Numer i seria", font(tableContentSize, 0));
+        Paragraph recordInEvidenceBook = new Paragraph("Poz. z książki ewidencji", font(tableContentSize, 0));
+        Paragraph numberOfMagazines = new Paragraph("Magazynki", font(tableContentSize, 0));
+        Paragraph gunCertificateSerialNumber = new Paragraph("Numer świadectwa", font(tableContentSize, 0));
 
 
         PdfPTable titleTable = new PdfPTable(pointColumnWidths);
@@ -2087,25 +2126,25 @@ public class FilesService {
             if (collect.size() > 0) {
 
                 for (int j = 0; j < collect.size(); j++) {
-
+                    int contentSize = 8;
                     GunEntity gun = collect.get(j);
 
                     PdfPTable gunTable = new PdfPTable(pointColumnWidths);
                     gunTable.setWidthPercentage(100);
 
-                    Paragraph lpGun = new Paragraph(String.valueOf(j + 1), font(11, 0));
-                    Paragraph modelNameGun = new Paragraph(gun.getModelName(), font(11, 0));
+                    Paragraph lpGun = new Paragraph(String.valueOf(j + 1), font(contentSize, 0));
+                    Paragraph modelNameGun = new Paragraph(gun.getModelName(), font(contentSize, 0));
                     Paragraph caliberAndProductionYearGun;
                     if (gun.getProductionYear() != null && !gun.getProductionYear().isEmpty() && !gun.getProductionYear().equals("null")) {
-                        caliberAndProductionYearGun = new Paragraph(gun.getCaliber() + "\nrok " + gun.getProductionYear(), font(11, 0));
+                        caliberAndProductionYearGun = new Paragraph(gun.getCaliber() + "\nrok " + gun.getProductionYear(), font(contentSize, 0));
 
                     } else {
-                        caliberAndProductionYearGun = new Paragraph(gun.getCaliber(), font(11, 0));
+                        caliberAndProductionYearGun = new Paragraph(gun.getCaliber(), font(contentSize, 0));
                     }
-                    Paragraph serialNumberGun = new Paragraph(gun.getSerialNumber(), font(11, 0));
-                    Paragraph recordInEvidenceBookGun = new Paragraph(gun.getRecordInEvidenceBook(), font(11, 0));
-                    Paragraph numberOfMagazinesGun = new Paragraph(gun.getNumberOfMagazines(), font(11, 0));
-                    Paragraph gunCertificateSerialNumberGun = new Paragraph(gun.getGunCertificateSerialNumber(), font(11, 0));
+                    Paragraph serialNumberGun = new Paragraph(gun.getSerialNumber(), font(contentSize, 0));
+                    Paragraph recordInEvidenceBookGun = new Paragraph(gun.getRecordInEvidenceBook(), font(contentSize, 0));
+                    Paragraph numberOfMagazinesGun = new Paragraph(gun.getNumberOfMagazines(), font(contentSize, 0));
+                    Paragraph gunCertificateSerialNumberGun = new Paragraph(gun.getGunCertificateSerialNumber(), font(contentSize, 0));
 
                     PdfPCell lpGunCell = new PdfPCell(lpGun);
                     PdfPCell modelNameGunCell = new PdfPCell(modelNameGun);
@@ -2702,6 +2741,32 @@ public class FilesService {
         return day + " " + month + " " + year;
 
 
+    }
+
+
+    @NotNull
+    private String getArbiterClass(String arbiterClass) {
+        switch (arbiterClass) {
+            case "Klasa 3":
+                arbiterClass = "Sędzia Klasy Trzeciej";
+                break;
+            case "Klasa 2":
+                arbiterClass = "Sędzia Klasy Drugiej";
+                break;
+            case "Klasa 1":
+                arbiterClass = "Sędzia Klasy Pierwszej";
+                break;
+            case "Klasa Państwowa":
+                arbiterClass = "Sędzia Klasy Państwowej";
+                break;
+            case "Klasa Międzynarodowa":
+                arbiterClass = "Sędzia Klasy Międzynarodowej";
+                break;
+            default:
+                LOG.info("Nie znaleziono Klasy Sędziowskiej");
+
+        }
+        return arbiterClass;
     }
 
     static class PageStamper extends PdfPageEventHelper {

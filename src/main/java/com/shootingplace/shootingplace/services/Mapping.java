@@ -417,6 +417,7 @@ public class Mapping {
                 .name(e.getName())
                 .data(e.getData())
                 .type(e.getType())
+                .date(e.getDate())
                 .build()).orElse(null);
     }
 
@@ -425,6 +426,7 @@ public class Mapping {
                 .name(e.getName())
                 .data(e.getData())
                 .type(e.getType())
+                .date(e.getDate())
                 .build()).orElse(null);
     }
 

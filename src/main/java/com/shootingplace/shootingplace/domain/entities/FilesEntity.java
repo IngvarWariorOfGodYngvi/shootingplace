@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Lob;
+import java.time.LocalDate;
 
 @Entity
 @AllArgsConstructor
@@ -24,6 +25,15 @@ public class FilesEntity {
     private String type;
     @Lob
     private byte[] data;
+    private LocalDate date;
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
 
     public String getUuid() {
         return uuid;
