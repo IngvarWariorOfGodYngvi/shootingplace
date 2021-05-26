@@ -12,8 +12,11 @@ import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
 import java.io.File;
@@ -24,14 +27,15 @@ import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class FilesService {
+
+    @Autowired
+    private DBFileRepository dbFileRepository;
 
     private final MemberRepository memberRepository;
     private final AmmoEvidenceRepository ammoEvidenceRepository;
@@ -61,6 +65,7 @@ public class FilesService {
 
     private FilesEntity createFileEntity(FilesModel filesModel) {
         filesModel.setDate(LocalDate.now());
+        filesModel.setTime(LocalTime.now());
         FilesEntity filesEntity = Mapping.map(filesModel);
         LOG.info(filesModel.getName().trim() + " Encja została zapisana");
         return filesRepository.saveAndFlush(filesEntity);
@@ -196,6 +201,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -259,19 +265,24 @@ public class FilesService {
         Paragraph p11 = new Paragraph("PESEL : " + memberEntity.getPesel(), font(11, 0));
         Paragraph p12 = new Paragraph("", font(11, 0));
         Phrase p13 = new Phrase(memberEntity.getIDCard());
-        Paragraph p14 = new Paragraph("Telefon Kontaktowy : " + memberEntity.getPhoneNumber(), font(11, 0));
+        String phone = memberEntity.getPhoneNumber();
+        String split = phone.substring(0, 3) + " ";
+        String split1 = phone.substring(3, 6) + " ";
+        String split2 = phone.substring(6, 9) + " ";
+        String split3 = phone.substring(9, 12) + " ";
+        String phoneSplit = split + split1 + split2 + split3;
+        Paragraph p14 = new Paragraph("Telefon Kontaktowy : " + phoneSplit, font(11, 0));
         Paragraph p15 = new Paragraph("", font(11, 0));
         Paragraph p16 = new Paragraph("\n\nAdres Zamieszkania", font(11, 0));
         Paragraph p17 = new Paragraph("", font(11, 0));
         Paragraph p18 = new Paragraph("\n\n" + statement, font(11, 0));
         Paragraph p19;
-        if (memberEntity.getAdult()) {
-            p19 = new Paragraph("\n\n\n\n\n\n.............................................", font(11, 0));
-        } else {
+        if (!memberEntity.getAdult() && birthDate.isAfter(LocalDate.now().minusYears(18))) {
             p18 = new Paragraph("\n\n" + statement + "\n" + adultAcceptation + "\n\n     Podpis Rodzica / Opiekuna Prawnego\n         ..................................................", font(11, 0));
 
             p19 = new Paragraph("\n\n\n\n.............................................", font(11, 0));
-
+        } else {
+            p19 = new Paragraph("\n\n\n\n\n\n.............................................", font(11, 0));
         }
         Phrase p20 = new Phrase("                                                              ");
         Phrase p21 = new Phrase("............................................................");
@@ -281,10 +292,9 @@ public class FilesService {
 
         p1.add("Grupa ");
         p1.add(p2);
-        p1.add("\n");
-        p1.setIndentationLeft(190);
+        p1.setAlignment(1);
         p3.add(p4);
-        p3.add("                                    ");
+        p3.add("          ");
         p5.add(p6);
         p3.add(p5);
         p7.add(p8);
@@ -360,6 +370,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -517,6 +528,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -758,6 +770,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1032,6 +1045,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1130,6 +1144,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1143,7 +1158,7 @@ public class FilesService {
 
     public FilesEntity getMemberCSVFile(String memberUUID) throws IOException {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        String fileName = "Plik_" + memberEntity.getFirstName().trim().concat(" " + memberEntity.getSecondName().trim()) + ".csv";
+        String fileName = memberEntity.getFirstName() + memberEntity.getSecondName().toUpperCase().trim() + ".csv";
         File file = new File(fileName);
         String[] tab = new String[5];
 
@@ -1178,7 +1193,8 @@ public class FilesService {
         FilesModel filesModel = FilesModel.builder()
                 .name(fileName)
                 .data(data)
-                .type(String.valueOf(MediaType.TEXT_PLAIN))
+                .type(String.valueOf(MediaType.TEXT_XML))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1425,6 +1441,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1529,6 +1546,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1687,6 +1705,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1793,6 +1812,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1912,6 +1932,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -2021,6 +2042,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -2192,6 +2214,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -2349,6 +2372,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -2473,6 +2497,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -2639,6 +2664,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -2767,6 +2793,62 @@ public class FilesService {
 
         }
         return arbiterClass;
+    }
+
+    public List<FilesModel> getAllFilesList() {
+
+        List<FilesModel> list = new ArrayList<>();
+
+        filesRepository.findAll().stream().filter(f -> f.getDate() != null).forEach(e -> list.add(
+                FilesModel.builder()
+                        .uuid(e.getUuid())
+                        .date(e.getDate())
+                        .name(e.getName())
+                        .type(e.getType())
+                        .time(e.getTime())
+                        .size(e.getSize())
+                        .build()));
+        list.sort(Comparator.comparing(FilesModel::getDate).reversed());
+        filesRepository.findAll().stream().filter(f -> f.getDate() == null).forEach(e -> list.add(
+                FilesModel.builder()
+                        .uuid(e.getUuid())
+                        .date(e.getDate())
+                        .name(e.getName())
+                        .type(e.getType())
+                        .time(e.getTime())
+                        .size(e.getSize())
+                        .build()));
+
+        return list;
+
+    }
+
+    public FilesEntity getFile(String uuid) {
+        return filesRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
+    }
+
+    public boolean store(MultipartFile file) throws IOException {
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(file.getContentType()))
+                .data(file.getBytes())
+                .size(file.getSize())
+                .build();
+        System.out.println(build.getType());
+        System.out.println(build.getName());
+        createFileEntity(build);
+
+        return true;
+    }
+
+    public List<FilesModel> getAllImages() {
+        List<FilesEntity> image = filesRepository.findAll().stream().filter(f -> f.getType().contains("image")).collect(Collectors.toList());
+
+        List<FilesModel> model = new ArrayList<>();
+
+        image.forEach(e -> model.add(Mapping.map(e)));
+        return model;
     }
 
     static class PageStamper extends PdfPageEventHelper {

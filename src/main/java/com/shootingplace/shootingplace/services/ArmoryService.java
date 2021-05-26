@@ -26,11 +26,12 @@ public class ArmoryService {
     private final GunRepository gunRepository;
     private final ChangeHistoryService changeHistoryService;
     private final GunStoreRepository gunStoreRepository;
+    private final FilesRepository filesRepository;
 
     private final Logger LOG = LogManager.getLogger();
 
 
-    public ArmoryService(AmmoEvidenceRepository ammoEvidenceRepository, CaliberService caliberService, CaliberRepository caliberRepository, CaliberUsedRepository caliberUsedRepository, CalibersAddedRepository calibersAddedRepository, GunRepository gunRepository, ChangeHistoryService changeHistoryService, GunStoreRepository gunStoreRepository) {
+    public ArmoryService(AmmoEvidenceRepository ammoEvidenceRepository, CaliberService caliberService, CaliberRepository caliberRepository, CaliberUsedRepository caliberUsedRepository, CalibersAddedRepository calibersAddedRepository, GunRepository gunRepository, ChangeHistoryService changeHistoryService, GunStoreRepository gunStoreRepository, FilesRepository filesRepository) {
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.caliberService = caliberService;
         this.caliberRepository = caliberRepository;
@@ -39,6 +40,7 @@ public class ArmoryService {
         this.gunRepository = gunRepository;
         this.changeHistoryService = changeHistoryService;
         this.gunStoreRepository = gunStoreRepository;
+        this.filesRepository = filesRepository;
     }
 
 
@@ -306,5 +308,14 @@ public class ArmoryService {
             LOG.info("nie dodaję nowego rodzaju broni");
             return false;
         }
+    }
+
+    public boolean addImageToGun(String gunUUID, String fileUUID) {
+        GunEntity gunEntity = gunRepository.findById(gunUUID).orElseThrow(EntityNotFoundException::new);
+        FilesEntity filesEntity = filesRepository.findById(fileUUID).orElseThrow(EntityNotFoundException::new);
+
+        gunEntity.setImgUUID(filesEntity.getUuid());
+        gunRepository.saveAndFlush(gunEntity);
+        return true;
     }
 }

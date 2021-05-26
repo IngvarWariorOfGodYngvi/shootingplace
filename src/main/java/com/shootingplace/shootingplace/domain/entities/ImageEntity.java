@@ -4,14 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.*;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Lob;
 
 @Entity
 @AllArgsConstructor
 @Builder
-public class FilesEntity {
+public class ImageEntity {
+
     @Id
     @GeneratedValue(generator = "id")
     @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
@@ -21,26 +23,6 @@ public class FilesEntity {
     private String type;
     @Lob
     private byte[] data;
-    private LocalDate date;
-    private LocalTime time;
-    private long size;
-
-    public FilesEntity() {
-    }
-
-    public FilesEntity(String name, String type, byte[] data) {
-        this.name = name;
-        this.type = type;
-        this.data = data;
-    }
-
-    public LocalDate getDate() {
-        return date;
-    }
-
-    public void setDate(LocalDate date) {
-        this.date = date;
-    }
 
     public String getUuid() {
         return uuid;
@@ -70,19 +52,12 @@ public class FilesEntity {
         this.data = data;
     }
 
-    public LocalTime getTime() {
-        return time;
+    public ImageEntity() {
     }
 
-    public void setTime(LocalTime time) {
-        this.time = time;
-    }
-
-    public long getSize() {
-        return size;
-    }
-
-    public void setSize(long size) {
-        this.size = size;
+    public ImageEntity(String name, String type, byte[] data) {
+        this.name = name;
+        this.type = type;
+        this.data = data;
     }
 }

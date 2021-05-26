@@ -414,19 +414,25 @@ public class Mapping {
 
     public static FilesEntity map(FilesModel f) {
         return Optional.ofNullable(f).map(e -> FilesEntity.builder()
+                .uuid(e.getUuid())
                 .name(e.getName())
                 .data(e.getData())
                 .type(e.getType())
                 .date(e.getDate())
+                .time(e.getTime())
+                .size(e.getSize())
                 .build()).orElse(null);
     }
 
     public static FilesModel map(FilesEntity f) {
         return Optional.ofNullable(f).map(e -> FilesModel.builder()
+                .uuid(e.getUuid())
                 .name(e.getName())
                 .data(e.getData())
                 .type(e.getType())
                 .date(e.getDate())
+                .time(e.getTime())
+                .size(e.getSize())
                 .build()).orElse(null);
     }
 

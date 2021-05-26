@@ -3,10 +3,9 @@ package com.shootingplace.shootingplace.controllers;
 import com.itextpdf.text.DocumentException;
 import com.shootingplace.shootingplace.domain.entities.FilesEntity;
 import com.shootingplace.shootingplace.services.FilesService;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -22,6 +21,33 @@ public class FilesController {
 
     public FilesController(FilesService filesService) {
         this.filesService = filesService;
+    }
+
+    //@Transactional
+//    @PostMapping("/addImage")
+//    public ResponseEntity<?> storeFile(@ModelAttribute MultipartFile file) throws IOException {
+//        System.out.println("coś");
+//        if(filesService.store(file)){
+//            return ResponseEntity.ok().build();
+//        }else {return ResponseEntity.}
+//        return "OK";
+//
+//    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+        String message = "";
+        try {
+            System.out.println("coś");
+            filesService.store(file);
+
+            message = "Uploaded the file successfully: " + file.getName();
+            return ResponseEntity.status(HttpStatus.OK).body(message);
+        } catch (Exception e) {
+            message = "Could not upload the file: " + file.getOriginalFilename() + "!";
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(message);
+        }
+//        return String.format("File %s uploaded successfully",file.getOriginalFilename());
     }
 
     @GetMapping("/downloadContribution/{memberUUID}")
@@ -47,7 +73,7 @@ public class FilesController {
         FilesEntity filesEntity = filesService.getMemberCSVFile(memberUUID);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .header(HttpHeaders.CONTENT_TYPE, filesEntity.getName())
                 .body(filesEntity.getData());
     }
 
@@ -133,8 +159,8 @@ public class FilesController {
     }
 
     @GetMapping("/downloadCertificateOfClubMembership/{memberUUID}")
-    public ResponseEntity<byte[]> CertificateOfClubMembership(@PathVariable String memberUUID,@RequestParam String reason) throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.CertificateOfClubMembership(memberUUID,reason);
+    public ResponseEntity<byte[]> CertificateOfClubMembership(@PathVariable String memberUUID, @RequestParam String reason) throws IOException, DocumentException {
+        FilesEntity filesEntity = filesService.CertificateOfClubMembership(memberUUID, reason);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
@@ -183,9 +209,30 @@ public class FilesController {
     public ResponseEntity<byte[]> getJudge(@PathVariable String tournamentUUID) throws IOException, DocumentException {
 
         FilesEntity filesEntity = filesService.getJudge(tournamentUUID);
+
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
+    }
+
+    @GetMapping("/getAllFiles")
+    public ResponseEntity<?> getAllFiles() {
+
+        return ResponseEntity.ok(filesService.getAllFilesList());
+    }
+    @GetMapping("/getAllImages")
+    public ResponseEntity<?> getAllImages(){
+        return ResponseEntity.ok(filesService.getAllImages());
+    }
+
+    @GetMapping("/getFile")
+    public ResponseEntity<byte[]> getFile(@RequestParam String uuid) {
+        FilesEntity filesEntity = filesService.getFile(uuid);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_TYPE, filesEntity.getType())
+                .header("filename", filesEntity.getName())
                 .body(filesEntity.getData());
     }
 
