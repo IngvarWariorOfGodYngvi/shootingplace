@@ -21,6 +21,15 @@ public class FilesModel {
     private LocalDate date;
     private LocalTime time;
     private long size;
+    private Gun gun;
+
+    public Gun getGun() {
+        return gun;
+    }
+
+    public void setGun(Gun gun) {
+        this.gun = gun;
+    }
 
     public LocalDate getDate() {
         return date;

@@ -38,7 +38,6 @@ public class FilesController {
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
         String message = "";
         try {
-            System.out.println("coś");
             filesService.store(file);
 
             message = "Uploaded the file successfully: " + file.getName();
@@ -47,7 +46,6 @@ public class FilesController {
             message = "Could not upload the file: " + file.getOriginalFilename() + "!";
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(message);
         }
-//        return String.format("File %s uploaded successfully",file.getOriginalFilename());
     }
 
     @GetMapping("/downloadContribution/{memberUUID}")

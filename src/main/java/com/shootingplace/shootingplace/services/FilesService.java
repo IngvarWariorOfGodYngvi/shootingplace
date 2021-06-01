@@ -2835,8 +2835,6 @@ public class FilesService {
                 .data(file.getBytes())
                 .size(file.getSize())
                 .build();
-        System.out.println(build.getType());
-        System.out.println(build.getName());
         createFileEntity(build);
 
         return true;
@@ -2847,7 +2845,13 @@ public class FilesService {
 
         List<FilesModel> model = new ArrayList<>();
 
-        image.forEach(e -> model.add(Mapping.map(e)));
+        image.forEach(e -> {
+                    FilesModel map = Mapping.map(e);
+                    gunRepository.findAll().stream().filter(f->f.getImgUUID()!=null).filter(f -> f.getImgUUID().equals(e.getUuid())).findFirst().ifPresent(gunEntity -> map.setGun(Mapping.map(gunEntity)));
+                    model.add(map);
+                }
+        );
+        model.sort(Comparator.comparing(FilesModel::getDate).thenComparing(FilesModel::getTime).reversed());
         return model;
     }
 

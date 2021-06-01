@@ -525,4 +525,21 @@ public class Mapping {
                 .name(c.getName())
                 .build();
     }
+
+    static Gun map(GunEntity c) {
+        return Gun.builder()
+                .additionalEquipment(c.getAdditionalEquipment())
+                .basisForPurchaseOrAssignment(c.getBasisForPurchaseOrAssignment())
+                .caliber(c.getCaliber())
+                .comment(c.getComment())
+                .gunCertificateSerialNumber(c.getGunCertificateSerialNumber())
+                .gunType(c.getGunType())
+                .modelName(c.getModelName())
+                .numberOfMagazines(c.getNumberOfMagazines())
+                .productionYear(c.getProductionYear())
+                .recordInEvidenceBook(c.getRecordInEvidenceBook())
+                .serialNumber(c.getSerialNumber())
+                .uuid(c.getUuid())
+                .build();
+    }
 }
