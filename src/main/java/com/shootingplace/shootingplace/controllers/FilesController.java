@@ -120,6 +120,15 @@ public class FilesController {
                 .body(filesEntity.getData());
     }
 
+    @GetMapping("/downloadAllMembersToElection")
+    public ResponseEntity<byte[]> getAllMembersToElection() throws IOException, DocumentException {
+        FilesEntity filesEntity = filesService.getAllMembersToElection();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
+    }
+
     @GetMapping("/downloadAllMembersWithNoValidLicenseNoContribution")
     public ResponseEntity<byte[]> getAllMembersWithLicenceNotValidAndContributionNotValid() throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.getAllMembersWithLicenceNotValidAndContributionNotValid();

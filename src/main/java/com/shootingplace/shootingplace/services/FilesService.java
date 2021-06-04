@@ -12,7 +12,6 @@ import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -27,15 +26,13 @@ import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class FilesService {
 
-    @Autowired
-    private DBFileRepository dbFileRepository;
 
     private final MemberRepository memberRepository;
     private final AmmoEvidenceRepository ammoEvidenceRepository;
@@ -277,7 +274,7 @@ public class FilesService {
         Paragraph p17 = new Paragraph("", font(11, 0));
         Paragraph p18 = new Paragraph("\n\n" + statement, font(11, 0));
         Paragraph p19;
-        if (!memberEntity.getAdult() && birthDate.isAfter(LocalDate.now().minusYears(18))) {
+        if (!memberEntity.getAdult() && LocalDate.now().minusYears(18).isAfter(birthDate)) {
             p18 = new Paragraph("\n\n" + statement + "\n" + adultAcceptation + "\n\n     Podpis Rodzica / Opiekuna Prawnego\n         ..................................................", font(11, 0));
 
             p19 = new Paragraph("\n\n\n\n.............................................", font(11, 0));
@@ -1558,6 +1555,105 @@ public class FilesService {
         return filesEntity;
     }
 
+    public FilesEntity getAllMembersToElection() throws IOException, DocumentException {
+
+        String fileName = "Lista_klubowiczów_na_dzień " + LocalDate.now() + ".pdf";
+
+        Document document = new Document(PageSize.A4);
+        PdfWriter writer = PdfWriter.getInstance(document,
+                new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
+
+        document.open();
+        document.addTitle(fileName);
+        document.addCreationDate();
+
+        List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).sorted(Comparator.comparing(MemberEntity::getSecondName)).collect(Collectors.toList());
+
+        String hour = String.valueOf(LocalTime.now().getHour());
+        String minute = String.valueOf(LocalTime.now().getMinute());
+        if (Integer.parseInt(minute) < 10) {
+            minute = "0" + minute;
+        }
+
+        String now = hour + ":" + minute;
+
+        Paragraph title = new Paragraph("Lista klubowiczów na dzień " + LocalDate.now(), font(14, 1));
+        Paragraph newLine = new Paragraph("\n", font(14, 0));
+        document.add(title);
+        document.add(newLine);
+
+        float[] pointColumnWidths = {3F, 25F, 15F, 20F};
+
+
+        PdfPTable titleTable = new PdfPTable(pointColumnWidths);
+
+        titleTable.setWidthPercentage(100);
+        Paragraph lp1 = new Paragraph("lp", font(12, 0));
+        PdfPCell lp = new PdfPCell(lp1);
+        Paragraph name1 = new Paragraph("Nazwisko Imię", font(12, 0));
+        PdfPCell name = new PdfPCell(name1);
+        Paragraph legNumber1 = new Paragraph("Legitymacja", font(12, 0));
+        PdfPCell legNumber = new PdfPCell(legNumber1);
+        Paragraph signature1 = new Paragraph("Podpis", font(12, 0));
+        PdfPCell signature = new PdfPCell(signature1);
+
+        lp.setHorizontalAlignment(1);
+        name.setHorizontalAlignment(1);
+        legNumber.setHorizontalAlignment(1);
+        signature.setHorizontalAlignment(1);
+
+        titleTable.addCell(lp);
+        titleTable.addCell(name);
+        titleTable.addCell(legNumber);
+        titleTable.addCell(signature);
+
+        document.add(titleTable);
+        document.add(newLine);
+
+        for (int i = 0; i < all.size(); i++) {
+            MemberEntity memberEntity = all.get(i);
+            PdfPTable memberTable = new PdfPTable(pointColumnWidths);
+
+            memberTable.setWidthPercentage(100);
+
+            PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(12, 0)));
+            PdfPCell nameCell = new PdfPCell(new Paragraph(memberEntity.getSecondName().concat(" " + memberEntity.getFirstName()), font(12, 0)));
+            PdfPCell legNumberCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getLegitimationNumber()), font(12, 0)));
+            PdfPCell signatureCell = new PdfPCell(new Paragraph(" ", font(12, 0)));
+
+            lpCell.setHorizontalAlignment(1);
+            legNumberCell.setHorizontalAlignment(1);
+
+            memberTable.addCell(lpCell);
+            memberTable.addCell(nameCell);
+            memberTable.addCell(legNumberCell);
+            memberTable.addCell(signatureCell);
+
+            document.add(memberTable);
+        }
+
+
+        document.close();
+
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+
+        File file = new File(fileName);
+
+        file.delete();
+        return filesEntity;
+    }
+
     public FilesEntity getJudge(String tournamentUUID) throws IOException, DocumentException {
 
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
@@ -1602,21 +1698,6 @@ public class FilesService {
 
         String commissionRTSArbiter;
         String commissionRTSArbiterClass;
-
-//        if (tournamentEntity.getCommissionRTSArbiter() != null) {
-//            if (tournamentEntity.getCommissionRTSArbiter() != null) {
-//                commissionRTSArbiter = tournamentEntity.getCommissionRTSArbiter().getFirstName().concat(" " + tournamentEntity.getCommissionRTSArbiter().getSecondName());
-//                commissionRTSArbiterClass = tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass();
-//                commissionRTSArbiterClass = getArbiterClass(commissionRTSArbiterClass);
-//            } else {
-//                commissionRTSArbiter = tournamentEntity.getOtherCommissionRTSArbiter().getFirstName().concat(" " + tournamentEntity.getOtherCommissionRTSArbiter().getSecondName());
-//                commissionRTSArbiterClass = tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass();
-//                commissionRTSArbiterClass = getArbiterClass(mainArbiterClass);
-//            }
-//        } else {
-//            commissionRTSArbiter = "Nie wskazano";
-//            commissionRTSArbiterClass = "";
-//        }
 
         if (tournamentEntity.getCommissionRTSArbiter() != null) {
             commissionRTSArbiter = tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getSecondName();
@@ -2847,7 +2928,7 @@ public class FilesService {
 
         image.forEach(e -> {
                     FilesModel map = Mapping.map(e);
-                    gunRepository.findAll().stream().filter(f->f.getImgUUID()!=null).filter(f -> f.getImgUUID().equals(e.getUuid())).findFirst().ifPresent(gunEntity -> map.setGun(Mapping.map(gunEntity)));
+                    gunRepository.findAll().stream().filter(f -> f.getImgUUID() != null).filter(f -> f.getImgUUID().equals(e.getUuid())).findFirst().ifPresent(gunEntity -> map.setGun(Mapping.map(gunEntity)));
                     model.add(map);
                 }
         );
