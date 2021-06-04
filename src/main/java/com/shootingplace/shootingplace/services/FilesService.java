@@ -11,8 +11,11 @@ import com.shootingplace.shootingplace.domain.models.Score;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
 import java.io.File;
@@ -23,14 +26,13 @@ import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class FilesService {
+
 
     private final MemberRepository memberRepository;
     private final AmmoEvidenceRepository ammoEvidenceRepository;
@@ -59,9 +61,10 @@ public class FilesService {
     }
 
     private FilesEntity createFileEntity(FilesModel filesModel) {
-
+        filesModel.setDate(LocalDate.now());
+        filesModel.setTime(LocalTime.now());
         FilesEntity filesEntity = Mapping.map(filesModel);
-        LOG.info(filesModel.getName() + " Encja została zapisana");
+        LOG.info(filesModel.getName().trim() + " Encja została zapisana");
         return filesRepository.saveAndFlush(filesEntity);
 
     }
@@ -195,6 +198,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -258,19 +262,24 @@ public class FilesService {
         Paragraph p11 = new Paragraph("PESEL : " + memberEntity.getPesel(), font(11, 0));
         Paragraph p12 = new Paragraph("", font(11, 0));
         Phrase p13 = new Phrase(memberEntity.getIDCard());
-        Paragraph p14 = new Paragraph("Telefon Kontaktowy : " + memberEntity.getPhoneNumber(), font(11, 0));
+        String phone = memberEntity.getPhoneNumber();
+        String split = phone.substring(0, 3) + " ";
+        String split1 = phone.substring(3, 6) + " ";
+        String split2 = phone.substring(6, 9) + " ";
+        String split3 = phone.substring(9, 12) + " ";
+        String phoneSplit = split + split1 + split2 + split3;
+        Paragraph p14 = new Paragraph("Telefon Kontaktowy : " + phoneSplit, font(11, 0));
         Paragraph p15 = new Paragraph("", font(11, 0));
         Paragraph p16 = new Paragraph("\n\nAdres Zamieszkania", font(11, 0));
         Paragraph p17 = new Paragraph("", font(11, 0));
         Paragraph p18 = new Paragraph("\n\n" + statement, font(11, 0));
         Paragraph p19;
-        if (memberEntity.getAdult()) {
-            p19 = new Paragraph("\n\n\n\n\n\n.............................................", font(11, 0));
-        } else {
+        if (!memberEntity.getAdult() && LocalDate.now().minusYears(18).isAfter(birthDate)) {
             p18 = new Paragraph("\n\n" + statement + "\n" + adultAcceptation + "\n\n     Podpis Rodzica / Opiekuna Prawnego\n         ..................................................", font(11, 0));
 
             p19 = new Paragraph("\n\n\n\n.............................................", font(11, 0));
-
+        } else {
+            p19 = new Paragraph("\n\n\n\n\n\n.............................................", font(11, 0));
         }
         Phrase p20 = new Phrase("                                                              ");
         Phrase p21 = new Phrase("............................................................");
@@ -280,10 +289,9 @@ public class FilesService {
 
         p1.add("Grupa ");
         p1.add(p2);
-        p1.add("\n");
-        p1.setIndentationLeft(190);
+        p1.setAlignment(1);
         p3.add(p4);
-        p3.add("                                    ");
+        p3.add("          ");
         p5.add(p6);
         p3.add(p5);
         p7.add(p8);
@@ -359,6 +367,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -516,6 +525,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -757,6 +767,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -954,10 +965,12 @@ public class FilesService {
         if (tournamentEntity.getMainArbiter() != null) {
             mainArbiter = tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getSecondName();
             mainArbiterClass = tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass();
+            mainArbiterClass = getArbiterClass(mainArbiterClass);
         } else {
             if (tournamentEntity.getOtherMainArbiter() != null) {
                 mainArbiter = tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getSecondName();
                 mainArbiterClass = tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass();
+                mainArbiterClass = getArbiterClass(mainArbiterClass);
             } else {
                 mainArbiter = "Nie Wskazano";
                 mainArbiterClass = "";
@@ -969,10 +982,12 @@ public class FilesService {
         if (tournamentEntity.getCommissionRTSArbiter() != null) {
             arbiterRTS = tournamentEntity.getCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getCommissionRTSArbiter().getSecondName();
             arbiterRTSClass = tournamentEntity.getCommissionRTSArbiter().getMemberPermissions().getArbiterClass();
+            arbiterRTSClass = getArbiterClass(arbiterRTSClass);
         } else {
             if (tournamentEntity.getOtherCommissionRTSArbiter() != null) {
                 arbiterRTS = tournamentEntity.getOtherCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getOtherCommissionRTSArbiter().getSecondName();
                 arbiterRTSClass = tournamentEntity.getOtherCommissionRTSArbiter().getPermissionsEntity().getArbiterClass();
+                arbiterRTSClass = getArbiterClass(arbiterRTSClass);
             } else {
                 arbiterRTS = "Nie Wskazano";
                 arbiterRTSClass = "";
@@ -1003,9 +1018,9 @@ public class FilesService {
         document.add(newLine);
         document.add(newLine);
 
-        Paragraph state = new Paragraph("Zawody odbyły się zgodnie z przepisami bezpieczeństwa i regulaminem zawodów,",font(10,0));
-        Paragraph state1 = new Paragraph("oraz liczba sklasyfikowanych zawodników",font(10,0));
-        Paragraph state2 = new Paragraph("była zgodna ze stanem faktycznym.",font(10,0));
+        Paragraph state = new Paragraph("Zawody odbyły się zgodnie z przepisami bezpieczeństwa i regulaminem zawodów,", font(10, 0));
+        Paragraph state1 = new Paragraph("oraz liczba sklasyfikowanych zawodników", font(10, 0));
+        Paragraph state2 = new Paragraph("była zgodna ze stanem faktycznym.", font(10, 0));
         state.setAlignment(0);
         state1.setAlignment(0);
         state2.setAlignment(0);
@@ -1027,6 +1042,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1125,6 +1141,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1138,7 +1155,7 @@ public class FilesService {
 
     public FilesEntity getMemberCSVFile(String memberUUID) throws IOException {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        String fileName = "Plik_" + memberEntity.getFirstName().trim().concat(" " + memberEntity.getSecondName().trim()) + ".csv";
+        String fileName = memberEntity.getFirstName() + memberEntity.getSecondName().toUpperCase().trim() + ".csv";
         File file = new File(fileName);
         String[] tab = new String[5];
 
@@ -1173,7 +1190,8 @@ public class FilesService {
         FilesModel filesModel = FilesModel.builder()
                 .name(fileName)
                 .data(data)
-                .type(String.valueOf(MediaType.TEXT_PLAIN))
+                .type(String.valueOf(MediaType.TEXT_XML))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1420,6 +1438,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1524,6 +1543,106 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+
+        File file = new File(fileName);
+
+        file.delete();
+        return filesEntity;
+    }
+
+    public FilesEntity getAllMembersToElection() throws IOException, DocumentException {
+
+        String fileName = "Lista_klubowiczów_na_dzień " + LocalDate.now() + ".pdf";
+
+        Document document = new Document(PageSize.A4);
+        PdfWriter writer = PdfWriter.getInstance(document,
+                new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
+
+        document.open();
+        document.addTitle(fileName);
+        document.addCreationDate();
+
+        List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).sorted(Comparator.comparing(MemberEntity::getSecondName)).collect(Collectors.toList());
+
+        String hour = String.valueOf(LocalTime.now().getHour());
+        String minute = String.valueOf(LocalTime.now().getMinute());
+        if (Integer.parseInt(minute) < 10) {
+            minute = "0" + minute;
+        }
+
+        String now = hour + ":" + minute;
+
+        Paragraph title = new Paragraph("Lista klubowiczów na dzień " + LocalDate.now(), font(14, 1));
+        Paragraph newLine = new Paragraph("\n", font(14, 0));
+        document.add(title);
+        document.add(newLine);
+
+        float[] pointColumnWidths = {3F, 25F, 15F, 20F};
+
+
+        PdfPTable titleTable = new PdfPTable(pointColumnWidths);
+
+        titleTable.setWidthPercentage(100);
+        Paragraph lp1 = new Paragraph("lp", font(12, 0));
+        PdfPCell lp = new PdfPCell(lp1);
+        Paragraph name1 = new Paragraph("Nazwisko Imię", font(12, 0));
+        PdfPCell name = new PdfPCell(name1);
+        Paragraph legNumber1 = new Paragraph("Legitymacja", font(12, 0));
+        PdfPCell legNumber = new PdfPCell(legNumber1);
+        Paragraph signature1 = new Paragraph("Podpis", font(12, 0));
+        PdfPCell signature = new PdfPCell(signature1);
+
+        lp.setHorizontalAlignment(1);
+        name.setHorizontalAlignment(1);
+        legNumber.setHorizontalAlignment(1);
+        signature.setHorizontalAlignment(1);
+
+        titleTable.addCell(lp);
+        titleTable.addCell(name);
+        titleTable.addCell(legNumber);
+        titleTable.addCell(signature);
+
+        document.add(titleTable);
+        document.add(newLine);
+
+        for (int i = 0; i < all.size(); i++) {
+            MemberEntity memberEntity = all.get(i);
+            PdfPTable memberTable = new PdfPTable(pointColumnWidths);
+
+            memberTable.setWidthPercentage(100);
+
+            PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(12, 0)));
+            PdfPCell nameCell = new PdfPCell(new Paragraph(memberEntity.getSecondName().concat(" " + memberEntity.getFirstName()), font(12, 0)));
+            PdfPCell legNumberCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getLegitimationNumber()), font(12, 0)));
+            PdfPCell signatureCell = new PdfPCell(new Paragraph(" ", font(12, 0)));
+
+            lpCell.setHorizontalAlignment(1);
+            legNumberCell.setHorizontalAlignment(1);
+
+            memberTable.addCell(lpCell);
+            memberTable.addCell(nameCell);
+            memberTable.addCell(legNumberCell);
+            memberTable.addCell(signatureCell);
+
+            document.add(memberTable);
+        }
+
+
+        document.close();
+
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1558,32 +1677,44 @@ public class FilesService {
         Paragraph subTitle1 = new Paragraph("\nPrzewodniczący Komisji RTS", font(13, 0));
 
         String mainArbiter;
+        String mainArbiterClass;
 
         if (tournamentEntity.getMainArbiter() != null) {
-            if (tournamentEntity.getMainArbiter() != null) {
-                mainArbiter = tournamentEntity.getMainArbiter().getSecondName().concat(" " + tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass());
-            } else {
-                mainArbiter = tournamentEntity.getOtherMainArbiter().getSecondName().concat(" " + tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass());
-            }
+            mainArbiter = tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getSecondName();
+            mainArbiterClass = tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass();
+            mainArbiterClass = getArbiterClass(mainArbiterClass);
         } else {
-            mainArbiter = "Nie wskazano";
+            if (tournamentEntity.getOtherMainArbiter() != null) {
+                mainArbiter = tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getSecondName();
+                mainArbiterClass = tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass();
+                mainArbiterClass = getArbiterClass(mainArbiterClass);
+            } else {
+                mainArbiter = "Nie Wskazano";
+                mainArbiterClass = "";
+            }
         }
 
-        Paragraph mainArbiterOnTournament = new Paragraph(mainArbiter, font(12, 0));
+        Paragraph mainArbiterOnTournament = new Paragraph(mainArbiter + " " + mainArbiterClass, font(12, 0));
 
         String commissionRTSArbiter;
+        String commissionRTSArbiterClass;
 
-        if (tournamentEntity.getMainArbiter() != null) {
-            if (tournamentEntity.getCommissionRTSArbiter() != null) {
-                commissionRTSArbiter = tournamentEntity.getCommissionRTSArbiter().getSecondName().concat(" " + tournamentEntity.getCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getCommissionRTSArbiter().getMemberPermissions().getArbiterClass());
-            } else {
-                commissionRTSArbiter = tournamentEntity.getOtherCommissionRTSArbiter().getSecondName().concat(" " + tournamentEntity.getOtherCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getOtherCommissionRTSArbiter().getPermissionsEntity().getArbiterClass());
-            }
+        if (tournamentEntity.getCommissionRTSArbiter() != null) {
+            commissionRTSArbiter = tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getSecondName();
+            commissionRTSArbiterClass = tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass();
+            commissionRTSArbiterClass = getArbiterClass(commissionRTSArbiterClass);
         } else {
-            commissionRTSArbiter = "Nie wskazano";
+            if (tournamentEntity.getOtherCommissionRTSArbiter() != null) {
+                commissionRTSArbiter = tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getSecondName();
+                commissionRTSArbiterClass = tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass();
+                commissionRTSArbiterClass = getArbiterClass(commissionRTSArbiterClass);
+            } else {
+                commissionRTSArbiter = "Nie Wskazano";
+                commissionRTSArbiterClass = "";
+            }
         }
 
-        Paragraph commissionRTSArbiterOnTournament = new Paragraph(commissionRTSArbiter, font(12, 0));
+        Paragraph commissionRTSArbiterOnTournament = new Paragraph(commissionRTSArbiter + " " + commissionRTSArbiterClass, font(12, 0));
 
         Paragraph others = new Paragraph("\nSędziowie Stanowiskowi\n", font(12, 0));
         Paragraph others1 = new Paragraph("\nSędziowie Biura Obliczeń\n", font(12, 0));
@@ -1604,7 +1735,9 @@ public class FilesService {
         List<MemberEntity> arbitersList = tournamentEntity.getArbitersList();
         if (arbitersList.size() > 0) {
             for (MemberEntity entity : arbitersList) {
-                Paragraph otherArbiter = new Paragraph(entity.getSecondName().concat(" " + entity.getFirstName() + " " + entity.getMemberPermissions().getArbiterClass()), font(12, 0));
+                String arbiterClass = entity.getMemberPermissions().getArbiterClass();
+                arbiterClass = getArbiterClass(arbiterClass);
+                Paragraph otherArbiter = new Paragraph(entity.getFirstName().concat(" " + entity.getSecondName() + " " + arbiterClass), font(12, 0));
                 document.add(otherArbiter);
             }
         }
@@ -1613,8 +1746,10 @@ public class FilesService {
         if (otherArbitersList.size() > 0) {
 
             for (OtherPersonEntity personEntity : otherArbitersList) {
-                Paragraph otherPersonArbiter = new Paragraph(personEntity.getSecondName().concat(" " + personEntity.getFirstName() + " " + personEntity.getPermissionsEntity().getArbiterClass()), font(12, 0));
-                document.add(otherPersonArbiter);
+                String arbiterClass = personEntity.getPermissionsEntity().getArbiterClass();
+                arbiterClass = getArbiterClass(arbiterClass);
+                Paragraph otherArbiters = new Paragraph(personEntity.getFirstName().concat(" " + personEntity.getSecondName() + " " + arbiterClass), font(12, 0));
+                document.add(otherArbiters);
             }
 
         }
@@ -1626,7 +1761,9 @@ public class FilesService {
         List<MemberEntity> arbitersRTSList = tournamentEntity.getArbitersRTSList();
         if (arbitersRTSList.size() > 0) {
             for (MemberEntity entity : arbitersRTSList) {
-                Paragraph otherRTSArbiter = new Paragraph(entity.getSecondName().concat(" " + entity.getFirstName() + " " + entity.getMemberPermissions().getArbiterClass()), font(12, 0));
+                String arbiterClass = entity.getMemberPermissions().getArbiterClass();
+                arbiterClass = getArbiterClass(arbiterClass);
+                Paragraph otherRTSArbiter = new Paragraph(entity.getFirstName().concat(" " + entity.getSecondName() + " " + arbiterClass), font(12, 0));
                 document.add(otherRTSArbiter);
             }
         }
@@ -1634,7 +1771,9 @@ public class FilesService {
         List<OtherPersonEntity> otherArbitersRTSList = tournamentEntity.getOtherArbitersRTSList();
         if (otherArbitersRTSList.size() > 0) {
             for (OtherPersonEntity personEntity : otherArbitersRTSList) {
-                Paragraph otherPersonRTSArbiter = new Paragraph(personEntity.getSecondName().concat(" " + personEntity.getFirstName() + " " + personEntity.getPermissionsEntity().getArbiterClass()), font(12, 0));
+                String arbiterClass = personEntity.getPermissionsEntity().getArbiterClass();
+                arbiterClass = getArbiterClass(arbiterClass);
+                Paragraph otherPersonRTSArbiter = new Paragraph(personEntity.getFirstName().concat(" " + personEntity.getSecondName() + " " + arbiterClass), font(12, 0));
                 document.add(otherPersonRTSArbiter);
             }
         }
@@ -1647,6 +1786,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1753,6 +1893,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1872,6 +2013,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1981,6 +2123,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -1993,26 +2136,18 @@ public class FilesService {
 
     }
 
-    public FilesEntity getGunRegistry() throws IOException, DocumentException {
+    public FilesEntity getGunRegistry(List<String> guns) throws IOException, DocumentException {
 
 
         String fileName = "Lista_broni_w_magazynie_na_dzień" + LocalDate.now() + ".pdf";
 
-        Document document = new Document(PageSize.A4.rotate());
+        Document document = new Document(PageSize.A4);
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
-        int pageNumber = 0;
 
-        String minute;
-        if (LocalTime.now().getMinute() < 10) {
-            minute = "0" + LocalTime.now().getMinute();
-        } else {
-            minute = String.valueOf(LocalTime.now().getMinute());
-        }
-        String now = LocalTime.now().getHour() + ":" + minute;
         Paragraph title = new Paragraph("Lista Broni w Magazynie".toUpperCase(), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
@@ -2021,14 +2156,14 @@ public class FilesService {
         document.add(newLine);
 
         float[] pointColumnWidths = {4F, 16F, 10F, 10F, 10F, 10F, 10F};
-
-        Paragraph lp = new Paragraph("Lp", font(12, 0));
-        Paragraph modelName = new Paragraph("Marka i Model", font(12, 0));
-        Paragraph caliberAndProductionYear = new Paragraph("Kaliber i rok produkcji", font(12, 0));
-        Paragraph serialNumber = new Paragraph("Numer i seria", font(12, 0));
-        Paragraph recordInEvidenceBook = new Paragraph("Poz. z książki ewidencji", font(12, 0));
-        Paragraph numberOfMagazines = new Paragraph("Magazynki", font(12, 0));
-        Paragraph gunCertificateSerialNumber = new Paragraph("Numer świadectwa", font(12, 0));
+        int tableContentSize = 10;
+        Paragraph lp = new Paragraph("Lp", font(tableContentSize, 0));
+        Paragraph modelName = new Paragraph("Marka i Model", font(tableContentSize, 0));
+        Paragraph caliberAndProductionYear = new Paragraph("Kaliber i rok produkcji", font(tableContentSize, 0));
+        Paragraph serialNumber = new Paragraph("Numer i seria", font(tableContentSize, 0));
+        Paragraph recordInEvidenceBook = new Paragraph("Poz. z książki ewidencji", font(tableContentSize, 0));
+        Paragraph numberOfMagazines = new Paragraph("Magazynki", font(tableContentSize, 0));
+        Paragraph gunCertificateSerialNumber = new Paragraph("Numer świadectwa", font(tableContentSize, 0));
 
 
         PdfPTable titleTable = new PdfPTable(pointColumnWidths);
@@ -2066,14 +2201,24 @@ public class FilesService {
         titleTable.addCell(numberOfMagazinesCell);
         titleTable.addCell(gunCertificateSerialNumberCell);
 
-        document.add(titleTable);
 
         List<String> list = new ArrayList<>();
-        List<GunStoreEntity> all = gunStoreRepository.findAll();
-        all.sort(Comparator.comparing(GunStoreEntity::getTypeName));
-        all.forEach(e -> list.add(e.getTypeName()));
+
+        for (int i = 0; i < guns.size(); i++) {
+            int finalI = i;
+            GunStoreEntity gunStoreEntity = gunStoreRepository.findAll().stream().filter(f -> f.getUuid().equals(guns.get(finalI))).findFirst().orElseThrow(EntityNotFoundException::new);
+            if (!gunStoreEntity.getGunEntityList().isEmpty()) {
+                list.add(gunStoreEntity.getTypeName());
+            }
+            list.sort(String::compareTo);
+        }
 
         for (int i = 0; i < list.size(); i++) {
+            Paragraph gunTypeName = new Paragraph(list.get(i), font(12, 1));
+            gunTypeName.setAlignment(1);
+            document.add(gunTypeName);
+            document.add(newLine);
+            document.add(titleTable);
 
             int finalI = i;
             List<GunEntity> collect = gunRepository.findAll()
@@ -2082,31 +2227,27 @@ public class FilesService {
                     .sorted(Comparator.comparing(GunEntity::getCaliber).thenComparing(GunEntity::getModelName))
                     .collect(Collectors.toList());
             if (collect.size() > 0) {
-                Paragraph gunTypeName = new Paragraph(list.get(i), font(12, 1));
-                gunTypeName.setAlignment(1);
-                document.add(gunTypeName);
-                document.add(newLine);
 
                 for (int j = 0; j < collect.size(); j++) {
-
+                    int contentSize = 8;
                     GunEntity gun = collect.get(j);
 
                     PdfPTable gunTable = new PdfPTable(pointColumnWidths);
                     gunTable.setWidthPercentage(100);
 
-                    Paragraph lpGun = new Paragraph(String.valueOf(j + 1), font(12, 0));
-                    Paragraph modelNameGun = new Paragraph(gun.getModelName(), font(12, 0));
+                    Paragraph lpGun = new Paragraph(String.valueOf(j + 1), font(contentSize, 0));
+                    Paragraph modelNameGun = new Paragraph(gun.getModelName(), font(contentSize, 0));
                     Paragraph caliberAndProductionYearGun;
                     if (gun.getProductionYear() != null && !gun.getProductionYear().isEmpty() && !gun.getProductionYear().equals("null")) {
-                        caliberAndProductionYearGun = new Paragraph(gun.getCaliber() + "\nrok " + gun.getProductionYear(), font(12, 0));
+                        caliberAndProductionYearGun = new Paragraph(gun.getCaliber() + "\nrok " + gun.getProductionYear(), font(contentSize, 0));
 
                     } else {
-                        caliberAndProductionYearGun = new Paragraph(gun.getCaliber(), font(12, 0));
+                        caliberAndProductionYearGun = new Paragraph(gun.getCaliber(), font(contentSize, 0));
                     }
-                    Paragraph serialNumberGun = new Paragraph(gun.getSerialNumber(), font(12, 0));
-                    Paragraph recordInEvidenceBookGun = new Paragraph(gun.getRecordInEvidenceBook(), font(12, 0));
-                    Paragraph numberOfMagazinesGun = new Paragraph(gun.getNumberOfMagazines(), font(12, 0));
-                    Paragraph gunCertificateSerialNumberGun = new Paragraph(gun.getGunCertificateSerialNumber(), font(12, 0));
+                    Paragraph serialNumberGun = new Paragraph(gun.getSerialNumber(), font(contentSize, 0));
+                    Paragraph recordInEvidenceBookGun = new Paragraph(gun.getRecordInEvidenceBook(), font(contentSize, 0));
+                    Paragraph numberOfMagazinesGun = new Paragraph(gun.getNumberOfMagazines(), font(contentSize, 0));
+                    Paragraph gunCertificateSerialNumberGun = new Paragraph(gun.getGunCertificateSerialNumber(), font(contentSize, 0));
 
                     PdfPCell lpGunCell = new PdfPCell(lpGun);
                     PdfPCell modelNameGunCell = new PdfPCell(modelNameGun);
@@ -2138,9 +2279,7 @@ public class FilesService {
                     gunTable.addCell(recordInEvidenceBookGunCell);
                     gunTable.addCell(numberOfMagazinesGunCell);
                     gunTable.addCell(gunCertificateSerialNumberGunCell);
-                    if (writer.getPageNumber() > pageNumber) {
-                        writer.setPageEvent(new PageStamper());
-                    }
+
                     document.add(gunTable);
                 }
                 document.add(newLine);
@@ -2148,7 +2287,6 @@ public class FilesService {
             }
 
         }
-        writer.setPageEvent(new PageStamper());
         document.close();
 
 
@@ -2157,6 +2295,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -2314,6 +2453,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -2438,6 +2578,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -2604,6 +2745,7 @@ public class FilesService {
                 .name(fileName)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
                 .build();
 
         FilesEntity filesEntity =
@@ -2706,6 +2848,92 @@ public class FilesService {
         return day + " " + month + " " + year;
 
 
+    }
+
+
+    @NotNull
+    private String getArbiterClass(String arbiterClass) {
+        switch (arbiterClass) {
+            case "Klasa 3":
+                arbiterClass = "Sędzia Klasy Trzeciej";
+                break;
+            case "Klasa 2":
+                arbiterClass = "Sędzia Klasy Drugiej";
+                break;
+            case "Klasa 1":
+                arbiterClass = "Sędzia Klasy Pierwszej";
+                break;
+            case "Klasa Państwowa":
+                arbiterClass = "Sędzia Klasy Państwowej";
+                break;
+            case "Klasa Międzynarodowa":
+                arbiterClass = "Sędzia Klasy Międzynarodowej";
+                break;
+            default:
+                LOG.info("Nie znaleziono Klasy Sędziowskiej");
+
+        }
+        return arbiterClass;
+    }
+
+    public List<FilesModel> getAllFilesList() {
+
+        List<FilesModel> list = new ArrayList<>();
+
+        filesRepository.findAll().stream().filter(f -> f.getDate() != null).forEach(e -> list.add(
+                FilesModel.builder()
+                        .uuid(e.getUuid())
+                        .date(e.getDate())
+                        .name(e.getName())
+                        .type(e.getType())
+                        .time(e.getTime())
+                        .size(e.getSize())
+                        .build()));
+        list.sort(Comparator.comparing(FilesModel::getDate).reversed());
+        filesRepository.findAll().stream().filter(f -> f.getDate() == null).forEach(e -> list.add(
+                FilesModel.builder()
+                        .uuid(e.getUuid())
+                        .date(e.getDate())
+                        .name(e.getName())
+                        .type(e.getType())
+                        .time(e.getTime())
+                        .size(e.getSize())
+                        .build()));
+
+        return list;
+
+    }
+
+    public FilesEntity getFile(String uuid) {
+        return filesRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
+    }
+
+    public boolean store(MultipartFile file) throws IOException {
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(file.getContentType()))
+                .data(file.getBytes())
+                .size(file.getSize())
+                .build();
+        createFileEntity(build);
+
+        return true;
+    }
+
+    public List<FilesModel> getAllImages() {
+        List<FilesEntity> image = filesRepository.findAll().stream().filter(f -> f.getType().contains("image")).collect(Collectors.toList());
+
+        List<FilesModel> model = new ArrayList<>();
+
+        image.forEach(e -> {
+                    FilesModel map = Mapping.map(e);
+                    gunRepository.findAll().stream().filter(f -> f.getImgUUID() != null).filter(f -> f.getImgUUID().equals(e.getUuid())).findFirst().ifPresent(gunEntity -> map.setGun(Mapping.map(gunEntity)));
+                    model.add(map);
+                }
+        );
+        model.sort(Comparator.comparing(FilesModel::getDate).thenComparing(FilesModel::getTime).reversed());
+        return model;
     }
 
     static class PageStamper extends PdfPageEventHelper {

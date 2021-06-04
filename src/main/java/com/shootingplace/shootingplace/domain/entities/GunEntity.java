@@ -42,6 +42,15 @@ public class GunEntity {
     private String comment;
 
     private boolean inStock;
+    private String imgUUID;
+
+    public String getImgUUID() {
+        return imgUUID;
+    }
+
+    public void setImgUUID(String imgUUID) {
+        this.imgUUID = imgUUID;
+    }
 
     public String getUuid() {
         return uuid;

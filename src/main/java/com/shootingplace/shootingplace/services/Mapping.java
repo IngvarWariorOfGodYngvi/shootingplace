@@ -414,17 +414,25 @@ public class Mapping {
 
     public static FilesEntity map(FilesModel f) {
         return Optional.ofNullable(f).map(e -> FilesEntity.builder()
+                .uuid(e.getUuid())
                 .name(e.getName())
                 .data(e.getData())
                 .type(e.getType())
+                .date(e.getDate())
+                .time(e.getTime())
+                .size(e.getSize())
                 .build()).orElse(null);
     }
 
     public static FilesModel map(FilesEntity f) {
         return Optional.ofNullable(f).map(e -> FilesModel.builder()
+                .uuid(e.getUuid())
                 .name(e.getName())
                 .data(e.getData())
                 .type(e.getType())
+                .date(e.getDate())
+                .time(e.getTime())
+                .size(e.getSize())
                 .build()).orElse(null);
     }
 
@@ -515,6 +523,23 @@ public class Mapping {
     static Club map(ClubEntity c) {
         return Club.builder()
                 .name(c.getName())
+                .build();
+    }
+
+    static Gun map(GunEntity c) {
+        return Gun.builder()
+                .additionalEquipment(c.getAdditionalEquipment())
+                .basisForPurchaseOrAssignment(c.getBasisForPurchaseOrAssignment())
+                .caliber(c.getCaliber())
+                .comment(c.getComment())
+                .gunCertificateSerialNumber(c.getGunCertificateSerialNumber())
+                .gunType(c.getGunType())
+                .modelName(c.getModelName())
+                .numberOfMagazines(c.getNumberOfMagazines())
+                .productionYear(c.getProductionYear())
+                .recordInEvidenceBook(c.getRecordInEvidenceBook())
+                .serialNumber(c.getSerialNumber())
+                .uuid(c.getUuid())
                 .build();
     }
 }

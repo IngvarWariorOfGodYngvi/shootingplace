@@ -23,7 +23,7 @@ public class GunStoreEntity {
     private String typeName;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @OrderBy("gunType DESC")
+    @OrderBy("caliber ASC, modelName ASC")
     private List<GunEntity> gunEntityList;
 
     public String getUuid() {

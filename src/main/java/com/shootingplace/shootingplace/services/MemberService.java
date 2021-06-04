@@ -565,6 +565,7 @@ public class MemberService {
         all.sort(Comparator.comparing(MemberEntity::getSecondName).thenComparing(MemberEntity::getFirstName));
         all.stream()
                 .filter(MemberEntity::getAdult)
+                .filter(MemberEntity::getActive)
                 .filter(f -> f.getShootingPatent().getPatentNumber() == null || f.getShootingPatent().getPatentNumber().isEmpty()).forEach(e -> {
             if ((e.getEmail() != null && !e.getEmail().isEmpty()) && !e.getErased()) {
                 list.add(e.getEmail().concat(";"));
@@ -579,6 +580,7 @@ public class MemberService {
         all.sort(Comparator.comparing(MemberEntity::getSecondName).thenComparing(MemberEntity::getFirstName));
         all.stream()
                 .filter(MemberEntity::getAdult)
+                .filter(MemberEntity::getActive)
                 .filter(f -> f.getShootingPatent().getPatentNumber() == null || f.getShootingPatent().getPatentNumber().isEmpty()).forEach(e -> {
             if ((e.getPhoneNumber() != null && !e.getPhoneNumber().isEmpty()) && !e.getErased()) {
                 String phone = e.getPhoneNumber();
@@ -662,10 +664,9 @@ public class MemberService {
 
         List<String> list = new ArrayList<>();
         memberRepository.findAll().stream()
-                .filter(f -> f.getErased().equals(false))
-                .filter(f -> f.getAdult().equals(true))
+                .filter(f -> !f.getErased())
                 .forEach(e -> {
-                    if (e.getActive().equals(false)) {
+                    if (!e.getActive()) {
                         list.add(e.getSecondName().concat(" " + e.getFirstName() + " BRAK SKŁADEK " + " leg. " + e.getLegitimationNumber()));
                     } else {
                         list.add(e.getSecondName().concat(" " + e.getFirstName() + " leg. " + e.getLegitimationNumber()));

@@ -127,5 +127,15 @@ public class ArmoryController {
             return ResponseEntity.badRequest().build();
     }
 
+    @PatchMapping("/addImageToGun")
+    public ResponseEntity<?> addImageToGun(@RequestParam String gunUUID, @RequestParam String fileUUID) {
+
+        if (armoryService.addImageToGun(gunUUID, fileUUID)) {
+            return ResponseEntity.ok("Przypisano zdjęcie");
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
 
 }
