@@ -40,6 +40,7 @@ public class AmmoEvidenceService {
                 .findById(evidenceUUID)
                 .orElseThrow(EntityNotFoundException::new);
         ammoEvidenceEntity.setOpen(false);
+        ammoEvidenceEntity.setForceOpen(false);
         ammoEvidenceRepository.saveAndFlush(ammoEvidenceEntity);
         LOG.info("zamknięto");
         return true;
@@ -49,12 +50,15 @@ public class AmmoEvidenceService {
         List<AmmoEvidenceEntity> all = ammoEvidenceRepository.findAll().stream().filter(f -> !f.isOpen()).collect(Collectors.toList());
         List<AmmoDTO> allDTO = new ArrayList<>();
         all.forEach(e -> allDTO.add(Mapping.map1(e)));
-        allDTO.sort(Comparator.comparing(AmmoDTO::getDate).reversed());
+        allDTO.sort(Comparator.comparing(AmmoDTO::getDate).thenComparing(AmmoDTO::getNumber).reversed());
         return allDTO;
     }
 
     public boolean openEvidence(String evidenceUUID, String pinCode) {
-        if (ammoEvidenceRepository.findAll().stream().anyMatch(AmmoEvidenceEntity::isOpen)) {
+        String x ="abc",y = "abc";
+        if(new Long(42) == 42L)
+        System.out.println(x);
+        ;if (ammoEvidenceRepository.findAll().stream().anyMatch(AmmoEvidenceEntity::isOpen)) {
             return false;
 
         } else {
@@ -62,10 +66,30 @@ public class AmmoEvidenceService {
                     .findById(evidenceUUID)
                     .orElseThrow(EntityNotFoundException::new);
             ammoEvidenceEntity.setOpen(true);
+            ammoEvidenceEntity.setForceOpen(true);
             ammoEvidenceRepository.saveAndFlush(ammoEvidenceEntity);
             LOG.info("otworzono");
             changeHistoryService.addRecordToChangeHistory(pinCode, ammoEvidenceEntity.getClass().getSimpleName() + " openAmmoEvidenceList", evidenceUUID);
             return true;
         }
+    }
+
+    public String checkAnyOpenEvidence() {
+        // send name of colours with -> \" \" <-
+        // primary
+        // secondary
+        // accent
+        // warning
+        // negative
+        // rest of colours
+        String message = "\"primary\"";
+
+        if (ammoEvidenceRepository.findAll().stream().anyMatch(f -> f.isOpen() && !f.isForceOpen())) {
+            message = "\"negative\"";
+        }
+        if(ammoEvidenceRepository.findAll().stream().anyMatch(f -> f.isOpen() && f.isForceOpen())){
+            message = "\"red\"";
+        }
+        return message;
     }
 }

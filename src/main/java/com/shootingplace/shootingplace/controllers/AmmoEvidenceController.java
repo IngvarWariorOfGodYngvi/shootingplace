@@ -59,6 +59,11 @@ public class AmmoEvidenceController {
         return ResponseEntity.ok().body(ammoEvidenceService.getClosedEvidences());
     }
 
+    @GetMapping("/checkAnyOpenEvidence")
+    public ResponseEntity<?> checkAnyOpenEvidence(){
+        return ResponseEntity.ok().body(ammoEvidenceService.checkAnyOpenEvidence());
+    }
+
     @PatchMapping("/ammo")
     public ResponseEntity<?> closeEvidence(@RequestParam String evidenceUUID) {
         if (ammoEvidenceService.closeEvidence(evidenceUUID)) {

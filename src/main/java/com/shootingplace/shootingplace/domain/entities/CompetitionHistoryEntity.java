@@ -26,6 +26,8 @@ public class CompetitionHistoryEntity {
 
     private String discipline;
 
+    private String[] disciplines;
+
     private LocalDate date;
 
     private boolean WZSS;
@@ -72,5 +74,13 @@ public class CompetitionHistoryEntity {
 
     public void setWZSS(boolean WZSS) {
         this.WZSS = WZSS;
+    }
+
+    public String[] getDisciplines() {
+        return disciplines;
+    }
+
+    public void setDisciplines(String[] disciplines) {
+        this.disciplines = disciplines;
     }
 }

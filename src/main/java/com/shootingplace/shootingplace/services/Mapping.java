@@ -334,6 +334,7 @@ public class Mapping {
                 .attachedToTournament(c.getAttachedToTournament())
                 .scoreList(c.getScoreList().stream().map(Mapping::map).collect(Collectors.toList()))
                 .discipline(c.getDiscipline())
+                .disciplines(c.getDisciplines())
                 .countingMethod(c.getCountingMethod())
                 .type(c.getType())
                 .numberOfShots(c.getNumberOfShots())
@@ -489,6 +490,7 @@ public class Mapping {
                 .memberEntity(a.getMemberEntity())
                 .otherPersonEntity(a.getOtherPersonEntity())
                 .name(a.getUserName())
+                .date(a.getDate())
                 .build()).orElse(null);
     }
 
@@ -498,6 +500,9 @@ public class Mapping {
                 .counter(a.getCounter())
                 .memberUUID(a.getMemberUUID())
                 .caliberUUID(a.getCaliberUUID())
+                .date(a.getDate())
+                .userName(a.getMemberName())
+                .otherPersonEntityID(null)
                 .build()).orElse(null);
 
     }

@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import java.time.LocalDate;
 
 @Entity
 @AllArgsConstructor
@@ -32,6 +33,16 @@ public class AmmoUsedToEvidenceEntity {
     private OtherPersonEntity otherPersonEntity;
 
     private String name;
+
+    private LocalDate date;
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
 
     public String getUuid() {
         return uuid;

@@ -2,9 +2,10 @@ package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.ArbiterClass;
-import com.shootingplace.shootingplace.domain.enums.Discipline;
 import com.shootingplace.shootingplace.domain.enums.ErasedType;
-import com.shootingplace.shootingplace.domain.models.*;
+import com.shootingplace.shootingplace.domain.models.History;
+import com.shootingplace.shootingplace.domain.models.Member;
+import com.shootingplace.shootingplace.domain.models.MemberDTO;
 import com.shootingplace.shootingplace.repositories.*;
 import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +17,10 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -502,41 +506,49 @@ public class MemberService {
                 .filter(f -> f.getLegitimationNumber().equals(number))
                 .findFirst()
                 .orElseThrow(EntityNotFoundException::new);
-
-        HistoryEntity historyEntity = memberEntity
-                .getHistory();
-        List<CompetitionHistoryEntity> competitionHistory = historyEntity.getCompetitionHistory();
-
-        int licenseYear;
-        if (memberEntity.getLicense().getValidThru() != null) {
-            licenseYear = memberEntity.getLicense().getValidThru().getYear();
-        } else {
-
-            licenseYear = LocalDate.now().getYear();
-        }
-        List<CompetitionHistoryEntity> collectPistol = competitionHistory
-                .stream()
-                .filter(f -> f.getDiscipline().equals(Discipline.PISTOL.getName()))
-                .filter(f -> f.getDate().getYear() == licenseYear)
-                .collect(Collectors.toList());
-
-        List<CompetitionHistoryEntity> collectRifle = competitionHistory
-                .stream()
-                .filter(f -> f.getDiscipline().equals(Discipline.RIFLE.getName()))
-                .filter(f -> f.getDate().getYear() == licenseYear)
-                .collect(Collectors.toList());
-
-        List<CompetitionHistoryEntity> collectShotgun = competitionHistory
-                .stream()
-                .filter(f -> f.getDiscipline().equals(Discipline.SHOTGUN.getName()))
-                .filter(f -> f.getDate().getYear() == licenseYear)
-                .collect(Collectors.toList());
-
-        historyEntity.setPistolCounter(collectPistol.size());
-        historyEntity.setRifleCounter(collectRifle.size());
-        historyEntity.setShotgunCounter(collectShotgun.size());
-
-        historyRepository.saveAndFlush(historyEntity);
+//
+//        HistoryEntity historyEntity = memberEntity
+//                .getHistory();
+//        List<CompetitionHistoryEntity> competitionHistory = historyEntity.getCompetitionHistory();
+//
+//        int licenseYear;
+//        if (memberEntity.getLicense().getValidThru() != null) {
+//            licenseYear = memberEntity.getLicense().getValidThru().getYear();
+//        } else {
+//
+//            licenseYear = LocalDate.now().getYear();
+//        }
+//
+//        List<String> list1 = new ArrayList<>();
+//        for (int i = 0; i < competitionHistoryEntity.getDisciplines().length; i++) {
+//            String[] disciplines = competitionHistoryEntity.getDisciplines();
+//            String s = disciplines[i];
+//            list1.add(s);
+//        }
+//
+//        List<CompetitionHistoryEntity> collectPistol = competitionHistory
+//                .stream()
+//                .filter(f -> list1.contains(Discipline.PISTOL.getName()) || (f.getDiscipline() != null && f.getDiscipline().equals(Discipline.PISTOL.getName())))
+//                .filter(f -> f.getDate().getYear() == licenseYear)
+//                .collect(Collectors.toList());
+//
+//        List<CompetitionHistoryEntity> collectRifle = competitionHistory
+//                .stream()
+//                .filter(f -> f.getDiscipline().equals(Discipline.RIFLE.getName()))
+//                .filter(f -> f.getDate().getYear() == licenseYear)
+//                .collect(Collectors.toList());
+//
+//        List<CompetitionHistoryEntity> collectShotgun = competitionHistory
+//                .stream()
+//                .filter(f -> f.getDiscipline().equals(Discipline.SHOTGUN.getName()))
+//                .filter(f -> f.getDate().getYear() == licenseYear)
+//                .collect(Collectors.toList());
+//
+//        historyEntity.setPistolCounter(collectPistol.size());
+//        historyEntity.setRifleCounter(collectRifle.size());
+//        historyEntity.setShotgunCounter(collectShotgun.size());
+//
+//        historyRepository.saveAndFlush(historyEntity);
 
         return memberEntity;
 

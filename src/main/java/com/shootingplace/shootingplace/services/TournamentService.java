@@ -508,6 +508,7 @@ public class TournamentService {
                         .attachedToTournament(tournamentEntity.getUuid())
                         .date(tournamentEntity.getDate())
                         .discipline(competition.getDiscipline())
+                        .disciplines(competition.getDisciplines())
                         .countingMethod(competition.getCountingMethod())
                         .type(competition.getType())
                         .numberOfShots(competition.getNumberOfShots())
@@ -767,5 +768,9 @@ public class TournamentService {
             return true;
 
         }
+    }
+
+    public Boolean checkAnyOpenTournament() {
+        return tournamentRepository.findAll().stream().anyMatch(TournamentEntity::isOpen);
     }
 }

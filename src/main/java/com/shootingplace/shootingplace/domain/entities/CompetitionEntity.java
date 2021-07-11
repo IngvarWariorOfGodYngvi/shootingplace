@@ -24,6 +24,8 @@ public class CompetitionEntity {
 
     private String discipline;
 
+    private String[] disciplines;
+
     private Integer numberOfShots;
 
     private String type;
@@ -83,5 +85,13 @@ public class CompetitionEntity {
 
     public void setOrdering(Integer ordering) {
         this.ordering = ordering;
+    }
+
+    public String[] getDisciplines() {
+        return disciplines;
+    }
+
+    public void setDisciplines(String[] disciplines) {
+        this.disciplines = disciplines;
     }
 }

@@ -6,6 +6,8 @@ import com.shootingplace.shootingplace.domain.entities.AmmoUsedToEvidenceEntity;
 import com.shootingplace.shootingplace.repositories.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.repositories.AmmoInEvidenceRepository;
 import com.shootingplace.shootingplace.repositories.AmmoUsedToEvidenceEntityRepository;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -18,24 +20,26 @@ import java.util.stream.Collectors;
 public class AmmoInEvidenceService {
     private final AmmoInEvidenceRepository ammoInEvidenceRepository;
     private final AmmoUsedToEvidenceEntityRepository ammoUsedToEvidenceEntityRepository;
+    private final ArmoryService armoryService;
 
     private final AmmoEvidenceRepository ammoEvidenceRepository;
 
-    public AmmoInEvidenceService(AmmoInEvidenceRepository ammoInEvidenceRepository, AmmoUsedToEvidenceEntityRepository ammoUsedToEvidenceEntityRepository, AmmoEvidenceRepository ammoEvidenceRepository) {
+    private final Logger LOG = LogManager.getLogger();
+
+    public AmmoInEvidenceService(AmmoInEvidenceRepository ammoInEvidenceRepository, AmmoUsedToEvidenceEntityRepository ammoUsedToEvidenceEntityRepository, ArmoryService armoryService, AmmoEvidenceRepository ammoEvidenceRepository) {
         this.ammoInEvidenceRepository = ammoInEvidenceRepository;
         this.ammoUsedToEvidenceEntityRepository = ammoUsedToEvidenceEntityRepository;
+        this.armoryService = armoryService;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
     }
 
     boolean addAmmoUsedEntityToAmmoInEvidenceEntity(AmmoUsedToEvidenceEntity ammoUsedToEvidenceEntity) {
 
         List<AmmoEvidenceEntity> collect = ammoEvidenceRepository.findAll().stream().filter(AmmoEvidenceEntity::isOpen).collect(Collectors.toList());
-
 //      Nie znaleziono żadnej listy
         if (collect.size() < 1) {
             if (ammoUsedToEvidenceEntity.getCounter() < 0) {
-                System.out.println("nie można dodać ujemnej wartości");
-                return false;
+                LOG.info("nie można dodać ujemnej wartości");
             } else {
 //                nadawanie numeru listy
                 int number;
@@ -70,6 +74,7 @@ public class AmmoInEvidenceService {
 
                 buildEvidence.getAmmoInEvidenceEntityList().add(build);
                 ammoEvidenceRepository.saveAndFlush(buildEvidence);
+                LOG.info("otworzono nową listę");
             }
 
         }
@@ -99,7 +104,7 @@ public class AmmoInEvidenceService {
                 List<AmmoUsedToEvidenceEntity> ammoUsedToEvidenceEntityList = ammoInEvidenceEntity.getAmmoUsedToEvidenceEntityList();
                 if (ammoUsedToEvidenceEntityList.stream().noneMatch(f -> f.getName().equals(ammoUsedToEvidenceEntity.getName()))) {
                     if (ammoUsedToEvidenceEntity.getCounter() <= 0) {
-                        System.out.println("nie można dodać ujemnej wartości");
+                        LOG.info("nie można dodać ujemnej wartości");
                         return false;
                     } else {
                         ammoUsedToEvidenceEntityList.add(ammoUsedToEvidenceEntity);
@@ -117,6 +122,8 @@ public class AmmoInEvidenceService {
                             .findFirst()
                             .orElseThrow(EntityNotFoundException::new);
                     if (ammoUsedToEvidenceEntity1.getCounter() + ammoUsedToEvidenceEntity.getCounter() <= 0) {
+//                   to jest to co należy dodać do magazynu amunicji     -ammoUsedToEvidenceEntity1.getCounter()
+                        armoryService.substratAmmo(ammoUsedToEvidenceEntity1.getCaliberUUID(), -ammoUsedToEvidenceEntity1.getCounter());
                         ammoUsedToEvidenceEntity1.setCounter(-ammoUsedToEvidenceEntity1.getCounter());
                     } else {
                         ammoUsedToEvidenceEntity1.setCounter(ammoUsedToEvidenceEntity1.getCounter() + ammoUsedToEvidenceEntity.getCounter());

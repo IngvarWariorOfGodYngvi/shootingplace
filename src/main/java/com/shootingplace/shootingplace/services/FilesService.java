@@ -1092,7 +1092,15 @@ public class FilesService {
         if (reason.equals(choice[1])) {
             pesel = " PESEL: " + memberEntity.getPesel();
         }
-        Paragraph par1 = new Paragraph("" + getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + pesel + " jest czynnym członkiem Klubu Strzeleckiego „Dziesiątka” LOK w Łodzi. Numer legitymacji klubowej : " + memberEntity.getLegitimationNumber() + " . " +
+        String sex,word = "";
+        if (getSex(memberEntity.getPesel()).equals("Pani")){
+            sex = "Pani";
+            word = "wystąpiła";
+        }else {
+            sex = "Pan";
+            word = "wystąpił";
+        }
+        Paragraph par1 = new Paragraph("" + sex + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + pesel + " jest czynnym członkiem Klubu Strzeleckiego „Dziesiątka” LOK w Łodzi. Numer legitymacji klubowej : " + memberEntity.getLegitimationNumber() + " . " +
                 "Uczestniczy w zawodach i treningach strzeleckich osiągając bardzo dobre wyniki. " +
                 "Czynnie uczestniczy w życiu Klubu. ", font(12, 0));
         par1.setFirstLineIndent(40);
@@ -1107,7 +1115,7 @@ public class FilesService {
         Paragraph par4 = new Paragraph(club.getFullName() + " jest członkiem Polskiego Związku Strzelectwa Sportowego i posiada Licencję Klubową nr LK-" + club.getLicenseNumber() + ", jest również Członkiem Łódzkiego Związku Strzelectwa Sportowego, zarejestrowany pod numerem ewidencyjnym 6.", font(12, 0));
         par4.setFirstLineIndent(40);
 
-        Paragraph par5 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " wystąpił z prośbą o wydanie niniejszego zaświadczenia, skutkiem którego będzie złożenie wniosku o pozwolenie na broń sportową do celów sportowych. ", font(12, 0));
+        Paragraph par5 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " " + word + " z prośbą o wydanie niniejszego zaświadczenia, skutkiem którego będzie złożenie wniosku o pozwolenie na broń sportową do celów sportowych. ", font(12, 0));
         par5.setFirstLineIndent(40);
 
         Paragraph par6 = new Paragraph("Sporządzono w 2 egz.", font(12, 0));
@@ -2773,10 +2781,25 @@ public class FilesService {
 
     private LocalDate birthDay(String pesel) {
 
-        int year = Integer.parseInt(pesel.substring(0, 2));
-        year += (year < 5) ? 2000 : 1900;
-        int month = Integer.parseInt(pesel.substring(2, 4));
-        if (month > 12) {
+        int year;
+        int month;
+        year = 10 * Integer.parseInt(pesel.substring(0, 1));
+        year += Integer.parseInt(pesel.substring(1, 2));
+        month = 10 * Integer.parseInt(pesel.substring(2, 3));
+        month += Integer.parseInt(pesel.substring(3, 4));
+        if (month > 80 && month < 93) {
+            year += 1800;
+        } else if (month > 0 && month < 13) {
+            year += 1900;
+        } else if (month > 20 && month < 33) {
+            year += 2000;
+        } else if (month > 40 && month < 53) {
+            year += 2100;
+        } else if (month > 60 && month < 73) {
+            year += 2200;
+        }
+
+        if (month > 12 && month < 33) {
             month -= 20;
         }
         int day = Integer.parseInt(pesel.substring(4, 6));
