@@ -28,6 +28,8 @@ public class CompetitionEntity {
 
     private Integer numberOfShots;
 
+    private Integer[] numberOfManyShots;
+
     private String type;
 
     private String countingMethod;
@@ -93,5 +95,13 @@ public class CompetitionEntity {
 
     public void setDisciplines(String[] disciplines) {
         this.disciplines = disciplines;
+    }
+
+    public Integer[] getNumberOfManyShots() {
+        return numberOfManyShots;
+    }
+
+    public void setNumberOfManyShots(Integer[] numberOfManyShots) {
+        this.numberOfManyShots = numberOfManyShots;
     }
 }

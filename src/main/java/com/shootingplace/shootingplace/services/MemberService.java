@@ -38,7 +38,6 @@ public class MemberService {
     private final ClubRepository clubRepository;
     private final ChangeHistoryService changeHistoryService;
     private final ErasedRepository erasedRepository;
-    private final HistoryRepository historyRepository;
     private final ContributionRepository contributionRepository;
     private final Logger LOG = LogManager.getLogger();
 
@@ -55,7 +54,6 @@ public class MemberService {
                          ClubRepository clubRepository,
                          ChangeHistoryService changeHistoryService,
                          ErasedRepository erasedRepository,
-                         HistoryRepository historyRepository,
                          ContributionRepository contributionRepository) {
         this.memberRepository = memberRepository;
         this.addressRepository = addressRepository;
@@ -69,7 +67,6 @@ public class MemberService {
         this.clubRepository = clubRepository;
         this.changeHistoryService = changeHistoryService;
         this.erasedRepository = erasedRepository;
-        this.historyRepository = historyRepository;
         this.contributionRepository = contributionRepository;
     }
 

@@ -531,7 +531,8 @@ public class Mapping {
                 .build();
     }
 
-    static Gun map(GunEntity c) {
+
+    public static Gun map(GunEntity c) {
         return Gun.builder()
                 .additionalEquipment(c.getAdditionalEquipment())
                 .basisForPurchaseOrAssignment(c.getBasisForPurchaseOrAssignment())

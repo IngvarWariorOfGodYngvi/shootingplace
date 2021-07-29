@@ -169,7 +169,7 @@ public class HistoryService {
         HistoryEntity historyEntity = memberRepository.findById(memberUUID)
                 .orElseThrow(EntityNotFoundException::new)
                 .getHistory();
-        if (memberEntity.getActive() && !licenseEntity.isPaid()) {
+        if (!licenseEntity.isPaid()) {
             if (historyEntity.getLicensePaymentHistory() != null) {
                 int dateYear;
                 if (memberEntity.getLicense().getValidThru() != null) {
@@ -275,16 +275,18 @@ public class HistoryService {
         List<CompetitionHistoryEntity> competitionHistory = historyEntity.getCompetitionHistory();
         for (CompetitionHistoryEntity entity : competitionHistory) {
             if (entity.getDisciplines() != null) {
-                String[] disciplines = entity.getDisciplines();
-                for (String s : disciplines) {
-                    if (s.equals(Discipline.PISTOL.getName())) {
-                        pistolC = pistolC + 1;
-                    }
-                    if (s.equals(Discipline.RIFLE.getName())) {
-                        rifleC = rifleC + 1;
-                    }
-                    if (s.equals(Discipline.SHOTGUN.getName())) {
-                        shotgunC = shotgunC + 1;
+                if (entity.getDate().getYear() == licenseYear) {
+                    String[] disciplines = entity.getDisciplines();
+                    for (String s : disciplines) {
+                        if (s.equals(Discipline.PISTOL.getName())) {
+                            pistolC = pistolC + 1;
+                        }
+                        if (s.equals(Discipline.RIFLE.getName())) {
+                            rifleC = rifleC + 1;
+                        }
+                        if (s.equals(Discipline.SHOTGUN.getName())) {
+                            shotgunC = shotgunC + 1;
+                        }
                     }
                 }
             }

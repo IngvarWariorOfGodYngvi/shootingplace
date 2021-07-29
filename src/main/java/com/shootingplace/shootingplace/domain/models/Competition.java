@@ -16,6 +16,7 @@ public class Competition {
     private String[] disciplines;
 
     private Integer numberOfShots;
+    private Integer[] numberOfManyShots;
 
     private String type;
 
@@ -77,5 +78,13 @@ public class Competition {
 
     public void setDisciplines(String[] disciplines) {
         this.disciplines = disciplines;
+    }
+
+    public Integer[] getNumberOfManyShots() {
+        return numberOfManyShots;
+    }
+
+    public void setNumberOfManyShots(Integer[] numberOfManyShots) {
+        this.numberOfManyShots = numberOfManyShots;
     }
 }

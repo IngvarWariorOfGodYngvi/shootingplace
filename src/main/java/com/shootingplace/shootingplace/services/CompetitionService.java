@@ -126,23 +126,17 @@ public class CompetitionService {
             LOG.info("Taka konkurencja już istnieje");
             return false;
         }
-        System.out.println(" dyscyplina " +competition.getDiscipline());
-        System.out.println(" nazwa " + competition.getName());
-        System.out.println(" rodzaj " + competition.getType());
-        System.out.println(" ilość strzałów " + competition.getNumberOfShots());
-        System.out.println(competition.getCountingMethod());
-        System.out.println(Arrays.toString(competition.getDisciplines()));
         if (!competition.getDiscipline().equals("")) {
-            System.out.println("wchodzę");
             if (competition.getDiscipline().equals(Discipline.PISTOL.getName()) || competition.getDiscipline().equals(Discipline.RIFLE.getName()) || competition.getDiscipline().equals(Discipline.SHOTGUN.getName())) {
+
                 CompetitionEntity competitionEntity = CompetitionEntity.builder()
                         .name(competition.getName())
                         .numberOfShots(competition.getNumberOfShots())
+                        .numberOfManyShots(competition.getNumberOfManyShots())
                         .discipline(competition.getDiscipline())
                         .type(competition.getType())
                         .ordering(size)
                         .build();
-                System.out.println("tworzę");
                 if (competition.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                     competitionEntity.setCountingMethod(CountingMethod.NORMAL.getName());
                     LOG.info("Ustawiono metodę liczenia " + CountingMethod.NORMAL.getName());
@@ -164,6 +158,7 @@ public class CompetitionService {
                     .numberOfShots(competition.getNumberOfShots())
                     .discipline(null)
                     .disciplines(competition.getDisciplines())
+                    .numberOfManyShots(competition.getNumberOfManyShots())
                     .type(competition.getType())
                     .ordering(size)
                     .build();

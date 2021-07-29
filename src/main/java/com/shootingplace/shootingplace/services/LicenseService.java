@@ -188,8 +188,7 @@ public class LicenseService {
         LicenseEntity licenseEntity = licenseRepository.findById(memberEntity.getLicense().getUuid()).orElseThrow(EntityNotFoundException::new);
 
 
-        if (memberEntity.getActive()
-                && licenseEntity.getNumber() != null && licenseEntity.isPaid()) {
+        if (licenseEntity.getNumber() != null && licenseEntity.isPaid()) {
             if (LocalDate.now().isAfter(LocalDate.of(licenseEntity.getValidThru().getYear(), 11, 1)) || licenseEntity.getValidThru().isBefore(LocalDate.now())) {
                 licenseEntity.setValidThru(LocalDate.of((licenseEntity.getValidThru().getYear() + 1), 12, 31));
                 licenseEntity.setValid(licenseEntity.getValidThru().getYear() >= LocalDate.now().getYear());
