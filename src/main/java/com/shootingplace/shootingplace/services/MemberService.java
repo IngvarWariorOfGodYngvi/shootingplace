@@ -755,21 +755,71 @@ public class MemberService {
         List<MemberDTO> list = new ArrayList<>();
 
         memberRepository.findAll().stream().filter(f -> !f.getErased()).forEach(e -> list.add(Mapping.map2(e)));
-        list.sort(Comparator.comparing(MemberDTO::getAdult).reversed().thenComparing(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName)));
+        list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
         return list;
     }
 
-    public List<MemberDTO> getAllMemberDTO(boolean adult, boolean active, boolean erase) {
+    public List<MemberDTO> getAllMemberDTO(Boolean adult, Boolean active, Boolean erase) {
         checkMembers();
+        System.out.println("adult " + adult);
+        System.out.println("active " + active);
+        System.out.println("erase " + erase);
 
         List<MemberDTO> list = new ArrayList<>();
 
-        memberRepository.findAll().stream()
-                .filter(f -> f.getErased().equals(erase))
-                .filter(f -> f.getAdult().equals(adult))
-                .filter(f -> f.getActive().equals(active))
-                .forEach(e -> list.add(Mapping.map2(e)));
-        list.sort(Comparator.comparing(MemberDTO::getAdult).reversed().thenComparing(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName)));
+        if (adult == null && !erase) {
+            System.out.println(1);
+            if (active != null) {
+                System.out.println(1.1);
+                memberRepository.findAll().stream()
+                        .filter(f -> !f.getErased())
+                        .filter(f -> f.getActive().equals(active))
+                        .forEach(e -> list.add(Mapping.map2(e)));
+            } else {
+                System.out.println(1.2);
+                memberRepository.findAll().stream()
+                        .filter(f -> !f.getErased())
+                        .forEach(e -> list.add(Mapping.map2(e)));
+            }
+        }
+        if (active == null && !erase) {
+            System.out.println(2);
+            if (adult != null) {
+                System.out.println(2.1);
+                memberRepository.findAll().stream()
+                        .filter(f -> !f.getErased())
+                        .filter(f -> f.getAdult().equals(adult))
+                        .forEach(e -> list.add(Mapping.map2(e)));
+            } else {
+                System.out.println(2.2);
+                memberRepository.findAll().stream()
+                        .filter(f -> !f.getErased())
+                        .forEach(e -> list.add(Mapping.map2(e)));
+            }
+        }
+        if (erase) {
+            System.out.println(3);
+            if (adult != null) {
+                System.out.println(3.1);
+                memberRepository.findAll().stream()
+                        .filter(MemberEntity::getErased)
+                        .filter(f -> f.getAdult().equals(adult))
+                        .forEach(e -> list.add(Mapping.map2(e)));
+            } else {
+                System.out.println(3.2);
+                memberRepository.findAll().stream()
+                        .filter(MemberEntity::getErased)
+                        .forEach(e -> list.add(Mapping.map2(e)));
+            }
+        } else {
+            System.out.println(4);
+            memberRepository.findAll().stream()
+                    .filter(f -> !f.getErased())
+                    .filter(f -> f.getActive().equals(active))
+                    .filter(f -> f.getAdult().equals(adult))
+                    .forEach(e -> list.add(Mapping.map2(e)));
+        }
+        list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
         return list;
     }
 

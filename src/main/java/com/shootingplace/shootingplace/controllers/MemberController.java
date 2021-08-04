@@ -8,6 +8,7 @@ import com.shootingplace.shootingplace.services.ChangeHistoryService;
 import com.shootingplace.shootingplace.services.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -71,8 +72,26 @@ public class MemberController {
     }
 
     @GetMapping("/getAllMemberDTOWithArgs")
-    public ResponseEntity<List<MemberDTO>> getAllMemberDTO(@RequestParam boolean adult, @RequestParam boolean active, @RequestParam boolean erase) {
-        return ResponseEntity.ok(memberService.getAllMemberDTO(adult, active, erase));
+    public ResponseEntity<List<MemberDTO>> getAllMemberDTO(@RequestParam @Nullable String adult, @Nullable @RequestParam String active, @RequestParam String erase) {
+        Boolean adult1;
+        Boolean active1;
+        Boolean erase1;
+        if (adult == null || adult.equals("null")) {
+            adult1 = null;
+        } else {
+            adult1 = Boolean.valueOf(adult);
+        }
+        if (active == null || active.equals("null")) {
+            active1 = null;
+        } else {
+            active1 = Boolean.valueOf(active);
+        }
+        if (erase == null || erase.equals("null")) {
+            erase1 = null;
+        } else {
+            erase1 = Boolean.valueOf(erase);
+        }
+        return ResponseEntity.ok(memberService.getAllMemberDTO(adult1, active1, erase1));
 
     }
 

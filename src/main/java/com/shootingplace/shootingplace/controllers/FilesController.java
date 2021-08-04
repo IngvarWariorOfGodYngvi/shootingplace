@@ -3,7 +3,11 @@ package com.shootingplace.shootingplace.controllers;
 import com.itextpdf.text.DocumentException;
 import com.shootingplace.shootingplace.domain.entities.FilesEntity;
 import com.shootingplace.shootingplace.services.FilesService;
-import org.springframework.http.*;
+import com.shootingplace.shootingplace.services.XLSXFiles;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,10 +21,12 @@ import java.util.List;
 public class FilesController {
 
     private final FilesService filesService;
+    private final XLSXFiles xlsxFiles;
 
 
-    public FilesController(FilesService filesService) {
+    public FilesController(FilesService filesService, XLSXFiles xlsxFiles) {
         this.filesService = filesService;
+        this.xlsxFiles = xlsxFiles;
     }
 
     //@Transactional
@@ -96,6 +102,15 @@ public class FilesController {
     @GetMapping("/downloadAnnouncementFromCompetition/{tournamentUUID}")
     public ResponseEntity<byte[]> getAnnouncementFromCompetition(@PathVariable String tournamentUUID) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.createAnnouncementFromCompetition(tournamentUUID);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
+    }
+
+    @GetMapping("/downloadAnnouncementFromCompetitionXLSX/{tournamentUUID}")
+    public ResponseEntity<byte[]> getAnnouncementFromCompetitionXSLX(@PathVariable String tournamentUUID) throws IOException, DocumentException {
+        FilesEntity filesEntity = xlsxFiles.createAnnouncementInXLSXType(tournamentUUID);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
