@@ -39,26 +39,26 @@ public class MemberController {
     public ResponseEntity<MemberEntity> getMemberByUUID(@PathVariable String uuid) {
         return ResponseEntity.ok(memberService.getMemberByUUID(uuid));
     }
-
-    @GetMapping("/activeList")
-    public ResponseEntity<List<MemberEntity>> getActiveMembersList(@RequestParam Boolean active, @RequestParam Boolean adult, @RequestParam Boolean erase) {
-        return ResponseEntity.ok(memberService.getMembersList(active, adult, erase));
-    }
+//
+//    @GetMapping("/activeList")
+//    public ResponseEntity<List<MemberEntity>> getActiveMembersList(@RequestParam Boolean active, @RequestParam Boolean adult, @RequestParam Boolean erase) {
+//        return ResponseEntity.ok(memberService.getMembersList(active, adult, erase));
+//    }
 
     @GetMapping("/erased")
     public ResponseEntity<List<MemberEntity>> getErasedMembers() {
         return ResponseEntity.ok(memberService.getErasedMembers());
     }
 
-    @GetMapping("/license")
-    public ResponseEntity<List<String>> getMemberWithLicense(@RequestParam Boolean license) {
-        return ResponseEntity.ok(memberService.getMembersWithLicense(license));
-    }
+//    @GetMapping("/license")
+//    public ResponseEntity<List<String>> getMemberWithLicense(@RequestParam Boolean license) {
+//        return ResponseEntity.ok(memberService.getMembersWithLicense(license));
+//    }
 
-    @GetMapping("/getMembersNames")
-    public List<String> getMembersNames(@RequestParam Boolean active, @RequestParam Boolean adult, @RequestParam Boolean erase) {
-        return memberService.getMembersNameAndLegitimationNumber(active, adult, erase);
-    }
+//    @GetMapping("/getMembersNames")
+//    public List<String> getMembersNames(@RequestParam Boolean active, @RequestParam Boolean adult, @RequestParam Boolean erase) {
+//        return memberService.getMembersNameAndLegitimationNumber(active, adult, erase);
+//    }
 
     @GetMapping("/getAllNames")
     public List<String> getAllNames() {

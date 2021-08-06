@@ -31,7 +31,7 @@ public class Mapping {
                 .build();
     }
 
-    static MemberDTO map2(MemberEntity e) {
+    static MemberDTO map2DTO(MemberEntity e) {
         if (e.getErasedEntity() != null) {
             return Optional.of(e).map(o ->
                     MemberDTO.builder()
@@ -77,7 +77,7 @@ public class Mapping {
                 .build();
     }
 
-    static MemberEntity map2(MemberDTO e) {
+    static MemberEntity map2DTO(MemberDTO e) {
         return MemberEntity.builder()
                 .uuid(e.getUuid())
                 .firstName(e.getFirstName())
@@ -317,8 +317,8 @@ public class Mapping {
                 .date(t.getDate())
                 .open(t.isOpen())
                 .wzss(t.isWZSS())
-                .mainArbiter(map2(t.getMainArbiter()))
-                .commissionRTSArbiter(map2(t.getCommissionRTSArbiter()))
+                .mainArbiter(map2DTO(t.getMainArbiter()))
+                .commissionRTSArbiter(map2DTO(t.getCommissionRTSArbiter()))
                 .otherMainArbiter(t.getOtherMainArbiter())
                 .otherCommissionRTSArbiter(t.getOtherCommissionRTSArbiter())
                 .competitionsList(t.getCompetitionsList().stream().map(Mapping::map).collect(Collectors.toList()))
@@ -346,7 +346,7 @@ public class Mapping {
         if (s.getMember() != null) {
             return Score.builder()
                     .name(s.getName())
-                    .member(map2(s.getMember()))
+                    .member(map2DTO(s.getMember()))
                     .ammunition(s.isAmmunition())
                     .gun(s.isGun())
                     .metricNumber(s.getMetricNumber())
@@ -394,8 +394,8 @@ public class Mapping {
                 .date(t.getDate())
                 .open(t.isOpen())
                 .WZSS(t.isWzss())
-                .mainArbiter(Mapping.map2(t.getMainArbiter()))
-                .commissionRTSArbiter(map2(t.getCommissionRTSArbiter()))
+                .mainArbiter(Mapping.map2DTO(t.getMainArbiter()))
+                .commissionRTSArbiter(map2DTO(t.getCommissionRTSArbiter()))
                 .otherMainArbiter(t.getOtherMainArbiter())
                 .otherCommissionRTSArbiter(t.getOtherCommissionRTSArbiter())
                 .build();

@@ -72,20 +72,20 @@ public class MemberService {
 
 
     //--------------------------------------------------------------------------
-    public List<MemberEntity> getMembersList(Boolean active, Boolean adult, Boolean erase) {
-        checkMembers();
-
-
-        List<MemberEntity> list = new ArrayList<>(memberRepository.findAllByActiveAndAdultAndErased(active, adult, erase));
-        String c = "aktywnych";
-        if (!active) {
-            c = "nieaktywnych";
-        }
-        LOG.info("wyświetlono listę osób " + c);
-        LOG.info("ilość osób " + c + " : " + list.size());
-        list.sort(Comparator.comparing(MemberEntity::getSecondName));
-        return list;
-    }
+//    public List<MemberEntity> getMembersList(Boolean active, Boolean adult, Boolean erase) {
+//        checkMembers();
+//
+//
+//        List<MemberEntity> list = new ArrayList<>(memberRepository.findAllByActiveAndAdultAndErased(active, adult, erase));
+//        String c = "aktywnych";
+//        if (!active) {
+//            c = "nieaktywnych";
+//        }
+//        LOG.info("wyświetlono listę osób " + c);
+//        LOG.info("ilość osób " + c + " : " + list.size());
+//        list.sort(Comparator.comparing(MemberEntity::getSecondName));
+//        return list;
+//    }
 
     public List<Member> getMembersWithPermissions() {
         List<Member> list = new ArrayList<>();
@@ -111,17 +111,17 @@ public class MemberService {
         return list;
     }
 
-    public List<String> getMembersNameAndLegitimationNumber(Boolean active, Boolean adult, Boolean erase) {
-        checkMembers();
-
-        List<String> list = new ArrayList<>();
-        memberRepository.findAllByActiveAndAdultAndErased(active, adult, erase)
-                .forEach(e ->
-                        list.add(e.getSecondName().concat(" " + e.getFirstName() + " leg. " + e.getLegitimationNumber())));
-        list.sort(Comparator.comparing(String::new));
-        LOG.info("Lista nazwisk z identyfikatorem");
-        return list;
-    }
+//    public List<String> getMembersNameAndLegitimationNumber(Boolean active, Boolean adult, Boolean erase) {
+//        checkMembers();
+//
+//        List<String> list = new ArrayList<>();
+//        memberRepository.findAllByActiveAndAdultAndErased(active, adult, erase)
+//                .forEach(e ->
+//                        list.add(e.getSecondName().concat(" " + e.getFirstName() + " leg. " + e.getLegitimationNumber())));
+//        list.sort(Comparator.comparing(String::new));
+//        LOG.info("Lista nazwisk z identyfikatorem");
+//        return list;
+//    }
 
     void checkMembers() {
         // dorośli
@@ -503,49 +503,6 @@ public class MemberService {
                 .filter(f -> f.getLegitimationNumber().equals(number))
                 .findFirst()
                 .orElseThrow(EntityNotFoundException::new);
-//
-//        HistoryEntity historyEntity = memberEntity
-//                .getHistory();
-//        List<CompetitionHistoryEntity> competitionHistory = historyEntity.getCompetitionHistory();
-//
-//        int licenseYear;
-//        if (memberEntity.getLicense().getValidThru() != null) {
-//            licenseYear = memberEntity.getLicense().getValidThru().getYear();
-//        } else {
-//
-//            licenseYear = LocalDate.now().getYear();
-//        }
-//
-//        List<String> list1 = new ArrayList<>();
-//        for (int i = 0; i < competitionHistoryEntity.getDisciplines().length; i++) {
-//            String[] disciplines = competitionHistoryEntity.getDisciplines();
-//            String s = disciplines[i];
-//            list1.add(s);
-//        }
-//
-//        List<CompetitionHistoryEntity> collectPistol = competitionHistory
-//                .stream()
-//                .filter(f -> list1.contains(Discipline.PISTOL.getName()) || (f.getDiscipline() != null && f.getDiscipline().equals(Discipline.PISTOL.getName())))
-//                .filter(f -> f.getDate().getYear() == licenseYear)
-//                .collect(Collectors.toList());
-//
-//        List<CompetitionHistoryEntity> collectRifle = competitionHistory
-//                .stream()
-//                .filter(f -> f.getDiscipline().equals(Discipline.RIFLE.getName()))
-//                .filter(f -> f.getDate().getYear() == licenseYear)
-//                .collect(Collectors.toList());
-//
-//        List<CompetitionHistoryEntity> collectShotgun = competitionHistory
-//                .stream()
-//                .filter(f -> f.getDiscipline().equals(Discipline.SHOTGUN.getName()))
-//                .filter(f -> f.getDate().getYear() == licenseYear)
-//                .collect(Collectors.toList());
-//
-//        historyEntity.setPistolCounter(collectPistol.size());
-//        historyEntity.setRifleCounter(collectRifle.size());
-//        historyEntity.setShotgunCounter(collectShotgun.size());
-//
-//        historyRepository.saveAndFlush(historyEntity);
 
         return memberEntity;
 
@@ -638,7 +595,7 @@ public class MemberService {
 
     }
 
-    public List<String> getMembersWithLicense(Boolean license) {
+    public List<String>  getMembersWithLicense(Boolean license) {
 
         List<String> list = new ArrayList<>();
         if (license) {
@@ -754,7 +711,7 @@ public class MemberService {
 
         List<MemberDTO> list = new ArrayList<>();
 
-        memberRepository.findAll().stream().filter(f -> !f.getErased()).forEach(e -> list.add(Mapping.map2(e)));
+        memberRepository.findAll().stream().filter(f -> !f.getErased()).forEach(e -> list.add(Mapping.map2DTO(e)));
         list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
         return list;
     }
@@ -774,12 +731,12 @@ public class MemberService {
                 memberRepository.findAll().stream()
                         .filter(f -> !f.getErased())
                         .filter(f -> f.getActive().equals(active))
-                        .forEach(e -> list.add(Mapping.map2(e)));
+                        .forEach(e -> list.add(Mapping.map2DTO(e)));
             } else {
                 System.out.println(1.2);
                 memberRepository.findAll().stream()
                         .filter(f -> !f.getErased())
-                        .forEach(e -> list.add(Mapping.map2(e)));
+                        .forEach(e -> list.add(Mapping.map2DTO(e)));
             }
         }
         if (active == null && !erase) {
@@ -789,12 +746,12 @@ public class MemberService {
                 memberRepository.findAll().stream()
                         .filter(f -> !f.getErased())
                         .filter(f -> f.getAdult().equals(adult))
-                        .forEach(e -> list.add(Mapping.map2(e)));
+                        .forEach(e -> list.add(Mapping.map2DTO(e)));
             } else {
                 System.out.println(2.2);
                 memberRepository.findAll().stream()
                         .filter(f -> !f.getErased())
-                        .forEach(e -> list.add(Mapping.map2(e)));
+                        .forEach(e -> list.add(Mapping.map2DTO(e)));
             }
         }
         if (erase) {
@@ -804,12 +761,12 @@ public class MemberService {
                 memberRepository.findAll().stream()
                         .filter(MemberEntity::getErased)
                         .filter(f -> f.getAdult().equals(adult))
-                        .forEach(e -> list.add(Mapping.map2(e)));
+                        .forEach(e -> list.add(Mapping.map2DTO(e)));
             } else {
                 System.out.println(3.2);
                 memberRepository.findAll().stream()
                         .filter(MemberEntity::getErased)
-                        .forEach(e -> list.add(Mapping.map2(e)));
+                        .forEach(e -> list.add(Mapping.map2DTO(e)));
             }
         } else {
             System.out.println(4);
@@ -817,7 +774,7 @@ public class MemberService {
                     .filter(f -> !f.getErased())
                     .filter(f -> f.getActive().equals(active))
                     .filter(f -> f.getAdult().equals(adult))
-                    .forEach(e -> list.add(Mapping.map2(e)));
+                    .forEach(e -> list.add(Mapping.map2DTO(e)));
         }
         list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
         return list;

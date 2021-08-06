@@ -1,148 +1,194 @@
 package com.shootingplace.shootingplace.controllers;
 
-import com.shootingplace.shootingplace.repositories.MemberRepository;
 import com.shootingplace.shootingplace.domain.entities.MemberEntity;
 import com.shootingplace.shootingplace.domain.models.Member;
-import org.junit.After;
+import com.shootingplace.shootingplace.repositories.MemberRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@RunWith(MockitoJUnitRunner.class)
 public class MemberControllerTest {
 
-    @Autowired
-    private TestRestTemplate testRestTemplate;
+    @Mock
+    MemberRepository memberRepository;
 
-    @Autowired
-    private MemberRepository memberRepository;
-
-    private MemberEntity memberEntity;
-    private String uuid;
+    @InjectMocks
+    MemberController memberController;
 
     @Before
-    public void setUp() {
-        MemberEntity memberEntity = MemberEntity.builder()
-                .firstName("Janusz")
-                .secondName("Piekutowski")
-                .email("cośtam@mail.com")
-                .pesel("22222222222").phoneNumber("+48987654321").active(true)
-                .build();
-        memberEntity = memberRepository.saveAndFlush(memberEntity);
-        uuid = memberEntity.getUuid();
+    public void init(){
+        when(memberRepository.findAll()).thenReturn(namesList());
     }
 
-    @After
-    public void tearDown() {
-        memberRepository.deleteAll();
-    }
 
-    @Test
-    public void addMemberTest() {
-        Member member = Member.builder()
-                .firstName("Janusz")
-                .secondName("Piekutowski")
-                .email("cośta@mail.com")
-                .pesel("90120510813").phoneNumber("+48987654321").active(true)
-                .build();
-        ResponseEntity<String> re = testRestTemplate.postForEntity("/memberEntity/", member, String.class);
-        assertEquals(HttpStatus.OK, re.getStatusCode());
-        assertTrue(memberRepository.findById(uuid).isPresent());
-    }
+    private final String pinCodeNotOK = "1578";
+    private final String pinCodeOK = "0127";
+
+    private Member memberNotOK = Member.builder()
+            .firstName("John")
+            .secondName("Doe")
+            .email("sample@mail.com")
+            .pesel("22222222222").phoneNumber("+48987654321").active(true)
+            .build();
+    private Member memberOK = Member.builder()
+            .firstName("John")
+            .secondName("Doe")
+            .email("sample@mail.com")
+            .pesel("22222222222").phoneNumber("+48987654321").active(true)
+            .IDCard("AAA 999999")
+            .build();
+
 
     @Test
     public void getMemberListTest() {
-        MemberEntity memberEntity = MemberEntity.builder()
-                .firstName("Januszex")
-                .secondName("Piekutowski")
-                .email("cośtam@mail.com")
-                .pesel("22222222222")
-                .build();
-        memberRepository.saveAndFlush(memberEntity);
-        ResponseEntity<Map<UUID, Member>> re = testRestTemplate
-                .exchange("/memberEntity/list", HttpMethod.GET, null, new ParameterizedTypeReference<Map<UUID, Member>>() {
-                });
-        Map<UUID, Member> map = re.getBody();
-        assertEquals(HttpStatus.OK, re.getStatusCode());
-        assert map != null;
-        assertEquals(2, map.size());
-    }
-
-
-    @Test
-    public void updateMemberTest() {
-        Member updatedMember = Member.builder()
-                .firstName("Jasko")
-                .build();
-        testRestTemplate.put(String.format("/memberEntity/%s", uuid), updatedMember);
-        System.out.println(uuid);
-        memberEntity = memberRepository.findById(uuid).orElseGet(MemberEntity::new);
-        assertEquals(updatedMember.getFirstName(), memberEntity.getFirstName());
-        Member updatedMember2 = Member.builder()
-                .secondName("Pie")
-                .build();
-        testRestTemplate.put(String.format("/memberEntity/%s", uuid), updatedMember2);
-        System.out.println(uuid);
-        memberEntity = memberRepository.findById(uuid).orElseGet(MemberEntity::new);
-        assertEquals(updatedMember2.getSecondName(), memberEntity.getSecondName());
 
     }
 
-    @Test
-    public void failUpdateMemberTest(){
-        Member updatedMember = Member.builder()
-                .firstName("Jasko")
-                .build();
 
+//
+//    @Test
+//    public void getMemberListTest() {
+//        //given
+//        when(memberController.getAllNames()).thenReturn(namesList());
+//        //when
+//        List<String> membersNames = memberController.getAllNames();
+//        //then
+//        MatcherAssert.assertThat(membersNames, Matchers.hasSize(2));
+//
+//    }
+//
+//    @Test(expected = IllegalArgumentException.class)
+//    public void add_Member_test1() {
+//        //given
+//        MemberController memberController = mock(MemberController.class);
+//        when(memberController.addMember(memberNotOK, pinCodeOK)).thenThrow(IllegalArgumentException.class);
+//
+//        //when
+//        ResponseEntity<?> responseEntity = memberController.addMember(memberNotOK, pinCodeOK);
+//        //then
+//        Assert.assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.CONFLICT));
+//
+//    }
+//
+//    @Test
+//    public void add_Member_tes2() {
+//        //given
+//        MemberController memberController = mock(MemberController.class);
+//        when(memberController.addMember(memberOK, pinCodeOK)).thenReturn(ResponseEntity.status(201).build());
+//        //when
+//        ResponseEntity<?> responseEntity = memberController.addMember(memberOK, pinCodeOK);
+//        //then
+//        Assert.assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.CREATED));
+//    }
+//
+//    @Test
+//    public void add_Member_tes3() {
+//        //given
+//        MemberController memberController = mock(MemberController.class);
+//        when(memberController.addMember(memberOK, pinCodeNotOK)).thenReturn(ResponseEntity.status(403).build());
+//        //when
+//        ResponseEntity<?> responseEntity = memberController.addMember(memberOK, pinCodeNotOK);
+//        //then
+//        Assert.assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.FORBIDDEN));
+//    }
+
+
+//    @Test
+//    public void updateMemberTest() {
+//        Member updatedMember = Member.builder()
+//                .firstName("Jasko")
+//                .build();
+//        testRestTemplate.put(String.format("/memberEntity/%s", uuid), updatedMember);
+//        System.out.println(uuid);
+//        memberEntity = memberRepository.findById(uuid).orElseGet(MemberEntity::new);
+//        assertEquals(updatedMember.getFirstName(), memberEntity.getFirstName());
+//        Member updatedMember2 = Member.builder()
+//                .secondName("Pie")
+//                .build();
+//        testRestTemplate.put(String.format("/memberEntity/%s", uuid), updatedMember2);
+//        System.out.println(uuid);
+//        memberEntity = memberRepository.findById(uuid).orElseGet(MemberEntity::new);
+//        assertEquals(updatedMember2.getSecondName(), memberEntity.getSecondName());
+//
+//    }
+//
+//    @Test
+//    public void failUpdateMemberTest() {
+//        Member updatedMember = Member.builder()
+//                .firstName("Jasko")
+//                .build();
+//
+//    }
+//
+//    @Test
+//    public void addNewMemberAndUpdateHimTest() {
+//        MemberEntity memberEntity2 = MemberEntity.builder()
+//                .firstName("Janusz")
+//                .secondName("Piekutowski")
+//                .email("cośta@mail.com")
+//                .pesel("22222222222")
+//                .build();
+//        memberEntity2 = memberRepository.saveAndFlush(memberEntity2);
+//        String uuid2 = memberEntity2.getUuid();
+//
+//        Member updatedMember = Member.builder()
+//                .firstName("Jasko")
+//                .build();
+//        Member updatedMember2 = Member.builder()
+//                .firstName("DRZWI KURWA")
+//                .build();
+//        testRestTemplate.put(String.format("/memberEntity/%s", uuid), updatedMember);
+//        System.out.println(uuid);
+//        testRestTemplate.put(String.format("/memberEntity/%s", uuid2), updatedMember2);
+//        System.out.println(uuid2);
+//        memberEntity = memberRepository.findById(uuid).orElseGet(MemberEntity::new);
+//        memberEntity2 = memberRepository.findById(uuid2).orElseGet(MemberEntity::new);
+//        assertEquals(updatedMember.getFirstName(), memberEntity.getFirstName());
+//        assertEquals(updatedMember2.getFirstName(), memberEntity2.getFirstName());
+//
+//
+//    }
+
+    private List<MemberEntity> namesList() {
+        List<MemberEntity> list = new ArrayList<>();
+        MemberEntity member1 = MemberEntity.builder()
+                .uuid(String.valueOf(UUID.randomUUID()))
+                .firstName("John1")
+                .secondName("Doe1")
+                .email("sample1@mail.com")
+                .pesel("90120510813").phoneNumber("+48111111111").active(true)
+                .IDCard("AAA 999991")
+                .build();
+        MemberEntity member2 = MemberEntity.builder()
+                .uuid(String.valueOf(UUID.randomUUID()))
+                .firstName("John2")
+                .secondName("Doe2")
+                .email("sample2@mail.com")
+                .pesel("22222222222").phoneNumber("+48222222222").active(true)
+                .IDCard("AAA 999992")
+                .build();
+        MemberEntity member3 = MemberEntity.builder()
+                .uuid(String.valueOf(UUID.randomUUID()))
+                .firstName("John3")
+                .secondName("Doe3")
+                .email("sample3@mail.com")
+                .pesel("22222222222").phoneNumber("+48333333333").active(true)
+                .IDCard("AAA 999993")
+                .build();
+        list.add(member1);
+        list.add(member2);
+        list.add(member3);
+        return list;
     }
-
-    @Test
-    public void addNewMemberAndUpdateHimTest(){
-        MemberEntity memberEntity2 = MemberEntity.builder()
-                .firstName("Janusz")
-                .secondName("Piekutowski")
-                .email("cośta@mail.com")
-                .pesel("22222222222")
-                .build();
-        memberEntity2 = memberRepository.saveAndFlush(memberEntity2);
-        String uuid2 = memberEntity2.getUuid();
-
-        Member updatedMember = Member.builder()
-                .firstName("Jasko")
-                .build();
-        Member updatedMember2 = Member.builder()
-                .firstName("DRZWI KURWA")
-                .build();
-        testRestTemplate.put(String.format("/memberEntity/%s", uuid), updatedMember);
-        System.out.println(uuid);
-        testRestTemplate.put(String.format("/memberEntity/%s",uuid2),updatedMember2);
-        System.out.println(uuid2);
-        memberEntity = memberRepository.findById(uuid).orElseGet(MemberEntity::new);
-        memberEntity2 = memberRepository.findById(uuid2).orElseGet(MemberEntity::new);
-        assertEquals(updatedMember.getFirstName(),memberEntity.getFirstName());
-        assertEquals(updatedMember2.getFirstName(),memberEntity2.getFirstName());
-
-
-
-    }
-
-    @Test
-    public void deleteMemberTest() {
-        testRestTemplate.delete(String.format("/memberEntity/%s", uuid));
-        assertFalse(memberRepository.findById(uuid).isPresent());
-    }
-
 
 }

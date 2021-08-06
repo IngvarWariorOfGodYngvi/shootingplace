@@ -37,7 +37,7 @@ public class StatisticsService {
             List<MemberDTO> collect = memberRepository.findAll().stream()
                     .filter(f -> f.getJoinDate().getYear() == year)
                     .filter(f -> f.getJoinDate().getMonth().getValue() == finalI + 1)
-                    .map(Mapping::map2)
+                    .map(Mapping::map2DTO)
                     .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName))
                     .collect(Collectors.toList());
 
@@ -54,7 +54,7 @@ public class StatisticsService {
                         .stream()
                         .filter(lp -> lp.getDate().isAfter(firstDate.minusDays(1)))
                         .filter(lp -> lp.getDate().isBefore(secondDate.plusDays(1)))
-                        .forEach(g -> list.add(Mapping.map2(member))));
+                        .forEach(g -> list.add(Mapping.map2DTO(member))));
         list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
         return list;
     }
@@ -64,7 +64,7 @@ public class StatisticsService {
         return memberRepository.findAll().stream()
                 .filter(f -> f.getJoinDate().isAfter(firstDate.minusDays(1)))
                 .filter(f -> f.getJoinDate().isBefore(secondDate.plusDays(1)))
-                .map(Mapping::map2)
+                .map(Mapping::map2DTO)
                 .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName))
                 .collect(Collectors.toList());
     }
@@ -75,7 +75,7 @@ public class StatisticsService {
                 .filter(f -> f.getErasedEntity() != null)
                 .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1)))
                 .filter(f -> f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
-                .map(Mapping::map2)
+                .map(Mapping::map2DTO)
                 .sorted(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName))
                 .collect(Collectors.toList());
 
@@ -106,7 +106,7 @@ public class StatisticsService {
                         .filter(f -> f.getHistoryUUID() != null)
                         .filter(f -> f.getPaymentDay().isAfter(firstDate.minusDays(1)))
                         .filter(f -> f.getPaymentDay().isBefore(secondDate.plusDays(1)))
-                        .forEach(d -> collect1.add(Mapping.map2(e))));
+                        .forEach(d -> collect1.add(Mapping.map2DTO(e))));
 
         collect1.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
 
@@ -135,7 +135,7 @@ public class StatisticsService {
                 List<MemberDTO> members = memberRepository.findAll().stream()
                         .filter(f -> f.getJoinDate().getYear() == year)
                         .filter(f -> f.getJoinDate().getMonth().getValue() == finalI + 1)
-                        .map(Mapping::map2)
+                        .map(Mapping::map2DTO)
                         .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName))
                         .collect(Collectors.toList());
                 if (!members.isEmpty()) {

@@ -46,7 +46,7 @@ public class LicenseService {
                     if (e.getLicense().getNumber() != null) {
                         if (e.getLicense().isValid()) {
 
-                            list.add(Mapping.map2(e));
+                            list.add(Mapping.map2DTO(e));
                         }
                     }
                 });
@@ -63,7 +63,7 @@ public class LicenseService {
                     if (e.getLicense().getNumber() != null) {
                         if (!e.getLicense().isValid()) {
 
-                            list.add(Mapping.map2(e));
+                            list.add(Mapping.map2DTO(e));
                         }
                     }
                 });
