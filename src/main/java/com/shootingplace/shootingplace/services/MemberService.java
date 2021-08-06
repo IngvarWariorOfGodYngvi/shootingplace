@@ -90,10 +90,13 @@ public class MemberService {
     public List<Member> getMembersWithPermissions() {
         List<Member> list = new ArrayList<>();
 
-        memberRepository.findAll().forEach(e -> {
-            if ((e.getMemberPermissions().getShootingLeaderNumber() != null)
-                    || (e.getMemberPermissions().getArbiterNumber() != null)
-                    || (e.getMemberPermissions().getInstructorNumber() != null)) {
+        memberRepository.findAll().stream().filter(f -> f.getMemberPermissions() != null).forEach(e -> {
+            if (
+                    (e.getMemberPermissions().getShootingLeaderNumber() != null)
+
+                            || (e.getMemberPermissions().getArbiterNumber() != null)
+
+                            || (e.getMemberPermissions().getInstructorNumber() != null)) {
                 list.add(Mapping.map(e));
             }
         });
@@ -105,6 +108,7 @@ public class MemberService {
     public List<String> getArbiters() {
         List<String> list = new ArrayList<>();
         memberRepository.findAll().stream()
+                .filter(e -> e.getMemberPermissions() != null)
                 .filter(e -> e.getMemberPermissions().getArbiterNumber() != null)
                 .forEach(e -> list.add(e.getSecondName().concat(" " + e.getFirstName() + " " + e.getMemberPermissions().getArbiterClass() + " leg. " + e.getLegitimationNumber())));
         list.sort(Comparator.comparing(String::new));
@@ -123,7 +127,7 @@ public class MemberService {
 //        return list;
 //    }
 
-    void checkMembers() {
+    public void checkMembers() {
         // dorośli
         List<MemberEntity> adultMembers = memberRepository
                 .findAll()
@@ -525,15 +529,18 @@ public class MemberService {
         return list;
     }
 
-    public List<String> getMembersEmailsWithNoPatent() {
+    public List<String> getMembersEmailsAdultActiveWithNoPatent() {
         List<String> list = new ArrayList<>();
         List<MemberEntity> all = memberRepository.findAll();
         all.sort(Comparator.comparing(MemberEntity::getSecondName).thenComparing(MemberEntity::getFirstName));
         all.stream()
+                .filter(f->!f.getErased())
                 .filter(MemberEntity::getAdult)
                 .filter(MemberEntity::getActive)
-                .filter(f -> f.getShootingPatent().getPatentNumber() == null || f.getShootingPatent().getPatentNumber().isEmpty()).forEach(e -> {
-            if ((e.getEmail() != null && !e.getEmail().isEmpty()) && !e.getErased()) {
+                .filter(f->f.getShootingPatent()!=null)
+                .filter(f -> f.getShootingPatent().getPatentNumber() == null || f.getShootingPatent().getPatentNumber().isEmpty())
+                .forEach(e -> {
+            if ((e.getEmail() != null && !e.getEmail().isEmpty())) {
                 list.add(e.getEmail().concat(";"));
             }
         });
@@ -545,10 +552,12 @@ public class MemberService {
         List<MemberEntity> all = memberRepository.findAll();
         all.sort(Comparator.comparing(MemberEntity::getSecondName).thenComparing(MemberEntity::getFirstName));
         all.stream()
+                .filter(f->!f.getErased())
                 .filter(MemberEntity::getAdult)
                 .filter(MemberEntity::getActive)
-                .filter(f -> f.getShootingPatent().getPatentNumber() == null || f.getShootingPatent().getPatentNumber().isEmpty()).forEach(e -> {
-            if ((e.getPhoneNumber() != null && !e.getPhoneNumber().isEmpty()) && !e.getErased()) {
+                .filter(f -> f.getShootingPatent().getPatentNumber() == null || f.getShootingPatent().getPatentNumber().isEmpty())
+                .forEach(e -> {
+            if ((e.getPhoneNumber() != null && !e.getPhoneNumber().isEmpty())) {
                 String phone = e.getPhoneNumber();
                 String split = phone.substring(0, 3) + " ";
                 String split1 = phone.substring(3, 6) + " ";
@@ -595,7 +604,7 @@ public class MemberService {
 
     }
 
-    public List<String>  getMembersWithLicense(Boolean license) {
+    public List<String> getMembersWithLicense(Boolean license) {
 
         List<String> list = new ArrayList<>();
         if (license) {
@@ -612,17 +621,17 @@ public class MemberService {
         return list;
     }
 
-    public List<String> getAllActiveMembersNames() {
-        checkMembers();
-
-        List<String> list = new ArrayList<>();
-        memberRepository.findAll().stream().filter(MemberEntity::getActive)
-                .forEach(e ->
-                        list.add(e.getSecondName().concat(" " + e.getFirstName() + " leg. " + e.getLegitimationNumber())));
-        list.sort(Comparator.comparing(String::new));
-        LOG.info("Lista nazwisk z identyfikatorem");
-        return list;
-    }
+//    public List<String> getAllActiveMembersNames() {
+//        checkMembers();
+//
+//        List<String> list = new ArrayList<>();
+//        memberRepository.findAll().stream().filter(MemberEntity::getActive)
+//                .forEach(e ->
+//                        list.add(e.getSecondName().concat(" " + e.getFirstName() + " leg. " + e.getLegitimationNumber())));
+//        list.sort(Comparator.comparing(String::new));
+//        LOG.info("Lista nazwisk z identyfikatorem");
+//        return list;
+//    }
 
     public List<String> getAllNames() {
         checkMembers();
@@ -646,49 +655,49 @@ public class MemberService {
 
     public List<Long> getMembersQuantity() {
         List<Long> list = new ArrayList<>();
-//      ogólnie dorośli
+//      whole adult
         long count = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(MemberEntity::getAdult)
                 .count();
-//      dorośli aktywni
+//      adult active
         long count1 = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(MemberEntity::getAdult)
                 .filter(MemberEntity::getActive)
                 .count();
 
-//      dorośli nieaktywni
+//      adult not active
         long count2 = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(MemberEntity::getAdult)
                 .filter(f -> !f.getActive())
                 .count();
 
-//      ogólnie młodzież
+//      whole not adult
         long count3 = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getAdult())
                 .count();
-//      młodzież aktywni
+//      not adult active
         long count4 = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getAdult())
                 .filter(MemberEntity::getActive)
                 .count();
-//      młodzież nieaktywni
+//      not adult not active
         long count5 = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getAdult())
                 .filter(f -> !f.getActive())
                 .count();
 
-//      dorośli skreśleni
+//      adult erased
         long count6 = memberRepository.findAll().stream()
                 .filter(MemberEntity::getErased)
                 .filter(MemberEntity::getAdult)
                 .count();
-//      młodzież skreśleni
+//      not adult erased
         long count7 = memberRepository.findAll().stream()
                 .filter(MemberEntity::getErased)
                 .filter(f -> !f.getAdult())
@@ -717,65 +726,89 @@ public class MemberService {
     }
 
     public List<MemberDTO> getAllMemberDTO(Boolean adult, Boolean active, Boolean erase) {
-        checkMembers();
-        System.out.println("adult " + adult);
-        System.out.println("active " + active);
-        System.out.println("erase " + erase);
 
         List<MemberDTO> list = new ArrayList<>();
-
-        if (adult == null && !erase) {
-            System.out.println(1);
-            if (active != null) {
-                System.out.println(1.1);
+        if (!erase) {
+            if (adult == null && active == null) {
+                memberRepository.findAll().stream()
+                        .filter(f -> !f.getErased())
+                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+            }
+            if (adult != null && active == null) {
+                memberRepository.findAll().stream()
+                        .filter(f -> !f.getErased())
+                        .filter(f -> f.getAdult().equals(adult))
+                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+            }
+            if (adult == null && active != null) {
                 memberRepository.findAll().stream()
                         .filter(f -> !f.getErased())
                         .filter(f -> f.getActive().equals(active))
                         .forEach(e -> list.add(Mapping.map2DTO(e)));
-            } else {
-                System.out.println(1.2);
-                memberRepository.findAll().stream()
-                        .filter(f -> !f.getErased())
-                        .forEach(e -> list.add(Mapping.map2DTO(e)));
             }
-        }
-        if (active == null && !erase) {
-            System.out.println(2);
-            if (adult != null) {
-                System.out.println(2.1);
+            if (adult != null && active != null) {
                 memberRepository.findAll().stream()
                         .filter(f -> !f.getErased())
                         .filter(f -> f.getAdult().equals(adult))
-                        .forEach(e -> list.add(Mapping.map2DTO(e)));
-            } else {
-                System.out.println(2.2);
-                memberRepository.findAll().stream()
-                        .filter(f -> !f.getErased())
-                        .forEach(e -> list.add(Mapping.map2DTO(e)));
-            }
-        }
-        if (erase) {
-            System.out.println(3);
-            if (adult != null) {
-                System.out.println(3.1);
-                memberRepository.findAll().stream()
-                        .filter(MemberEntity::getErased)
-                        .filter(f -> f.getAdult().equals(adult))
-                        .forEach(e -> list.add(Mapping.map2DTO(e)));
-            } else {
-                System.out.println(3.2);
-                memberRepository.findAll().stream()
-                        .filter(MemberEntity::getErased)
+                        .filter(f -> f.getActive().equals(active))
                         .forEach(e -> list.add(Mapping.map2DTO(e)));
             }
         } else {
-            System.out.println(4);
-            memberRepository.findAll().stream()
-                    .filter(f -> !f.getErased())
-                    .filter(f -> f.getActive().equals(active))
-                    .filter(f -> f.getAdult().equals(adult))
-                    .forEach(e -> list.add(Mapping.map2DTO(e)));
+            if (adult == null) {
+                memberRepository.findAll().stream()
+                        .filter(MemberEntity::getErased)
+                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+            }
+            if (adult != null) {
+                memberRepository.findAll().stream()
+                        .filter(f -> f.getAdult().equals(adult))
+                        .filter(MemberEntity::getErased)
+                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+            }
         }
+
+//        if (adult == null && !erase) {
+//            if (active != null) {
+//                memberRepository.findAll().stream()
+//                        .filter(f -> !f.getErased())
+//                        .filter(f -> f.getActive().equals(active))
+//                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+//            } else {
+//                memberRepository.findAll().stream()
+//                        .filter(f -> !f.getErased())
+//                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+//            }
+//        }
+//        if (active == null && !erase) {
+//            if (adult != null) {
+//                memberRepository.findAll().stream()
+//                        .filter(f -> !f.getErased())
+//                        .filter(f -> f.getAdult().equals(adult))
+//                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+//            } else {
+//                memberRepository.findAll().stream()
+//                        .filter(f -> !f.getErased())
+//                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+//            }
+//        }
+//        if (erase) {
+//            if (adult != null) {
+//                memberRepository.findAll().stream()
+//                        .filter(MemberEntity::getErased)
+//                        .filter(f -> f.getAdult().equals(adult))
+//                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+//            } else {
+//                memberRepository.findAll().stream()
+//                        .filter(MemberEntity::getErased)
+//                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+//            }
+//        } else {
+//            memberRepository.findAll().stream()
+//                    .filter(f -> !f.getErased())
+//                    .filter(f -> f.getActive().equals(active))
+//                    .filter(f -> f.getAdult().equals(adult))
+//                    .forEach(e -> list.add(Mapping.map2DTO(e)));
+//        }
         list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
         return list;
     }

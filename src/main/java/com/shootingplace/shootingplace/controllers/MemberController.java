@@ -91,6 +91,7 @@ public class MemberController {
         } else {
             erase1 = Boolean.valueOf(erase);
         }
+        memberService.checkMembers();
         return ResponseEntity.ok(memberService.getAllMemberDTO(adult1, active1, erase1));
 
     }
@@ -100,10 +101,10 @@ public class MemberController {
         return memberService.getMembersQuantity();
     }
 
-    @GetMapping("/getAllActiveMembersNames")
-    public List<String> getAllActiveMembersNames() {
-        return memberService.getAllActiveMembersNames();
-    }
+//    @GetMapping("/getAllActiveMembersNames")
+//    public List<String> getAllActiveMembersNames() {
+//        return memberService.getAllActiveMembersNames();
+//    }
 
     @GetMapping("/getArbiters")
     public List<String> getArbiters() {
@@ -132,7 +133,7 @@ public class MemberController {
 
     @GetMapping("/membersEmailsNoPatent")
     public ResponseEntity<?> getMembersEmailsWithNoPatent() {
-        return ResponseEntity.ok(memberService.getMembersEmailsWithNoPatent());
+        return ResponseEntity.ok(memberService.getMembersEmailsAdultActiveWithNoPatent());
     }
 
     @GetMapping("/phoneNumbersNoPatent")
