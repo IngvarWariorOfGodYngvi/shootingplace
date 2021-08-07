@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class Club {
-
+    private Integer id;
     private String name;
     private String fullName;
     private String licenseNumber;
@@ -16,6 +16,14 @@ public class Club {
     private String email;
     private String address;
     private String url;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;

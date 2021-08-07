@@ -100,4 +100,14 @@ public class ShootingPatentService {
         }
         return true;
     }
+
+    public ShootingPatent getShootingPatent() {
+        return ShootingPatent.builder()
+                .patentNumber(null)
+                .dateOfPosting(null)
+                .pistolPermission(false)
+                .riflePermission(false)
+                .shotgunPermission(false)
+                .build();
+    }
 }

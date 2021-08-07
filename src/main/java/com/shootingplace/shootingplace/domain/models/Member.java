@@ -1,5 +1,7 @@
 package com.shootingplace.shootingplace.domain.models;
 
+import com.shootingplace.shootingplace.domain.entities.ClubEntity;
+import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -22,7 +24,7 @@ public class Member {
 
     private String pesel;
     private String IDCard;
-    private Club club;
+    private ClubEntity club;
     private Address address;
     private String phoneNumber;
     private WeaponPermission weaponPermission;
@@ -30,13 +32,14 @@ public class Member {
     private Boolean active = true;
     private Boolean adult = true;
     private Boolean erased = false;
-    private String erasedReason;
 
     private History history;
 
     private MemberPermissions memberPermissions;
 
     private PersonalEvidence personalEvidence;
+    private boolean pzss;
+    private ErasedEntity erasedEntity;
 
     public LocalDate getJoinDate() {
         return joinDate;
@@ -110,11 +113,11 @@ public class Member {
         this.IDCard = IDCard;
     }
 
-    public Club getClub() {
+    public ClubEntity getClub() {
         return club;
     }
 
-    public void setClub(Club club) {
+    public void setClub(ClubEntity club) {
         this.club = club;
     }
 
@@ -190,12 +193,23 @@ public class Member {
         this.personalEvidence = personalEvidence;
     }
 
-
-    public String getErasedReason() {
-        return erasedReason;
+    public void setPzss(boolean pzss) {
+        this.pzss = pzss;
     }
 
-    public void setErasedReason(String erasedReason) {
-        this.erasedReason = erasedReason;
+    public boolean getPzss() {
+        return pzss;
+    }
+
+    public void setErasedEntity(ErasedEntity erasedEntity) {
+        this.erasedEntity = erasedEntity;
+    }
+
+    public ErasedEntity getErasedEntity() {
+        return erasedEntity;
+    }
+
+    public boolean isPzss() {
+        return pzss;
     }
 }

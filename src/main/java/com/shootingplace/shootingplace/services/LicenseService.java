@@ -290,4 +290,18 @@ public class LicenseService {
 
         return list;
     }
+
+
+    public License getLicense() {
+        return License.builder()
+                .number(null)
+                .validThru(null)
+                .pistolPermission(false)
+                .riflePermission(false)
+                .shotgunPermission(false)
+                .isValid(false)
+                .canProlong(false)
+                .isPaid(false)
+                .build();
+    }
 }

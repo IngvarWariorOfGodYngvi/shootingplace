@@ -63,4 +63,15 @@ public class AddressService {
         LOG.info("Zaktualizowano adres");
         return true;
     }
+
+    public Address getAddress() {
+        return Address.builder()
+                .zipCode(null)
+                .postOfficeCity(null)
+                .street(null)
+                .streetNumber(null)
+                .flatNumber(null)
+                .build();
+
+    }
 }

@@ -27,7 +27,6 @@ public class MemberControllerTest {
 
     @Before
     public void init(){
-        when(memberRepository.findAll()).thenReturn(namesList());
     }
 
 

@@ -38,4 +38,10 @@ public class PersonalEvidenceService {
         LOG.info("Osobista Ewidencja została zapisana");
     }
 
+    public PersonalEvidence getPersonalEvidence() {
+        return PersonalEvidence.builder()
+                .ammoList(new ArrayList<>())
+                .build();
+    }
+
 }

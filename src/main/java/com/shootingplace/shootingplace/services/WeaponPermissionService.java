@@ -87,4 +87,11 @@ public class WeaponPermissionService {
         return true;
     }
 
+    public WeaponPermission getWeaponPermission() {
+        return WeaponPermission.builder()
+                .number(null)
+                .isExist(false)
+                .build();
+    }
+
 }

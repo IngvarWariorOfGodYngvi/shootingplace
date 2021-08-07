@@ -137,4 +137,14 @@ public class MemberPermissionsService {
 
 
     }
+
+    public MemberPermissions getMemberPermissions() {
+        return MemberPermissions.builder()
+                .instructorNumber(null)
+                .shootingLeaderNumber(null)
+                .arbiterClass(ArbiterClass.NONE.getName())
+                .arbiterNumber(null)
+                .arbiterPermissionValidThru(null)
+                .build();
+    }
 }

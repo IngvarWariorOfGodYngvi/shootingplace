@@ -39,19 +39,18 @@ public class HistoryService {
     }
 
     //  Basic
-    HistoryEntity createHistory(History history) {
-        HistoryEntity historyEntity = Mapping.map(history);
-        historyEntity.setContributionsList(new ArrayList<>());
-        historyEntity.setLicenseHistory(new String[3]);
-        historyEntity.setPatentDay(new LocalDate[3]);
-        historyEntity.setPistolCounter(0);
-        historyEntity.setRifleCounter(0);
-        historyEntity.setShotgunCounter(0);
-        historyEntity.setCompetitionHistory(new ArrayList<>());
-        historyEntity.setJudgingHistory(new ArrayList<>());
-        historyEntity.setPatentFirstRecord(false);
-        LOG.info("Historia została utworzona");
-        return historyRepository.saveAndFlush(historyEntity);
+    public History getHistory() {
+        return History.builder()
+                .licenseHistory(new String[3])
+                .patentDay(new LocalDate[3])
+                .licensePaymentHistory(new ArrayList<>())
+                .contributionList(new ArrayList<>())
+                .judgingHistory(new ArrayList<>())
+                .competitionHistory(new ArrayList<>())
+                .pistolCounter(0)
+                .rifleCounter(0)
+                .shotgunCounter(0)
+                .patentFirstRecord(false).build();
     }
 
     // Contribution
@@ -63,8 +62,12 @@ public class HistoryService {
         contribution.setHistoryUUID(historyEntity.getUuid());
         List<ContributionEntity> contributionList = historyEntity
                 .getContributionList();
-        contributionList
-                .sort(Comparator.comparing(ContributionEntity::getPaymentDay));
+        if (contributionList != null) {
+            contributionList
+                    .sort(Comparator.comparing(ContributionEntity::getPaymentDay));
+        } else {
+            contributionList = new ArrayList<>();
+        }
         contributionList.add(contribution);
         contributionList
                 .sort(Comparator.comparing(ContributionEntity::getPaymentDay).reversed());
@@ -72,7 +75,6 @@ public class HistoryService {
 
         LOG.info("Dodano rekord w historii składek");
         historyRepository.saveAndFlush(historyEntity);
-
     }
 
     void removeContribution(String memberUUID, ContributionEntity contribution) {
@@ -97,14 +99,18 @@ public class HistoryService {
                 .getHistory();
 
         String[] licenseTab = historyEntity.getLicenseHistory().clone();
-        if (index == 0) {
-            licenseTab[0] = "Pistolet";
-        }
-        if (index == 1) {
-            licenseTab[1] = "Karabin";
-        }
-        if (index == 2) {
-            licenseTab[2] = "Strzelba";
+        if (licenseTab == null) {
+            licenseTab = new String[3];
+        } else {
+            if (index == 0) {
+                licenseTab[0] = "Pistolet";
+            }
+            if (index == 1) {
+                licenseTab[1] = "Karabin";
+            }
+            if (index == 2) {
+                licenseTab[2] = "Strzelba";
+            }
         }
         historyEntity.setLicenseHistory(licenseTab);
         historyRepository.saveAndFlush(historyEntity);
