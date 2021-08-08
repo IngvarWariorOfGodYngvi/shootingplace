@@ -40,6 +40,13 @@ public class ClubService {
     }
 
     public boolean updateClub(int id, Club club) {
+        if (!clubRepository.existsById(id)) {
+            return false;
+        }
+        if (id == 2) {
+            LOG.info("Forbidden");
+            return false;
+        }
         ClubEntity clubEntity = clubRepository.findById(id)
                 .orElseThrow(EntityNotFoundException::new);
         if (club.getName() != null && !club.getName().isEmpty()) {
