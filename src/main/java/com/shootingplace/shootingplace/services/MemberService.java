@@ -1,14 +1,15 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.ContributionEntity;
 import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
 import com.shootingplace.shootingplace.domain.entities.LicenseEntity;
 import com.shootingplace.shootingplace.domain.entities.MemberEntity;
 import com.shootingplace.shootingplace.domain.enums.ErasedType;
 import com.shootingplace.shootingplace.domain.models.Member;
 import com.shootingplace.shootingplace.domain.models.MemberDTO;
-import com.shootingplace.shootingplace.repositories.*;
-import lombok.SneakyThrows;
+import com.shootingplace.shootingplace.repositories.ClubRepository;
+import com.shootingplace.shootingplace.repositories.ErasedRepository;
+import com.shootingplace.shootingplace.repositories.LicenseRepository;
+import com.shootingplace.shootingplace.repositories.MemberRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -39,7 +40,6 @@ public class MemberService {
     private final ClubRepository clubRepository;
     private final ChangeHistoryService changeHistoryService;
     private final ErasedRepository erasedRepository;
-    private final ContributionRepository contributionRepository;
     private final Logger LOG = LogManager.getLogger();
 
 
@@ -54,8 +54,7 @@ public class MemberService {
                          PersonalEvidenceService personalEvidenceService,
                          ClubRepository clubRepository,
                          ChangeHistoryService changeHistoryService,
-                         ErasedRepository erasedRepository,
-                         ContributionRepository contributionRepository) {
+                         ErasedRepository erasedRepository) {
         this.memberRepository = memberRepository;
         this.addressService = addressService;
         this.licenseService = licenseService;
@@ -69,7 +68,6 @@ public class MemberService {
         this.clubRepository = clubRepository;
         this.changeHistoryService = changeHistoryService;
         this.erasedRepository = erasedRepository;
-        this.contributionRepository = contributionRepository;
     }
 
 
@@ -279,7 +277,6 @@ public class MemberService {
 
 
     //--------------------------------------------------------------------------
-    // @Patch
     public ResponseEntity<?> activateOrDeactivateMember(String memberUUID, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
@@ -294,34 +291,22 @@ public class MemberService {
     }
 
     public ResponseEntity<?> changeAdult(String memberUUID, String pinCode) {
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.notFound().build();
         }
+        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         if (memberEntity.getAdult()) {
             LOG.info("Klubowicz należy już do grupy powszechnej");
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("\"Klubowicz należy już do grupy powszechnej\"");
         }
-        if (!LocalDate.now().equals(memberEntity.getJoinDate().plusYears(1))) {
+        if (LocalDate.now().minusYears(1).minusDays(1).isBefore(memberEntity.getJoinDate())) {
             LOG.info("Klubowicz ma za krótki staż jako młodzież");
-            return ResponseEntity.badRequest().body("Klubowicz ma za krótki staż jako młodzież");
+            return ResponseEntity.badRequest().body("\"Klubowicz ma za krótki staż jako młodzież\"");
         }
         memberEntity.setAdult(true);
         memberRepository.saveAndFlush(memberEntity);
-        LocalDate date;
-        if (memberEntity.getHistory().getContributionList().get(0).getValidThru().getDayOfMonth() == 28) {
-            date = LocalDate.of(LocalDate.now().getYear(), 6, 30);
-        } else {
-            date = memberEntity.getHistory().getContributionList().get(0).getValidThru().plusMonths(4);
-        }
-        ContributionEntity contribution = ContributionEntity.builder()
-                .paymentDay(LocalDate.now())
-                .validThru(date)
-                .historyUUID(memberEntity.getHistory().getUuid())
-                .build();
-        contributionRepository.saveAndFlush(contribution);
-        historyService.addContribution(memberUUID, contribution);
+        historyService.changeContributionTime(memberUUID);
         LOG.info("Klubowicz należy od teraz do grupy dorosłej : " + LocalDate.now());
         changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " changeAdult", memberEntity.getUuid());
         return ResponseEntity.noContent().build();
@@ -338,6 +323,7 @@ public class MemberService {
                     .erasedType(erasedType)
                     .date(erasedDate)
                     .additionalDescription(additionalDescription)
+                    .date(LocalDate.now())
                     .build();
             erasedRepository.save(build);
             memberEntity.setErasedEntity(build);
@@ -351,7 +337,6 @@ public class MemberService {
     }
 
     //--------------------------------------------------------------------------
-    @SneakyThrows
     public ResponseEntity<?> updateMember(String memberUUID, Member member) {
 
         if (!memberRepository.existsById(memberUUID)) {
@@ -360,7 +345,6 @@ public class MemberService {
         }
 
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-
         if (member.getFirstName() != null && !member.getFirstName().isEmpty()) {
             String[] s1 = member.getFirstName().split(" ");
             StringBuilder firstNames = new StringBuilder();
@@ -439,13 +423,12 @@ public class MemberService {
 
     public MemberEntity getMember(int number) {
         LOG.info("Wywołano Klubowicza");
-        MemberEntity memberEntity = memberRepository.findAll()
+
+        return memberRepository.findAll()
                 .stream()
                 .filter(f -> f.getLegitimationNumber().equals(number))
                 .findFirst()
                 .orElseThrow(EntityNotFoundException::new);
-
-        return memberEntity;
 
     }
 
@@ -524,51 +507,6 @@ public class MemberService {
         });
         return list;
     }
-
-
-    public ResponseEntity<?> updateJoinDate(String memberUUID, String date) {
-
-        if (!memberRepository.existsById(memberUUID)) {
-            LOG.info("Nie znaleziono Klubowicza");
-            return ResponseEntity.notFound().build();
-        }
-        MemberEntity toUpdate = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        LocalDate newDate = LocalDate.parse(date);
-        toUpdate.setJoinDate(newDate);
-        memberRepository.saveAndFlush(toUpdate);
-        LOG.info("Zaktualizowano pomyślnie Data przystąpienia do klubu");
-        return ResponseEntity.ok().build();
-
-    }
-
-    public List<String> getMembersWithLicense(Boolean license) {
-
-        List<String> list = new ArrayList<>();
-        if (license) {
-            memberRepository.findAll()
-                    .stream()
-                    .filter(e -> e.getLicense().getNumber() != null && e.getLicense().isValid())
-                    .forEach(e -> list.add(e.getFirstName() + " " + e.getSecondName() + " " + e.getLicense().getNumber()));
-        } else {
-            memberRepository.findAll()
-                    .stream()
-                    .filter(e -> e.getLicense().getNumber() != null && !e.getLicense().isValid())
-                    .forEach(e -> list.add(e.getFirstName() + " " + e.getSecondName() + " " + e.getLicense().getNumber()));
-        }
-        return list;
-    }
-
-//    public List<String> getAllActiveMembersNames() {
-//        checkMembers();
-//
-//        List<String> list = new ArrayList<>();
-//        memberRepository.findAll().stream().filter(MemberEntity::getActive)
-//                .forEach(e ->
-//                        list.add(e.getSecondName().concat(" " + e.getFirstName() + " leg. " + e.getLegitimationNumber())));
-//        list.sort(Comparator.comparing(String::new));
-//        LOG.info("Lista nazwisk z identyfikatorem");
-//        return list;
-//    }
 
     public List<String> getAllNames() {
         checkMembers();
@@ -704,57 +642,19 @@ public class MemberService {
             }
         }
 
-//        if (adult == null && !erase) {
-//            if (active != null) {
-//                memberRepository.findAll().stream()
-//                        .filter(f -> !f.getErased())
-//                        .filter(f -> f.getActive().equals(active))
-//                        .forEach(e -> list.add(Mapping.map2DTO(e)));
-//            } else {
-//                memberRepository.findAll().stream()
-//                        .filter(f -> !f.getErased())
-//                        .forEach(e -> list.add(Mapping.map2DTO(e)));
-//            }
-//        }
-//        if (active == null && !erase) {
-//            if (adult != null) {
-//                memberRepository.findAll().stream()
-//                        .filter(f -> !f.getErased())
-//                        .filter(f -> f.getAdult().equals(adult))
-//                        .forEach(e -> list.add(Mapping.map2DTO(e)));
-//            } else {
-//                memberRepository.findAll().stream()
-//                        .filter(f -> !f.getErased())
-//                        .forEach(e -> list.add(Mapping.map2DTO(e)));
-//            }
-//        }
-//        if (erase) {
-//            if (adult != null) {
-//                memberRepository.findAll().stream()
-//                        .filter(MemberEntity::getErased)
-//                        .filter(f -> f.getAdult().equals(adult))
-//                        .forEach(e -> list.add(Mapping.map2DTO(e)));
-//            } else {
-//                memberRepository.findAll().stream()
-//                        .filter(MemberEntity::getErased)
-//                        .forEach(e -> list.add(Mapping.map2DTO(e)));
-//            }
-//        } else {
-//            memberRepository.findAll().stream()
-//                    .filter(f -> !f.getErased())
-//                    .filter(f -> f.getActive().equals(active))
-//                    .filter(f -> f.getAdult().equals(adult))
-//                    .forEach(e -> list.add(Mapping.map2DTO(e)));
-//        }
         list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
         return list;
     }
 
     public boolean changePzss(String uuid) {
         MemberEntity memberEntity = memberRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
-        memberEntity.setPzss(true);
-        memberRepository.saveAndFlush(memberEntity);
-        return true;
+        if (memberEntity != null) {
+            memberEntity.setPzss(true);
+            memberRepository.saveAndFlush(memberEntity);
+            return true;
+        } else {
+            return false;
+        }
 
     }
 
@@ -775,7 +675,7 @@ public class MemberService {
         List<MemberEntity> collect = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getActive())
-                .filter(f -> (!f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution)) || f.getHistory().getContributionList().isEmpty())
+                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName))
                 .collect(Collectors.toList());
         collect.forEach(e -> {
@@ -795,7 +695,7 @@ public class MemberService {
         List<MemberEntity> collect = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getActive())
-                .filter(f -> (!f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution)) || f.getHistory().getContributionList().isEmpty())
+                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName))
                 .collect(Collectors.toList());
         collect.forEach(e -> {

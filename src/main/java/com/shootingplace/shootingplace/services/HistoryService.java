@@ -473,6 +473,22 @@ public class HistoryService {
         }
 
     }
+    void changeContributionTime(String memberUUID) {
+        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        LocalDate date;
+        if (memberEntity.getHistory().getContributionList().get(0).getValidThru().getDayOfMonth() == 28) {
+            date = LocalDate.of(LocalDate.now().getYear(), 6, 30);
+        } else {
+            date = memberEntity.getHistory().getContributionList().get(0).getValidThru().plusMonths(4);
+        }
+        ContributionEntity contribution = ContributionEntity.builder()
+                .paymentDay(LocalDate.now())
+                .validThru(date)
+                .historyUUID(memberEntity.getHistory().getUuid())
+                .build();
+        contributionRepository.saveAndFlush(contribution);
+        addContribution(memberUUID, contribution);
+    }
 
 
 }

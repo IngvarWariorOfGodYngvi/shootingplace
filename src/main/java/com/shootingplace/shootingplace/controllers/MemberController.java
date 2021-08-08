@@ -210,10 +210,10 @@ public class MemberController {
         return memberService.updateMember(uuid, member);
     }
 
-    @PutMapping("/date/{uuid}")
-    public ResponseEntity<?> updateJoinDate(@PathVariable String uuid, @RequestParam String date) {
-        return memberService.updateJoinDate(uuid, date);
-    }
+//    @PutMapping("/date/{uuid}")
+//    public ResponseEntity<?> updateJoinDate(@PathVariable String uuid, @RequestParam String date) {
+//        return memberService.updateJoinDate(uuid, date);
+//    }
 
     @PatchMapping("/adult/{uuid}")
     public ResponseEntity<?> changeAdult(@PathVariable String uuid, @RequestParam String pinCode) {
