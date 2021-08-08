@@ -10,8 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class WeaponPermissionService {
@@ -31,35 +29,34 @@ public class WeaponPermissionService {
         WeaponPermissionEntity weaponPermissionEntity = memberEntity.getWeaponPermission();
         if (weaponPermission.getNumber() != null) {
 
-            List<MemberEntity> collect = memberRepository.findAll()
+            boolean match = memberRepository.findAll()
                     .stream()
                     .filter(f -> !f.getErased())
                     .filter(f -> f.getWeaponPermission().getNumber() != null)
-                    .filter(f -> f.getWeaponPermission().getNumber().equals(weaponPermission.getNumber()))
-                    .collect(Collectors.toList());
-            if (collect.size() > 0) {
+                    .anyMatch(f -> f.getWeaponPermission().getNumber().equals(weaponPermission.getNumber()));
+            if (match) {
                 LOG.error("ktoś już ma taki numer pozwolenia");
                 return false;
             } else {
-                weaponPermissionEntity.setNumber(weaponPermission.getNumber());
+                weaponPermissionEntity.setNumber(weaponPermission.getNumber().toUpperCase());
                 weaponPermissionEntity.setExist(true);
                 LOG.info("Wprowadzono numer pozwolenia");
             }
         }
         if (weaponPermission.getAdmissionToPossessAWeapon() != null) {
 
-            List<MemberEntity> collect = memberRepository.findAll()
+            boolean match = memberRepository.findAll()
                     .stream()
                     .filter(f -> !f.getErased())
                     .filter(f -> f.getWeaponPermission().getAdmissionToPossessAWeapon() != null)
                     .filter(f -> f.getWeaponPermission().getAdmissionToPossessAWeapon().equals(weaponPermission.getAdmissionToPossessAWeapon()))
-                    .collect(Collectors.toList());
+                    .anyMatch(f -> f.getWeaponPermission().getAdmissionToPossessAWeapon().equals(weaponPermission.getAdmissionToPossessAWeapon()));
 
-            if (collect.size() > 0) {
+            if (match) {
                 LOG.error("ktoś już ma taki numer dopuszczenia");
                 return false;
             } else {
-                weaponPermissionEntity.setAdmissionToPossessAWeapon(weaponPermission.getAdmissionToPossessAWeapon());
+                weaponPermissionEntity.setAdmissionToPossessAWeapon(weaponPermission.getAdmissionToPossessAWeapon().toUpperCase());
                 weaponPermissionEntity.setAdmissionToPossessAWeaponIsExist(true);
                 LOG.info("Wprowadzono numer dopuszczenia");
             }
@@ -72,6 +69,10 @@ public class WeaponPermissionService {
     }
 
     public boolean removeWeaponPermission(String memberUUID, boolean admission, boolean permission) {
+        if (!memberRepository.existsById(memberUUID)) {
+            LOG.info("Nie znaleziono użytkownika");
+            return false;
+        }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         WeaponPermissionEntity weaponPermission = memberEntity.getWeaponPermission();
 
@@ -91,6 +92,8 @@ public class WeaponPermissionService {
         return WeaponPermission.builder()
                 .number(null)
                 .isExist(false)
+                .admissionToPossessAWeapon(null)
+                .admissionToPossessAWeaponIsExist(false)
                 .build();
     }
 

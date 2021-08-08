@@ -911,37 +911,30 @@ public class MemberServiceTest {
     }
 
     private List<MemberEntity> erasedList() {
-        System.out.println("erased list");
         return membersList.stream().filter(MemberEntity::getErased).collect(Collectors.toList());
     }
 
     private MemberEntity findByID(String uuid) {
-        System.out.println("find by ID");
         return membersList.stream().filter(f -> f.getUuid().equals(uuid)).findFirst().orElseThrow(EntityNotFoundException::new);
     }
 
     private MemberEntity findByPesel(String pesel) {
-        System.out.println("find by PESEL");
         return membersList.stream().filter(f -> f.getPesel().equals(pesel)).findFirst().orElseThrow(EntityNotFoundException::new);
     }
 
     private MemberEntity findByIDCard(String idCard) {
-        System.out.println("find by IDCard");
         return membersList.stream().filter(f -> f.getIDCard().equals(idCard)).findFirst().orElseThrow(EntityNotFoundException::new);
     }
 
     private MemberEntity findByEmail(String email) {
-        System.out.println("find by email");
         return membersList.stream().filter(f -> f.getEmail().equals(email)).findFirst().orElseThrow(EntityNotFoundException::new);
     }
 
     private List<MemberEntity> findAllByErasedIsTrue() {
-        System.out.println("find all by erased is true");
         return membersList.stream().filter(MemberEntity::getErased).collect(Collectors.toList());
     }
 
     private boolean existsById(String uuid) {
-        System.out.println("find all by by erased is true");
         return membersList.stream().anyMatch(f -> f.getUuid().equals(uuid));
     }
 

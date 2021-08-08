@@ -101,7 +101,6 @@ public class ShootingPatentServiceTest {
     }
 
     private MemberEntity findByID(String uuid) {
-        System.out.println("find by ID");
         return membersList.stream().filter(f -> f.getUuid().equals(uuid)).findFirst().orElseThrow(EntityNotFoundException::new);
     }
 
