@@ -51,7 +51,6 @@ public class AddressServiceTest {
         //given
         //when
         Address address = addressService.getAddress();
-        System.out.println(address);
         //then
         assertThat(address.getFlatNumber(), Matchers.equalTo(null));
     }

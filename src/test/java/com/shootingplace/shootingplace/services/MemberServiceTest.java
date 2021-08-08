@@ -1149,23 +1149,6 @@ public class MemberServiceTest {
                 .build();
     }
 
-    private AddressEntity createAddress() {
-        return AddressEntity.builder()
-                .uuid(String.valueOf(UUID.randomUUID()))
-                .build();
-    }
-
-    private WeaponPermissionEntity createWeaponPermission() {
-        return WeaponPermissionEntity.builder()
-                .uuid(String.valueOf(UUID.randomUUID()))
-                .build();
-    }
-
-    private PersonalEvidenceEntity createPersonalEvidence() {
-        return PersonalEvidenceEntity.builder()
-                .uuid(String.valueOf(UUID.randomUUID()))
-                .build();
-    }
 
     private MemberPermissionsEntity createMemberPermission() {
         Random r = new Random();

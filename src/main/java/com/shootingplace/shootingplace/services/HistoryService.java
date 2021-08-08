@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.services;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
 import com.shootingplace.shootingplace.domain.models.History;
+import com.shootingplace.shootingplace.domain.models.ShootingPatent;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -488,6 +489,28 @@ public class HistoryService {
                 .build();
         contributionRepository.saveAndFlush(contribution);
         addContribution(memberUUID, contribution);
+    }
+
+    public void updateShootingPatentHistory(String memberUUID, ShootingPatent shootingPatent) {
+        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        ShootingPatentEntity shootingPatentEntity = memberEntity.getShootingPatent();
+        HistoryEntity historyEntity =
+                memberEntity.getHistory();
+        if (shootingPatentEntity.getDateOfPosting() != null) {
+            if (shootingPatentEntity.getPistolPermission()) {
+                addDateToPatentPermissions(memberUUID, shootingPatent.getDateOfPosting(), 0);
+            }
+            if (shootingPatentEntity.getRiflePermission()) {
+                addDateToPatentPermissions(memberUUID, shootingPatent.getDateOfPosting(), 1);
+            }
+            if (shootingPatentEntity.getShotgunPermission()) {
+                addDateToPatentPermissions(memberUUID, shootingPatent.getDateOfPosting(), 2);
+            }
+            if (shootingPatentEntity.getDateOfPosting() != null) {
+                historyEntity.setPatentFirstRecord(true);
+            }
+            historyRepository.saveAndFlush(historyEntity);
+        }
     }
 
 
