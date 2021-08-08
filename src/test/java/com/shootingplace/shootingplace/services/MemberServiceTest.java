@@ -7,7 +7,6 @@ import com.shootingplace.shootingplace.domain.models.Member;
 import com.shootingplace.shootingplace.domain.models.MemberDTO;
 import com.shootingplace.shootingplace.repositories.*;
 import org.hamcrest.Matchers;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,25 +36,7 @@ public class MemberServiceTest {
     @Mock
     LicenseRepository licenseRepository;
     @Mock
-    AddressService addressService;
-    @Mock
-    ClubRepository clubRepository;
-    @Mock
-    ShootingPatentService shootingPatentService;
-    @Mock
-    LicenseService licenseService;
-    @Mock
     HistoryService historyService;
-    @Mock
-    WeaponPermissionService weaponPermissionService;
-    @Mock
-    MemberPermissionsService memberPermissionsService;
-    @Mock
-    PersonalEvidenceService personalEvidenceService;
-    @Mock
-    ContributionService contributionService;
-    @Mock
-    ContributionRepository contributionRepository;
     @Mock
     ChangeHistoryService changeHistoryService;
     @Mock
@@ -69,7 +50,6 @@ public class MemberServiceTest {
 
     private int i = 0;
 
-    private final int index = 0;
     private final String pinCodeOK = "0127";
 
     @Before
@@ -982,7 +962,6 @@ public class MemberServiceTest {
         return memberEntity1;
     }
 
-    @NotNull
     private List<MemberEntity> getMemberEntities() {
         List<MemberEntity> list = new ArrayList<>();
         MemberEntity member1 = MemberEntity.builder()

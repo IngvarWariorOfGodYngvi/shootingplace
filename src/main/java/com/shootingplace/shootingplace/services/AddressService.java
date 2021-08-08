@@ -5,7 +5,6 @@ import com.shootingplace.shootingplace.domain.entities.MemberEntity;
 import com.shootingplace.shootingplace.domain.models.Address;
 import com.shootingplace.shootingplace.repositories.AddressRepository;
 import com.shootingplace.shootingplace.repositories.MemberRepository;
-import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -23,8 +22,8 @@ public class AddressService {
         this.memberRepository = memberRepository;
     }
 
-    @SneakyThrows
     public boolean updateAddress(String memberUUID, Address address) {
+        System.out.println(memberUUID);
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         AddressEntity addressEntity = memberEntity.getAddress();
         if (address.getZipCode() != null && !address.getZipCode().isEmpty()) {
