@@ -56,14 +56,4 @@ public class Address {
         this.flatNumber = flatNumber;
     }
 
-    @Override
-    public String toString() {
-        return "Address{" +
-                "zipCode='" + zipCode + '\'' +
-                ", postOfficeCity='" + postOfficeCity + '\'' +
-                ", street='" + street + '\'' +
-                ", streetNumber='" + streetNumber + '\'' +
-                ", flatNumber='" + flatNumber + '\'' +
-                '}';
-    }
 }

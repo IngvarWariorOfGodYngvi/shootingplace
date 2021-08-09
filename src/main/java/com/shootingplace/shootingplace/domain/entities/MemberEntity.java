@@ -247,31 +247,4 @@ public class MemberEntity {
         this.pzss = pzss;
     }
 
-    @Override
-    public String toString() {
-        return "MemberEntity{" +
-                "uuid='" + uuid + '\'' +
-                ", joinDate=" + joinDate +
-                ", legitimationNumber=" + legitimationNumber +
-                ", firstName='" + firstName + '\'' +
-                ", secondName='" + secondName + '\'' +
-                ", license=" + license +
-                ", shootingPatent=" + shootingPatent +
-                ", email='" + email + '\'' +
-                ", pesel='" + pesel + '\'' +
-                ", IDCard='" + IDCard + '\'' +
-                ", club=" + club +
-                ", address=" + address +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                ", weaponPermission=" + weaponPermission +
-                ", active=" + active +
-                ", adult=" + adult +
-                ", erased=" + erased +
-                ", pzss=" + pzss +
-                ", erasedEntity=" + erasedEntity +
-                ", history=" + history +
-                ", memberPermissions=" + memberPermissions +
-                ", personalEvidence=" + personalEvidence +
-                '}';
-    }
 }

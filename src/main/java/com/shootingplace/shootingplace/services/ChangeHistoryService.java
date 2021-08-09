@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ChangeHistoryService {
@@ -24,26 +22,26 @@ public class ChangeHistoryService {
     }
 
 
-    private ChangeHistoryEntity addRecord(UserEntity user, String change, String uuid) {
-        return changeHistoryRepository.saveAndFlush(ChangeHistoryEntity.builder()
-                .username(user)
-                .classNamePlusMethod(change)
-                .belongsTo(uuid)
+    ChangeHistoryEntity addRecord(UserEntity user, String classNamePlusMethod, String memberUUID) {
+        return changeHistoryRepository.save(ChangeHistoryEntity.builder()
+                .userEntity(user)
+                .classNamePlusMethod(classNamePlusMethod)
+                .belongsTo(memberUUID)
                 .dayNow(LocalDate.now())
                 .timeNow(String.valueOf(LocalTime.now()))
                 .build());
     }
 
     public boolean comparePinCode(String pinCode) {
-        List<UserEntity> collect = userRepository.findAll().stream().filter(f -> f.getPinCode().equals(pinCode)).collect(Collectors.toList());
-//        pinCode.equals("5062") || pinCode.equals("6420") || pinCode.equals("0127")
-        return !collect.isEmpty();
+//        List<UserEntity> collect = userRepository.findAll().stream().filter(f -> f.getPinCode().equals(pinCode)).collect(Collectors.toList());
+////        pinCode.equals("5062") || pinCode.equals("6420") || pinCode.equals("0127")
+//        return !collect.isEmpty();
+        return userRepository.findAll().stream().anyMatch(f -> f.getPinCode().equals(pinCode));
     }
 
     void addRecordToChangeHistory(String pinCode, String classNamePlusMethod, String uuid) {
 
         UserEntity userEntity = userRepository.findAll().stream().filter(f -> f.getPinCode().equals(pinCode)).findFirst().orElse(null);
-
 
         if (userEntity != null) {
 

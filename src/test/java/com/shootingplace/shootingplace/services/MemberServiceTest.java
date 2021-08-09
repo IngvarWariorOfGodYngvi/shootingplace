@@ -5,7 +5,9 @@ import com.shootingplace.shootingplace.domain.enums.ArbiterClass;
 import com.shootingplace.shootingplace.domain.enums.ErasedType;
 import com.shootingplace.shootingplace.domain.models.Member;
 import com.shootingplace.shootingplace.domain.models.MemberDTO;
-import com.shootingplace.shootingplace.repositories.*;
+import com.shootingplace.shootingplace.repositories.ErasedRepository;
+import com.shootingplace.shootingplace.repositories.LicenseRepository;
+import com.shootingplace.shootingplace.repositories.MemberRepository;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -25,7 +27,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest
@@ -909,6 +911,14 @@ public class MemberServiceTest {
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.NO_CONTENT));
     }
+    @Test
+    public void addNewMember() {
+        //given
+//        MemberEntity memberEntity = MemberEntity.builder().build();
+        //when
+//        when(memberRepository.save(any(MemberEntity.class))).thenReturn(save((memberEntity)));
+        //then
+    }
 
     private List<MemberEntity> erasedList() {
         return membersList.stream().filter(MemberEntity::getErased).collect(Collectors.toList());
@@ -947,12 +957,23 @@ public class MemberServiceTest {
     }
 
     private MemberEntity save(MemberEntity memberEntity) {
-        System.out.println("metoda save");
-        System.out.println(memberEntity.getUuid());
-        MemberEntity memberEntity1 = membersList.stream().filter(f -> f.getUuid().equals(memberEntity.getUuid())).findFirst().orElseThrow(EntityNotFoundException::new);
-        System.out.println(memberEntity1.getUuid());
-
-        return memberEntity1;
+        MemberEntity entity = MemberEntity.builder()
+                .uuid(String.valueOf(UUID.randomUUID()))
+                .firstName(memberEntity.getFirstName())
+                .secondName(memberEntity.getSecondName())
+                .email(memberEntity.getEmail())
+                .pesel(memberEntity.getPesel()).phoneNumber(memberEntity.getPhoneNumber())
+                .IDCard(memberEntity.getIDCard())
+                .legitimationNumber(memberEntity.getLegitimationNumber())
+                .adult(memberEntity.getAdult()).active(memberEntity.getActive()).erased(memberEntity.getErased())
+                .history(memberEntity.getHistory())
+                .license(memberEntity.getLicense())
+                .joinDate(memberEntity.getJoinDate())
+                .club(memberEntity.getClub())
+                .shootingPatent(memberEntity.getShootingPatent())
+                .build();
+        membersList.add(entity);
+        return entity;
     }
 
     private List<MemberEntity> getMemberEntities() {
