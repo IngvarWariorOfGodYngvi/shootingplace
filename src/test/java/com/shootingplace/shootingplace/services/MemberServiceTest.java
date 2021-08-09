@@ -5,9 +5,12 @@ import com.shootingplace.shootingplace.domain.enums.ArbiterClass;
 import com.shootingplace.shootingplace.domain.enums.ErasedType;
 import com.shootingplace.shootingplace.domain.models.Member;
 import com.shootingplace.shootingplace.domain.models.MemberDTO;
+import com.shootingplace.shootingplace.repositories.ClubRepository;
 import com.shootingplace.shootingplace.repositories.ErasedRepository;
 import com.shootingplace.shootingplace.repositories.LicenseRepository;
 import com.shootingplace.shootingplace.repositories.MemberRepository;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -27,11 +30,14 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest
 public class MemberServiceTest {
+
+    private final Logger LOG = LogManager.getLogger();
 
     @Mock
     MemberRepository memberRepository;
@@ -43,6 +49,22 @@ public class MemberServiceTest {
     ChangeHistoryService changeHistoryService;
     @Mock
     ErasedRepository erasedRepository;
+    @Mock
+    AddressService addressService;
+    @Mock
+    ClubRepository clubRepository;
+    @Mock
+    ShootingPatentService shootingPatentService;
+    @Mock
+    LicenseService licenseService;
+    @Mock
+    WeaponPermissionService weaponPermissionService;
+    @Mock
+    MemberPermissionsService memberPermissionsService;
+    @Mock
+    PersonalEvidenceService personalEvidenceService;
+    @Mock
+    ContributionService contributionService;
 
 
     @InjectMocks
@@ -572,6 +594,7 @@ public class MemberServiceTest {
                 .adult(true)
                 .build();
         //when
+        when(memberRepository.findByPesel(member.getPesel())).thenReturn(Optional.ofNullable(findByPesel(member.getPesel())));
         ResponseEntity<?> responseEntity = memberService.addNewMember(member, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
@@ -617,6 +640,27 @@ public class MemberServiceTest {
     }
 
     @Test
+    public void add_new_member_bad_request_legitimation_number_exist_in_erased_member() {
+        //given
+        Member member = Member.builder()
+                .firstName("John7")
+                .secondName("Doe7")
+                .pesel("50052116592")
+                .email("sample7@mail.com")
+                .IDCard("AAA 999999")
+                .joinDate(LocalDate.now())
+                .adult(true)
+                .legitimationNumber(6)
+                .build();
+        //when
+        when(memberRepository.findByLegitimationNumber(member.getLegitimationNumber())).thenReturn(Optional.ofNullable(findByLegitimationNumber(member.getLegitimationNumber())));
+        ResponseEntity<?> responseEntity = memberService.addNewMember(member, pinCodeOK);
+        //then
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Uwaga! Ktoś wśród skreślonych już ma taki numer legitymacji\""));
+    }
+
+    @Test
     public void add_new_member_bad_request_legitimation_number_exist() {
         //given
         Member member = Member.builder()
@@ -624,12 +668,13 @@ public class MemberServiceTest {
                 .secondName("Doe7")
                 .pesel("50052116592")
                 .email("sample7@mail.com")
-                .IDCard("AAA 999991")
+                .IDCard("AAA 999999")
                 .joinDate(LocalDate.now())
                 .adult(true)
                 .legitimationNumber(1)
                 .build();
         //when
+        when(memberRepository.findByLegitimationNumber(member.getLegitimationNumber())).thenReturn(Optional.ofNullable(findByLegitimationNumber(member.getLegitimationNumber())));
         ResponseEntity<?> responseEntity = memberService.addNewMember(member, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
@@ -824,6 +869,7 @@ public class MemberServiceTest {
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
         assertThat(responseEntity.getBody(), Matchers.equalTo("\"Klubowicz należy już do grupy powszechnej\""));
     }
+
     @Test
     public void change_adult_bad_request_too_short_probation() {
         //given
@@ -857,7 +903,7 @@ public class MemberServiceTest {
         when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
         boolean b = memberService.changePzss(uuid);
         //then
-        assertThat(b,Matchers.equalTo(true));
+        assertThat(b, Matchers.equalTo(true));
     }
 
     @Test
@@ -892,7 +938,7 @@ public class MemberServiceTest {
         String description = "description";
         //when
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
-        ResponseEntity<?> responseEntity = memberService.eraseMember(uuid,erasedType,date,description,pinCodeOK);
+        ResponseEntity<?> responseEntity = memberService.eraseMember(uuid, erasedType, date, description, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.NOT_FOUND));
     }
@@ -907,17 +953,85 @@ public class MemberServiceTest {
         //when
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
         when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
-        ResponseEntity<?> responseEntity = memberService.eraseMember(uuid,erasedType,date,description,pinCodeOK);
+        ResponseEntity<?> responseEntity = memberService.eraseMember(uuid, erasedType, date, description, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.NO_CONTENT));
     }
+
     @Test
-    public void addNewMember() {
+    public void add_new_member_adult_success() {
         //given
-//        MemberEntity memberEntity = MemberEntity.builder().build();
+        Member member = getMember();
+        MemberEntity memberEntity = MemberEntity.builder()
+                .firstName(member.getFirstName())
+                .secondName(member.getSecondName())
+                .pesel(member.getPesel())
+                .IDCard(member.getIDCard())
+                .phoneNumber(member.getPhoneNumber())
+                .email(member.getEmail())
+                .joinDate(member.getJoinDate())
+                .adult(member.getAdult())
+                .build();
         //when
-//        when(memberRepository.save(any(MemberEntity.class))).thenReturn(save((memberEntity)));
+        when(memberRepository.findByPesel(member.getPesel())).thenReturn(Optional.ofNullable(findByPesel(member.getPesel())));
+        when(memberRepository.save(any(MemberEntity.class))).thenReturn(save((memberEntity)));
+        when(clubRepository.findById(1)).thenReturn(Optional.ofNullable(createClub()));
+        ResponseEntity<?> responseEntity = memberService.addNewMember(member, pinCodeOK);
         //then
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.CREATED));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("\"" + memberEntity.getUuid() + "\""));
+    }
+
+    @Test
+    public void add_new_member_non_adult_success() {
+        //given
+        Member member = getMember();
+        member.setAdult(false);
+        member.setLegitimationNumber(9);
+        member.setJoinDate(null);
+        member.setEmail(null);
+        MemberEntity memberEntity = MemberEntity.builder()
+                .firstName(member.getFirstName())
+                .secondName(member.getSecondName())
+                .pesel(member.getPesel())
+                .IDCard(member.getIDCard())
+                .phoneNumber(member.getPhoneNumber())
+                .adult(member.getAdult())
+                .build();
+        //when
+        when(memberRepository.findByPesel(member.getPesel())).thenReturn(Optional.ofNullable(findByPesel(member.getPesel())));
+        when(memberRepository.save(any(MemberEntity.class))).thenReturn(save((memberEntity)));
+        when(clubRepository.findById(1)).thenReturn(Optional.ofNullable(createClub()));
+        ResponseEntity<?> responseEntity = memberService.addNewMember(member, pinCodeOK);
+        //then
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.CREATED));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("\"" + memberEntity.getUuid() + "\""));
+    }
+
+    @Test
+    public void add_new_member_to_empty_list_success() {
+        //given
+        Member member = getMember();
+        member.setAdult(false);
+        member.setJoinDate(null);
+        member.setEmail(null);
+        MemberEntity memberEntity = MemberEntity.builder()
+                .firstName(member.getFirstName())
+                .secondName(member.getSecondName())
+                .pesel(member.getPesel())
+                .IDCard(member.getIDCard())
+                .phoneNumber(member.getPhoneNumber())
+                .adult(member.getAdult())
+                .build();
+        //when
+        when(memberRepository.findAll()).thenReturn(new ArrayList<>());
+        when(memberRepository.findByPesel(member.getPesel())).thenReturn(Optional.ofNullable(findByPesel(member.getPesel())));
+        when(memberRepository.save(any(MemberEntity.class))).thenReturn(save((memberEntity)));
+        when(clubRepository.findById(1)).thenReturn(Optional.ofNullable(createClub()));
+        ResponseEntity<?> responseEntity = memberService.addNewMember(member, pinCodeOK);
+        //then
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.CREATED));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("\"" + memberEntity.getUuid() + "\""));
     }
 
     private List<MemberEntity> erasedList() {
@@ -929,7 +1043,7 @@ public class MemberServiceTest {
     }
 
     private MemberEntity findByPesel(String pesel) {
-        return membersList.stream().filter(f -> f.getPesel().equals(pesel)).findFirst().orElseThrow(EntityNotFoundException::new);
+        return membersList.stream().filter(f -> f.getPesel().equals(pesel)).findFirst().orElse(null);
     }
 
     private MemberEntity findByIDCard(String idCard) {
@@ -958,7 +1072,6 @@ public class MemberServiceTest {
 
     private MemberEntity save(MemberEntity memberEntity) {
         MemberEntity entity = MemberEntity.builder()
-                .uuid(String.valueOf(UUID.randomUUID()))
                 .firstName(memberEntity.getFirstName())
                 .secondName(memberEntity.getSecondName())
                 .email(memberEntity.getEmail())
@@ -972,8 +1085,21 @@ public class MemberServiceTest {
                 .club(memberEntity.getClub())
                 .shootingPatent(memberEntity.getShootingPatent())
                 .build();
-        membersList.add(entity);
+//        membersList.add(entity);
         return entity;
+    }
+
+    private Member getMember() {
+        return Member.builder()
+                .firstName("John7")
+                .secondName("Doe7")
+                .email("sample7@mail.com")
+                .pesel("95070787164")
+                .phoneNumber("+48777777777")
+                .IDCard("AAA 999997")
+                .adult(true)
+                .joinDate(LocalDate.now())
+                .build();
     }
 
     private List<MemberEntity> getMemberEntities() {
@@ -1213,6 +1339,5 @@ public class MemberServiceTest {
                     .build();
         }
     }
-
 
 }

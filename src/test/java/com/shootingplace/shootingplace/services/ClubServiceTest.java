@@ -52,7 +52,6 @@ public class ClubServiceTest {
         //given
         //when
         List<ClubEntity> allClubs = clubService.getAllClubs();
-        allClubs.forEach(System.out::println);
         //then
         assertThat(allClubs, Matchers.hasSize(clubCount));
     }

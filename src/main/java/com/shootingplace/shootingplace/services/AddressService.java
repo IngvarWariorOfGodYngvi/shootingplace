@@ -23,7 +23,6 @@ public class AddressService {
     }
 
     public boolean updateAddress(String memberUUID, Address address) {
-        System.out.println(memberUUID);
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         AddressEntity addressEntity = memberEntity.getAddress();
         if (address.getZipCode() != null && !address.getZipCode().isEmpty()) {

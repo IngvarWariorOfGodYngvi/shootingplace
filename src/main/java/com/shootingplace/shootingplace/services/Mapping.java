@@ -60,11 +60,11 @@ public class Mapping {
                 .active(e.getActive())
                 .adult(e.getAdult())
                 .erased(e.getErased())
-                .history(map(e.getHistory()))
                 .memberPermissions(map(e.getMemberPermissions()))
                 .personalEvidence(map(e.getPersonalEvidence()))
                 .pzss(e.getPzss())
                 .erasedEntity(e.getErasedEntity())
+                .history(map(e.getHistory()))
                 .build();
     }
 
@@ -250,11 +250,9 @@ public class Mapping {
                 .build()).orElse(null);
     }
 
-    static HistoryEntity map(History h) {
-        if (h.
-                getLicensePaymentHistory()
-                != null) {
-            return HistoryEntity.builder()
+    static HistoryEntity map(History e) {
+
+            return Optional.ofNullable(e).map(h->HistoryEntity.builder()
                     .licenseHistory(h.getLicenseHistory())
                     .patentDay(h.getPatentDay())
                     .patentFirstRecord(h.getPatentFirstRecord())
@@ -262,18 +260,8 @@ public class Mapping {
                     .pistolCounter(h.getPistolCounter())
                     .rifleCounter(h.getRifleCounter())
                     .shotgunCounter(h.getShotgunCounter())
-                    .build();
-        } else {
-            return HistoryEntity.builder()
-                    .licenseHistory(h.getLicenseHistory())
-                    .patentDay(h.getPatentDay())
-                    .patentFirstRecord(h.getPatentFirstRecord())
-                    .licensePaymentHistory(h.getLicensePaymentHistory().stream().map(Mapping::map).collect(Collectors.toList()))
-                    .pistolCounter(h.getPistolCounter())
-                    .rifleCounter(h.getRifleCounter())
-                    .shotgunCounter(h.getShotgunCounter())
-                    .build();
-        }
+                    .build()).orElse(null);
+
     }
 
     static LicensePaymentHistory map(LicensePaymentHistoryEntity l) {

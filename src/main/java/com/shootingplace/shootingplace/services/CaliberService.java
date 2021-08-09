@@ -2,8 +2,6 @@ package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.CaliberEntity;
 import com.shootingplace.shootingplace.repositories.CaliberRepository;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -14,23 +12,27 @@ import java.util.stream.Collectors;
 public class CaliberService {
 
     private final CaliberRepository caliberRepository;
-    private final Logger LOG = LogManager.getLogger();
-
-
+    
     public CaliberService(CaliberRepository caliberRepository) {
         this.caliberRepository = caliberRepository;
     }
 
     public List<CaliberEntity> getCalibersList() {
-        List<CaliberEntity> caliberEntityList = caliberRepository.findAll();
-        if (caliberEntityList.isEmpty()) {
-            createAllCalibersEntities();
+        List<CaliberEntity> caliberEntityList;
+        if (caliberRepository.findAll().isEmpty()) {
+            caliberEntityList = createAllCalibersEntities();
+        }
+        else {
             caliberEntityList = caliberRepository.findAll();
         }
 
-        List<CaliberEntity> all = caliberRepository.findAll();
+        return getCaliberSortedEntityList(caliberEntityList);
+
+    }
+
+    private List<CaliberEntity> getCaliberSortedEntityList(List<CaliberEntity> caliberEntityList) {
         String[] sort = {"5,6mm", "9x19mm", "12/76", ".357", ".38", "7,62x39mm"};
-        List<CaliberEntity> collect = all.stream().filter(f -> !f.getName().equals(sort[0])
+        List<CaliberEntity> collect = caliberEntityList.stream().filter(f -> !f.getName().equals(sort[0])
                 && !f.getName().equals(sort[1])
                 && !f.getName().equals(sort[2])
                 && !f.getName().equals(sort[3])
@@ -56,52 +58,22 @@ public class CaliberService {
     }
 
     public List<String> getCalibersNamesList() {
-        List<String> list = new ArrayList<>();
+        List<CaliberEntity> caliberEntityList;
+        if (caliberRepository.findAll().isEmpty()) {
+            caliberEntityList = createAllCalibersEntities();
+        }
+        else {
+            caliberEntityList = caliberRepository.findAll();
+        }
+        List<CaliberEntity> caliberSortedEntityList = getCaliberSortedEntityList(caliberEntityList);
+        List<String> caliberSortedEntityListNames = new ArrayList<>();
+        caliberSortedEntityList.forEach(e-> caliberSortedEntityListNames.add(e.getName()));
 
-        List<CaliberEntity> all = caliberRepository.findAll();
-        String[] sort = {"5,6mm", "9x19mm", "12/76", ".357", ".38", "7,62x39mm"};
-        all.stream().filter(f -> !f.getName().equals(sort[0])
-                && !f.getName().equals(sort[1])
-                && !f.getName().equals(sort[2])
-                && !f.getName().equals(sort[3])
-                && !f.getName().equals(sort[4])
-                && !f.getName().equals(sort[5]))
-                .forEach(e ->
-                    list.add(e.getName())
-
-                );
-        CaliberEntity caliberEntity = all.stream().filter(f -> f.getName().equals(sort[0])).findFirst().orElse(null);
-        CaliberEntity caliberEntity1 = all.stream().filter(f -> f.getName().equals(sort[1])).findFirst().orElse(null);
-        CaliberEntity caliberEntity2 = all.stream().filter(f -> f.getName().equals(sort[2])).findFirst().orElse(null);
-        CaliberEntity caliberEntity3 = all.stream().filter(f -> f.getName().equals(sort[3])).findFirst().orElse(null);
-        CaliberEntity caliberEntity4 = all.stream().filter(f -> f.getName().equals(sort[4])).findFirst().orElse(null);
-        CaliberEntity caliberEntity5 = all.stream().filter(f -> f.getName().equals(sort[5])).findFirst().orElse(null);
-        List<String> caliberEntityList2 = new ArrayList<>();
-        if (caliberEntity != null) {
-            caliberEntityList2.add(caliberEntity.getName());
-        }
-        if (caliberEntity1 != null) {
-            caliberEntityList2.add(caliberEntity1.getName());
-        }
-        if (caliberEntity2 != null) {
-            caliberEntityList2.add(caliberEntity2.getName());
-        }
-        if (caliberEntity3 != null) {
-            caliberEntityList2.add(caliberEntity3.getName());
-        }
-        if (caliberEntity4 != null) {
-            caliberEntityList2.add(caliberEntity4.getName());
-        }
-        if (caliberEntity5 != null) {
-            caliberEntityList2.add(caliberEntity5.getName());
-        }
-        caliberEntityList2.addAll(list);
-
-        return caliberEntityList2;
+        return caliberSortedEntityListNames;
 
     }
 
-    private void createAllCalibersEntities() {
+    private List<CaliberEntity> createAllCalibersEntities() {
 
         List<CaliberEntity> list = new ArrayList<>();
         CaliberEntity caliberEntity = CaliberEntity.builder()
@@ -146,7 +118,8 @@ public class CaliberService {
                 .ammoUsed(null)
                 .build();
         list.add(caliberEntity5);
-        caliberRepository.saveAll(list);
+        list.forEach(caliberRepository::save);
+        return list;
     }
 
     public boolean createNewCaliber(String caliber) {

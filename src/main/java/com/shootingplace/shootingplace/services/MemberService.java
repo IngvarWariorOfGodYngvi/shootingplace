@@ -164,13 +164,13 @@ public class MemberService {
         MemberEntity memberEntity;
 
         List<MemberEntity> memberEntityList = memberRepository.findAll();
-        if (memberEntityList.stream().filter(f -> !f.getErased()).anyMatch(a -> a.getPesel().equals(member.getPesel()))) {
+        if (memberRepository.findByPesel(member.getPesel()).isPresent()) {
             LOG.error("Ktoś już ma taki numer PESEL");
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Uwaga! Ktoś już ma taki numer PESEL\"");
         }
         String finalEmail = member.getEmail();
         boolean anyMatch = memberEntityList.stream()
-                .filter(f -> !f.getErased())
+//                .filter(f -> !f.getErased())
                 .filter(f -> f.getEmail() != null)
                 .filter(f -> !f.getEmail().isEmpty())
                 .anyMatch(f -> f.getEmail().equals(finalEmail));
@@ -178,7 +178,7 @@ public class MemberService {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Uwaga! Ktoś już ma taki e-mail\" " + finalEmail);
         }
         if (member.getLegitimationNumber() != null) {
-            if (memberEntityList.stream().anyMatch(e -> e.getLegitimationNumber().equals(member.getLegitimationNumber()))) {
+            if (memberRepository.findByLegitimationNumber(member.getLegitimationNumber()).isPresent()) {
                 if (memberEntityList.stream().filter(MemberEntity::getErased).anyMatch(e -> e.getLegitimationNumber().equals(member.getLegitimationNumber()))) {
                     LOG.error("Ktoś już ma taki numer legitymacji");
                     return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Uwaga! Ktoś wśród skreślonych już ma taki numer legitymacji\"");
@@ -197,7 +197,7 @@ public class MemberService {
                 email = "";
             }
             LocalDate joinDate;
-            int legitimationNumber = 0;
+            int legitimationNumber;
             if (member.getJoinDate() == null) {
                 joinDate = LocalDate.now();
                 LOG.info("ustawiono domyślną datę zapisu " + joinDate);
@@ -208,20 +208,13 @@ public class MemberService {
             if (member.getLegitimationNumber() == null) {
                 int number;
                 if (memberEntityList.isEmpty()) {
-                    legitimationNumber = 1;
                     number = 1;
                 } else {
-//                    memberEntityList.stream().filter(f->f.getLegitimationNumber()!=null).collect(Collectors.toList()).sort(Comparator.comparing(MemberEntity::getLegitimationNumber).reversed());
                     number = memberEntityList.stream().filter(f -> f.getLegitimationNumber() != null).max(Comparator.comparing(MemberEntity::getLegitimationNumber)).orElseThrow(EntityNotFoundException::new).getLegitimationNumber() + 1;
                 }
-                int finalLegitimationNumber = legitimationNumber;
-                if (memberEntityList.stream().filter(f -> f.getLegitimationNumber() != null).anyMatch(e -> e.getLegitimationNumber().equals(finalLegitimationNumber))) {
-                    LOG.error("Ktoś już ma taki numer legitymacji");
-                    return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Uwaga! Ktoś już ma taki numer legitymacji\"");
-                } else {
-                    legitimationNumber = number;
-                    LOG.info("ustawiono domyślny numer legitymacji : " + legitimationNumber);
-                }
+                legitimationNumber = number;
+                LOG.info("ustawiono domyślny numer legitymacji : " + legitimationNumber);
+
             } else {
                 legitimationNumber = member.getLegitimationNumber();
             }

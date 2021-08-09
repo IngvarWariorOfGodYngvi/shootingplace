@@ -34,13 +34,10 @@ public class AddressServiceTest {
     public void update_address_success() {
         //given
         MemberEntity memberEntity = getMember();
-        System.out.println(memberEntity.getUuid());
         String uuid = memberEntity.getUuid();
         Address address = getBuild();
-        System.out.println(address.toString());
         //when
         when(memberRepository.findById(uuid)).thenReturn(java.util.Optional.of(memberEntity));
-        System.out.println(uuid);
         boolean b = addressService.updateAddress(uuid, address);
         //then
         assertThat(b, Matchers.equalTo(true));

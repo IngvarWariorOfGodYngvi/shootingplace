@@ -84,7 +84,6 @@ public class ShootingPatentServiceTest {
                 .shotgunPermission(true)
                 .build();
         //when
-        membersList.forEach(e -> System.out.println(e.getUuid() + " " + e.getShootingPatent().getPatentNumber()));
         when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
         boolean b = shootingPatentService.updatePatent(uuid, shootingPatent);
         //then
