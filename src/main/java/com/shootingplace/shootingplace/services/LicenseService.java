@@ -43,15 +43,11 @@ public class LicenseService {
         memberRepository.findAll()
                 .stream().filter(f -> !f.getErased())
                 .forEach(e -> {
-                    if (e.getLicense().getNumber() != null) {
-                        if (e.getLicense().isValid()) {
-
-                            list.add(Mapping.map2DTO(e));
-                        }
+                    if (e.getLicense().getNumber() != null && e.getLicense().isValid()) {
+                        list.add(Mapping.map2DTO(e));
                     }
                 });
         list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
-        LOG.info("Wysłano listę osób z licencjami");
         return list;
     }
 
@@ -60,15 +56,11 @@ public class LicenseService {
         memberRepository.findAll()
                 .stream().filter(f -> !f.getErased())
                 .forEach(e -> {
-                    if (e.getLicense().getNumber() != null) {
-                        if (!e.getLicense().isValid()) {
-
-                            list.add(Mapping.map2DTO(e));
-                        }
+                    if (e.getLicense().getNumber() != null && !e.getLicense().isValid()) {
+                        list.add(Mapping.map2DTO(e));
                     }
                 });
         list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
-        LOG.info("Wysłano listę osób z licencjami");
         return list;
     }
 
@@ -79,7 +71,6 @@ public class LicenseService {
                 .getUuid())
                 .orElseThrow(EntityNotFoundException::new);
         if (memberEntity.getShootingPatent().getPatentNumber() == null && memberEntity.getAdult()) {
-            LOG.error("Brak patentu");
             return false;
         }
         if (license.getNumber() != null
@@ -100,7 +91,6 @@ public class LicenseService {
         }
         if (license.getPistolPermission() != null) {
             if (!memberEntity.getShootingPatent().getPistolPermission() && memberEntity.getAdult()) {
-                LOG.error(noPatentMessage());
             }
             if (license.getPistolPermission().equals(true)) {
                 historyService.addLicenseHistoryRecord(memberUUID, 0);
@@ -110,7 +100,6 @@ public class LicenseService {
         }
         if (license.getRiflePermission() != null) {
             if (!memberEntity.getShootingPatent().getRiflePermission() && memberEntity.getAdult()) {
-                LOG.error(noPatentMessage());
             }
             if (license.getRiflePermission().equals(true)) {
                 historyService.addLicenseHistoryRecord(memberUUID, 1);
@@ -120,7 +109,6 @@ public class LicenseService {
         }
         if (license.getShotgunPermission() != null) {
             if (!memberEntity.getShootingPatent().getShotgunPermission() && memberEntity.getAdult()) {
-                LOG.error(noPatentMessage());
             }
             if (license.getShotgunPermission().equals(true)) {
                 historyService.addLicenseHistoryRecord(memberUUID, 2);
@@ -176,10 +164,6 @@ public class LicenseService {
         licenseRepository.saveAndFlush(license);
         changeHistoryService.addRecordToChangeHistory(pinCode, license.getClass().getSimpleName() + " updateLicense", memberEntity.getUuid());
         return true;
-    }
-
-    private String noPatentMessage() {
-        return "Nie ma na to Patentu";
     }
 
     public boolean renewLicenseValid(String memberUUID, License license) {

@@ -9,8 +9,6 @@ import com.shootingplace.shootingplace.repositories.ClubRepository;
 import com.shootingplace.shootingplace.repositories.ErasedRepository;
 import com.shootingplace.shootingplace.repositories.LicenseRepository;
 import com.shootingplace.shootingplace.repositories.MemberRepository;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -36,8 +34,6 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest
 public class MemberServiceTest {
-
-    private final Logger LOG = LogManager.getLogger();
 
     @Mock
     MemberRepository memberRepository;
@@ -88,8 +84,11 @@ public class MemberServiceTest {
 
     @Test
     public void get_Member() {
+        //given
+        int number = 1;
         //when
-        MemberEntity member = memberService.getMember(1);
+        when(memberRepository.findByLegitimationNumber(any(Integer.class))).thenReturn(Optional.ofNullable(findByLegitimationNumber(number)));
+        MemberEntity member = memberService.getMember(number);
         //then
         assertThat(member.getEmail(), Matchers.equalTo("sample1@mail.com"));
     }

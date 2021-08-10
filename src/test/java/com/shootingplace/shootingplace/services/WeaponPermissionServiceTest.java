@@ -113,7 +113,7 @@ public class WeaponPermissionServiceTest {
         String uuid = String.valueOf(UUID.randomUUID());
         //when
         when(memberRepository.existsById(uuid)).thenReturn(existsById(uuid));
-        boolean b = weaponPermissionService.removeWeaponPermission(uuid,false,false);
+        boolean b = weaponPermissionService.removeWeaponPermission(uuid, false, false);
         //then
         assertThat(b, Matchers.equalTo(false));
     }
@@ -178,13 +178,15 @@ public class WeaponPermissionServiceTest {
         int i = r.nextInt(100000);
         int y = r.nextInt(100000);
 
-        return WeaponPermissionEntity.builder()
+        WeaponPermissionEntity build = WeaponPermissionEntity.builder()
                 .uuid(String.valueOf(UUID.randomUUID()))
                 .isExist(true)
                 .number("AA " + i)
                 .admissionToPossessAWeapon("AO " + y)
                 .admissionToPossessAWeaponIsExist(true)
                 .build();
+        this.i++;
+        return build;
 
     }
 

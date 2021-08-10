@@ -416,12 +416,7 @@ public class MemberService {
 
     public MemberEntity getMember(int number) {
         LOG.info("Wywołano Klubowicza");
-
-        return memberRepository.findAll()
-                .stream()
-                .filter(f -> f.getLegitimationNumber().equals(number))
-                .findFirst()
-                .orElseThrow(EntityNotFoundException::new);
+        return memberRepository.findByLegitimationNumber(number).orElseThrow(EntityNotFoundException::new);
 
     }
 

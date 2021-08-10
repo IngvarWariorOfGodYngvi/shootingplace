@@ -14,7 +14,6 @@ import java.util.List;
 public class PersonalEvidence {
 
     private List<AmmoUsedEntity> ammoList;
-    private FilesModel file;
 
     public List<AmmoUsedEntity> getAmmoList() {
         return ammoList;
@@ -24,11 +23,4 @@ public class PersonalEvidence {
         this.ammoList = ammoList;
     }
 
-    public FilesModel getFile() {
-        return file;
-    }
-
-    public void setFile(FilesModel file) {
-        this.file = file;
-    }
 }
