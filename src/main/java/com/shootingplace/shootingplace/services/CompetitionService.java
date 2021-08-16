@@ -11,10 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class CompetitionService {
@@ -120,7 +117,7 @@ public class CompetitionService {
 
     public boolean createNewCompetition(Competition competition) {
         List<String> list = new ArrayList<>();
-        int size = competitionRepository.findAll().size() + 1 ;
+        int size = competitionRepository.findAll().size() + 1;
         competitionRepository.findAll().forEach(e -> list.add(e.getName()));
         if (list.isEmpty()) {
             createCompetitions();
@@ -129,11 +126,39 @@ public class CompetitionService {
             LOG.info("Taka konkurencja już istnieje");
             return false;
         }
-        if (competition.getDiscipline().equals(Discipline.PISTOL.getName()) || competition.getDiscipline().equals(Discipline.RIFLE.getName()) || competition.getDiscipline().equals(Discipline.SHOTGUN.getName())) {
+        if (!competition.getDiscipline().equals("")) {
+            if (competition.getDiscipline().equals(Discipline.PISTOL.getName()) || competition.getDiscipline().equals(Discipline.RIFLE.getName()) || competition.getDiscipline().equals(Discipline.SHOTGUN.getName())) {
+
+                CompetitionEntity competitionEntity = CompetitionEntity.builder()
+                        .name(competition.getName())
+                        .numberOfShots(competition.getNumberOfShots())
+                        .numberOfManyShots(competition.getNumberOfManyShots())
+                        .discipline(competition.getDiscipline())
+                        .type(competition.getType())
+                        .ordering(size)
+                        .build();
+                if (competition.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
+                    competitionEntity.setCountingMethod(CountingMethod.NORMAL.getName());
+                    LOG.info("Ustawiono metodę liczenia " + CountingMethod.NORMAL.getName());
+                }
+                if (competition.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+                    LOG.info("Ustawiono metodę liczenia " + CountingMethod.COMSTOCK.getName());
+                    competitionEntity.setCountingMethod(CountingMethod.COMSTOCK.getName());
+                }
+                competitionRepository.saveAndFlush(competitionEntity);
+                LOG.info("Utworzono nową konkurencję \"" + competition.getName() + "\"");
+                return true;
+            } else {
+                LOG.info("Po prostu się nie udało");
+                return false;
+            }
+        } else {
             CompetitionEntity competitionEntity = CompetitionEntity.builder()
                     .name(competition.getName())
                     .numberOfShots(competition.getNumberOfShots())
-                    .discipline(competition.getDiscipline())
+                    .discipline(null)
+                    .disciplines(competition.getDisciplines())
+                    .numberOfManyShots(competition.getNumberOfManyShots())
                     .type(competition.getType())
                     .ordering(size)
                     .build();
@@ -148,9 +173,6 @@ public class CompetitionService {
             competitionRepository.saveAndFlush(competitionEntity);
             LOG.info("Utworzono nową konkurencję \"" + competition.getName() + "\"");
             return true;
-        } else {
-            LOG.info("Po prostu się nie udało");
-            return false;
         }
     }
 

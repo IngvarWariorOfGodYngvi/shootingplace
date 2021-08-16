@@ -10,9 +10,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -89,6 +87,7 @@ public class ArmoryService {
         CalibersAddedEntity calibersAddedEntity = CalibersAddedEntity.builder()
                 .ammoAdded(count)
                 .belongTo(caliberUUID)
+                .caliberName(caliberEntity.getName())
                 .date(date)
                 .description(description)
                 .stateForAddedDay(caliberEntity.getQuantity())

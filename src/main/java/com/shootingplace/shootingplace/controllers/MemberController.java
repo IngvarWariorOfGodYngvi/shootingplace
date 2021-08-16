@@ -8,6 +8,7 @@ import com.shootingplace.shootingplace.services.ChangeHistoryService;
 import com.shootingplace.shootingplace.services.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -39,24 +40,9 @@ public class MemberController {
         return ResponseEntity.ok(memberService.getMemberByUUID(uuid));
     }
 
-    @GetMapping("/activeList")
-    public ResponseEntity<List<MemberEntity>> getActiveMembersList(@RequestParam Boolean active, @RequestParam Boolean adult, @RequestParam Boolean erase) {
-        return ResponseEntity.ok(memberService.getMembersList(active, adult, erase));
-    }
-
     @GetMapping("/erased")
     public ResponseEntity<List<MemberEntity>> getErasedMembers() {
         return ResponseEntity.ok(memberService.getErasedMembers());
-    }
-
-    @GetMapping("/license")
-    public ResponseEntity<List<String>> getMemberWithLicense(@RequestParam Boolean license) {
-        return ResponseEntity.ok(memberService.getMembersWithLicense(license));
-    }
-
-    @GetMapping("/getMembersNames")
-    public List<String> getMembersNames(@RequestParam Boolean active, @RequestParam Boolean adult, @RequestParam Boolean erase) {
-        return memberService.getMembersNameAndLegitimationNumber(active, adult, erase);
     }
 
     @GetMapping("/getAllNames")
@@ -71,19 +57,33 @@ public class MemberController {
     }
 
     @GetMapping("/getAllMemberDTOWithArgs")
-    public ResponseEntity<List<MemberDTO>> getAllMemberDTO(@RequestParam boolean adult, @RequestParam boolean active, @RequestParam boolean erase) {
-        return ResponseEntity.ok(memberService.getAllMemberDTO(adult, active, erase));
+    public ResponseEntity<List<MemberDTO>> getAllMemberDTO(@RequestParam @Nullable String adult, @Nullable @RequestParam String active, @RequestParam String erase) {
+        Boolean adult1;
+        Boolean active1;
+        Boolean erase1;
+        if (adult == null || adult.equals("null")) {
+            adult1 = null;
+        } else {
+            adult1 = Boolean.valueOf(adult);
+        }
+        if (active == null || active.equals("null")) {
+            active1 = null;
+        } else {
+            active1 = Boolean.valueOf(active);
+        }
+        if (erase == null || erase.equals("null")) {
+            erase1 = null;
+        } else {
+            erase1 = Boolean.valueOf(erase);
+        }
+        memberService.checkMembers();
+        return ResponseEntity.ok(memberService.getAllMemberDTO(adult1, active1, erase1));
 
     }
 
     @GetMapping("/membersQuantity")
     public List<Long> getMembersQuantity() {
         return memberService.getMembersQuantity();
-    }
-
-    @GetMapping("/getAllActiveMembersNames")
-    public List<String> getAllActiveMembersNames() {
-        return memberService.getAllActiveMembersNames();
     }
 
     @GetMapping("/getArbiters")
@@ -113,7 +113,7 @@ public class MemberController {
 
     @GetMapping("/membersEmailsNoPatent")
     public ResponseEntity<?> getMembersEmailsWithNoPatent() {
-        return ResponseEntity.ok(memberService.getMembersEmailsWithNoPatent());
+        return ResponseEntity.ok(memberService.getMembersEmailsAdultActiveWithNoPatent());
     }
 
     @GetMapping("/phoneNumbersNoPatent")
@@ -190,11 +190,6 @@ public class MemberController {
         return memberService.updateMember(uuid, member);
     }
 
-    @PutMapping("/date/{uuid}")
-    public ResponseEntity<?> updateJoinDate(@PathVariable String uuid, @RequestParam String date) {
-        return memberService.updateJoinDate(uuid, date);
-    }
-
     @PatchMapping("/adult/{uuid}")
     public ResponseEntity<?> changeAdult(@PathVariable String uuid, @RequestParam String pinCode) {
         if (changeHistoryService.comparePinCode(pinCode)) {
@@ -207,11 +202,7 @@ public class MemberController {
 
     @PatchMapping("/pzss/{uuid}")
     public ResponseEntity<?> changePzss(@PathVariable String uuid) {
-        if (memberService.changePzss(uuid)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return memberService.changePzss(uuid);
     }
 
     @PatchMapping("/{uuid}")

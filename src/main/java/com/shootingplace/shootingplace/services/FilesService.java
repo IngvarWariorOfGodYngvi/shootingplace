@@ -60,7 +60,7 @@ public class FilesService {
         this.gunStoreRepository = gunStoreRepository;
     }
 
-    private FilesEntity createFileEntity(FilesModel filesModel) {
+    FilesEntity createFileEntity(FilesModel filesModel) {
         filesModel.setDate(LocalDate.now());
         filesModel.setTime(LocalTime.now());
         FilesEntity filesEntity = Mapping.map(filesModel);
@@ -567,26 +567,52 @@ public class FilesService {
         String phoneSplit = split + split1 + split2 + split3;
         String date = memberEntity.getLicense().getValidThru().toString().substring(2, 4);
 
-        // brać uprawnienia  z patentu
+        // brać uprawnienia z patentu
         int pistol = 0;
+        int licenceYear = memberEntity.getLicense().getValidThru().getYear();
         List<CompetitionHistoryEntity> collectPistol = memberEntity.getHistory().getCompetitionHistory()
                 .stream()
+                .filter(f -> f.getDisciplines() == null)
                 .filter(CompetitionHistoryEntity::isWZSS)
-                .filter(f -> f.getDate().getYear() == (memberEntity.getLicense().getValidThru().getYear()))
+                .filter(f -> f.getDate().getYear() == licenceYear)
                 .filter(f -> f.getDiscipline().equals(Discipline.values()[0].getName()))
                 .collect(Collectors.toList());
         List<CompetitionHistoryEntity> collectRifle = memberEntity.getHistory().getCompetitionHistory()
                 .stream()
+                .filter(f -> f.getDisciplines() == null)
                 .filter(CompetitionHistoryEntity::isWZSS)
-                .filter(f -> f.getDate().getYear() == (memberEntity.getLicense().getValidThru().getYear()))
+                .filter(f -> f.getDate().getYear() == licenceYear)
                 .filter(f -> f.getDiscipline().equals(Discipline.values()[1].getName()))
                 .collect(Collectors.toList());
         List<CompetitionHistoryEntity> collectShotgun = memberEntity.getHistory().getCompetitionHistory()
                 .stream()
+                .filter(f -> f.getDisciplines() == null)
                 .filter(CompetitionHistoryEntity::isWZSS)
-                .filter(f -> f.getDate().getYear() == (memberEntity.getLicense().getValidThru().getYear()))
+                .filter(f -> f.getDate().getYear() == licenceYear)
                 .filter(f -> f.getDiscipline().equals(Discipline.values()[2].getName()))
                 .collect(Collectors.toList());
+
+        List<CompetitionHistoryEntity> competitionHistory = memberEntity.getHistory().getCompetitionHistory();
+        for (CompetitionHistoryEntity entity : competitionHistory) {
+            if (entity.getDisciplines() != null) {
+                if (entity.getDate().getYear() == licenceYear) {
+                    String[] disciplines = entity.getDisciplines();
+                    for (String s : disciplines) {
+                        if (s.equals(Discipline.PISTOL.getName())) {
+                            collectPistol.add(entity);
+                        }
+                        if (s.equals(Discipline.RIFLE.getName())) {
+                            collectRifle.add(entity);
+                        }
+                        if (s.equals(Discipline.SHOTGUN.getName())) {
+                            collectShotgun.add(entity);
+                        }
+                    }
+                }
+            }
+        }
+
+
         if (memberEntity.getShootingPatent().getPistolPermission()) {
             pistol = collectPistol.size();
         }
@@ -669,18 +695,21 @@ public class FilesService {
             document.add(newLine);
         }
         ClubEntity club = clubRepository.findById(1).orElseThrow(EntityNotFoundException::new);
+        int fontSize = 10;
+        float fixedHeight = 27F;
+        document.add(new Phrase("\n", font(7, 0)));
+        int counter = 0;
         for (int i = 0; i < pistol; i++) {
             float[] pointColumnWidths = {50, 20, 20, 5, 10, 2, 28};
             PdfPTable table = new PdfPTable(pointColumnWidths);
-
-
-            PdfPCell cell = new PdfPCell(new Paragraph(collectPistol.get(i).getName() + " " + club.getName(), font(9, 0)));
-            PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectPistol.get(i).getDate().toString(), font(9, 0)));
-            PdfPCell cell2 = new PdfPCell(new Paragraph("Łódź", font(9, 0)));
-            PdfPCell cell3 = new PdfPCell(new Paragraph("X", font(9, 1)));
-            PdfPCell cell4 = new PdfPCell(new Paragraph(" ", font(9, 0)));
-            PdfPCell cell5 = new PdfPCell(new Paragraph(" ", font(9, 0)));
-            PdfPCell cell6 = new PdfPCell(new Paragraph("WZSS", font(9, 0)));
+            counter++;
+            PdfPCell cell = new PdfPCell(new Paragraph(collectPistol.get(i).getName() + "\n" + club.getName(), font(fontSize, 0)));
+            PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectPistol.get(i).getDate().toString(), font(fontSize, 0)));
+            PdfPCell cell2 = new PdfPCell(new Paragraph("Łódź", font(fontSize, 0)));
+            PdfPCell cell3 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
+            PdfPCell cell4 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
+            PdfPCell cell5 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
+            PdfPCell cell6 = new PdfPCell(new Paragraph("WZSS", font(fontSize, 0)));
             cell.setBorder(0);
             cell1.setBorder(0);
             cell2.setBorder(0);
@@ -689,6 +718,13 @@ public class FilesService {
             cell5.setBorder(0);
             cell6.setBorder(0);
             cell.setUseDescender(true);
+            cell.setFixedHeight(fixedHeight);
+            cell1.setFixedHeight(fixedHeight);
+            cell2.setFixedHeight(fixedHeight);
+            cell3.setFixedHeight(fixedHeight);
+            cell4.setFixedHeight(fixedHeight);
+            cell5.setFixedHeight(fixedHeight);
+            cell6.setFixedHeight(fixedHeight);
             table.addCell(cell);
             table.addCell(cell1);
             table.addCell(cell2);
@@ -696,21 +732,23 @@ public class FilesService {
             table.addCell(cell4);
             table.addCell(cell5);
             table.addCell(cell6);
-            document.add(new Phrase("\n", font(5, 0)));
             document.add(table);
+            if (counter == 4) {
+                document.add(new Phrase("\n", font(3, 0)));
+            }
         }
         for (int i = 0; i < rifle; i++) {
             float[] pointColumnWidths = {50, 20, 20, 5, 2, 10, 28};
             PdfPTable table = new PdfPTable(pointColumnWidths);
+            counter++;
 
-
-            PdfPCell cell = new PdfPCell(new Paragraph(collectRifle.get(i).getName() + " " + club.getName(), font(9, 0)));
-            PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectRifle.get(i).getDate().toString(), font(9, 0)));
-            PdfPCell cell2 = new PdfPCell(new Paragraph("Łódź", font(9, 0)));
-            PdfPCell cell3 = new PdfPCell(new Paragraph(" ", font(9, 0)));
-            PdfPCell cell4 = new PdfPCell(new Paragraph("X", font(9, 1)));
-            PdfPCell cell5 = new PdfPCell(new Paragraph(" ", font(9, 0)));
-            PdfPCell cell6 = new PdfPCell(new Paragraph("WZSS", font(9, 0)));
+            PdfPCell cell = new PdfPCell(new Paragraph(collectRifle.get(i).getName() + "\n" + club.getName(), font(fontSize, 0)));
+            PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectRifle.get(i).getDate().toString(), font(fontSize, 0)));
+            PdfPCell cell2 = new PdfPCell(new Paragraph("Łódź", font(fontSize, 0)));
+            PdfPCell cell3 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
+            PdfPCell cell4 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
+            PdfPCell cell5 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
+            PdfPCell cell6 = new PdfPCell(new Paragraph("WZSS", font(fontSize, 0)));
             cell.setBorder(0);
             cell1.setBorder(0);
             cell2.setBorder(0);
@@ -719,6 +757,13 @@ public class FilesService {
             cell5.setBorder(0);
             cell6.setBorder(0);
             cell.setUseDescender(true);
+            cell.setFixedHeight(fixedHeight);
+            cell1.setFixedHeight(fixedHeight);
+            cell2.setFixedHeight(fixedHeight);
+            cell3.setFixedHeight(fixedHeight);
+            cell4.setFixedHeight(fixedHeight);
+            cell5.setFixedHeight(fixedHeight);
+            cell6.setFixedHeight(fixedHeight);
             table.addCell(cell);
             table.addCell(cell1);
             table.addCell(cell2);
@@ -726,21 +771,23 @@ public class FilesService {
             table.addCell(cell4);
             table.addCell(cell5);
             table.addCell(cell6);
-            document.add(new Phrase("\n", font(5, 0)));
             document.add(table);
+            if (counter == 4) {
+                document.add(new Phrase("\n", font(3, 0)));
+            }
         }
         for (int i = 0; i < shotgun; i++) {
             float[] pointColumnWidths = {50, 20, 20, 8, 3, 6, 28};
             PdfPTable table = new PdfPTable(pointColumnWidths);
+            counter++;
 
-
-            PdfPCell cell = new PdfPCell(new Paragraph(collectShotgun.get(i).getName() + " " + club.getName(), font(9, 0)));
-            PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectShotgun.get(i).getDate().toString(), font(9, 0)));
-            PdfPCell cell2 = new PdfPCell(new Paragraph("Łódź", font(9, 0)));
-            PdfPCell cell3 = new PdfPCell(new Paragraph(" ", font(9, 0)));
-            PdfPCell cell4 = new PdfPCell(new Paragraph(" ", font(9, 0)));
-            PdfPCell cell5 = new PdfPCell(new Paragraph("X", font(9, 1)));
-            PdfPCell cell6 = new PdfPCell(new Paragraph("WZSS", font(9, 0)));
+            PdfPCell cell = new PdfPCell(new Paragraph(collectShotgun.get(i).getName() + "\n" + club.getName(), font(fontSize, 0)));
+            PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectShotgun.get(i).getDate().toString(), font(fontSize, 0)));
+            PdfPCell cell2 = new PdfPCell(new Paragraph("Łódź", font(fontSize, 0)));
+            PdfPCell cell3 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
+            PdfPCell cell4 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
+            PdfPCell cell5 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
+            PdfPCell cell6 = new PdfPCell(new Paragraph("WZSS", font(fontSize, 0)));
             cell.setBorder(0);
             cell1.setBorder(0);
             cell2.setBorder(0);
@@ -749,6 +796,13 @@ public class FilesService {
             cell5.setBorder(0);
             cell6.setBorder(0);
             cell.setUseDescender(true);
+            cell.setFixedHeight(fixedHeight);
+            cell1.setFixedHeight(fixedHeight);
+            cell2.setFixedHeight(fixedHeight);
+            cell3.setFixedHeight(fixedHeight);
+            cell4.setFixedHeight(fixedHeight);
+            cell5.setFixedHeight(fixedHeight);
+            cell6.setFixedHeight(fixedHeight);
             table.addCell(cell);
             table.addCell(cell1);
             table.addCell(cell2);
@@ -756,8 +810,10 @@ public class FilesService {
             table.addCell(cell4);
             table.addCell(cell5);
             table.addCell(cell6);
-            document.add(new Phrase("\n", font(5, 0)));
             document.add(table);
+            if (counter == 4) {
+                document.add(new Phrase("\n", font(3, 0)));
+            }
         }
         document.close();
 
@@ -1092,7 +1148,15 @@ public class FilesService {
         if (reason.equals(choice[1])) {
             pesel = " PESEL: " + memberEntity.getPesel();
         }
-        Paragraph par1 = new Paragraph("" + getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + pesel + " jest czynnym członkiem Klubu Strzeleckiego „Dziesiątka” LOK w Łodzi. Numer legitymacji klubowej : " + memberEntity.getLegitimationNumber() + " . " +
+        String sex, word = "";
+        if (getSex(memberEntity.getPesel()).equals("Pani")) {
+            sex = "Pani";
+            word = "wystąpiła";
+        } else {
+            sex = "Pan";
+            word = "wystąpił";
+        }
+        Paragraph par1 = new Paragraph("" + sex + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + pesel + " jest czynnym członkiem Klubu Strzeleckiego „Dziesiątka” LOK w Łodzi. Numer legitymacji klubowej : " + memberEntity.getLegitimationNumber() + " . " +
                 "Uczestniczy w zawodach i treningach strzeleckich osiągając bardzo dobre wyniki. " +
                 "Czynnie uczestniczy w życiu Klubu. ", font(12, 0));
         par1.setFirstLineIndent(40);
@@ -1107,7 +1171,7 @@ public class FilesService {
         Paragraph par4 = new Paragraph(club.getFullName() + " jest członkiem Polskiego Związku Strzelectwa Sportowego i posiada Licencję Klubową nr LK-" + club.getLicenseNumber() + ", jest również Członkiem Łódzkiego Związku Strzelectwa Sportowego, zarejestrowany pod numerem ewidencyjnym 6.", font(12, 0));
         par4.setFirstLineIndent(40);
 
-        Paragraph par5 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " wystąpił z prośbą o wydanie niniejszego zaświadczenia, skutkiem którego będzie złożenie wniosku o pozwolenie na broń sportową do celów sportowych. ", font(12, 0));
+        Paragraph par5 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " " + word + " z prośbą o wydanie niniejszego zaświadczenia, skutkiem którego będzie złożenie wniosku o pozwolenie na broń sportową do celów sportowych. ", font(12, 0));
         par5.setFirstLineIndent(40);
 
         Paragraph par6 = new Paragraph("Sporządzono w 2 egz.", font(12, 0));
@@ -2773,10 +2837,25 @@ public class FilesService {
 
     private LocalDate birthDay(String pesel) {
 
-        int year = Integer.parseInt(pesel.substring(0, 2));
-        year += (year < 5) ? 2000 : 1900;
-        int month = Integer.parseInt(pesel.substring(2, 4));
-        if (month > 12) {
+        int year;
+        int month;
+        year = 10 * Integer.parseInt(pesel.substring(0, 1));
+        year += Integer.parseInt(pesel.substring(1, 2));
+        month = 10 * Integer.parseInt(pesel.substring(2, 3));
+        month += Integer.parseInt(pesel.substring(3, 4));
+        if (month > 80 && month < 93) {
+            year += 1800;
+        } else if (month > 0 && month < 13) {
+            year += 1900;
+        } else if (month > 20 && month < 33) {
+            year += 2000;
+        } else if (month > 40 && month < 53) {
+            year += 2100;
+        } else if (month > 60 && month < 73) {
+            year += 2200;
+        }
+
+        if (month > 12 && month < 33) {
             month -= 20;
         }
         int day = Integer.parseInt(pesel.substring(4, 6));

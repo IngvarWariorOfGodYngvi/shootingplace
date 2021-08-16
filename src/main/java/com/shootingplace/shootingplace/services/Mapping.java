@@ -2,7 +2,6 @@ package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.models.*;
-import com.shootingplace.shootingplace.domain.models.WeaponPermission;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -20,18 +19,69 @@ public class Mapping {
                 .email(e.getEmail())
                 .pesel(e.getPesel())
                 .IDCard(e.getIDCard())
+                .club(e.getClub())
+                .address(map(e.getAddress()))
                 .phoneNumber(e.getPhoneNumber())
                 .weaponPermission(map(e.getWeaponPermission()))
                 .active(e.getActive())
                 .adult(e.getAdult())
                 .erased(e.getErased())
-                .address(map(e.getAddress()))
                 .history(map(e.getHistory()))
                 .memberPermissions(map(e.getMemberPermissions()))
+                .personalEvidence(map(e.getPersonalEvidence()))
+                .pzss(checkBool(e.getPzss()))
+                .erasedEntity(e.getErasedEntity())
                 .build();
     }
 
-    static MemberDTO map2(MemberEntity e) {
+    private static Boolean checkBool(Boolean b) {
+        if (b == null) {
+            return false;
+        } else return b;
+
+    }
+
+
+    static MemberEntity map(Member e) {
+        return MemberEntity.builder()
+                .joinDate(e.getJoinDate())
+                .legitimationNumber(e.getLegitimationNumber())
+                .firstName(e.getFirstName())
+                .secondName(e.getSecondName())
+                .shootingPatent(map(e.getShootingPatent()))
+                .license(map(e.getLicense()))
+                .email(e.getEmail())
+                .pesel(e.getPesel())
+                .IDCard(e.getIDCard())
+                .club(e.getClub())
+                .address(map(e.getAddress()))
+                .phoneNumber(e.getPhoneNumber())
+                .weaponPermission(map(e.getWeaponPermission()))
+                .active(e.getActive())
+                .adult(e.getAdult())
+                .erased(e.getErased())
+                .memberPermissions(map(e.getMemberPermissions()))
+                .personalEvidence(map(e.getPersonalEvidence()))
+                .pzss(e.getPzss())
+                .erasedEntity(e.getErasedEntity())
+                .history(map(e.getHistory()))
+                .build();
+    }
+
+    private static ClubEntity map(Club e) {
+        return ClubEntity.builder()
+                .id(e.getId())
+                .name(e.getName())
+                .fullName(e.getFullName())
+                .licenseNumber(e.getLicenseNumber())
+                .phoneNumber(e.getPhoneNumber())
+                .email(e.getEmail())
+                .address(e.getAddress())
+                .url(e.getUrl())
+                .build();
+    }
+
+    static MemberDTO map2DTO(MemberEntity e) {
         if (e.getErasedEntity() != null) {
             return Optional.of(e).map(o ->
                     MemberDTO.builder()
@@ -68,16 +118,8 @@ public class Mapping {
         }
 
     }
-    static MemberAmmo map3(MemberEntity e){
-        return MemberAmmo.builder()
-                .uuid(e.getUuid())
-                .firstName(e.getFirstName())
-                .secondName(e.getSecondName())
-                .legitimationNumber(e.getLegitimationNumber())
-                .build();
-    }
 
-    static MemberEntity map2(MemberDTO e) {
+    static MemberEntity map2DTO(MemberDTO e) {
         return MemberEntity.builder()
                 .uuid(e.getUuid())
                 .firstName(e.getFirstName())
@@ -91,25 +133,12 @@ public class Mapping {
                 .build();
     }
 
-    static MemberEntity map(Member e) {
-        return MemberEntity.builder()
-                .joinDate(e.getJoinDate())
-                .legitimationNumber(e.getLegitimationNumber())
+    static MemberAmmo map3(MemberEntity e) {
+        return MemberAmmo.builder()
+                .uuid(e.getUuid())
                 .firstName(e.getFirstName())
                 .secondName(e.getSecondName())
-                .shootingPatent(map(e.getShootingPatent()))
-                .license(map(e.getLicense()))
-                .email(e.getEmail())
-                .pesel(e.getPesel())
-                .IDCard(e.getIDCard())
-                .phoneNumber(e.getPhoneNumber())
-                .weaponPermission(map(e.getWeaponPermission()))
-                .active(e.getActive())
-                .adult(e.getAdult())
-                .erased(e.getErased())
-                .address(map(e.getAddress()))
-                .history(map(e.getHistory()))
-                .memberPermissions(map(e.getMemberPermissions()))
+                .legitimationNumber(e.getLegitimationNumber())
                 .build();
     }
 
@@ -221,28 +250,18 @@ public class Mapping {
                 .build()).orElse(null);
     }
 
-    static HistoryEntity map(History r) {
-        if (r.getLicensePaymentHistory() != null) {
-            return Optional.ofNullable(r).map(e -> HistoryEntity.builder()
-                    .licenseHistory(e.getLicenseHistory())
-                    .patentDay(e.getPatentDay())
-                    .patentFirstRecord(e.getPatentFirstRecord())
-                    .licensePaymentHistory(e.getLicensePaymentHistory().stream().map(Mapping::map).collect(Collectors.toList()))
-                    .pistolCounter(e.getPistolCounter())
-                    .rifleCounter(e.getRifleCounter())
-                    .shotgunCounter(e.getShotgunCounter())
-                    .build()).orElse(null);
-        }else{
-            return Optional.ofNullable(r).map(e -> HistoryEntity.builder()
-                    .licenseHistory(e.getLicenseHistory())
-                    .patentDay(e.getPatentDay())
-                    .patentFirstRecord(e.getPatentFirstRecord())
+    static HistoryEntity map(History e) {
+
+            return Optional.ofNullable(e).map(h->HistoryEntity.builder()
+                    .licenseHistory(h.getLicenseHistory())
+                    .patentDay(h.getPatentDay())
+                    .patentFirstRecord(h.getPatentFirstRecord())
                     .licensePaymentHistory(null)
-                    .pistolCounter(e.getPistolCounter())
-                    .rifleCounter(e.getRifleCounter())
-                    .shotgunCounter(e.getShotgunCounter())
+                    .pistolCounter(h.getPistolCounter())
+                    .rifleCounter(h.getRifleCounter())
+                    .shotgunCounter(h.getShotgunCounter())
                     .build()).orElse(null);
-        }
+
     }
 
     static LicensePaymentHistory map(LicensePaymentHistoryEntity l) {
@@ -317,8 +336,8 @@ public class Mapping {
                 .date(t.getDate())
                 .open(t.isOpen())
                 .wzss(t.isWZSS())
-                .mainArbiter(map2(t.getMainArbiter()))
-                .commissionRTSArbiter(map2(t.getCommissionRTSArbiter()))
+                .mainArbiter(map2DTO(t.getMainArbiter()))
+                .commissionRTSArbiter(map2DTO(t.getCommissionRTSArbiter()))
                 .otherMainArbiter(t.getOtherMainArbiter())
                 .otherCommissionRTSArbiter(t.getOtherCommissionRTSArbiter())
                 .competitionsList(t.getCompetitionsList().stream().map(Mapping::map).collect(Collectors.toList()))
@@ -334,6 +353,7 @@ public class Mapping {
                 .attachedToTournament(c.getAttachedToTournament())
                 .scoreList(c.getScoreList().stream().map(Mapping::map).collect(Collectors.toList()))
                 .discipline(c.getDiscipline())
+                .disciplines(c.getDisciplines())
                 .countingMethod(c.getCountingMethod())
                 .type(c.getType())
                 .numberOfShots(c.getNumberOfShots())
@@ -345,7 +365,7 @@ public class Mapping {
         if (s.getMember() != null) {
             return Score.builder()
                     .name(s.getName())
-                    .member(map2(s.getMember()))
+                    .member(map2DTO(s.getMember()))
                     .ammunition(s.isAmmunition())
                     .gun(s.isGun())
                     .metricNumber(s.getMetricNumber())
@@ -393,8 +413,8 @@ public class Mapping {
                 .date(t.getDate())
                 .open(t.isOpen())
                 .WZSS(t.isWzss())
-                .mainArbiter(Mapping.map2(t.getMainArbiter()))
-                .commissionRTSArbiter(map2(t.getCommissionRTSArbiter()))
+                .mainArbiter(Mapping.map2DTO(t.getMainArbiter()))
+                .commissionRTSArbiter(map2DTO(t.getCommissionRTSArbiter()))
                 .otherMainArbiter(t.getOtherMainArbiter())
                 .otherCommissionRTSArbiter(t.getOtherCommissionRTSArbiter())
                 .build();
@@ -489,6 +509,7 @@ public class Mapping {
                 .memberEntity(a.getMemberEntity())
                 .otherPersonEntity(a.getOtherPersonEntity())
                 .name(a.getUserName())
+                .date(a.getDate())
                 .build()).orElse(null);
     }
 
@@ -498,6 +519,9 @@ public class Mapping {
                 .counter(a.getCounter())
                 .memberUUID(a.getMemberUUID())
                 .caliberUUID(a.getCaliberUUID())
+                .date(a.getDate())
+                .userName(a.getMemberName())
+                .otherPersonEntityID(null)
                 .build()).orElse(null);
 
     }
@@ -526,7 +550,8 @@ public class Mapping {
                 .build();
     }
 
-    static Gun map(GunEntity c) {
+
+    public static Gun map(GunEntity c) {
         return Gun.builder()
                 .additionalEquipment(c.getAdditionalEquipment())
                 .basisForPurchaseOrAssignment(c.getBasisForPurchaseOrAssignment())

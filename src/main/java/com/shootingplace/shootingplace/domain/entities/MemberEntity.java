@@ -246,4 +246,5 @@ public class MemberEntity {
     public void setPzss(Boolean pzss) {
         this.pzss = pzss;
     }
+
 }

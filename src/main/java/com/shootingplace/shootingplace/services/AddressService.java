@@ -5,9 +5,10 @@ import com.shootingplace.shootingplace.domain.entities.MemberEntity;
 import com.shootingplace.shootingplace.domain.models.Address;
 import com.shootingplace.shootingplace.repositories.AddressRepository;
 import com.shootingplace.shootingplace.repositories.MemberRepository;
-import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -23,8 +24,11 @@ public class AddressService {
         this.memberRepository = memberRepository;
     }
 
-    @SneakyThrows
-    public boolean updateAddress(String memberUUID, Address address) {
+    public ResponseEntity<?> updateAddress(String memberUUID, Address address) {
+        if (!memberRepository.existsById(memberUUID)) {
+            return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).body("\"Nie znaleziono Klubowicza\"");
+        }
+
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         AddressEntity addressEntity = memberEntity.getAddress();
         if (address.getZipCode() != null && !address.getZipCode().isEmpty()) {
@@ -61,6 +65,17 @@ public class AddressService {
         }
         addressRepository.saveAndFlush(addressEntity);
         LOG.info("Zaktualizowano adres");
-        return true;
+        return ResponseEntity.ok("\"Zaktualizowano adres\"");
+    }
+
+    public Address getAddress() {
+        return Address.builder()
+                .zipCode(null)
+                .postOfficeCity(null)
+                .street(null)
+                .streetNumber(null)
+                .flatNumber(null)
+                .build();
+
     }
 }

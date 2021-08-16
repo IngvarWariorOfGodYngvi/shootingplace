@@ -1,19 +1,16 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.HistoryEntity;
 import com.shootingplace.shootingplace.domain.entities.MemberEntity;
 import com.shootingplace.shootingplace.domain.entities.ShootingPatentEntity;
 import com.shootingplace.shootingplace.domain.models.ShootingPatent;
-import com.shootingplace.shootingplace.repositories.HistoryRepository;
 import com.shootingplace.shootingplace.repositories.MemberRepository;
 import com.shootingplace.shootingplace.repositories.ShootingPatentRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ShootingPatentService {
@@ -21,36 +18,35 @@ public class ShootingPatentService {
     private final ShootingPatentRepository shootingPatentRepository;
     private final MemberRepository memberRepository;
     private final HistoryService historyService;
-    private final HistoryRepository historyRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
     public ShootingPatentService(ShootingPatentRepository shootingPatentRepository,
-                                 MemberRepository memberRepository, HistoryService historyService, HistoryRepository historyRepository) {
+                                 MemberRepository memberRepository, HistoryService historyService) {
         this.shootingPatentRepository = shootingPatentRepository;
         this.memberRepository = memberRepository;
         this.historyService = historyService;
-        this.historyRepository = historyRepository;
     }
 
-    public boolean updatePatent(String memberUUID, ShootingPatent shootingPatent) {
+    public ResponseEntity<?> updatePatent(String memberUUID, ShootingPatent shootingPatent) {
+
+        if(!memberRepository.existsById(memberUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono klubowicza\"");
+        }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        ShootingPatentEntity shootingPatentEntity = shootingPatentRepository.findById(memberEntity
-                .getShootingPatent()
-                .getUuid())
-                .orElseThrow(EntityNotFoundException::new);
+        ShootingPatentEntity shootingPatentEntity = memberEntity.getShootingPatent();
+
         if (shootingPatent.getPatentNumber() != null && !shootingPatent.getPatentNumber().isEmpty()) {
 
-            List<MemberEntity> collect = memberRepository.findAll()
+            boolean match = memberRepository.findAll()
                     .stream()
                     .filter(f -> !f.getErased())
-                    .filter(f->f.getShootingPatent().getPatentNumber()!=null)
-                    .filter(f -> f.getShootingPatent().getPatentNumber().equals(shootingPatent.getPatentNumber()))
-                    .collect(Collectors.toList());
+                    .filter(f -> f.getShootingPatent().getPatentNumber() != null)
+                    .anyMatch(f -> f.getShootingPatent().getPatentNumber().equals(shootingPatent.getPatentNumber()));
 
-            if (collect.size()>0) {
+            if (match && !shootingPatentEntity.getPatentNumber().equals(shootingPatent.getPatentNumber())) {
                 LOG.error("ktoś już ma taki numer patentu");
-                return false;
+                return ResponseEntity.badRequest().body("\"ktoś już ma taki numer patentu\"");
             } else {
                 shootingPatentEntity.setPatentNumber(shootingPatent.getPatentNumber());
                 LOG.info("Wprowadzono numer patentu");
@@ -81,23 +77,17 @@ public class ShootingPatentService {
         }
         shootingPatentRepository.saveAndFlush(shootingPatentEntity);
         LOG.info("Zaktualizowano patent");
-        HistoryEntity historyEntity =
-                memberEntity.getHistory();
-        if (shootingPatentEntity.getDateOfPosting() != null) {
-            if (shootingPatentEntity.getPistolPermission()) {
-                historyService.addDateToPatentPermissions(memberUUID, shootingPatent.getDateOfPosting(), 0);
-            }
-            if (shootingPatentEntity.getRiflePermission()) {
-                historyService.addDateToPatentPermissions(memberUUID, shootingPatent.getDateOfPosting(), 1);
-            }
-            if (shootingPatentEntity.getShotgunPermission()) {
-                historyService.addDateToPatentPermissions(memberUUID, shootingPatent.getDateOfPosting(), 2);
-            }
-            if (shootingPatentEntity.getDateOfPosting() != null) {
-                historyEntity.setPatentFirstRecord(true);
-            }
-            historyRepository.saveAndFlush(historyEntity);
-        }
-        return true;
+        historyService.updateShootingPatentHistory(memberUUID, shootingPatent);
+        return ResponseEntity.ok("\"Zaktualizowano patent\"");
+    }
+
+    public ShootingPatent getShootingPatent() {
+        return ShootingPatent.builder()
+                .patentNumber(null)
+                .dateOfPosting(null)
+                .pistolPermission(false)
+                .riflePermission(false)
+                .shotgunPermission(false)
+                .build();
     }
 }

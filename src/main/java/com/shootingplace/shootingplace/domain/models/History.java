@@ -1,10 +1,12 @@
 package com.shootingplace.shootingplace.domain.models;
 
+import com.shootingplace.shootingplace.domain.entities.JudgingHistoryEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -12,6 +14,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class History {
+
+    private List<Contribution> contributionList;
     private String[] licenseHistory;
     private List<LicensePaymentHistory> licensePaymentHistory;
 
@@ -21,6 +25,9 @@ public class History {
     private Integer pistolCounter = 0;
     private Integer rifleCounter = 0;
     private Integer shotgunCounter = 0;
+    private List<CompetitionHistory> competitionHistory;
+
+    private List<JudgingHistoryEntity> judgingHistory;
 
     public String[] getLicenseHistory() {
         return licenseHistory;
@@ -76,5 +83,21 @@ public class History {
 
     public void setShotgunCounter(Integer shotgunCounter) {
         this.shotgunCounter = shotgunCounter;
+    }
+
+    @Override
+    public String toString() {
+        return "History{" +
+                "contributionList=" + contributionList +
+                ", licenseHistory=" + Arrays.toString(licenseHistory) +
+                ", licensePaymentHistory=" + licensePaymentHistory +
+                ", patentFirstRecord=" + patentFirstRecord +
+                ", patentDay=" + Arrays.toString(patentDay) +
+                ", pistolCounter=" + pistolCounter +
+                ", rifleCounter=" + rifleCounter +
+                ", shotgunCounter=" + shotgunCounter +
+                ", competitionHistory=" + competitionHistory +
+                ", judgingHistory=" + judgingHistory +
+                '}';
     }
 }

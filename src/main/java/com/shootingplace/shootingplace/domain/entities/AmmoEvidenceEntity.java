@@ -28,6 +28,8 @@ public class AmmoEvidenceEntity {
 
     private boolean open;
 
+    private boolean forceOpen;
+
     public String getUuid() {
         return uuid;
     }
@@ -62,5 +64,13 @@ public class AmmoEvidenceEntity {
 
     public void setOpen(boolean open) {
         this.open = open;
+    }
+
+    public boolean isForceOpen() {
+        return forceOpen;
+    }
+
+    public void setForceOpen(boolean forceOpen) {
+        this.forceOpen = forceOpen;
     }
 }

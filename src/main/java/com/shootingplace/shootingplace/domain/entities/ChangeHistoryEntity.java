@@ -19,10 +19,57 @@ public class ChangeHistoryEntity {
     @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
     private String uuid;
     @OneToOne
-    private UserEntity username;
+    private UserEntity userEntity;
     private String classNamePlusMethod;
     private String belongsTo;
     private LocalDate dayNow;
     private String timeNow;
 
+    public String getUuid() {
+        return uuid;
+    }
+
+    public UserEntity getUserEntity() {
+        return userEntity;
+    }
+
+    public String getClassNamePlusMethod() {
+        return classNamePlusMethod;
+    }
+
+    public String getBelongsTo() {
+        return belongsTo;
+    }
+
+    public LocalDate getDayNow() {
+        return dayNow;
+    }
+
+    public String getTimeNow() {
+        return timeNow;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public void setUserEntity(UserEntity userEntity) {
+        this.userEntity = userEntity;
+    }
+
+    public void setClassNamePlusMethod(String classNamePlusMethod) {
+        this.classNamePlusMethod = classNamePlusMethod;
+    }
+
+    public void setBelongsTo(String belongsTo) {
+        this.belongsTo = belongsTo;
+    }
+
+    public void setDayNow(LocalDate dayNow) {
+        this.dayNow = dayNow;
+    }
+
+    public void setTimeNow(String timeNow) {
+        this.timeNow = timeNow;
+    }
 }

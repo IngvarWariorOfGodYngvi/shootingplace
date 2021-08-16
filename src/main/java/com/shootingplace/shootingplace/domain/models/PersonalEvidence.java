@@ -1,9 +1,11 @@
 package com.shootingplace.shootingplace.domain.models;
 
+import com.shootingplace.shootingplace.domain.entities.AmmoUsedEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 
 @AllArgsConstructor
@@ -11,22 +13,14 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PersonalEvidence {
 
-    private String[] ammo;
-    private FilesModel file;
+    private List<AmmoUsedEntity> ammoList;
 
-    public String[] getAmmo() {
-        return ammo;
+    public List<AmmoUsedEntity> getAmmoList() {
+        return ammoList;
     }
 
-    public void setAmmo(String[] ammo) {
-        this.ammo = ammo;
+    public void setAmmoList(List<AmmoUsedEntity> ammoList) {
+        this.ammoList = ammoList;
     }
 
-    public FilesModel getFile() {
-        return file;
-    }
-
-    public void setFile(FilesModel file) {
-        this.file = file;
-    }
 }

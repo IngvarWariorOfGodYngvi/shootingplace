@@ -5,6 +5,9 @@ import com.shootingplace.shootingplace.domain.entities.OtherPersonEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -20,6 +23,12 @@ public class AmmoUsedEvidence {
     private Integer counter;
 
     private String caliberUUID;
+
+    private LocalDate date;
+
+    public LocalDate getDate() {
+        return date;
+    }
 
     public String getCaliberUUID() {
         return caliberUUID;
@@ -67,5 +76,9 @@ public class AmmoUsedEvidence {
 
     public void setOtherPersonEntity(OtherPersonEntity otherPersonEntity) {
         this.otherPersonEntity = otherPersonEntity;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 }

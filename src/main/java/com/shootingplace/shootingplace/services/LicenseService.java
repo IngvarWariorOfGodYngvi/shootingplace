@@ -10,17 +10,27 @@ import com.shootingplace.shootingplace.repositories.LicenseRepository;
 import com.shootingplace.shootingplace.repositories.MemberRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class LicenseService {
+
+    @Autowired
+    private Clock clock;
+
+    public LocalDate now(){
+        return LocalDate.now(clock);
+    }
+
     private final MemberRepository memberRepository;
     private final LicenseRepository licenseRepository;
     private final HistoryService historyService;
@@ -43,15 +53,11 @@ public class LicenseService {
         memberRepository.findAll()
                 .stream().filter(f -> !f.getErased())
                 .forEach(e -> {
-                    if (e.getLicense().getNumber() != null) {
-                        if (e.getLicense().isValid()) {
-
-                            list.add(Mapping.map2(e));
-                        }
+                    if (e.getLicense().getNumber() != null && e.getLicense().isValid()) {
+                        list.add(Mapping.map2DTO(e));
                     }
                 });
         list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
-        LOG.info("Wysłano listę osób z licencjami");
         return list;
     }
 
@@ -60,69 +66,51 @@ public class LicenseService {
         memberRepository.findAll()
                 .stream().filter(f -> !f.getErased())
                 .forEach(e -> {
-                    if (e.getLicense().getNumber() != null) {
-                        if (!e.getLicense().isValid()) {
-
-                            list.add(Mapping.map2(e));
-                        }
+                    if (e.getLicense().getNumber() != null && !e.getLicense().isValid()) {
+                        list.add(Mapping.map2DTO(e));
                     }
                 });
         list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
-        LOG.info("Wysłano listę osób z licencjami");
         return list;
     }
 
-    public boolean updateLicense(String memberUUID, License license) {
+    public ResponseEntity<?> updateLicense(String memberUUID, License license) {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        LicenseEntity licenseEntity = licenseRepository.findById(memberEntity
-                .getLicense()
-                .getUuid())
-                .orElseThrow(EntityNotFoundException::new);
+        LicenseEntity licenseEntity = memberEntity.getLicense();
         if (memberEntity.getShootingPatent().getPatentNumber() == null && memberEntity.getAdult()) {
-            LOG.error("Brak patentu");
-            return false;
+            LOG.info("Brak Patentu");
+            return ResponseEntity.badRequest().body("\"Brak Patentu\"");
         }
-        if (license.getNumber() != null
-                && memberEntity.getLicense().getUuid().equals(licenseEntity.getUuid())) {
-            List<MemberEntity> collect = memberRepository.findAll()
+        if (license.getNumber() != null) {
+            boolean match = memberRepository.findAll()
                     .stream()
                     .filter(f -> !f.getErased())
                     .filter(f -> f.getLicense().getNumber() != null)
-                    .filter(f -> f.getLicense().getNumber().equals(license.getNumber()))
-                    .collect(Collectors.toList());
-            if (collect.size() > 0 && !licenseEntity.getNumber().equals(license.getNumber())) {
+                    .anyMatch(f -> f.getLicense().getNumber().equals(license.getNumber()));
+            if (match && !licenseEntity.getNumber().equals(license.getNumber())) {
                 LOG.error("Ktoś już ma taki numer licencji");
-                return false;
+                return ResponseEntity.badRequest().body("\"Ktoś już ma taki numer licencji\"");
             } else {
                 licenseEntity.setNumber(license.getNumber());
                 LOG.info("Dodano numer licencji");
             }
         }
         if (license.getPistolPermission() != null) {
-            if (!memberEntity.getShootingPatent().getPistolPermission() && memberEntity.getAdult()) {
-                LOG.error(noPatentMessage());
-            }
-            if (license.getPistolPermission().equals(true)) {
+            if (license.getPistolPermission()) {
                 historyService.addLicenseHistoryRecord(memberUUID, 0);
                 licenseEntity.setPistolPermission(license.getPistolPermission());
                 LOG.info("Dodano dyscyplinę : pistolet");
             }
         }
         if (license.getRiflePermission() != null) {
-            if (!memberEntity.getShootingPatent().getRiflePermission() && memberEntity.getAdult()) {
-                LOG.error(noPatentMessage());
-            }
-            if (license.getRiflePermission().equals(true)) {
+            if (license.getRiflePermission()) {
                 historyService.addLicenseHistoryRecord(memberUUID, 1);
                 licenseEntity.setRiflePermission(license.getRiflePermission());
                 LOG.info("Dodano dyscyplinę : karabin");
             }
         }
         if (license.getShotgunPermission() != null) {
-            if (!memberEntity.getShootingPatent().getShotgunPermission() && memberEntity.getAdult()) {
-                LOG.error(noPatentMessage());
-            }
-            if (license.getShotgunPermission().equals(true)) {
+            if (license.getShotgunPermission()) {
                 historyService.addLicenseHistoryRecord(memberUUID, 2);
                 licenseEntity.setShotgunPermission(license.getShotgunPermission());
                 LOG.info("Dodano dyscyplinę : strzelba");
@@ -130,39 +118,39 @@ public class LicenseService {
         }
         if (license.getValidThru() != null) {
             licenseEntity.setValidThru(LocalDate.of(license.getValidThru().getYear(), 12, 31));
-            if (license.getValidThru().getYear() >= LocalDate.now().getYear()) {
+            if (license.getValidThru().getYear() >= now().getYear()) {
                 licenseEntity.setValid(true);
             }
             LOG.info("zaktualizowano datę licencji");
         } else {
-            licenseEntity.setValidThru(LocalDate.of(LocalDate.now().getYear(), 12, 31));
+            licenseEntity.setValidThru(LocalDate.of(now().getYear(), 12, 31));
             licenseEntity.setValid(true);
             LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
         }
-        licenseEntity.setPaid(false);
 
         licenseRepository.saveAndFlush(licenseEntity);
-        memberRepository.saveAndFlush(memberEntity);
-        LOG.info("zaktualizowano licencję");
-        return true;
+        LOG.info("Zaktualizowano licencję");
+        return ResponseEntity.ok("\"Zaktualizowano licencję\"");
     }
 
-    public boolean updateLicense(String memberUUID, String number, LocalDate date, String pinCode) {
+    public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date, String pinCode) {
+        if(!memberRepository.existsById(memberUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+        }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        LicenseEntity license = licenseRepository.findById(memberEntity.getLicense().getUuid()).orElseThrow(EntityNotFoundException::new);
+        LicenseEntity license = memberEntity.getLicense();
 
         if (number != null && !number.isEmpty() && !number.equals("null")) {
 
-            List<MemberEntity> collect = memberRepository.findAll()
+            boolean match = memberRepository.findAll()
                     .stream()
                     .filter(f -> !f.getErased())
                     .filter(f -> f.getLicense().getNumber() != null)
-                    .filter(f -> f.getLicense().getNumber().equals(number))
-                    .collect(Collectors.toList());
+                    .anyMatch(f -> f.getLicense().getNumber().equals(number));
 
-            if (collect.size() > 0 && !license.getNumber().equals(number)) {
+            if (match && !license.getNumber().equals(number)) {
                 LOG.error("Ktoś już ma taki numer licencji");
-                return false;
+                return ResponseEntity.badRequest().body("\"Ktoś już ma taki numer licencji\"");
             } else {
                 license.setNumber(number);
                 LOG.info("Dodano numer licencji");
@@ -171,28 +159,23 @@ public class LicenseService {
         }
         if (date != null) {
             license.setValidThru(date);
-            license.setValid(license.getValidThru().getYear() >= LocalDate.now().getYear());
+            license.setValid(license.getValidThru().getYear() >= now().getYear());
         }
         licenseRepository.saveAndFlush(license);
         changeHistoryService.addRecordToChangeHistory(pinCode, license.getClass().getSimpleName() + " updateLicense", memberEntity.getUuid());
-        return true;
+        return ResponseEntity.ok("\"Poprawiono Licencję\"");
     }
 
-    private String noPatentMessage() {
-        return "Nie ma na to Patentu";
-    }
-
-    public boolean renewLicenseValid(String memberUUID, License license) {
+    public ResponseEntity<?> renewLicenseValid(String memberUUID, License license) {
 
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        LicenseEntity licenseEntity = licenseRepository.findById(memberEntity.getLicense().getUuid()).orElseThrow(EntityNotFoundException::new);
+        LicenseEntity licenseEntity = memberEntity.getLicense();
 
 
-        if (memberEntity.getActive()
-                && licenseEntity.getNumber() != null && licenseEntity.isPaid()) {
-            if (LocalDate.now().isAfter(LocalDate.of(licenseEntity.getValidThru().getYear(), 11, 1)) || licenseEntity.getValidThru().isBefore(LocalDate.now())) {
+        if (licenseEntity.getNumber() != null && licenseEntity.isPaid()) {
+            if (now().isAfter(LocalDate.of(licenseEntity.getValidThru().getYear(), 11, 1)) || licenseEntity.getValidThru().isBefore(now())) {
                 licenseEntity.setValidThru(LocalDate.of((licenseEntity.getValidThru().getYear() + 1), 12, 31));
-                licenseEntity.setValid(licenseEntity.getValidThru().getYear() >= LocalDate.now().getYear());
+                licenseEntity.setValid(licenseEntity.getValidThru().getYear() >= now().getYear());
                 if (license.getPistolPermission() != null) {
                     if (!memberEntity.getShootingPatent().getPistolPermission() && memberEntity.getAdult()) {
                         LOG.error("Brak Patentu");
@@ -236,19 +219,19 @@ public class LicenseService {
                 memberEntity.getHistory().setShotgunCounter(0);
                 licenseRepository.saveAndFlush(licenseEntity);
                 LOG.info("Przedłużono licencję");
-                return true;
+                return ResponseEntity.ok().body("\"Przedłużono licencję\"");
 
             } else {
-                LOG.error("nie można przedłużyć licencji");
-                return false;
+                LOG.error("Nie można przedłużyć licencji - należy poczekać do 1 listopada");
+                return ResponseEntity.status(403).body("\"Nie można przedłużyć licencji - należy poczekać do 1 listopada\"");
             }
         } else {
-            LOG.error("nie można przedłużyć licencji");
-            return false;
+            LOG.error("Nie można przedłużyć licencji");
+            return ResponseEntity.badRequest().body("\"Nie można przedłużyć licencji\"");
         }
     }
 
-    public boolean updateLicensePayment(String memberUUID, String paymentUUID, LocalDate date, Integer year, String pinCode) {
+    public ResponseEntity<?> updateLicensePayment(String memberUUID, String paymentUUID, LocalDate date, Integer year, String pinCode) {
 
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         LicensePaymentHistoryEntity licensePaymentHistoryEntity = memberEntity.getHistory().getLicensePaymentHistory().stream().filter(f -> f.getUuid().equals(paymentUUID)).findFirst().orElseThrow(EntityNotFoundException::new);
@@ -263,32 +246,49 @@ public class LicenseService {
         licensePaymentHistoryRepository.saveAndFlush(licensePaymentHistoryEntity);
         changeHistoryService.addRecordToChangeHistory(pinCode, licensePaymentHistoryEntity.getClass().getSimpleName() + " updateLicense", memberEntity.getUuid());
 
-        return true;
+        return ResponseEntity.ok("\"Poprawiono płatność za licencję\"");
     }
 
-    public List<Long> getMembersQuantity() {
+    public List<Integer> getMembersQuantity() {
 
-        long count2 = memberRepository.findAll().stream()
+        int count2 = (int) memberRepository.findAll().stream()
                 .filter(MemberEntity::getErased)
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(f -> !f.getLicense().isValid())
                 .count();
 
-        List<Long> list = new ArrayList<>();
-        //jak wyszukać licencje tylko osób NIE-skreślonych?
+        List<Integer> list = new ArrayList<>();
 
-        long count = licenseRepository.findAll().stream()
-                .filter(f -> f.getNumber() != null)
-                .filter(f -> !f.isValid())
+        int count = (int) memberRepository.findAll().stream()
+                .filter(f->!f.getErased())
+                .filter(f ->f.getLicense()!=null)
+                .filter(f -> f.getLicense().getNumber() != null)
+                .filter(f -> !f.getLicense().isValid())
                 .count();
-        long count1 = licenseRepository.findAll().stream()
-                .filter(f -> f.getNumber() != null)
-                .filter(LicenseEntity::isValid)
+        int count1 = (int) memberRepository.findAll().stream()
+                .filter(f->!f.getErased())
+                .filter(f ->f.getLicense()!=null)
+                .filter(f -> f.getLicense().getNumber() != null)
+                .filter(f -> f.getLicense().isValid())
                 .count();
 
         list.add(count - count2);
         list.add(count1);
 
         return list;
+    }
+
+
+    public License getLicense() {
+        return License.builder()
+                .number(null)
+                .validThru(null)
+                .pistolPermission(false)
+                .riflePermission(false)
+                .shotgunPermission(false)
+                .isValid(false)
+                .canProlong(false)
+                .isPaid(false)
+                .build();
     }
 }

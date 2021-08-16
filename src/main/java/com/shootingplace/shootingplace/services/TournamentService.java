@@ -111,12 +111,12 @@ public class TournamentService {
             MemberDTO mainArbiterDTO;
             MemberDTO commissionRTSArbiter;
             if (tournamentEntity.getMainArbiter() != null) {
-                mainArbiterDTO = Mapping.map2(tournamentEntity.getMainArbiter());
+                mainArbiterDTO = Mapping.map2DTO(tournamentEntity.getMainArbiter());
             } else {
                 mainArbiterDTO = null;
             }
             if (tournamentEntity.getCommissionRTSArbiter() != null) {
-                commissionRTSArbiter = Mapping.map2(tournamentEntity.getCommissionRTSArbiter());
+                commissionRTSArbiter = Mapping.map2DTO(tournamentEntity.getCommissionRTSArbiter());
             } else {
                 commissionRTSArbiter = null;
             }
@@ -136,11 +136,11 @@ public class TournamentService {
 
                     .otherCommissionRTSArbiter(tournamentEntity.getOtherCommissionRTSArbiter())
 
-                    .arbitersList(tournamentEntity.getArbitersList().stream().map(Mapping::map2).collect(Collectors.toList()))
+                    .arbitersList(tournamentEntity.getArbitersList().stream().map(Mapping::map2DTO).collect(Collectors.toList()))
 
                     .otherArbitersList(tournamentEntity.getOtherArbitersList())
 
-                    .arbitersRTSList(tournamentEntity.getArbitersRTSList().stream().map(Mapping::map2).collect(Collectors.toList()))
+                    .arbitersRTSList(tournamentEntity.getArbitersRTSList().stream().map(Mapping::map2DTO).collect(Collectors.toList()))
 
                     .otherArbitersRTSList(tournamentEntity.getOtherArbitersRTSList())
 
@@ -508,6 +508,7 @@ public class TournamentService {
                         .attachedToTournament(tournamentEntity.getUuid())
                         .date(tournamentEntity.getDate())
                         .discipline(competition.getDiscipline())
+                        .disciplines(competition.getDisciplines())
                         .countingMethod(competition.getCountingMethod())
                         .type(competition.getType())
                         .numberOfShots(competition.getNumberOfShots())
@@ -767,5 +768,9 @@ public class TournamentService {
             return true;
 
         }
+    }
+
+    public Boolean checkAnyOpenTournament() {
+        return tournamentRepository.findAll().stream().anyMatch(TournamentEntity::isOpen);
     }
 }

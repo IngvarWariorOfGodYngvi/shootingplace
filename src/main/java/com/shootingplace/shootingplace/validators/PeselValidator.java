@@ -40,7 +40,7 @@ public class PeselValidator implements ConstraintValidator<ValidPESEL, String> {
         int month;
         year = 10 * PESEL[0];
         year += PESEL[1];
-        month = PESEL[2];
+        month = 10 * PESEL[2];
         month += PESEL[3];
         if (month > 80 && month < 93) {
             year += 1800;

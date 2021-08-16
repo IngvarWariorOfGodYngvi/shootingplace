@@ -22,6 +22,7 @@ public class CalibersAddedEntity {
     private String uuid;
 
     private String belongTo;
+    private String caliberName;
     private String description;
 
     private LocalDate date;
@@ -80,5 +81,13 @@ public class CalibersAddedEntity {
 
     public void setFinalStateForAddedDay(Integer finalStateForAddedDay) {
         this.finalStateForAddedDay = finalStateForAddedDay;
+    }
+
+    public String getCaliberName() {
+        return caliberName;
+    }
+
+    public void setCaliberName(String caliberName) {
+        this.caliberName = caliberName;
     }
 }

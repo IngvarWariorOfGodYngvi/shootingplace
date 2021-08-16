@@ -20,6 +20,7 @@ public class CompetitionMembersList {
     private LocalDate date;
 
     private String discipline;
+    private String[] disciplines;
     private Integer numberOfShots;
 
     private String type;
@@ -119,5 +120,13 @@ public class CompetitionMembersList {
 
     public void setWZSS(boolean WZSS) {
         this.WZSS = WZSS;
+    }
+
+    public String[] getDisciplines() {
+        return disciplines;
+    }
+
+    public void setDisciplines(String[] disciplines) {
+        this.disciplines = disciplines;
     }
 }

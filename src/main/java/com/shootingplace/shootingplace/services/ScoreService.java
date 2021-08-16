@@ -204,8 +204,8 @@ public class ScoreService {
                     .stream()
                     .filter(f -> !f.isDsq())
                     .filter(f -> !f.isDnf())
-                    .sorted(Comparator.comparing(ScoreEntity::getScore).reversed()
-                            .thenComparing(ScoreEntity::getInnerTen).reversed()
+                    .sorted(Comparator.comparing(ScoreEntity::getScore)
+                            .thenComparing(ScoreEntity::getInnerTen)
                             .thenComparing(ScoreEntity::getOuterTen).reversed())
                     .collect(Collectors.toList());
 

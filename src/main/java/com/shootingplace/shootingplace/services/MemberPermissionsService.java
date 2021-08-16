@@ -8,6 +8,7 @@ import com.shootingplace.shootingplace.repositories.MemberPermissionsRepository;
 import com.shootingplace.shootingplace.repositories.MemberRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -29,10 +30,12 @@ public class MemberPermissionsService {
         this.memberRepository = memberRepository;
     }
 
-    public Boolean updateMemberPermissions(String memberUUID, MemberPermissions memberPermissions, String ordinal) {
+    public ResponseEntity<?> updateMemberPermissions(String memberUUID, MemberPermissions memberPermissions, String ordinal) {
+        if(!memberRepository.existsById(memberUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+        }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        MemberPermissionsEntity memberPermissionsEntity = memberPermissionsRepository.findById(
-                memberEntity.getMemberPermissions().getUuid()).orElseThrow(EntityNotFoundException::new);
+        MemberPermissionsEntity memberPermissionsEntity = memberEntity.getMemberPermissions();
         List<MemberEntity> collect = memberRepository.findAll()
                 .stream()
                 .filter(f -> !f.getErased())
@@ -41,39 +44,45 @@ public class MemberPermissionsService {
                 .filter(f -> f.getMemberPermissions().getArbiterNumber() != null)
                 .collect(Collectors.toList());
 //        Instruktor
+        String instructor= "";
         if (memberPermissions.getInstructorNumber() != null) {
             if (!memberPermissions.getInstructorNumber().isEmpty()) {
                 if (collect.stream().noneMatch(e -> e.getMemberPermissions().getInstructorNumber().equals(memberPermissions.getInstructorNumber()))) {
                     memberPermissionsEntity.setInstructorNumber(memberPermissions.getInstructorNumber());
                     LOG.info("Nadano uprawnienia Instruktora");
+                    instructor = "instruktora";
                 } else {
                     LOG.info("Nie można nadać uprawnień");
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Nie można nadać uprawnień Instruktora\"");
                 }
             }
         }
 //        Prowadzący Strzelanie
+        String leader = "";
         if (memberPermissions.getShootingLeaderNumber() != null) {
             if (!memberPermissions.getShootingLeaderNumber().isEmpty()) {
                 if (collect.stream().noneMatch(e -> e.getMemberPermissions().getShootingLeaderNumber().equals(memberPermissions.getShootingLeaderNumber()))) {
                     memberPermissionsEntity.setShootingLeaderNumber(memberPermissions.getShootingLeaderNumber());
                     LOG.info("Nadano uprawnienia Prowadzącego Strzelanie");
+                    leader = "prowadzącego strzelanie";
                 } else {
                     LOG.info("Nie można nadać uprawnień");
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Nie można nadać uprawnień Prowadzącego Strzelanie\"");
                 }
 
             }
         }
 //        Sędzia
+        String arbiter= "";
         if (memberPermissions.getArbiterNumber() != null) {
             if (!memberPermissions.getArbiterNumber().isEmpty()) {
                 if (collect.stream().noneMatch(e -> e.getMemberPermissions().getArbiterNumber().equals(memberPermissions.getArbiterNumber()))) {
                     memberPermissionsEntity.setArbiterNumber(memberPermissions.getArbiterNumber());
                     LOG.info("Zmieniono numer sędziego");
+                    arbiter = "sędziego";
                 } else {
                     LOG.info("Nie można nadać uprawnień");
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Nie można nadać uprawnień Sędziego\"");
                 }
             }
             if (ordinal != null && !ordinal.isEmpty()) {
@@ -102,18 +111,18 @@ public class MemberPermissionsService {
         }
         memberPermissionsRepository.saveAndFlush(memberPermissionsEntity);
 
-        return true;
+        return ResponseEntity.ok("\"Przyznano uprawnienia " + instructor + " " + leader + " " + arbiter +  "\"");
     }
 
 
-    public boolean updateMemberArbiterClass(String memberUUID) {
+    public ResponseEntity<?> updateMemberArbiterClass(String memberUUID) {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         MemberPermissionsEntity memberPermissions = memberEntity.getMemberPermissions();
         String arbiterClass = memberPermissions.getArbiterClass();
 
         if(memberPermissions.getArbiterNumber()==null || memberPermissions.getArbiterNumber().isEmpty()){
-            System.out.println("nie można zaktualizować");
-            return false;
+            LOG.info("nie można zaktualizować");
+            return ResponseEntity.badRequest().body("\"nie można zaktualizować\"");
         }
 
         String finalArbiterClass = arbiterClass;
@@ -132,9 +141,18 @@ public class MemberPermissionsService {
         }
         memberPermissions.setArbiterClass(arbiterClass);
         memberPermissionsRepository.saveAndFlush(memberPermissions);
-        System.out.println("zaktualizowano");
-        return true;
+        return ResponseEntity.ok("\"Podniesono klasę sędziego na " + arbiterClass +"\"");
 
 
+    }
+
+    public MemberPermissions getMemberPermissions() {
+        return MemberPermissions.builder()
+                .instructorNumber(null)
+                .shootingLeaderNumber(null)
+                .arbiterClass(ArbiterClass.NONE.getName())
+                .arbiterNumber(null)
+                .arbiterPermissionValidThru(null)
+                .build();
     }
 }

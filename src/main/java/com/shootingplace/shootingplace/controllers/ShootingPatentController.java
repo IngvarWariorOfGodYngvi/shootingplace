@@ -18,11 +18,7 @@ public class ShootingPatentController {
 
     @PutMapping("/{memberUUID}")
     public ResponseEntity<?> updatePatent(@PathVariable String memberUUID, @RequestBody ShootingPatent shootingPatent) {
-        if (shootingPatentService.updatePatent(memberUUID, shootingPatent)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return shootingPatentService.updatePatent(memberUUID, shootingPatent);
     }
 
 

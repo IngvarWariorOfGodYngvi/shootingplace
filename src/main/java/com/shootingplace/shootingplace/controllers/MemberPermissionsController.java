@@ -31,19 +31,11 @@ public class MemberPermissionsController {
     @PutMapping("/{memberUUID}")
     public ResponseEntity<?> updateMemberPermissions(@PathVariable String memberUUID,
                                                      @RequestBody MemberPermissions memberPermissions, @RequestParam String ordinal) {
-        if (memberPermissionsService.updateMemberPermissions(memberUUID, memberPermissions, ordinal)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return memberPermissionsService.updateMemberPermissions(memberUUID, memberPermissions, ordinal);
     }
 
     @PutMapping("arbiter/{memberUUID}")
     public ResponseEntity<?> updateMemberArbiterClass(@PathVariable String memberUUID) {
-        if (memberPermissionsService.updateMemberArbiterClass(memberUUID)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return memberPermissionsService.updateMemberArbiterClass(memberUUID);
     }
 }

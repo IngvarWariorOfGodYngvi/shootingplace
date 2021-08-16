@@ -43,6 +43,11 @@ public class TournamentController {
         return ResponseEntity.ok().body(tournamentService.getStatistics(tournamentUUID));
     }
 
+    @GetMapping("/check")
+    public ResponseEntity<?> checkAnyOpenTournament() {
+        return ResponseEntity.ok().body(tournamentService.checkAnyOpenTournament());
+    }
+
     @PostMapping("/")
     public ResponseEntity<String> addNewTournament(@RequestBody Tournament tournament) {
         return ResponseEntity.status(201).body(tournamentService.createNewTournament(tournament));
