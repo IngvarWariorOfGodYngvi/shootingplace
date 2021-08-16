@@ -696,7 +696,7 @@ public class MemberServiceTest {
         //when
         ResponseEntity<?> responseEntity = memberService.updateMember(String.valueOf(UUID.randomUUID()), member);
         //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.NOT_FOUND));
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
 
     }
 
@@ -853,7 +853,7 @@ public class MemberServiceTest {
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
         ResponseEntity<?> responseEntity = memberService.changeAdult(uuid, pinCodeOK);
         //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.NOT_FOUND));
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
     }
 
     @Test
@@ -891,18 +891,32 @@ public class MemberServiceTest {
         when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
         ResponseEntity<?> responseEntity = memberService.changeAdult(uuid, pinCodeOK);
         //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.NO_CONTENT));
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
     }
 
     @Test
-    public void change_pzss() {
+    public void change_pzss_return_OK() {
         //given
         String uuid = membersList.get(6).getUuid();
         //when
+        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
         when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
-        boolean b = memberService.changePzss(uuid);
+        ResponseEntity<?> responseEntity = memberService.changePzss(uuid);
         //then
-        assertThat(b, Matchers.equalTo(true));
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Wskazano, że Klubowicz jest wpisany do Portalu PZSS\""));
+    }
+
+    @Test
+    public void change_pzss_return_bad_request() {
+        //given
+        String uuid = String.valueOf(UUID.randomUUID());
+        //when
+        when(memberRepository.existsById(uuid)).thenReturn(existsById(uuid));
+        ResponseEntity<?> responseEntity = memberService.changePzss(uuid);
+        //then
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie znaleziono Klubowicza\""));
     }
 
     @Test
@@ -913,7 +927,7 @@ public class MemberServiceTest {
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
         ResponseEntity<?> responseEntity = memberService.activateOrDeactivateMember(uuid, pinCodeOK);
         //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.NOT_FOUND));
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
     }
 
     @Test
@@ -929,7 +943,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void erase_member_not_found() {
+    public void erase_member_bad_request() {
         //given
         String uuid = String.valueOf(UUID.randomUUID());
         String erasedType = ErasedType.CLUB_DECISION.getName();
@@ -939,7 +953,7 @@ public class MemberServiceTest {
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
         ResponseEntity<?> responseEntity = memberService.eraseMember(uuid, erasedType, date, description, pinCodeOK);
         //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.NOT_FOUND));
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
     }
 
     @Test
@@ -954,7 +968,7 @@ public class MemberServiceTest {
         when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
         ResponseEntity<?> responseEntity = memberService.eraseMember(uuid, erasedType, date, description, pinCodeOK);
         //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.NO_CONTENT));
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
     }
 
     @Test

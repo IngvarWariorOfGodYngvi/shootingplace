@@ -12,10 +12,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
 
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -37,10 +40,25 @@ public class AddressServiceTest {
         String uuid = memberEntity.getUuid();
         Address address = getBuild();
         //when
-        when(memberRepository.findById(uuid)).thenReturn(java.util.Optional.of(memberEntity));
-        boolean b = addressService.updateAddress(uuid, address);
+        when(memberRepository.existsById(any(String.class))).thenReturn(true);
+        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.of(memberEntity));
+        ResponseEntity<?> responseEntity = addressService.updateAddress(uuid, address);
         //then
-        assertThat(b, Matchers.equalTo(true));
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Zaktualizowano adres\""));
+    }
+
+    @Test
+    public void update_address_fail() {
+        //given
+        String uuid = String.valueOf(UUID.randomUUID());
+        Address address = getBuild();
+        //when
+        when(memberRepository.existsById(any(String.class))).thenReturn(false);
+        ResponseEntity<?> responseEntity = addressService.updateAddress(uuid, address);
+        //then
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.I_AM_A_TEAPOT));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie znaleziono Klubowicza\""));
     }
 
     @Test

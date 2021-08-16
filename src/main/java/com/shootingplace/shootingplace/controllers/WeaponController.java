@@ -18,20 +18,12 @@ public class WeaponController {
 
     @PutMapping("/weapon/{memberUUID}")
     public ResponseEntity<?> changeWeaponPermission(@PathVariable String memberUUID, @RequestBody WeaponPermission weaponPermission) {
-        if (weaponPermissionService.updateWeaponPermission(memberUUID, weaponPermission)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return weaponPermissionService.updateWeaponPermission(memberUUID, weaponPermission);
     }
 
     @PatchMapping("/weapon/{memberUUID}")
     public ResponseEntity<?> removeWeaponPermission(@PathVariable String memberUUID, @RequestParam boolean admission, @RequestParam boolean permission) {
-        if (weaponPermissionService.removeWeaponPermission(memberUUID, admission, permission)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return weaponPermissionService.removeWeaponPermission(memberUUID, admission, permission);
     }
 
 }

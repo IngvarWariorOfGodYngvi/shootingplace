@@ -39,26 +39,11 @@ public class MemberController {
     public ResponseEntity<MemberEntity> getMemberByUUID(@PathVariable String uuid) {
         return ResponseEntity.ok(memberService.getMemberByUUID(uuid));
     }
-//
-//    @GetMapping("/activeList")
-//    public ResponseEntity<List<MemberEntity>> getActiveMembersList(@RequestParam Boolean active, @RequestParam Boolean adult, @RequestParam Boolean erase) {
-//        return ResponseEntity.ok(memberService.getMembersList(active, adult, erase));
-//    }
 
     @GetMapping("/erased")
     public ResponseEntity<List<MemberEntity>> getErasedMembers() {
         return ResponseEntity.ok(memberService.getErasedMembers());
     }
-
-//    @GetMapping("/license")
-//    public ResponseEntity<List<String>> getMemberWithLicense(@RequestParam Boolean license) {
-//        return ResponseEntity.ok(memberService.getMembersWithLicense(license));
-//    }
-
-//    @GetMapping("/getMembersNames")
-//    public List<String> getMembersNames(@RequestParam Boolean active, @RequestParam Boolean adult, @RequestParam Boolean erase) {
-//        return memberService.getMembersNameAndLegitimationNumber(active, adult, erase);
-//    }
 
     @GetMapping("/getAllNames")
     public List<String> getAllNames() {
@@ -100,11 +85,6 @@ public class MemberController {
     public List<Long> getMembersQuantity() {
         return memberService.getMembersQuantity();
     }
-
-//    @GetMapping("/getAllActiveMembersNames")
-//    public List<String> getAllActiveMembersNames() {
-//        return memberService.getAllActiveMembersNames();
-//    }
 
     @GetMapping("/getArbiters")
     public List<String> getArbiters() {
@@ -210,11 +190,6 @@ public class MemberController {
         return memberService.updateMember(uuid, member);
     }
 
-//    @PutMapping("/date/{uuid}")
-//    public ResponseEntity<?> updateJoinDate(@PathVariable String uuid, @RequestParam String date) {
-//        return memberService.updateJoinDate(uuid, date);
-//    }
-
     @PatchMapping("/adult/{uuid}")
     public ResponseEntity<?> changeAdult(@PathVariable String uuid, @RequestParam String pinCode) {
         if (changeHistoryService.comparePinCode(pinCode)) {
@@ -227,11 +202,7 @@ public class MemberController {
 
     @PatchMapping("/pzss/{uuid}")
     public ResponseEntity<?> changePzss(@PathVariable String uuid) {
-        if (memberService.changePzss(uuid)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return memberService.changePzss(uuid);
     }
 
     @PatchMapping("/{uuid}")

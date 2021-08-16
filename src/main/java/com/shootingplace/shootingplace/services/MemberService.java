@@ -273,20 +273,20 @@ public class MemberService {
     public ResponseEntity<?> activateOrDeactivateMember(String memberUUID, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         memberEntity.toggleActive();
         memberRepository.saveAndFlush(memberEntity);
         LOG.info("Zmieniono status");
         changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " activateOrDeactivateMember", memberEntity.getUuid());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("\"Zmieniono status aktywny/nieaktywny\"");
     }
 
     public ResponseEntity<?> changeAdult(String memberUUID, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         if (memberEntity.getAdult()) {
@@ -302,13 +302,13 @@ public class MemberService {
         historyService.changeContributionTime(memberUUID);
         LOG.info("Klubowicz należy od teraz do grupy dorosłej : " + LocalDate.now());
         changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " changeAdult", memberEntity.getUuid());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("\"Klubowicz należy od teraz do grupy dorosłej\"");
     }
 
     public ResponseEntity<?> eraseMember(String memberUUID, String erasedType, LocalDate erasedDate, String additionalDescription, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         if (!memberEntity.getErased()) {
@@ -326,7 +326,7 @@ public class MemberService {
         }
         memberRepository.saveAndFlush(memberEntity);
         changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " eraseMember", memberEntity.getUuid());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("\"Usunięto Klubowicza\"");
     }
 
     //--------------------------------------------------------------------------
@@ -334,7 +334,7 @@ public class MemberService {
 
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().build();
         }
 
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
@@ -367,7 +367,7 @@ public class MemberService {
             }
         }
         if (member.getEmail() != null && !member.getEmail().isEmpty()) {
-            if (memberRepository.findByEmail(member.getEmail()).isPresent()) {
+            if (memberRepository.findByEmail(member.getEmail()).isPresent() && !memberEntity.getEmail().equals(member.getEmail())) {
                 LOG.error("Już ktoś ma taki sam e-mail");
                 return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Uwaga! Już ktoś ma taki sam e-mail\"");
             } else {
@@ -390,7 +390,7 @@ public class MemberService {
             }
             String s = "+48";
             memberEntity.setPhoneNumber((s + member.getPhoneNumber()).replaceAll("\\s", ""));
-            if (memberRepository.findByPhoneNumber((s + member.getPhoneNumber()).replaceAll("\\s", "")).isPresent()) {
+            if (memberRepository.findByPhoneNumber((s + member.getPhoneNumber()).replaceAll("\\s", "")).isPresent() && !memberEntity.getPhoneNumber().equals(member.getPhoneNumber())) {
                 LOG.error("Ktoś już ma taki numer telefonu");
             }
             if (member.getPhoneNumber().equals(memberEntity.getPhoneNumber())) {
@@ -399,7 +399,7 @@ public class MemberService {
             }
         }
         if (member.getIDCard() != null && !member.getIDCard().isEmpty()) {
-            if (memberRepository.findByIDCard(member.getIDCard().trim()).isPresent()) {
+            if (memberRepository.findByIDCard(member.getIDCard().trim()).isPresent()&& !memberEntity.getIDCard().equals(member.getIDCard())) {
                 LOG.error("Ktoś już ma taki numer dowodu");
                 return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Ktoś już ma taki numer dowodu\"");
             } else {
@@ -410,7 +410,7 @@ public class MemberService {
 
         memberRepository.saveAndFlush(memberEntity);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("\"Zaktualizowano dane klubowicza\"");
     }
 
 
@@ -634,14 +634,14 @@ public class MemberService {
         return list;
     }
 
-    public boolean changePzss(String uuid) {
-        MemberEntity memberEntity = memberRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
-        if (memberEntity != null) {
+    public ResponseEntity<?> changePzss(String uuid) {
+        if (memberRepository.existsById(uuid)) {
+            MemberEntity memberEntity = memberRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
             memberEntity.setPzss(true);
             memberRepository.saveAndFlush(memberEntity);
-            return true;
+            return ResponseEntity.ok("\"Wskazano, że Klubowicz jest wpisany do Portalu PZSS\"");
         } else {
-            return false;
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
         }
 
     }

@@ -8,15 +8,26 @@ import com.shootingplace.shootingplace.repositories.MemberRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class ContributionService {
+
+
+    @Autowired
+    private Clock clock;
+
+    private LocalDate now(){
+        return LocalDate.now(clock);
+    }
 
     private final ContributionRepository contributionRepository;
     private final MemberRepository memberRepository;
@@ -32,14 +43,12 @@ public class ContributionService {
         this.changeHistoryService = changeHistoryService;
     }
 
-    public boolean addContribution(String memberUUID, LocalDate contributionPaymentDay, String pinCode) {
-
-        List<ContributionEntity> contributionEntityList = memberRepository.findById(memberUUID)
-                .orElseThrow(EntityNotFoundException::new)
-                .getHistory()
-                .getContributionList();
-
+    public ResponseEntity<?> addContribution(String memberUUID, LocalDate contributionPaymentDay, String pinCode) {
+        if (!memberRepository.existsById(memberUUID)) {
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+        }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        List<ContributionEntity> contributionEntityList = memberEntity.getHistory().getContributionList();
 
         LocalDate validThru = getDate(contributionPaymentDay);
 
@@ -96,7 +105,7 @@ public class ContributionService {
         memberEntity.setActive(!memberEntity.getHistory().getContributionList().get(0).getValidThru().plusMonths(3).isBefore(LocalDate.now()));
         LOG.info("zmieniono " + memberEntity.getSecondName());
         memberRepository.saveAndFlush(memberEntity);
-        return true;
+        return ResponseEntity.ok("\"Przedłużono składkę" + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\"");
     }
 
     @NotNull
@@ -111,7 +120,11 @@ public class ContributionService {
     }
 
 
-    public boolean addContributionRecord(String memberUUID, LocalDate paymentDate, String pinCode) {
+    public ResponseEntity<String> addContributionRecord(String memberUUID, LocalDate paymentDate, String pinCode) {
+        if (!memberRepository.existsById(memberUUID)) {
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+        }
+
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
 
         LocalDate validThru = getDate(paymentDate);
@@ -126,7 +139,7 @@ public class ContributionService {
         changeHistoryService.addRecordToChangeHistory(pinCode, contributionEntity.getClass().getSimpleName() + " addContributionRecord", memberUUID);
         LOG.info("zmieniono " + memberEntity.getSecondName());
         memberRepository.saveAndFlush(memberEntity);
-        return true;
+        return ResponseEntity.ok("\"Dodano składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\"");
     }
 
 
@@ -175,7 +188,10 @@ public class ContributionService {
 
     }
 
-    public boolean removeContribution(String memberUUID, String contributionUUID, String pinCode) {
+    public ResponseEntity<String> removeContribution(String memberUUID, String contributionUUID, String pinCode) {
+        if (!memberRepository.existsById(memberUUID)) {
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+        }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
 
         ContributionEntity contributionEntity = memberRepository
@@ -195,11 +211,16 @@ public class ContributionService {
         LOG.info("zmieniono " + memberEntity.getSecondName());
         memberRepository.saveAndFlush(memberEntity);
 
-        return true;
+        return ResponseEntity.ok("\"Usunięto składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\"");
 
     }
 
-    public boolean updateContribution(String memberUUID, String contributionUUID, LocalDate paymentDay, LocalDate validThru, String pinCode) {
+    public ResponseEntity<String> updateContribution(String memberUUID, String contributionUUID, LocalDate paymentDay, LocalDate validThru, String pinCode) {
+        if (!memberRepository.existsById(memberUUID)) {
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+        }
+        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+
         ContributionEntity contributionEntity = contributionRepository.findById(contributionUUID).orElseThrow(EntityNotFoundException::new);
 
         if (paymentDay != null) {
@@ -211,7 +232,7 @@ public class ContributionService {
         }
         contributionRepository.saveAndFlush(contributionEntity);
         changeHistoryService.addRecordToChangeHistory(pinCode, contributionEntity.getClass().getSimpleName() + " editContribution", memberUUID);
-        return true;
+        return ResponseEntity.ok("\"Edytowano składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\"");
 
     }
 

@@ -5,6 +5,7 @@ import com.shootingplace.shootingplace.domain.models.AmmoDTO;
 import com.shootingplace.shootingplace.repositories.AmmoEvidenceRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -40,9 +41,9 @@ public class AmmoEvidenceService {
         return ammoEvidenceRepository.getOne(uuid);
     }
 
-    public boolean closeEvidence(String evidenceUUID) {
+    public ResponseEntity<?> closeEvidence(String evidenceUUID) {
         if (!ammoEvidenceRepository.existsById(evidenceUUID)) {
-            return false;
+            return ResponseEntity.badRequest().body("\"Nie znaleziono listy\"");
         }
         AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository
                 .findById(evidenceUUID)
@@ -51,7 +52,7 @@ public class AmmoEvidenceService {
         ammoEvidenceEntity.setForceOpen(false);
         ammoEvidenceRepository.saveAndFlush(ammoEvidenceEntity);
         LOG.info("zamknięto");
-        return true;
+        return ResponseEntity.ok("\"Lista została zamknięta\"");
     }
 
     public List<AmmoDTO> getClosedEvidences() {
@@ -62,9 +63,9 @@ public class AmmoEvidenceService {
         return allDTO;
     }
 
-    public boolean openEvidence(String evidenceUUID, String pinCode) {
+    public ResponseEntity<?> openEvidence(String evidenceUUID, String pinCode) {
         if (ammoEvidenceRepository.findAll().stream().anyMatch(AmmoEvidenceEntity::isOpen)) {
-            return false;
+            return ResponseEntity.badRequest().body("\"Nie można otworzyć listy bo inna jest otwarta\"");
 
         } else {
             AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository
@@ -75,7 +76,7 @@ public class AmmoEvidenceService {
             ammoEvidenceRepository.saveAndFlush(ammoEvidenceEntity);
             LOG.info("otworzono");
             changeHistoryService.addRecordToChangeHistory(pinCode, ammoEvidenceEntity.getClass().getSimpleName() + " openAmmoEvidenceList", evidenceUUID);
-            return true;
+            return ResponseEntity.ok().body("\"Ręcznie otworzono listę - Pamiętaj by ją zamknąć!\"");
         }
     }
 

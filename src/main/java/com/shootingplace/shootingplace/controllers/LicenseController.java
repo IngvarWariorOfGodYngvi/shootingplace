@@ -37,17 +37,13 @@ public class LicenseController {
     }
 
     @GetMapping("/membersQuantity")
-    public List<Long> getMembersQuantity() {
+    public List<Integer> getMembersQuantity() {
         return licenseService.getMembersQuantity();
     }
 
     @PutMapping("/{memberUUID}")
     public ResponseEntity<?> updateLicense(@PathVariable String memberUUID, @RequestBody License license) {
-        if (licenseService.updateLicense(memberUUID, license)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return licenseService.updateLicense(memberUUID, license);
     }
 
     @PutMapping("/forceUpdate")
@@ -57,11 +53,7 @@ public class LicenseController {
             if (date != null && !date.isEmpty() && !date.equals("null")) {
                 parseDate = LocalDate.parse(date);
             }
-            if (licenseService.updateLicense(memberUUID, number, parseDate, pinCode)) {
-                return ResponseEntity.ok().build();
-            } else {
-                return ResponseEntity.badRequest().build();
-            }
+            return licenseService.updateLicense(memberUUID, number, parseDate, pinCode);
         } else {
             return ResponseEntity.status(403).body("Brak dostępu");
         }
@@ -69,34 +61,22 @@ public class LicenseController {
 
     @PatchMapping("/{memberUUID}")
     public ResponseEntity<?> renewLicenseValidDate(@PathVariable String memberUUID, @RequestBody License license) {
-        if (licenseService.renewLicenseValid(memberUUID, license)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return licenseService.renewLicenseValid(memberUUID, license);
     }
 
     @PutMapping("/history/{memberUUID}")
     public ResponseEntity<?> addLicensePaymentHistory(@PathVariable String memberUUID) {
-        if (historyService.addLicenseHistoryPayment(memberUUID)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return historyService.addLicenseHistoryPayment(memberUUID);
     }
 
     @PutMapping("/editPayment")
-    public ResponseEntity<?> editLicensePaymentHistory(@RequestParam String memberUUID,@RequestParam String paymentUUID, @RequestParam String paymentDate, @RequestParam Integer year, @RequestParam String pinCode) {
+    public ResponseEntity<?> editLicensePaymentHistory(@RequestParam String memberUUID, @RequestParam String paymentUUID, @RequestParam String paymentDate, @RequestParam Integer year, @RequestParam String pinCode) {
         if (changeHistoryService.comparePinCode(pinCode)) {
             LocalDate parseDate = null;
             if (paymentDate != null && !paymentDate.isEmpty() && !paymentDate.equals("null")) {
-                parseDate = LocalDate.parse(paymentDate );
+                parseDate = LocalDate.parse(paymentDate);
             }
-            if (licenseService.updateLicensePayment(memberUUID, paymentUUID, parseDate,year, pinCode)) {
-                return ResponseEntity.ok().build();
-            } else {
-                return ResponseEntity.badRequest().build();
-            }
+            return licenseService.updateLicensePayment(memberUUID, paymentUUID, parseDate, year, pinCode);
         } else {
             return ResponseEntity.status(403).body("Brak dostępu");
         }

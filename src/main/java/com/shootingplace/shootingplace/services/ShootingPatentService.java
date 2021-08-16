@@ -7,6 +7,7 @@ import com.shootingplace.shootingplace.repositories.MemberRepository;
 import com.shootingplace.shootingplace.repositories.ShootingPatentRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -27,7 +28,11 @@ public class ShootingPatentService {
         this.historyService = historyService;
     }
 
-    public boolean updatePatent(String memberUUID, ShootingPatent shootingPatent) {
+    public ResponseEntity<?> updatePatent(String memberUUID, ShootingPatent shootingPatent) {
+
+        if(!memberRepository.existsById(memberUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono klubowicza\"");
+        }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         ShootingPatentEntity shootingPatentEntity = memberEntity.getShootingPatent();
 
@@ -39,9 +44,9 @@ public class ShootingPatentService {
                     .filter(f -> f.getShootingPatent().getPatentNumber() != null)
                     .anyMatch(f -> f.getShootingPatent().getPatentNumber().equals(shootingPatent.getPatentNumber()));
 
-            if (match) {
+            if (match && !shootingPatentEntity.getPatentNumber().equals(shootingPatent.getPatentNumber())) {
                 LOG.error("ktoś już ma taki numer patentu");
-                return false;
+                return ResponseEntity.badRequest().body("\"ktoś już ma taki numer patentu\"");
             } else {
                 shootingPatentEntity.setPatentNumber(shootingPatent.getPatentNumber());
                 LOG.info("Wprowadzono numer patentu");
@@ -73,7 +78,7 @@ public class ShootingPatentService {
         shootingPatentRepository.saveAndFlush(shootingPatentEntity);
         LOG.info("Zaktualizowano patent");
         historyService.updateShootingPatentHistory(memberUUID, shootingPatent);
-        return true;
+        return ResponseEntity.ok("\"Zaktualizowano patent\"");
     }
 
     public ShootingPatent getShootingPatent() {

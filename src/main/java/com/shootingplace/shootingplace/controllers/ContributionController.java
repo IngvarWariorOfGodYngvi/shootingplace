@@ -25,17 +25,10 @@ public class ContributionController {
     @PostMapping("/history/{memberUUID}")
     public ResponseEntity<?> addHistoryContributionRecord(@PathVariable String memberUUID, @RequestParam String date, @RequestParam String pinCode) {
         if (changeHistoryService.comparePinCode(pinCode)) {
-            if (contributionService.addContributionRecord(memberUUID, LocalDate.parse(date), pinCode)) {
-                return ResponseEntity.ok("udało się");
-            } else {
-                return ResponseEntity.noContent().build();
-            }
-        }
-        if (!changeHistoryService.comparePinCode(pinCode)) {
+            return contributionService.addContributionRecord(memberUUID, LocalDate.parse(date), pinCode);
+        } else {
             return ResponseEntity.status(403).body("Brak uprawnień");
 
-        } else {
-            return ResponseEntity.badRequest().build();
         }
     }
 
@@ -43,17 +36,9 @@ public class ContributionController {
     public ResponseEntity<?> addContribution(@PathVariable String memberUUID, @RequestParam String pinCode) {
 
         if (changeHistoryService.comparePinCode(pinCode)) {
-            if (contributionService.addContribution(memberUUID, LocalDate.now(), pinCode)) {
-                return ResponseEntity.ok("udało się");
-            } else {
-                return ResponseEntity.noContent().build();
-            }
-        }
-        if (!changeHistoryService.comparePinCode(pinCode)) {
-            return ResponseEntity.status(403).body("Brak uprawnień");
-
+            return contributionService.addContribution(memberUUID, LocalDate.now(), pinCode);
         } else {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(403).body("Brak uprawnień");
         }
     }
 
@@ -65,38 +50,22 @@ public class ContributionController {
                 parsedPaymentDay = LocalDate.parse(paymentDay);
             }
             LocalDate parsedValidThru = null;
-            if(validThru!=null && !validThru.isEmpty() && !validThru.equals("null")){
+            if (validThru != null && !validThru.isEmpty() && !validThru.equals("null")) {
                 parsedValidThru = LocalDate.parse(validThru);
             }
 
-            if (contributionService.updateContribution(memberUUID, contributionUUID, parsedPaymentDay,parsedValidThru,pinCode )) {
-                return ResponseEntity.ok("udało się");
-            } else {
-                return ResponseEntity.noContent().build();
-            }
-        }
-        if (!changeHistoryService.comparePinCode(pinCode)) {
-            return ResponseEntity.status(403).body("Brak uprawnień");
-
+            return contributionService.updateContribution(memberUUID, contributionUUID, parsedPaymentDay, parsedValidThru, pinCode);
         } else {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(403).body("Brak uprawnień");
         }
     }
 
     @PatchMapping("/remove/{memberUUID}")
     public ResponseEntity<?> removeContribution(@PathVariable String memberUUID, @RequestParam String contributionUUID, @RequestParam String pinCode) {
         if (changeHistoryService.comparePinCode(pinCode)) {
-            if (contributionService.removeContribution(memberUUID, contributionUUID, pinCode)) {
-                return ResponseEntity.ok("udało się");
-            } else {
-                return ResponseEntity.noContent().build();
-            }
-        }
-        if (!changeHistoryService.comparePinCode(pinCode)) {
-            return ResponseEntity.status(403).body("Brak uprawnień");
-
+            return contributionService.removeContribution(memberUUID, contributionUUID, pinCode);
         } else {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(403).body("Brak uprawnień");
         }
     }
 }

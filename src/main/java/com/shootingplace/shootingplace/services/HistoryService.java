@@ -7,6 +7,7 @@ import com.shootingplace.shootingplace.domain.models.ShootingPatent;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -170,7 +171,11 @@ public class HistoryService {
 
     }
 
-    public Boolean addLicenseHistoryPayment(String memberUUID) {
+    public ResponseEntity<?> addLicenseHistoryPayment(String memberUUID) {
+
+        if (!memberRepository.existsById(memberUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+        }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         LicenseEntity licenseEntity = memberRepository
                 .findById(memberUUID)
@@ -212,12 +217,12 @@ public class HistoryService {
             historyRepository.saveAndFlush(historyEntity);
 
         } else {
-            return false;
+            return ResponseEntity.badRequest().body("\"Licencja na ten moment jest opłacona\"");
         }
 
         licenseEntity.setPaid(true);
         licenseRepository.saveAndFlush(licenseEntity);
-        return true;
+        return ResponseEntity.ok("\"Dodano płatność za Licencję\"");
 
     }
 

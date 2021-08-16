@@ -7,6 +7,7 @@ import com.shootingplace.shootingplace.repositories.MemberRepository;
 import com.shootingplace.shootingplace.repositories.WeaponPermissionRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -24,7 +25,11 @@ public class WeaponPermissionService {
         this.weaponPermissionRepository = weaponPermissionRepository;
     }
 
-    public boolean updateWeaponPermission(String memberUUID, WeaponPermission weaponPermission) {
+    public ResponseEntity<?> updateWeaponPermission(String memberUUID, WeaponPermission weaponPermission) {
+        if(!memberRepository.existsById(memberUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+        }
+
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         WeaponPermissionEntity weaponPermissionEntity = memberEntity.getWeaponPermission();
         if (weaponPermission.getNumber() != null) {
@@ -36,7 +41,7 @@ public class WeaponPermissionService {
                     .anyMatch(f -> f.getWeaponPermission().getNumber().equals(weaponPermission.getNumber()));
             if (match) {
                 LOG.error("ktoś już ma taki numer pozwolenia");
-                return false;
+                return ResponseEntity.badRequest().body("\"ktoś już ma taki numer pozwolenia\"");
             } else {
                 weaponPermissionEntity.setNumber(weaponPermission.getNumber().toUpperCase());
                 weaponPermissionEntity.setExist(true);
@@ -54,7 +59,7 @@ public class WeaponPermissionService {
 
             if (match) {
                 LOG.error("ktoś już ma taki numer dopuszczenia");
-                return false;
+                return ResponseEntity.badRequest().body("\"ktoś już ma taki numer dopuszczenia\"");
             } else {
                 weaponPermissionEntity.setAdmissionToPossessAWeapon(weaponPermission.getAdmissionToPossessAWeapon().toUpperCase());
                 weaponPermissionEntity.setAdmissionToPossessAWeaponIsExist(true);
@@ -65,13 +70,13 @@ public class WeaponPermissionService {
         memberEntity.setWeaponPermission(weaponPermissionEntity);
         memberRepository.saveAndFlush(memberEntity);
         LOG.info("Zaktualizowano pozwolenie na broń");
-        return true;
+        return ResponseEntity.ok("\"Zaktualizowano pozwolenie/dopuszczenie na broń\"");
     }
 
-    public boolean removeWeaponPermission(String memberUUID, boolean admission, boolean permission) {
+    public ResponseEntity<?> removeWeaponPermission(String memberUUID, boolean admission, boolean permission) {
         if (!memberRepository.existsById(memberUUID)) {
-            LOG.info("Nie znaleziono użytkownika");
-            return false;
+            LOG.info("Nie znaleziono Klubowicza");
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         WeaponPermissionEntity weaponPermission = memberEntity.getWeaponPermission();
@@ -85,7 +90,7 @@ public class WeaponPermissionService {
             weaponPermission.setAdmissionToPossessAWeaponIsExist(false);
         }
         weaponPermissionRepository.saveAndFlush(weaponPermission);
-        return true;
+        return ResponseEntity.ok("\"Usunięto pozwolenie/dopuszczenie\"");
     }
 
     public WeaponPermission getWeaponPermission() {

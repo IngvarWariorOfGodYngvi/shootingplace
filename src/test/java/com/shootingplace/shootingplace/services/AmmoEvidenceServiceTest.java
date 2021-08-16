@@ -13,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -88,9 +90,10 @@ public class AmmoEvidenceServiceTest {
         String uuid = String.valueOf(UUID.randomUUID());
         //when
         when(ammoEvidenceRepository.existsById(any(String.class))).thenReturn(existsById(uuid));
-        boolean evidence = ammoEvidenceService.closeEvidence(uuid);
+        ResponseEntity<?> responseEntity = ammoEvidenceService.closeEvidence(uuid);
         //then
-        Assert.assertThat(evidence, Matchers.equalTo(false));
+        Assert.assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+        Assert.assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie znaleziono listy\""));
     }
 
     @Test
@@ -100,9 +103,10 @@ public class AmmoEvidenceServiceTest {
         //when
         when(ammoEvidenceRepository.existsById(any(String.class))).thenReturn(existsById(uuid));
         when(ammoEvidenceRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findById(uuid)));
-        boolean evidence = ammoEvidenceService.closeEvidence(uuid);
+        ResponseEntity<?> responseEntity = ammoEvidenceService.closeEvidence(uuid);
         //then
-        Assert.assertThat(evidence, Matchers.equalTo(true));
+        Assert.assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+        Assert.assertThat(responseEntity.getBody(), Matchers.equalTo("\"Lista została zamknięta\""));
     }
 
     @Test
@@ -121,9 +125,10 @@ public class AmmoEvidenceServiceTest {
         //given
         String uuid = ammoEvidenceEntities.get(5).getUuid();
         //when
-        boolean b = ammoEvidenceService.openEvidence(uuid, "0125");
+        ResponseEntity<?> responseEntity = ammoEvidenceService.openEvidence(uuid, "0125");
         //then
-        assertThat(b, Matchers.equalTo(false));
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie można otworzyć listy bo inna jest otwarta\""));
     }
 
     @Test
@@ -136,9 +141,10 @@ public class AmmoEvidenceServiceTest {
         //when
         when(ammoEvidenceRepository.findAll()).thenReturn(list);
         when(ammoEvidenceRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findById(uuid)));
-        boolean b = ammoEvidenceService.openEvidence(uuid, "0125");
+        ResponseEntity<?> responseEntity = ammoEvidenceService.openEvidence(uuid, "0125");
         //then
-        assertThat(b, Matchers.equalTo(true));
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Ręcznie otworzono listę - Pamiętaj by ją zamknąć!\""));
     }
 
     @Test

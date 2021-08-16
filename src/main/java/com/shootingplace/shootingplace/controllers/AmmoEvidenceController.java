@@ -32,11 +32,7 @@ public class AmmoEvidenceController {
     @PostMapping("/ammo")
     public ResponseEntity<?> createAmmoUsed(@RequestParam String caliberUUID, @RequestParam Integer legitimationNumber, @RequestParam int otherID, @RequestParam Integer counter) {
         if (counter != 0) {
-            if (ammoUsedService.addAmmoUsedEntity(caliberUUID, legitimationNumber, otherID, counter)) {
-                return ResponseEntity.ok().build();
-            } else {
-                return ResponseEntity.status(406).build();
-            }
+            return ammoUsedService.addAmmoUsedEntity(caliberUUID, legitimationNumber, otherID, counter);
         } else {
             return ResponseEntity.badRequest().build();
         }
@@ -66,22 +62,14 @@ public class AmmoEvidenceController {
 
     @PatchMapping("/ammo")
     public ResponseEntity<?> closeEvidence(@RequestParam String evidenceUUID) {
-        if (ammoEvidenceService.closeEvidence(evidenceUUID)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return ammoEvidenceService.closeEvidence(evidenceUUID);
     }
 
     @Transactional
     @PatchMapping("/ammoOpen")
     public ResponseEntity<?> openEvidence(@RequestParam String pinCode, @RequestParam String evidenceUUID) {
         if (changeHistoryService.comparePinCode(pinCode)) {
-            if (ammoEvidenceService.openEvidence(evidenceUUID,pinCode)) {
-                return ResponseEntity.ok().build();
-            } else {
-                return ResponseEntity.badRequest().build();
-            }
+            return ammoEvidenceService.openEvidence(evidenceUUID,pinCode);
         } else {
             return ResponseEntity.status(403).body("Brak dostępu");
         }

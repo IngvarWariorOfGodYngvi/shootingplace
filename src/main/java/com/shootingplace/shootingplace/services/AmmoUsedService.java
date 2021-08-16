@@ -6,6 +6,7 @@ import com.shootingplace.shootingplace.domain.models.AmmoUsedPersonal;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +47,7 @@ public class AmmoUsedService {
     }
 
     @Transactional
-    public boolean addAmmoUsedEntity(String caliberUUID, Integer legitimationNumber, int otherID, Integer quantity) {
+    public ResponseEntity<String> addAmmoUsedEntity(String caliberUUID, Integer legitimationNumber, int otherID, Integer quantity) {
         if (ammoEvidenceRepository.findAll().stream().anyMatch(f -> f.isOpen() && !f.isForceOpen())) {
             AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository.findAll().stream().filter(f -> f.isOpen() && !f.isForceOpen()).findFirst().orElseThrow(EntityNotFoundException::new);
             if (ammoEvidenceEntity.getDate().isBefore(LocalDate.now())) {
@@ -56,18 +57,16 @@ public class AmmoUsedService {
                 LOG.info("zamknięto starą listę");
             }
         }
-// odwrócić kolejność jak oddaję amunicję
+        String caliberName = caliberRepository
+                .findById(caliberUUID)
+                .orElseThrow(EntityNotFoundException::new)
+                .getName();
         boolean substratAmmo;
         if (quantity > 0) {
             substratAmmo = armoryService.substratAmmo(caliberUUID, quantity);
 
             LOG.info("dodaję amunicję do listy");
             if (substratAmmo) {
-                String caliberName = caliberRepository
-                        .findById(caliberUUID)
-                        .orElseThrow(EntityNotFoundException::new)
-                        .getName();
-
 
                 String name;
                 if (legitimationNumber > 0) {
@@ -93,7 +92,9 @@ public class AmmoUsedService {
                             .date(LocalDate.now())
                             .build();
                     validateAmmo(ammoUsedPersonal);
-                    return starEvidence(ammoUsedEvidence);
+                    if (starEvidence(ammoUsedEvidence)) {
+                        return ResponseEntity.ok("\"Dodano do listy " + name + " " + caliberName + "\"");
+                    }
 
                 }
                 if (otherID > 0) {
@@ -113,19 +114,15 @@ public class AmmoUsedService {
                             .caliberUUID(caliberUUID)
                             .date(LocalDate.now())
                             .build();
-                    return starEvidence(ammoUsedEvidence);
-//            return true;
-
+                    starEvidence(ammoUsedEvidence);
+                    if (starEvidence(ammoUsedEvidence)) {
+                        return ResponseEntity.ok("\"Dodano do listy " + name + " " + caliberName + "\"");
+                    }
                 }
             }
         } else {
 
             LOG.info("odejmuję amunicję z listy");
-            String caliberName = caliberRepository
-                    .findById(caliberUUID)
-                    .orElseThrow(EntityNotFoundException::new)
-                    .getName();
-
 
             String name;
             if (legitimationNumber > 0) {
@@ -151,8 +148,9 @@ public class AmmoUsedService {
                         .date(LocalDate.now())
                         .build();
                 validateAmmo(ammoUsedPersonal);
-                return starEvidence(ammoUsedEvidence);
-
+                if (starEvidence(ammoUsedEvidence)) {
+                    return ResponseEntity.ok("\"Zwrócono do magazynu " + name + " " + caliberName + "\"");
+                }
             }
             if (otherID > 0) {
 
@@ -171,12 +169,13 @@ public class AmmoUsedService {
                         .caliberUUID(caliberUUID)
                         .date(LocalDate.now())
                         .build();
-                return starEvidence(ammoUsedEvidence);
-
+                if (starEvidence(ammoUsedEvidence)) {
+                    return ResponseEntity.ok("\"Zwrócono do magazynu " + name + " " + caliberName + "\"");
+                }
             }
 
         }
-        return false;
+        return ResponseEntity.badRequest().body("\"Coś poszło nie tak - Sprawdź stany magazynowe " + caliberName + "\"");
     }
 
     private void validateAmmo(AmmoUsedPersonal ammoUsedpersonal) {
