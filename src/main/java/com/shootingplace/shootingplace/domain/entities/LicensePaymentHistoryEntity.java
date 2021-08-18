@@ -27,6 +27,18 @@ public class LicensePaymentHistoryEntity {
 
     private Integer validForYear;
 
+    private boolean isPayInPZSSPortal;
+
+    private boolean isNew;
+
+    public boolean isNew() {
+        return isNew;
+    }
+
+    public void setNew(boolean aNew) {
+        isNew = aNew;
+    }
+
     public String getUuid() {
         return uuid;
     }
@@ -53,5 +65,13 @@ public class LicensePaymentHistoryEntity {
 
     public void setValidForYear(Integer validForYear) {
         this.validForYear = validForYear;
+    }
+
+    public boolean isPayInPZSSPortal() {
+        return isPayInPZSSPortal;
+    }
+
+    public void setPayInPZSSPortal(boolean payInPZSSPortal) {
+        isPayInPZSSPortal = payInPZSSPortal;
     }
 }

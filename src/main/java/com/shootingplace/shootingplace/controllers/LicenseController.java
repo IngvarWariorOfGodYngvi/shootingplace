@@ -6,6 +6,7 @@ import com.shootingplace.shootingplace.services.ChangeHistoryService;
 import com.shootingplace.shootingplace.services.HistoryService;
 import com.shootingplace.shootingplace.services.LicenseService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -67,6 +68,29 @@ public class LicenseController {
     @PutMapping("/history/{memberUUID}")
     public ResponseEntity<?> addLicensePaymentHistory(@PathVariable String memberUUID) {
         return historyService.addLicenseHistoryPayment(memberUUID);
+    }
+
+    @PatchMapping("/paymentToggle")
+    public ResponseEntity<?> toggleLicencePaymentInPZSS(@RequestParam String paymentUUID, @RequestParam String pinCode) {
+        if (changeHistoryService.comparePinCode(pinCode)) {
+            return historyService.toggleLicencePaymentInPZSS(paymentUUID);
+        } else {
+            return ResponseEntity.status(403).body("Brak dostępu");
+        }
+    }
+
+    @Transactional
+    @PatchMapping("/paymentToggleArray")
+    public ResponseEntity<?> toggleLicencePaymentInPZSSArray(@RequestParam List<String> paymentUUIDs, @RequestParam String pinCode) {
+        if (changeHistoryService.comparePinCode(pinCode)) {
+            ResponseEntity<?> result = null;
+            for (String paymentUUID : paymentUUIDs) {
+                result = historyService.toggleLicencePaymentInPZSS(paymentUUID);
+            }
+            return result;
+        } else {
+            return ResponseEntity.status(403).body("Brak dostępu");
+        }
     }
 
     @PutMapping("/editPayment")

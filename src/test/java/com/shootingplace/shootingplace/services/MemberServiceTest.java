@@ -5,10 +5,7 @@ import com.shootingplace.shootingplace.domain.enums.ArbiterClass;
 import com.shootingplace.shootingplace.domain.enums.ErasedType;
 import com.shootingplace.shootingplace.domain.models.Member;
 import com.shootingplace.shootingplace.domain.models.MemberDTO;
-import com.shootingplace.shootingplace.repositories.ClubRepository;
-import com.shootingplace.shootingplace.repositories.ErasedRepository;
-import com.shootingplace.shootingplace.repositories.LicenseRepository;
-import com.shootingplace.shootingplace.repositories.MemberRepository;
+import com.shootingplace.shootingplace.repositories.*;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -26,8 +23,8 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -61,6 +58,8 @@ public class MemberServiceTest {
     PersonalEvidenceService personalEvidenceService;
     @Mock
     ContributionService contributionService;
+    @Mock
+    LicensePaymentHistoryRepository licensePaymentHistoryRepository;
 
 
     @InjectMocks

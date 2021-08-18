@@ -17,7 +17,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
 
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 

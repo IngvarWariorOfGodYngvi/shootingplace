@@ -173,18 +173,13 @@ public class HistoryService {
 
     public ResponseEntity<?> addLicenseHistoryPayment(String memberUUID) {
 
-        if (!memberRepository.existsById(memberUUID)){
+        if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        LicenseEntity licenseEntity = memberRepository
-                .findById(memberUUID)
-                .orElseThrow(EntityNotFoundException::new)
-                .getLicense();
+        LicenseEntity licenseEntity = memberEntity.getLicense();
 
-        HistoryEntity historyEntity = memberRepository.findById(memberUUID)
-                .orElseThrow(EntityNotFoundException::new)
-                .getHistory();
+        HistoryEntity historyEntity = memberEntity.getHistory();
         if (!licenseEntity.isPaid()) {
             if (historyEntity.getLicensePaymentHistory() != null) {
                 int dateYear;
@@ -199,6 +194,7 @@ public class HistoryService {
                         .validForYear(dateYear)
                         .memberUUID(memberUUID)
                         .build();
+                build.setNew(licenseEntity.getNumber() == null);
                 licensePaymentHistoryRepository.saveAndFlush(build);
                 licensePaymentHistory.add(build);
 
@@ -207,6 +203,8 @@ public class HistoryService {
                         .date(LocalDate.now())
                         .validForYear(memberEntity.getLicense().getValidThru().getYear() + 1)
                         .memberUUID(memberUUID)
+                        .isPayInPZSSPortal(false)
+                        .isNew(false)
                         .build();
                 licensePaymentHistoryRepository.saveAndFlush(build);
                 List<LicensePaymentHistoryEntity> list = new ArrayList<>();
@@ -224,6 +222,18 @@ public class HistoryService {
         licenseRepository.saveAndFlush(licenseEntity);
         return ResponseEntity.ok("\"Dodano płatność za Licencję\"");
 
+    }
+
+    public ResponseEntity<?> toggleLicencePaymentInPZSS(String paymentUUID) {
+
+        if (!licensePaymentHistoryRepository.existsById(paymentUUID)) {
+            return ResponseEntity.badRequest().body("\"Nie znaleziono płatności\"");
+        }
+
+        LicensePaymentHistoryEntity licensePaymentHistoryEntity = licensePaymentHistoryRepository.findById(paymentUUID).orElseThrow(EntityNotFoundException::new);
+        licensePaymentHistoryEntity.setPayInPZSSPortal(true);
+        licensePaymentHistoryRepository.saveAndFlush(licensePaymentHistoryEntity);
+        return ResponseEntity.ok("\"Oznaczono jako opłacone w Portalu PZSS\"");
     }
 
     //  Tournament
@@ -483,6 +493,7 @@ public class HistoryService {
         }
 
     }
+
     void changeContributionTime(String memberUUID) {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         LocalDate date;
