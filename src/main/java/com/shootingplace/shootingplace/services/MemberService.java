@@ -2,14 +2,12 @@ package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
 import com.shootingplace.shootingplace.domain.entities.LicenseEntity;
+import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
 import com.shootingplace.shootingplace.domain.entities.MemberEntity;
 import com.shootingplace.shootingplace.domain.enums.ErasedType;
 import com.shootingplace.shootingplace.domain.models.Member;
 import com.shootingplace.shootingplace.domain.models.MemberDTO;
-import com.shootingplace.shootingplace.repositories.ClubRepository;
-import com.shootingplace.shootingplace.repositories.ErasedRepository;
-import com.shootingplace.shootingplace.repositories.LicenseRepository;
-import com.shootingplace.shootingplace.repositories.MemberRepository;
+import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -40,6 +38,7 @@ public class MemberService {
     private final ClubRepository clubRepository;
     private final ChangeHistoryService changeHistoryService;
     private final ErasedRepository erasedRepository;
+    private final LicensePaymentHistoryRepository licensePaymentHistoryRepository;
     private final Logger LOG = LogManager.getLogger();
 
 
@@ -54,7 +53,7 @@ public class MemberService {
                          PersonalEvidenceService personalEvidenceService,
                          ClubRepository clubRepository,
                          ChangeHistoryService changeHistoryService,
-                         ErasedRepository erasedRepository) {
+                         ErasedRepository erasedRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository) {
         this.memberRepository = memberRepository;
         this.addressService = addressService;
         this.licenseService = licenseService;
@@ -68,6 +67,7 @@ public class MemberService {
         this.clubRepository = clubRepository;
         this.changeHistoryService = changeHistoryService;
         this.erasedRepository = erasedRepository;
+        this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
     }
 
 
@@ -565,6 +565,13 @@ public class MemberService {
                 .filter(MemberEntity::getErased)
                 .filter(f -> !f.getAdult())
                 .count();
+        long count8 = licensePaymentHistoryRepository.findAll().stream()
+                .filter(f->!f.isPayInPZSSPortal())
+                .count();
+        long count9 = licensePaymentHistoryRepository.findAll().stream()
+                .filter(f->f.getValidForYear().equals(LocalDate.now().getYear()))
+                .filter(LicensePaymentHistoryEntity::isNew)
+                .count();
         list.add(count);
         list.add(count1);
         list.add(count2);
@@ -573,6 +580,8 @@ public class MemberService {
         list.add(count5);
         list.add(count6);
         list.add(count7);
+        list.add(count8);
+        list.add(count9);
 
 
         return list;

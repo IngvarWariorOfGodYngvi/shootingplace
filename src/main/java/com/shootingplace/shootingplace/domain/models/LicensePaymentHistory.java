@@ -11,17 +11,13 @@ import java.time.LocalDate;
 @Builder
 public class LicensePaymentHistory {
 
-    private String uuid;
-
     private LocalDate date;
 
     private String memberUUID;
 
     private Integer validForYear;
 
-    public String getUuid() {
-        return uuid;
-    }
+    private boolean isPayInPZSSPortal;
 
     public LocalDate getDate() {
         return date;
@@ -45,5 +41,13 @@ public class LicensePaymentHistory {
 
     public void setValidForYear(Integer validForYear) {
         this.validForYear = validForYear;
+    }
+
+    public boolean isPayInPZSSPortal() {
+        return isPayInPZSSPortal;
+    }
+
+    public void setPayInPZSSPortal(boolean payInPZSSPortal) {
+        isPayInPZSSPortal = payInPZSSPortal;
     }
 }

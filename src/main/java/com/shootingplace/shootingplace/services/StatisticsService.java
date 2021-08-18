@@ -2,9 +2,7 @@ package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.domain.entities.MemberEntity;
-import com.shootingplace.shootingplace.domain.models.Caliber;
-import com.shootingplace.shootingplace.domain.models.MemberAmmo;
-import com.shootingplace.shootingplace.domain.models.MemberDTO;
+import com.shootingplace.shootingplace.domain.models.*;
 import com.shootingplace.shootingplace.repositories.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.repositories.ContributionRepository;
 import com.shootingplace.shootingplace.repositories.MemberRepository;
@@ -46,7 +44,8 @@ public class StatisticsService {
         return list;
     }
 
-    public List<MemberDTO> getLicenseSum(LocalDate firstDate, LocalDate secondDate) {
+    public List<LicensePaymentHistoryDTO> getLicenseSum(LocalDate firstDate, LocalDate secondDate) {
+        List<LicensePaymentHistoryDTO> list1 = new ArrayList<>();
         List<MemberDTO> list = new ArrayList<>();
         memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
@@ -54,9 +53,22 @@ public class StatisticsService {
                         .stream()
                         .filter(lp -> lp.getDate().isAfter(firstDate.minusDays(1)))
                         .filter(lp -> lp.getDate().isBefore(secondDate.plusDays(1)))
-                        .forEach(g -> list.add(Mapping.map2DTO(member))));
-        list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
-        return list;
+                        .forEach(g -> list1.add(LicensePaymentHistoryDTO.builder()
+                                .firstName(member.getFirstName())
+                                .secondName(member.getSecondName())
+                                .active(member.getActive())
+                                .adult(member.getAdult())
+                                .legitimationNumber(member.getLegitimationNumber())
+                                .memberUUID(member.getUuid())
+                                .isPayInPZSSPortal(g.isPayInPZSSPortal())
+                                .date(g.getDate())
+                                .licenseUUID(g.getUuid())
+                                .validForYear(g.getValidForYear())
+                                .isNew(g.isNew())
+                                .build())));
+
+        list1.sort(Comparator.comparing(LicensePaymentHistoryDTO::getDate).thenComparing(LicensePaymentHistoryDTO::getSecondName).thenComparing(LicensePaymentHistoryDTO::getFirstName));
+        return list1;
     }
 
     public List<MemberDTO> getJoinDateSum(LocalDate firstDate, LocalDate secondDate) {

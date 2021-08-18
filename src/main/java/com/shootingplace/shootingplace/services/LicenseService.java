@@ -127,7 +127,7 @@ public class LicenseService {
             licenseEntity.setValid(true);
             LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
         }
-
+        licenseEntity.setPaid(false);
         licenseRepository.saveAndFlush(licenseEntity);
         LOG.info("Zaktualizowano licencję");
         return ResponseEntity.ok("\"Zaktualizowano licencję\"");
@@ -291,4 +291,5 @@ public class LicenseService {
                 .isPaid(false)
                 .build();
     }
+
 }
