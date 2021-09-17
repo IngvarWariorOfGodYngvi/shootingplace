@@ -28,6 +28,7 @@ public class Gun {
     private String comment;
 
     private boolean inStock;
+    private String barcode;
 
     public String getUuid() {
         return uuid;
@@ -131,5 +132,13 @@ public class Gun {
 
     public void setInStock(boolean inStock) {
         this.inStock = inStock;
+    }
+
+    public String getBarcode() {
+        return barcode;
+    }
+
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
     }
 }

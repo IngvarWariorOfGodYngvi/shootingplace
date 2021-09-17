@@ -399,7 +399,7 @@ public class MemberService {
             }
         }
         if (member.getIDCard() != null && !member.getIDCard().isEmpty()) {
-            if (memberRepository.findByIDCard(member.getIDCard().trim()).isPresent()&& !memberEntity.getIDCard().equals(member.getIDCard())) {
+            if (memberRepository.findByIDCard(member.getIDCard().trim()).isPresent() && !memberEntity.getIDCard().equals(member.getIDCard())) {
                 LOG.error("Ktoś już ma taki numer dowodu");
                 return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Ktoś już ma taki numer dowodu\"");
             } else {
@@ -418,11 +418,6 @@ public class MemberService {
         LOG.info("Wywołano Klubowicza");
         return memberRepository.findByLegitimationNumber(number).orElseThrow(EntityNotFoundException::new);
 
-    }
-
-    public List<MemberEntity> getErasedMembers() {
-        LOG.info("Wyświetlono osoby skreślone z listy członków");
-        return memberRepository.findAllByErasedIsTrue();
     }
 
     public List<String> getMembersEmails(Boolean condition) {
@@ -523,18 +518,18 @@ public class MemberService {
                 .filter(f -> !f.getErased())
                 .filter(MemberEntity::getAdult)
                 .count();
-//      adult active
+//      license valid
         long count1 = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
-                .filter(MemberEntity::getAdult)
-                .filter(MemberEntity::getActive)
+                .filter(f->f.getLicense().getNumber()!=null)
+                .filter(f->f.getLicense().isValid())
                 .count();
 
-//      adult not active
+//      license not valid
         long count2 = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
-                .filter(MemberEntity::getAdult)
-                .filter(f -> !f.getActive())
+                .filter(f->f.getLicense().getNumber()!=null)
+                .filter(f -> !f.getLicense().isValid())
                 .count();
 
 //      whole not adult
@@ -566,10 +561,10 @@ public class MemberService {
                 .filter(f -> !f.getAdult())
                 .count();
         long count8 = licensePaymentHistoryRepository.findAll().stream()
-                .filter(f->!f.isPayInPZSSPortal())
+                .filter(f -> !f.isPayInPZSSPortal())
                 .count();
         long count9 = licensePaymentHistoryRepository.findAll().stream()
-                .filter(f->f.getValidForYear().equals(LocalDate.now().getYear()))
+                .filter(f -> f.getValidForYear().equals(LocalDate.now().getYear()))
                 .filter(LicensePaymentHistoryEntity::isNew)
                 .count();
         list.add(count);
@@ -806,5 +801,69 @@ public class MemberService {
 
     public Boolean getMemberEmailPresent(String email) {
         return memberRepository.findByEmail(email).isPresent();
+    }
+
+    public ResponseEntity<?> addBarCode(String uuid, String barcode) {
+
+        if (!memberRepository.existsById(uuid)) {
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+        }
+        if (memberRepository.findByClubCardBarCode(barcode).isPresent()) {
+            return ResponseEntity.badRequest().body("\"Nie można przydzielić numeru bo już jest przypisany do kogoś innego\"");
+        }
+
+        MemberEntity memberEntity = memberRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
+
+        memberEntity.setClubCardBarCode(barcode);
+        memberRepository.save(memberEntity);
+
+        return ResponseEntity.ok("\"Pomyślnie połączono kartę z Klubowiczem \"");
+    }
+
+    public ResponseEntity<?> findMemberByBarCode(String barcode) {
+
+        if (memberRepository.findByClubCardBarCode(barcode).isEmpty()) {
+            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+        }
+
+        MemberEntity memberEntity = memberRepository.findByClubCardBarCode(barcode).orElseThrow(EntityNotFoundException::new);
+
+        return ResponseEntity.ok(memberEntity);
+    }
+    public List<Member> getMembersToReportToThePolice(){
+        LocalDate notValidLicense = LocalDate.now().minusYears(1);
+        List<Member> members = new ArrayList<>();
+        List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> f.getLicense().getNumber() != null)
+                .filter(f -> !f.getLicense().isValid())
+                .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName))
+                .collect(Collectors.toList());
+        memberEntityList.forEach(e->members.add(Mapping.map(e)));
+        return members;
+    }
+
+    public List<Member> getMembersToErase() {
+        LocalDate notValidContribution = LocalDate.of(LocalDate.now().getYear(), 12, 31).minusYears(2);
+        List<Member> members = new ArrayList<>();
+        List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> !f.getActive())
+                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName))
+                .collect(Collectors.toList());
+        memberEntityList.forEach(e -> members.add(Mapping.map(e)));
+        return members;
+    }
+
+    public List<Member> getMembersErased() {
+        List<Member> members = new ArrayList<>();
+        List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
+                .filter(MemberEntity::getErased)
+                .sorted(Comparator.comparing(MemberEntity::getSecondName))
+                .collect(Collectors.toList());
+        memberEntityList.forEach(e -> members.add(Mapping.map(e)));
+        return members;
     }
 }

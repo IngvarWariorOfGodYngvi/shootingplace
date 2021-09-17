@@ -37,10 +37,10 @@ public class LicenseController {
         return ResponseEntity.ok(licenseService.getMembersNamesAndLicenseNotValid());
     }
 
-    @GetMapping("/membersQuantity")
-    public List<Integer> getMembersQuantity() {
-        return licenseService.getMembersQuantity();
-    }
+//    @GetMapping("/membersQuantity")
+//    public List<Integer> getMembersQuantity() {
+//        return licenseService.getMembersQuantity();
+//    }
 
     @PutMapping("/{memberUUID}")
     public ResponseEntity<?> updateLicense(@PathVariable String memberUUID, @RequestBody License license) {

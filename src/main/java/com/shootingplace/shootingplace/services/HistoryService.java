@@ -359,10 +359,12 @@ public class HistoryService {
         historyRepository.saveAndFlush(historyEntity);
 
         List<String> list1 = new ArrayList<>();
-        for (int i = 0; i < competitionHistoryEntity.getDisciplines().length; i++) {
-            String[] disciplines = competitionHistoryEntity.getDisciplines();
-            String s = disciplines[i];
-            list1.add(s);
+        if (competitionHistoryEntity.getDisciplines() != null) {
+            for (int i = 0; i < competitionHistoryEntity.getDisciplines().length; i++) {
+                String[] disciplines = competitionHistoryEntity.getDisciplines();
+                String s = disciplines[i];
+                list1.add(s);
+            }
         }
 
         if ((list.getDiscipline() != null && list.getDiscipline().equals(Discipline.PISTOL.getName())) || list1.contains(Discipline.PISTOL.getName())) {

@@ -56,8 +56,19 @@ public class AmmoEvidenceController {
     }
 
     @GetMapping("/checkAnyOpenEvidence")
-    public ResponseEntity<?> checkAnyOpenEvidence(){
+    public ResponseEntity<?> checkAnyOpenEvidence() {
         return ResponseEntity.ok().body(ammoEvidenceService.checkAnyOpenEvidence());
+    }
+
+    @GetMapping("/getGunInAmmoEvidenceList")
+    public ResponseEntity<?> getGunInAmmoEvidenceList(@RequestParam String evidenceUUID) {
+        return ResponseEntity.ok().body(ammoEvidenceService.getGunInAmmoEvidenceList(evidenceUUID));
+    }
+
+    @Transactional
+    @PutMapping("/addGunToList")
+    public ResponseEntity<?> addGunToList(@RequestParam String evidenceUUID, @RequestParam String barcode) {
+        return ammoEvidenceService.addGunToList(evidenceUUID, barcode);
     }
 
     @PatchMapping("/ammo")
@@ -69,7 +80,7 @@ public class AmmoEvidenceController {
     @PatchMapping("/ammoOpen")
     public ResponseEntity<?> openEvidence(@RequestParam String pinCode, @RequestParam String evidenceUUID) {
         if (changeHistoryService.comparePinCode(pinCode)) {
-            return ammoEvidenceService.openEvidence(evidenceUUID,pinCode);
+            return ammoEvidenceService.openEvidence(evidenceUUID, pinCode);
         } else {
             return ResponseEntity.status(403).body("Brak dostępu");
         }

@@ -27,6 +27,7 @@ public class MemberEntity {
 
     private LocalDate joinDate;
     private Integer legitimationNumber;
+    private String clubCardBarCode;
     @NotBlank
     private String firstName;
     @NotBlank
@@ -85,6 +86,14 @@ public class MemberEntity {
 
     public Integer getLegitimationNumber() {
         return legitimationNumber;
+    }
+
+    public String getClubCardBarCode() {
+        return clubCardBarCode;
+    }
+
+    public void setClubCardBarCode(String clubCardBarCode) {
+        this.clubCardBarCode = clubCardBarCode;
     }
 
     public void setLegitimationNumber(Integer legitimationNumber) {

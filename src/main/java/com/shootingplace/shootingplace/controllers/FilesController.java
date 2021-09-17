@@ -128,7 +128,7 @@ public class FilesController {
 
     @GetMapping("/downloadAllMembers")
     public ResponseEntity<byte[]> getAllMembersToTable(@RequestParam boolean condition) throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.getAllMembersToTable(condition);
+        FilesEntity filesEntity = filesService.generateMembersListWithCondition(condition);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
@@ -137,16 +137,16 @@ public class FilesController {
 
     @GetMapping("/downloadAllMembersToElection")
     public ResponseEntity<byte[]> getAllMembersToElection() throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.getAllMembersToElection();
+        FilesEntity filesEntity = filesService.generateAllMembersList();
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
 
-    @GetMapping("/downloadAllMembersWithNoValidLicenseNoContribution")
-    public ResponseEntity<byte[]> getAllMembersWithLicenceNotValidAndContributionNotValid() throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.getAllMembersWithLicenceNotValidAndContributionNotValid();
+    @GetMapping("/generateListOfMembersToReportToPolice")
+    public ResponseEntity<byte[]> generateListOfMembersToReportToPolice() throws IOException, DocumentException {
+        FilesEntity filesEntity = filesService.generateListOfMembersToReportToPolice();
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
@@ -173,7 +173,7 @@ public class FilesController {
 
     @GetMapping("/downloadAllMembersToErased")
     public ResponseEntity<byte[]> getAllMembersToErased() throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.getAllMembersToErased();
+        FilesEntity filesEntity = filesService.generateAllMembersToErasedList();
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")

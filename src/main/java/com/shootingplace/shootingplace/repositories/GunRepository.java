@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface GunRepository extends JpaRepository<GunEntity,String> {
     Optional<GunEntity> findByImgUUID(String uuid);
+
+    Optional<GunEntity> findByBarcode(String barcode);
 }
