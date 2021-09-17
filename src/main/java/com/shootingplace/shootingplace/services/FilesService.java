@@ -1266,7 +1266,6 @@ public class FilesService {
         return filesEntity;
     }
 
-
     public FilesEntity getStartsMetric(String memberUUID, String otherID, String tournamentUUID, List<String> competitions, String startNumber) throws IOException, DocumentException {
         String name;
         String club;
@@ -1514,7 +1513,7 @@ public class FilesService {
         return filesEntity;
     }
 
-    public FilesEntity getAllMembersToTable(boolean condition) throws IOException, DocumentException {
+    public FilesEntity generateMembersListWithCondition(boolean condition) throws IOException, DocumentException {
 
         String fileName = "Lista_klubowiczów_na_dzień " + LocalDate.now() + ".pdf";
 
@@ -1619,7 +1618,7 @@ public class FilesService {
         return filesEntity;
     }
 
-    public FilesEntity getAllMembersToElection() throws IOException, DocumentException {
+    public FilesEntity generateAllMembersList() throws IOException, DocumentException {
 
         String fileName = "Lista_klubowiczów_na_dzień " + LocalDate.now() + ".pdf";
 
@@ -1863,10 +1862,10 @@ public class FilesService {
 
     }
 
-    public FilesEntity getAllMembersWithLicenceNotValidAndContributionNotValid() throws
+    public FilesEntity generateListOfMembersToReportToPolice() throws
             IOException, DocumentException {
 
-        String fileName = "Lista_osób_bez_składek_z_nieważnymi_licencjami_na_dzień" + LocalDate.now() + ".pdf";
+        String fileName = "Lista_osób_do_zgłoszenia_na_Policję " + LocalDate.now() + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
         PdfWriter writer = PdfWriter.getInstance(document,
@@ -1881,7 +1880,7 @@ public class FilesService {
             minute = String.valueOf(LocalTime.now().getMinute());
         }
         String now = LocalTime.now().getHour() + ":" + minute;
-        Paragraph title = new Paragraph("Lista osób bez składek z nieważnymi licencjami na dzień " + LocalDate.now() + " " + now, font(14, 1));
+        Paragraph title = new Paragraph("Lista osób do zgłoszenia na policję " + LocalDate.now() + " " + now, font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
 
@@ -1895,26 +1894,22 @@ public class FilesService {
                 .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName))
                 .collect(Collectors.toList());
-        float[] pointColumnWidths = {4F, 42F, 14F, 14F, 14F, 14F};
+        float[] pointColumnWidths = {7F, 44F, 17F, 17F};
 
 
         PdfPTable titleTable = new PdfPTable(pointColumnWidths);
 
         PdfPCell lp = new PdfPCell(new Paragraph("lp", font(12, 0)));
         PdfPCell name = new PdfPCell(new Paragraph("Nazwisko Imię", font(12, 0)));
-        PdfPCell legitimation = new PdfPCell(new Paragraph("legitymacja", font(12, 0)));
+        PdfPCell pesel = new PdfPCell(new Paragraph("PESEL", font(12, 0)));
         PdfPCell licenceNumber = new PdfPCell(new Paragraph("numer licencji", font(12, 0)));
-        PdfPCell licenceDate = new PdfPCell(new Paragraph("licencja ważna do", font(12, 0)));
-        PdfPCell contributionDate = new PdfPCell(new Paragraph("Składka ważna do", font(12, 0)));
 
         titleTable.setWidthPercentage(100);
 
         titleTable.addCell(lp);
         titleTable.addCell(name);
-        titleTable.addCell(legitimation);
+        titleTable.addCell(pesel);
         titleTable.addCell(licenceNumber);
-        titleTable.addCell(licenceDate);
-        titleTable.addCell(contributionDate);
 
         document.add(titleTable);
 
@@ -1930,19 +1925,15 @@ public class FilesService {
 
             PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(12, 0)));
             PdfPCell nameCell = new PdfPCell(new Paragraph(memberEntityName, font(12, 0)));
-            PdfPCell legitimationCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getLegitimationNumber()), font(12, 0)));
+            PdfPCell peselCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getPesel()), font(12, 0)));
             PdfPCell licenceNumberCell = new PdfPCell(new Paragraph(memberEntity.getLicense().getNumber(), font(12, 0)));
-            PdfPCell licenceDateCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getLicense().getValidThru()), font(12, 0)));
-            PdfPCell contributionDateCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getHistory().getContributionList().get(0).getValidThru()), font(12, 0)));
 
             memberTable.setWidthPercentage(100);
 
             memberTable.addCell(lpCell);
             memberTable.addCell(nameCell);
-            memberTable.addCell(legitimationCell);
+            memberTable.addCell(peselCell);
             memberTable.addCell(licenceNumberCell);
-            memberTable.addCell(licenceDateCell);
-            memberTable.addCell(contributionDateCell);
 
             document.add(memberTable);
 
@@ -1970,9 +1961,9 @@ public class FilesService {
     }
 
 
-    public FilesEntity getAllMembersToErased() throws IOException, DocumentException {
+    public FilesEntity generateAllMembersToErasedList() throws IOException, DocumentException {
 
-        String fileName = "Lista_osób_do_usunięcia_na_dzień" + LocalDate.now() + ".pdf";
+        String fileName = "Lista_osób_do_skreślenia_na_dzień" + LocalDate.now() + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
         PdfWriter writer = PdfWriter.getInstance(document,
@@ -1987,7 +1978,7 @@ public class FilesService {
             minute = String.valueOf(LocalTime.now().getMinute());
         }
         String now = LocalTime.now().getHour() + ":" + minute;
-        Paragraph title = new Paragraph("Lista osób do usunięcia na dzień " + LocalDate.now() + " " + now, font(14, 1));
+        Paragraph title = new Paragraph("Lista osób do skreślenia na dzień " + LocalDate.now() + " " + now, font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
 
@@ -1997,7 +1988,6 @@ public class FilesService {
         List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getActive())
-//                .filter(f -> (!f.getHistory().getContributionList().isEmpty() && f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))||f.getHistory().getContributionList().isEmpty())
                 .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName))
                 .collect(Collectors.toList());

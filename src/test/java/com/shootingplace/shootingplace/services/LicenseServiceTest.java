@@ -289,17 +289,17 @@ public class LicenseServiceTest {
 
     }
 
-    @Test
-    public void getMembersQuantity() {
-        //given
-        //when
-        when(memberRepository.findAll()).thenReturn(membersList);
-        List<Integer> membersQuantity = licenseService.getMembersQuantity();
-        //then
-        assertThat(membersQuantity.get(0), Matchers.equalTo(1));
-        assertThat(membersQuantity.get(1), Matchers.equalTo(4));
-
-    }
+//    @Test
+//    public void getMembersQuantity() {
+//        //given
+//        //when
+//        when(memberRepository.findAll()).thenReturn(membersList);
+//        List<Integer> membersQuantity = licenseService.getMembersQuantity();
+//        //then
+//        assertThat(membersQuantity.get(0), Matchers.equalTo(1));
+//        assertThat(membersQuantity.get(1), Matchers.equalTo(4));
+//
+//    }
 
     private boolean existsById(String uuid) {
         return membersList.stream().anyMatch(f -> f.getUuid().equals(uuid));

@@ -64,12 +64,12 @@ public class AmmoUsedService {
         boolean substratAmmo;
         if (quantity > 0) {
             substratAmmo = armoryService.substratAmmo(caliberUUID, quantity);
-
             LOG.info("dodaję amunicję do listy");
             if (substratAmmo) {
 
                 String name;
                 if (legitimationNumber > 0) {
+                    LOG.info("member");
                     MemberEntity memberEntity = memberRepository.findAll().stream().filter(f -> f.getLegitimationNumber().equals(legitimationNumber)).findFirst().orElseThrow(EntityNotFoundException::new);
                     name = memberEntity.getSecondName() + " " + memberEntity.getFirstName();
                     AmmoUsedPersonal ammoUsedPersonal = AmmoUsedPersonal.builder()
@@ -97,8 +97,9 @@ public class AmmoUsedService {
                     }
 
                 }
-                if (otherID > 0) {
-
+                else {
+                    LOG.info("not member");
+                    System.out.println(quantity);
                     OtherPersonEntity otherPersonEntity = otherPersonRepository
                             .findById(otherID)
                             .orElseThrow(EntityNotFoundException::new);
@@ -114,14 +115,13 @@ public class AmmoUsedService {
                             .caliberUUID(caliberUUID)
                             .date(LocalDate.now())
                             .build();
-                    starEvidence(ammoUsedEvidence);
-                    if (starEvidence(ammoUsedEvidence)) {
+                    boolean b = starEvidence(ammoUsedEvidence);
+                    if (b) {
                         return ResponseEntity.ok("\"Dodano do listy " + name + " " + caliberName + "\"");
                     }
                 }
             }
         } else {
-
             LOG.info("odejmuję amunicję z listy");
 
             String name;
@@ -152,8 +152,7 @@ public class AmmoUsedService {
                     return ResponseEntity.ok("\"Zwrócono do magazynu " + name + " " + caliberName + "\"");
                 }
             }
-            if (otherID > 0) {
-
+            else {
                 OtherPersonEntity otherPersonEntity = otherPersonRepository
                         .findById(otherID)
                         .orElseThrow(EntityNotFoundException::new);

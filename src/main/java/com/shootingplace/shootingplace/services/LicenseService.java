@@ -249,34 +249,34 @@ public class LicenseService {
         return ResponseEntity.ok("\"Poprawiono płatność za licencję\"");
     }
 
-    public List<Integer> getMembersQuantity() {
-
-        int count2 = (int) memberRepository.findAll().stream()
-                .filter(MemberEntity::getErased)
-                .filter(f -> f.getLicense().getNumber() != null)
-                .filter(f -> !f.getLicense().isValid())
-                .count();
-
-        List<Integer> list = new ArrayList<>();
-
-        int count = (int) memberRepository.findAll().stream()
-                .filter(f->!f.getErased())
-                .filter(f ->f.getLicense()!=null)
-                .filter(f -> f.getLicense().getNumber() != null)
-                .filter(f -> !f.getLicense().isValid())
-                .count();
-        int count1 = (int) memberRepository.findAll().stream()
-                .filter(f->!f.getErased())
-                .filter(f ->f.getLicense()!=null)
-                .filter(f -> f.getLicense().getNumber() != null)
-                .filter(f -> f.getLicense().isValid())
-                .count();
-
-        list.add(count - count2);
-        list.add(count1);
-
-        return list;
-    }
+//    public List<Integer> getMembersQuantity() {
+//
+//        int count2 = (int) memberRepository.findAll().stream()
+//                .filter(MemberEntity::getErased)
+//                .filter(f -> f.getLicense().getNumber() != null)
+//                .filter(f -> !f.getLicense().isValid())
+//                .count();
+//
+//        List<Integer> list = new ArrayList<>();
+//
+//        int count = (int) memberRepository.findAll().stream()
+//                .filter(f->!f.getErased())
+//                .filter(f ->f.getLicense()!=null)
+//                .filter(f -> f.getLicense().getNumber() != null)
+//                .filter(f -> !f.getLicense().isValid())
+//                .count();
+//        int count1 = (int) memberRepository.findAll().stream()
+//                .filter(f->!f.getErased())
+//                .filter(f ->f.getLicense()!=null)
+//                .filter(f -> f.getLicense().getNumber() != null)
+//                .filter(f -> f.getLicense().isValid())
+//                .count();
+//
+//        list.add(count - count2);
+//        list.add(count1);
+//
+//        return list;
+//    }
 
 
     public License getLicense() {

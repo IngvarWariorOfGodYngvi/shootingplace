@@ -1,8 +1,12 @@
 package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.domain.entities.GunEntity;
+import com.shootingplace.shootingplace.domain.entities.UsedHistoryEntity;
 import com.shootingplace.shootingplace.domain.models.AmmoDTO;
 import com.shootingplace.shootingplace.repositories.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.repositories.GunRepository;
+import com.shootingplace.shootingplace.repositories.UsedHistoryRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
@@ -20,12 +24,18 @@ public class AmmoEvidenceService {
 
     private final AmmoEvidenceRepository ammoEvidenceRepository;
     private final ChangeHistoryService changeHistoryService;
+    private final ArmoryService armoryService;
+    private final UsedHistoryRepository usedHistoryRepository;
+    private final GunRepository gunRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public AmmoEvidenceService(AmmoEvidenceRepository ammoEvidenceRepository, ChangeHistoryService changeHistoryService) {
+    public AmmoEvidenceService(AmmoEvidenceRepository ammoEvidenceRepository, ChangeHistoryService changeHistoryService, ArmoryService armoryService, UsedHistoryRepository usedHistoryRepository, GunRepository gunRepository) {
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.changeHistoryService = changeHistoryService;
+        this.armoryService = armoryService;
+        this.usedHistoryRepository = usedHistoryRepository;
+        this.gunRepository = gunRepository;
     }
 
     public List<AmmoEvidenceEntity> getAllEvidences(boolean state) {
@@ -98,4 +108,18 @@ public class AmmoEvidenceService {
         }
         return message;
     }
+
+    public ResponseEntity<?> addGunToList(String evidenceUUID,String barcode) {
+
+        String s = armoryService.addUseToGun(barcode, evidenceUUID);
+            return ResponseEntity.ok("\""+s+"\"");
+    }
+
+    public List<GunEntity> getGunInAmmoEvidenceList(String evidenceUUID){
+        List<UsedHistoryEntity> collect = usedHistoryRepository.findAll().stream().filter(f->f.getEvidenceUUID()!=null).filter(f -> f.getEvidenceUUID().equals(evidenceUUID)).collect(Collectors.toList());
+        List<GunEntity> gunEntityList = new ArrayList<>();
+        collect.forEach(e->gunEntityList.add(gunRepository.findById(e.getGunUUID()).orElseThrow(EntityNotFoundException::new)));
+        return gunEntityList;
+    }
+
 }

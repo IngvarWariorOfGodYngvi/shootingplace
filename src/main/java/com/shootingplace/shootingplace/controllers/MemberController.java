@@ -41,8 +41,8 @@ public class MemberController {
     }
 
     @GetMapping("/erased")
-    public ResponseEntity<List<MemberEntity>> getErasedMembers() {
-        return ResponseEntity.ok(memberService.getErasedMembers());
+    public ResponseEntity<?> getErasedMembers() {
+        return ResponseEntity.ok(memberService.getMembersErased());
     }
 
     @GetMapping("/getAllNames")
@@ -188,6 +188,25 @@ public class MemberController {
     @PutMapping("/{uuid}")
     public ResponseEntity<?> updateMember(@PathVariable String uuid, @RequestBody @Valid Member member) {
         return memberService.updateMember(uuid, member);
+    }
+
+    @PutMapping("/addBarCode")
+    public ResponseEntity<?> addBarCode(@RequestParam String uuid, @RequestParam String barcode) {
+        return memberService.addBarCode(uuid, barcode);
+    }
+
+    @GetMapping("/getMembersToReportToThePolice")
+    public ResponseEntity<?> getMembersToReportToThePolice() {
+        return ResponseEntity.ok(memberService.getMembersToReportToThePolice());
+    }
+    @GetMapping("/getMembersToErase")
+    public ResponseEntity<?> getMembersToErase() {
+        return ResponseEntity.ok(memberService.getMembersToErase());
+    }
+
+    @GetMapping("/findByBarCode")
+    public ResponseEntity<?> findMemberByBarCode(@RequestParam String barcode) {
+        return memberService.findMemberByBarCode(barcode);
     }
 
     @PatchMapping("/adult/{uuid}")

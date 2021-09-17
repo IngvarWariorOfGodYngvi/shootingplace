@@ -1,16 +1,20 @@
 package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.*;
+import com.shootingplace.shootingplace.domain.enums.UsedType;
 import com.shootingplace.shootingplace.domain.models.Caliber;
 import com.shootingplace.shootingplace.domain.models.Gun;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,11 +29,12 @@ public class ArmoryService {
     private final ChangeHistoryService changeHistoryService;
     private final GunStoreRepository gunStoreRepository;
     private final FilesRepository filesRepository;
+    private final UsedHistoryRepository usedHistoryRepository;
 
     private final Logger LOG = LogManager.getLogger();
 
 
-    public ArmoryService(AmmoEvidenceRepository ammoEvidenceRepository, CaliberService caliberService, CaliberRepository caliberRepository, CaliberUsedRepository caliberUsedRepository, CalibersAddedRepository calibersAddedRepository, GunRepository gunRepository, ChangeHistoryService changeHistoryService, GunStoreRepository gunStoreRepository, FilesRepository filesRepository) {
+    public ArmoryService(AmmoEvidenceRepository ammoEvidenceRepository, CaliberService caliberService, CaliberRepository caliberRepository, CaliberUsedRepository caliberUsedRepository, CalibersAddedRepository calibersAddedRepository, GunRepository gunRepository, ChangeHistoryService changeHistoryService, GunStoreRepository gunStoreRepository, FilesRepository filesRepository, UsedHistoryRepository usedHistoryRepository) {
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.caliberService = caliberService;
         this.caliberRepository = caliberRepository;
@@ -39,6 +44,7 @@ public class ArmoryService {
         this.changeHistoryService = changeHistoryService;
         this.gunStoreRepository = gunStoreRepository;
         this.filesRepository = filesRepository;
+        this.usedHistoryRepository = usedHistoryRepository;
     }
 
 
@@ -119,11 +125,11 @@ public class ArmoryService {
                 .build();
         caliberUsedRepository.saveAndFlush(caliberUsedEntity);
 
-        List<CaliberUsedEntity> ammoUsed = caliberEntity.getAmmoUsed();
+            List<CaliberUsedEntity> ammoUsed = caliberEntity.getAmmoUsed();
 
-        ammoUsed.add(caliberUsedEntity);
-        caliberEntity.setQuantity(caliberEntity.getQuantity() - caliberUsedEntity.getAmmoUsed());
-        caliberRepository.saveAndFlush(caliberEntity);
+            ammoUsed.add(caliberUsedEntity);
+            caliberEntity.setQuantity(caliberEntity.getQuantity() - caliberUsedEntity.getAmmoUsed());
+            caliberRepository.saveAndFlush(caliberEntity);
 
         return true;
     }
@@ -172,6 +178,12 @@ public class ArmoryService {
                 return false;
             }
         }
+        if (gun.getBarcode() != null) {
+            if (all.stream().filter(f -> f.getBarcode() != null).anyMatch(e -> e.getBarcode().equals(gun.getBarcode()))) {
+                LOG.info("Nie można Nadać kodu kreskowego gdyż jest przypisany już gdzieś indziej");
+                return false;
+            }
+        }
 
         String s = gun.getGunCertificateSerialNumber();
         if (gun.getGunCertificateSerialNumber() != null) {
@@ -190,6 +202,7 @@ public class ArmoryService {
                 .recordInEvidenceBook(gun.getRecordInEvidenceBook())
                 .comment(gun.getComment())
                 .basisForPurchaseOrAssignment(gun.getBasisForPurchaseOrAssignment())
+                .barcode(gun.getBarcode())
                 .inStock(true).build();
 
         gunRepository.saveAndFlush(gunEntity);
@@ -262,6 +275,9 @@ public class ArmoryService {
         if (gun.getBasisForPurchaseOrAssignment() != null && !gun.getBasisForPurchaseOrAssignment().isEmpty()) {
             gunEntity.setBasisForPurchaseOrAssignment(gun.getBasisForPurchaseOrAssignment());
         }
+        if (gun.getBarcode() != null && !gun.getBarcode().isEmpty()) {
+            gunEntity.setBarcode(gun.getBarcode());
+        }
         gunRepository.saveAndFlush(gunEntity);
         return true;
     }
@@ -316,5 +332,84 @@ public class ArmoryService {
         gunEntity.setImgUUID(filesEntity.getUuid());
         gunRepository.saveAndFlush(gunEntity);
         return true;
+    }
+
+    public ResponseEntity<?> findGunByBarcode(String barcode) {
+
+        if (gunRepository.findByBarcode(barcode).isEmpty()) {
+            return ResponseEntity.badRequest().body("\"Nie znaleziono broni\"");
+        }
+
+        GunEntity gunEntity = gunRepository.findByBarcode(barcode).orElseThrow(EntityNotFoundException::new);
+
+        return ResponseEntity.ok(gunEntity);
+    }
+
+    public ResponseEntity<?> getListGunsUsedInDate(LocalDate date) {
+        return ResponseEntity.ok(usedHistoryRepository.findAll().stream().filter(f -> f.getDate().equals(date)).collect(Collectors.toList()));
+    }
+
+    public String addUseToGun(String barcode, String evidenceUUID) {
+        AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository.findById(evidenceUUID).orElse(null);
+        GunEntity gunEntity = gunRepository.findByBarcode(barcode).orElse(null);
+        String response = "";
+        if (gunEntity == null) {
+            response = "Nie znaleziono broni";
+            return response;
+        }
+        if (ammoEvidenceEntity == null) {
+            response = "Nie znaleziono listy";
+            return response;
+        }
+        List<UsedHistoryEntity> usedHistoryEntityList = gunEntity.getUsedHistoryEntityList();
+        boolean anyMatch = usedHistoryEntityList.stream().filter(f -> f.getEvidenceUUID() != null).anyMatch(f -> f.getEvidenceUUID().equals(evidenceUUID));
+        if (anyMatch) {
+            response = "Broń znajduje się już na liście";
+        } else {
+            UsedHistoryEntity build = UsedHistoryEntity.builder()
+                    .date(ammoEvidenceEntity.getDate())
+                    .gunSerialNumber(gunEntity.getSerialNumber())
+                    .gunUUID(gunEntity.getUuid())
+                    .evidenceUUID(evidenceUUID)
+                    .usedType(UsedType.TRAINING.getName())
+                    .build();
+            UsedHistoryEntity save = usedHistoryRepository.save(build);
+            usedHistoryEntityList.add(save);
+            gunEntity.setUsedHistoryEntityList(usedHistoryEntityList);
+            gunRepository.saveAndFlush(gunEntity);
+            response = "Dodano Broń";
+        }
+        return response;
+    }
+
+    public List<UsedHistoryEntity> getGunUsedHistory(String gunUUID) {
+
+        List<UsedHistoryEntity> collect = usedHistoryRepository.findAll().stream().filter(f -> f.getGunUUID().equals(gunUUID)).collect(Collectors.toList());
+
+        collect.sort(Comparator.comparing(UsedHistoryEntity::getDate).reversed());
+
+        return collect;
+
+    }
+
+    public ResponseEntity<?> addUsedHistoryToGun(String barcode) {
+        GunEntity gunEntity = gunRepository.findByBarcode(barcode).orElseThrow(null);
+        if (gunEntity == null) {
+            return ResponseEntity.badRequest().body("\"Nie znaleziono broni\"");
+        } else {
+            List<UsedHistoryEntity> usedHistoryEntityList = gunEntity.getUsedHistoryEntityList();
+            UsedHistoryEntity build = UsedHistoryEntity.builder()
+                    .date(LocalDate.now())
+                    .gunSerialNumber(gunEntity.getSerialNumber())
+                    .gunUUID(gunEntity.getUuid())
+                    .evidenceUUID(null)
+                    .usedType(UsedType.CLEANING.getName())
+                    .build();
+            UsedHistoryEntity save = usedHistoryRepository.save(build);
+            usedHistoryEntityList.add(save);
+            gunEntity.setUsedHistoryEntityList(usedHistoryEntityList);
+            gunRepository.save(gunEntity);
+            return ResponseEntity.ok("\"Uznano broń za wyczyszczoną\"");
+        }
     }
 }

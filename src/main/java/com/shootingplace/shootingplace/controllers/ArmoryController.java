@@ -63,12 +63,31 @@ public class ArmoryController {
     public ResponseEntity<?> getHistoryOfCaliber(@RequestParam String caliberUUID) {
         return ResponseEntity.ok(armoryService.getHistoryOfCaliber(caliberUUID));
     }
+    @GetMapping("/getGunsUsedInDate")
+    public  ResponseEntity<?> getGunsUsedInDate(@RequestParam LocalDate date){
+        return armoryService.getListGunsUsedInDate(date);
+    }
+
+    @GetMapping("/getGunByBarcode")
+    public ResponseEntity<?> findGunByBarcode(@RequestParam String barcode) {
+        return ResponseEntity.ok(armoryService.findGunByBarcode(barcode));
+    }
+
+    @GetMapping("/getGunUsedHistory")
+    public ResponseEntity<?> getGunUsedHistory(@RequestParam String gunUUID) {
+        return ResponseEntity.ok(armoryService.getGunUsedHistory(gunUUID));
+    }
 
     @PutMapping("/addAmmo")
     public ResponseEntity<?> updateAmmoQuantity(@RequestParam String caliberUUID, @RequestParam Integer count, @RequestParam String date, @RequestParam String description) {
         LocalDate parse = LocalDate.parse(date);
         armoryService.updateAmmo(caliberUUID, count, parse, description);
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/addUsedHistoryToGun")
+    public ResponseEntity<?> addUsedHistoryToGun(@RequestParam String barcode) {
+        return armoryService.addUsedHistoryToGun(barcode);
     }
 
     @Transactional

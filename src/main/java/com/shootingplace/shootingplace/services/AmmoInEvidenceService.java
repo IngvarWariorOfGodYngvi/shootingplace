@@ -113,7 +113,7 @@ public class AmmoInEvidenceService {
                         ammoInEvidenceRepository.saveAndFlush(ammoInEvidenceEntity);
                     }
                 }
-//        Znaleziono podanego member
+//        Znaleziono podanego membera
                 else {
                     AmmoUsedToEvidenceEntity ammoUsedToEvidenceEntity1 = ammoUsedToEvidenceEntityList
                             .stream()
@@ -121,15 +121,18 @@ public class AmmoInEvidenceService {
                                     .equals(ammoUsedToEvidenceEntity.getName()))
                             .findFirst()
                             .orElseThrow(EntityNotFoundException::new);
-                    if (ammoUsedToEvidenceEntity1.getCounter() + ammoUsedToEvidenceEntity.getCounter() <= 0) {
-//                   to jest to co należy dodać do magazynu amunicji     -ammoUsedToEvidenceEntity1.getCounter()
-                        armoryService.substratAmmo(ammoUsedToEvidenceEntity1.getCaliberUUID(), -ammoUsedToEvidenceEntity1.getCounter());
-                        ammoUsedToEvidenceEntity1.setCounter(-ammoUsedToEvidenceEntity1.getCounter());
+                    if (ammoUsedToEvidenceEntity.getCounter() <= 0) {
+//                      to jest to co należy dodać do magazynu amunicji     -ammoUsedToEvidenceEntity1.getCounter()
+                        if (ammoUsedToEvidenceEntity1.getCounter() + ammoUsedToEvidenceEntity.getCounter() < 0) {
+                            ammoUsedToEvidenceEntity.setCounter(-ammoUsedToEvidenceEntity1.getCounter());
+                        }
+                        armoryService.substratAmmo(ammoUsedToEvidenceEntity1.getCaliberUUID(), ammoUsedToEvidenceEntity.getCounter());
+                        ammoUsedToEvidenceEntity1.setCounter(ammoUsedToEvidenceEntity1.getCounter() + ammoUsedToEvidenceEntity.getCounter());
+                        ammoInEvidenceEntity.setQuantity(ammoInEvidenceEntity.getQuantity() + ammoUsedToEvidenceEntity.getCounter());
                     } else {
                         ammoUsedToEvidenceEntity1.setCounter(ammoUsedToEvidenceEntity1.getCounter() + ammoUsedToEvidenceEntity.getCounter());
+                        ammoInEvidenceEntity.setQuantity(ammoInEvidenceEntity.getQuantity() + ammoUsedToEvidenceEntity.getCounter());
                     }
-
-                    ammoInEvidenceEntity.setQuantity(ammoInEvidenceEntity.getQuantity() + ammoUsedToEvidenceEntity.getCounter());
 
 
                     if (ammoUsedToEvidenceEntity1.getCounter() <= 0) {

@@ -5,10 +5,9 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
@@ -30,6 +29,9 @@ public class GunEntity {
     private String productionYear;
     @NotNull
     private String gunType;
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("date DESC")
+    private List<UsedHistoryEntity> usedHistoryEntityList;
 
     private String numberOfMagazines;
     private String gunCertificateSerialNumber;
@@ -40,9 +42,9 @@ public class GunEntity {
     private String basisForPurchaseOrAssignment;
 
     private String comment;
-
     private boolean inStock;
     private String imgUUID;
+    private String barcode;
 
     public String getImgUUID() {
         return imgUUID;
@@ -151,5 +153,21 @@ public class GunEntity {
 
     public void setBasisForPurchaseOrAssignment(String basisForPurchaseOrAssignment) {
         this.basisForPurchaseOrAssignment = basisForPurchaseOrAssignment;
+    }
+
+    public String getBarcode() {
+        return barcode;
+    }
+
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
+    }
+
+    public List<UsedHistoryEntity> getUsedHistoryEntityList() {
+        return usedHistoryEntityList;
+    }
+
+    public void setUsedHistoryEntityList(List<UsedHistoryEntity> usedHistoryEntityList) {
+        this.usedHistoryEntityList = usedHistoryEntityList;
     }
 }
