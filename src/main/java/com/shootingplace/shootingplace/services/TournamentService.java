@@ -8,6 +8,7 @@ import com.shootingplace.shootingplace.domain.models.TournamentDTO;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -27,10 +28,11 @@ public class TournamentService {
     private final CompetitionRepository competitionRepository;
     private final HistoryService historyService;
     private final ChangeHistoryService changeHistoryService;
+    private final UsedHistoryRepository usedHistoryRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public TournamentService(TournamentRepository tournamentRepository, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, CompetitionMembersListRepository competitionMembersListRepository, CompetitionRepository competitionRepository, HistoryService historyService, ChangeHistoryService changeHistoryService) {
+    public TournamentService(TournamentRepository tournamentRepository, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, CompetitionMembersListRepository competitionMembersListRepository, CompetitionRepository competitionRepository, HistoryService historyService, ChangeHistoryService changeHistoryService, UsedHistoryRepository usedHistoryRepository) {
         this.tournamentRepository = tournamentRepository;
         this.memberRepository = memberRepository;
         this.otherPersonRepository = otherPersonRepository;
@@ -38,9 +40,10 @@ public class TournamentService {
         this.competitionRepository = competitionRepository;
         this.historyService = historyService;
         this.changeHistoryService = changeHistoryService;
+        this.usedHistoryRepository = usedHistoryRepository;
     }
 
-    public String createNewTournament(Tournament tournament) {
+    public ResponseEntity<String> createNewTournament(Tournament tournament) {
         String[] s1 = tournament.getName().split(" ");
         StringBuilder name = new StringBuilder();
         for (String value : s1) {
@@ -62,7 +65,7 @@ public class TournamentService {
         tournamentRepository.saveAndFlush(tournamentEntity);
         LOG.info("Stworzono nowe zawody " + tournamentEntity.getName());
 
-        return tournamentEntity.getUuid();
+        return ResponseEntity.status(201).body("\"" + tournamentEntity.getUuid() + "\"");
     }
 
     public boolean updateTournament(String tournamentUUID, Tournament tournament) {
@@ -153,19 +156,19 @@ public class TournamentService {
         return list;
     }
 
-    public boolean closeTournament(String tournamentUUID) {
+    public ResponseEntity<?> closeTournament(String tournamentUUID) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
             LOG.info("Zawody " + tournamentEntity.getName() + " zostały zamknięte");
             tournamentEntity.setOpen(false);
             tournamentRepository.saveAndFlush(tournamentEntity);
-            return true;
+            return ResponseEntity.ok("\"Zawody zostały zamknięte\"");
         } else {
-            return false;
+            return ResponseEntity.badRequest().body("\"Nie można zamknąć zawodów\"");
         }
     }
 
-    public boolean removeArbiterFromTournament(String tournamentUUID, int legitimationNumber) {
+    public ResponseEntity<?> removeArbiterFromTournament(String tournamentUUID, int legitimationNumber) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -183,12 +186,12 @@ public class TournamentService {
 
             tournamentRepository.saveAndFlush(tournamentEntity);
 
-            return true;
+            return ResponseEntity.ok("\"Usunięto Sędziego\"");
         }
-        return false;
+        return ResponseEntity.status(418).body("\"I'm a teapot\"");
     }
 
-    public boolean removeOtherArbiterFromTournament(String tournamentUUID, int id) {
+    public ResponseEntity<String> removeOtherArbiterFromTournament(String tournamentUUID, int id) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -205,12 +208,12 @@ public class TournamentService {
 
             tournamentRepository.saveAndFlush(tournamentEntity);
 
-            return true;
+            return ResponseEntity.ok("\"Usunięto Sędziego\"");
         }
-        return false;
+        return ResponseEntity.status(418).body("\"I'm a teapot\"");
     }
 
-    public boolean addMainArbiter(String tournamentUUID, int legitimationNumber) {
+    public ResponseEntity<String> addMainArbiter(String tournamentUUID, int legitimationNumber) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -228,12 +231,12 @@ public class TournamentService {
 
             if (tournamentEntity.getCommissionRTSArbiter() != null) {
                 if (tournamentEntity.getCommissionRTSArbiter().equals(memberEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getArbitersList() != null) {
                 if (tournamentEntity.getArbitersList().stream().anyMatch(a -> a.equals(memberEntity))) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
 
@@ -251,16 +254,16 @@ public class TournamentService {
                     tournamentRepository.saveAndFlush(tournamentEntity);
                     LOG.info("Ustawiono sędziego głównego zawodów");
                     historyService.addJudgingRecord(memberEntity.getUuid(), tournamentUUID, function);
+                    return ResponseEntity.ok("\"Ustawiono sędziego głównego zawodów\"");
                 } else {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
                 }
             }
-            return true;
         }
-        return false;
+        return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
     }
 
-    public boolean addOtherMainArbiter(String tournamentUUID, int id) {
+    public ResponseEntity<String> addOtherMainArbiter(String tournamentUUID, int id) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -273,12 +276,12 @@ public class TournamentService {
 
             if (tournamentEntity.getOtherCommissionRTSArbiter() != null) {
                 if (tournamentEntity.getOtherCommissionRTSArbiter().equals(otherPersonEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getOtherArbitersList() != null) {
                 if (tournamentEntity.getOtherArbitersList().stream().anyMatch(a -> a.equals(otherPersonEntity))) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
 
@@ -299,16 +302,16 @@ public class TournamentService {
                     }
                     tournamentRepository.saveAndFlush(tournamentEntity);
                     LOG.info("Ustawiono sędziego głównego zawodów");
+                    return ResponseEntity.ok("\"Ustawiono sędziego głównego zawodów\"");
                 } else {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
                 }
             }
-            return true;
         }
-        return false;
+        return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
     }
 
-    public boolean addRTSArbiter(String tournamentUUID, int legitimationNumber) {
+    public ResponseEntity<?> addRTSArbiter(String tournamentUUID, int legitimationNumber) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -326,12 +329,12 @@ public class TournamentService {
 
             if (tournamentEntity.getMainArbiter() != null) {
                 if (tournamentEntity.getMainArbiter().equals(memberEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getArbitersList() != null) {
                 if (tournamentEntity.getArbitersList().stream().anyMatch(a -> a.equals(memberEntity))) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
 
@@ -342,18 +345,18 @@ public class TournamentService {
                     }
                     tournamentEntity.setCommissionRTSArbiter(memberEntity);
                     tournamentRepository.saveAndFlush(tournamentEntity);
-                    LOG.info("Ustawiono sędziego biura obliczeń");
+                    LOG.info("Ustawiono sędziego RTS");
                     historyService.addJudgingRecord(memberEntity.getUuid(), tournamentUUID, function);
+                    return ResponseEntity.ok("\"Ustawiono sędziego RTS\"");
                 } else {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
                 }
             }
-            return true;
         }
-        return false;
+        return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
     }
 
-    public boolean addOtherRTSArbiter(String tournamentUUID, int id) {
+    public ResponseEntity<?> addOtherRTSArbiter(String tournamentUUID, int id) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -366,12 +369,12 @@ public class TournamentService {
 
             if (tournamentEntity.getOtherMainArbiter() != null) {
                 if (tournamentEntity.getOtherMainArbiter().equals(otherPersonEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getOtherArbitersList() != null) {
                 if (tournamentEntity.getOtherArbitersList().stream().anyMatch(a -> a.equals(otherPersonEntity))) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
 
@@ -389,16 +392,16 @@ public class TournamentService {
                     tournamentEntity.setCommissionRTSArbiter(null);
                     tournamentRepository.saveAndFlush(tournamentEntity);
                     LOG.info("Ustawiono sędziego biura obliczeń");
+                    return ResponseEntity.ok("\"Ustawiono sędziego RTSń\"");
                 } else {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
                 }
             }
-            return true;
         }
-        return false;
+        return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
     }
 
-    public boolean addOthersArbiters(String tournamentUUID, int legitimationNumber) {
+    public ResponseEntity<?> addOthersArbiters(String tournamentUUID, int legitimationNumber) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
             String function = ArbiterWorkClass.HELP.getName();
@@ -412,22 +415,22 @@ public class TournamentService {
 
             if (tournamentEntity.getMainArbiter() != null) {
                 if (tournamentEntity.getMainArbiter().equals(memberEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getCommissionRTSArbiter() != null) {
                 if (tournamentEntity.getCommissionRTSArbiter().equals(memberEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getArbitersList() != null) {
                 if (tournamentEntity.getArbitersList().contains(memberEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getArbitersRTSList() != null) {
                 if (tournamentEntity.getArbitersRTSList().contains(memberEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (!memberEntity.getMemberPermissions().getArbiterNumber().isEmpty()) {
@@ -439,13 +442,13 @@ public class TournamentService {
                 tournamentRepository.saveAndFlush(tournamentEntity);
                 LOG.info("Dodano sędziego pomocniczego");
                 historyService.addJudgingRecord(memberEntity.getUuid(), tournamentUUID, function);
+                return ResponseEntity.ok("\"Ustawiono sędziego pomocniczego\"");
             }
-            return true;
         }
-        return false;
+        return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
     }
 
-    public boolean addPersonOthersArbiters(String tournamentUUID, int id) {
+    public ResponseEntity<?> addPersonOthersArbiters(String tournamentUUID, int id) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -458,22 +461,22 @@ public class TournamentService {
 
             if (tournamentEntity.getOtherMainArbiter() != null) {
                 if (tournamentEntity.getOtherMainArbiter().equals(otherPersonEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getOtherCommissionRTSArbiter() != null) {
                 if (tournamentEntity.getOtherCommissionRTSArbiter().equals(otherPersonEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getOtherArbitersList() != null) {
                 if (tournamentEntity.getOtherArbitersList().contains(otherPersonEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getOtherArbitersRTSList() != null) {
                 if (tournamentEntity.getOtherArbitersRTSList().contains(otherPersonEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (!otherPersonEntity.getPermissionsEntity().getArbiterNumber().isEmpty()) {
@@ -484,13 +487,13 @@ public class TournamentService {
                 tournamentEntity.setOtherArbitersList(list);
                 tournamentRepository.saveAndFlush(tournamentEntity);
                 LOG.info("Dodano sędziego pomocniczego");
+                return ResponseEntity.ok("\"Ustawiono sędziego pomocniczego\"");
             }
-            return true;
         }
-        return false;
+        return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
     }
 
-    public boolean addNewCompetitionListToTournament(String tournamentUUID, String competitionUUID) {
+    public ResponseEntity<?> addNewCompetitionListToTournament(String tournamentUUID, String competitionUUID) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
             if (competitionUUID != null) {
@@ -499,7 +502,7 @@ public class TournamentService {
                     for (int i = 0; i < tournamentEntity.getCompetitionsList().size(); i++) {
                         if (tournamentEntity.getCompetitionsList().get(i).getName().equals(competition.getName())) {
                             LOG.info("Nie można dodać konkurencji bo taka już istnieje w zawodach");
-                            return false;
+                            return ResponseEntity.badRequest().body("\"Nie można dodać konkurencji bo taka już istnieje w zawodach\"");
                         }
                     }
                 }
@@ -521,11 +524,10 @@ public class TournamentService {
                 competitionsList.sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
                 tournamentRepository.saveAndFlush(tournamentEntity);
                 LOG.info("Dodano konkurencję do zawodów");
-
+                return ResponseEntity.ok("\"Dodano konkurencję do zawodów\"");
             }
-            return true;
         }
-        return false;
+        return ResponseEntity.badRequest().body("\"Nie udało się dodać konkurencji\"");
     }
 
     public List<TournamentDTO> getClosedTournaments() {
@@ -579,7 +581,7 @@ public class TournamentService {
         return list;
     }
 
-    public boolean addOthersRTSArbiters(String tournamentUUID, int legitimationNumber) {
+    public ResponseEntity<?> addOthersRTSArbiters(String tournamentUUID, int legitimationNumber) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
             String function = ArbiterWorkClass.RTS_HELP.getName();
@@ -593,22 +595,22 @@ public class TournamentService {
 
             if (tournamentEntity.getMainArbiter() != null) {
                 if (tournamentEntity.getMainArbiter().equals(memberEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getCommissionRTSArbiter() != null) {
                 if (tournamentEntity.getCommissionRTSArbiter().equals(memberEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getArbitersList() != null) {
                 if (tournamentEntity.getArbitersList().contains(memberEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getArbitersRTSList() != null) {
                 if (tournamentEntity.getArbitersRTSList().contains(memberEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (!memberEntity.getMemberPermissions().getArbiterNumber().isEmpty()) {
@@ -620,13 +622,13 @@ public class TournamentService {
                 tournamentRepository.saveAndFlush(tournamentEntity);
                 LOG.info("Dodano sędziego biura obliczeń");
                 historyService.addJudgingRecord(memberEntity.getUuid(), tournamentUUID, function);
+                return ResponseEntity.ok("\"Ustawiono sędziego biura obliczeń\"");
             }
-            return true;
         }
-        return false;
+        return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
     }
 
-    public boolean addPersonOthersRTSArbiters(String tournamentUUID, int id) {
+    public ResponseEntity<?> addPersonOthersRTSArbiters(String tournamentUUID, int id) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -639,22 +641,22 @@ public class TournamentService {
 
             if (tournamentEntity.getOtherMainArbiter() != null) {
                 if (tournamentEntity.getOtherMainArbiter().equals(otherPersonEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getOtherCommissionRTSArbiter() != null) {
                 if (tournamentEntity.getOtherCommissionRTSArbiter().equals(otherPersonEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getOtherArbitersList() != null) {
                 if (tournamentEntity.getOtherArbitersList().contains(otherPersonEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (tournamentEntity.getOtherArbitersRTSList() != null) {
                 if (tournamentEntity.getOtherArbitersRTSList().contains(otherPersonEntity)) {
-                    return false;
+                    return ResponseEntity.badRequest().body("\"Sędzia już jest przypisany\"");
                 }
             }
             if (!otherPersonEntity.getPermissionsEntity().getArbiterNumber().isEmpty()) {
@@ -665,13 +667,13 @@ public class TournamentService {
                 tournamentEntity.setOtherArbitersRTSList(list);
                 tournamentRepository.saveAndFlush(tournamentEntity);
                 LOG.info("Dodano sędziego biura obliczeń");
+                return ResponseEntity.ok("\"Ustawiono sędziego biura obliczeń\"");
             }
-            return true;
         }
-        return false;
+        return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
     }
 
-    public boolean removeRTSArbiterFromTournament(String tournamentUUID, int legitimationNumber) {
+    public ResponseEntity<?> removeRTSArbiterFromTournament(String tournamentUUID, int legitimationNumber) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -689,12 +691,12 @@ public class TournamentService {
 
             tournamentRepository.saveAndFlush(tournamentEntity);
 
-            return true;
+            return ResponseEntity.ok("\"Usunięto sędziego\"");
         }
-        return false;
+        return ResponseEntity.badRequest().body("\"Nie udało się usunąć sędziego\"");
     }
 
-    public boolean removeRTSOtherArbiterFromTournament(String tournamentUUID, int id) {
+    public ResponseEntity<?> removeRTSOtherArbiterFromTournament(String tournamentUUID, int id) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -711,9 +713,9 @@ public class TournamentService {
 
             tournamentRepository.saveAndFlush(tournamentEntity);
 
-            return true;
+            return ResponseEntity.ok("\"Usunięto sędziego\"");
         }
-        return false;
+        return ResponseEntity.badRequest().body("\"Nie udało się usunąć sędziego\"");
     }
 
     public List<String> getStatistics(String tournamentUUID) {
@@ -772,5 +774,15 @@ public class TournamentService {
 
     public Boolean checkAnyOpenTournament() {
         return tournamentRepository.findAll().stream().anyMatch(TournamentEntity::isOpen);
+    }
+
+    public List<UsedHistoryEntity> getListOfGunsOnTournament(String tournamentUUID) {
+        List<UsedHistoryEntity> collect = usedHistoryRepository.findAll().stream().filter(f -> f.getEvidenceUUID().equals(tournamentUUID)).collect(Collectors.toList());
+
+        return collect;
+    }
+
+    public ResponseEntity<?> addGunToTournament(String tournamentUUID) {
+        return null;
     }
 }

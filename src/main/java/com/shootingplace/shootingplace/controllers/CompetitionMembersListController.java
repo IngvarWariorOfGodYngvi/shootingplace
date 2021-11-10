@@ -29,6 +29,16 @@ public class CompetitionMembersListController {
         return ResponseEntity.ok(competitionMembersListService.getMemberStartsInTournament(memberUUID, otherID, tournamentUUID));
     }
 
+    @GetMapping("/getMemberStartsByLegitimation")
+    public ResponseEntity<List<String>> getMemberStartsInTournament(@RequestParam int legNumber, @RequestParam int otherID, @RequestParam String tournamentUUID) {
+        return ResponseEntity.ok(competitionMembersListService.getMemberStartsInTournament(legNumber, otherID, tournamentUUID));
+    }
+
+    @GetMapping("/getScoreIdByNumberAndCompetitionName")
+    public ResponseEntity<?> getMemberStartsInTournament(@RequestParam int legNumber, @RequestParam int otherID, @RequestParam String tournamentUUID, @RequestParam String competitionName) {
+        return ResponseEntity.ok(competitionMembersListService.getScoreID(legNumber, otherID, tournamentUUID,competitionName));
+    }
+
     @Transactional
     @PutMapping("/addMember")
     public ResponseEntity<?> addScoreToCompetitionMembersList(@RequestParam String competitionUUID, @RequestParam int legitimationNumber, @RequestParam @Nullable int otherPerson) {

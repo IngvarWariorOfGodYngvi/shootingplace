@@ -105,7 +105,7 @@ public class ContributionService {
         memberEntity.setActive(!memberEntity.getHistory().getContributionList().get(0).getValidThru().plusMonths(3).isBefore(LocalDate.now()));
         LOG.info("zmieniono " + memberEntity.getSecondName());
         memberRepository.saveAndFlush(memberEntity);
-        return ResponseEntity.ok("\"Przedłużono składkę" + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\"");
+        return ResponseEntity.ok("\"Przedłużono składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\"");
     }
 
     @NotNull

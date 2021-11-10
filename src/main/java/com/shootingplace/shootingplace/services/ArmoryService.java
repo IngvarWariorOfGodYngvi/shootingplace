@@ -125,11 +125,11 @@ public class ArmoryService {
                 .build();
         caliberUsedRepository.saveAndFlush(caliberUsedEntity);
 
-            List<CaliberUsedEntity> ammoUsed = caliberEntity.getAmmoUsed();
+        List<CaliberUsedEntity> ammoUsed = caliberEntity.getAmmoUsed();
 
-            ammoUsed.add(caliberUsedEntity);
-            caliberEntity.setQuantity(caliberEntity.getQuantity() - caliberUsedEntity.getAmmoUsed());
-            caliberRepository.saveAndFlush(caliberEntity);
+        ammoUsed.add(caliberUsedEntity);
+        caliberEntity.setQuantity(caliberEntity.getQuantity() - caliberUsedEntity.getAmmoUsed());
+        caliberRepository.saveAndFlush(caliberEntity);
 
         return true;
     }
@@ -371,6 +371,7 @@ public class ArmoryService {
                     .gunSerialNumber(gunEntity.getSerialNumber())
                     .gunUUID(gunEntity.getUuid())
                     .evidenceUUID(evidenceUUID)
+                    .gunName(gunEntity.getModelName())
                     .usedType(UsedType.TRAINING.getName())
                     .build();
             UsedHistoryEntity save = usedHistoryRepository.save(build);
@@ -384,24 +385,28 @@ public class ArmoryService {
 
     public List<UsedHistoryEntity> getGunUsedHistory(String gunUUID) {
 
-        List<UsedHistoryEntity> collect = usedHistoryRepository.findAll().stream().filter(f -> f.getGunUUID().equals(gunUUID)).collect(Collectors.toList());
-
-        collect.sort(Comparator.comparing(UsedHistoryEntity::getDate).reversed());
-
-        return collect;
+        return usedHistoryRepository.findAll().stream().filter(f -> f.getGunUUID().equals(gunUUID)).sorted(Comparator.comparing(UsedHistoryEntity::getDate).reversed()).collect(Collectors.toList());
 
     }
 
     public ResponseEntity<?> addUsedHistoryToGun(String barcode) {
-        GunEntity gunEntity = gunRepository.findByBarcode(barcode).orElseThrow(null);
+        GunEntity gunEntity = gunRepository.findByBarcode(barcode).orElse(null);
         if (gunEntity == null) {
             return ResponseEntity.badRequest().body("\"Nie znaleziono broni\"");
         } else {
+            List<UsedHistoryEntity> usedHistoryEntityList1 = gunEntity.getUsedHistoryEntityList();
+            if (usedHistoryEntityList1.stream().anyMatch(f -> f.getDate().equals(LocalDate.now()))) {
+                UsedHistoryEntity usedHistoryEntity = usedHistoryEntityList1.stream().filter(f -> f.getDate().equals(LocalDate.now())).findFirst().orElse(null);
+                if (usedHistoryEntity != null && usedHistoryEntity.getUsedType().equals(UsedType.CLEANING.getName()))
+                    LOG.info("Broń była już dzisiaj czyszczona");
+                    return ResponseEntity.badRequest().body("\"Broń była już dzisiaj czyszczona\"");
+            }
             List<UsedHistoryEntity> usedHistoryEntityList = gunEntity.getUsedHistoryEntityList();
             UsedHistoryEntity build = UsedHistoryEntity.builder()
                     .date(LocalDate.now())
                     .gunSerialNumber(gunEntity.getSerialNumber())
                     .gunUUID(gunEntity.getUuid())
+                    .gunName(gunEntity.getModelName())
                     .evidenceUUID(null)
                     .usedType(UsedType.CLEANING.getName())
                     .build();
@@ -409,7 +414,53 @@ public class ArmoryService {
             usedHistoryEntityList.add(save);
             gunEntity.setUsedHistoryEntityList(usedHistoryEntityList);
             gunRepository.save(gunEntity);
+            LOG.info("Uznano broń za wyczyszczoną");
             return ResponseEntity.ok("\"Uznano broń za wyczyszczoną\"");
         }
+    }
+
+    public ResponseEntity<?> addUsedHistoryToGunInTournament(String barcode, String tournamentUUID) {
+        GunEntity gunEntity = gunRepository.findByBarcode(barcode).orElse(null);
+        if (gunEntity == null) {
+            return ResponseEntity.badRequest().body("\"Nie znaleziono broni\"");
+        } else {
+            List<UsedHistoryEntity> usedHistoryEntityList1 = gunEntity.getUsedHistoryEntityList();
+            if (usedHistoryEntityList1.stream().anyMatch(f -> f.getDate().equals(LocalDate.now()))) {
+                UsedHistoryEntity usedHistoryEntity = usedHistoryEntityList1.stream().filter(f -> f.getDate().equals(LocalDate.now())).findFirst().orElse(null);
+                if (usedHistoryEntity != null && usedHistoryEntity.getUsedType().equals(UsedType.CLEANING.getName()))
+                    LOG.info("Broń jest już Dodana");
+                return ResponseEntity.badRequest().body("\"Broń jest już dodana\"");
+            }
+            List<UsedHistoryEntity> usedHistoryEntityList = gunEntity.getUsedHistoryEntityList();
+            UsedHistoryEntity build = UsedHistoryEntity.builder()
+                    .date(LocalDate.now())
+                    .gunSerialNumber(gunEntity.getSerialNumber())
+                    .gunUUID(gunEntity.getUuid())
+                    .gunName(gunEntity.getModelName())
+                    .evidenceUUID(tournamentUUID)
+                    .usedType(UsedType.CLUB_COMPETITION.getName())
+                    .build();
+            UsedHistoryEntity save = usedHistoryRepository.save(build);
+            usedHistoryEntityList.add(save);
+            gunEntity.setUsedHistoryEntityList(usedHistoryEntityList);
+            gunRepository.save(gunEntity);
+            LOG.info("Broń została dodana");
+            return ResponseEntity.ok("\"Broń została dodana\"");
+        }
+    }
+
+    public List<UsedHistoryEntity> getHistoryGuns(LocalDate firstDate, LocalDate secondDate) {
+        List<UsedHistoryEntity> all = usedHistoryRepository.findAll();
+        return all.stream()
+                .filter(f -> f.getDate().isAfter(firstDate.minusDays(1)))
+                .filter(f -> f.getDate().isBefore(secondDate.plusDays(1))).sorted(Comparator.comparing(UsedHistoryEntity::getDate).reversed()).collect(Collectors.toList());
+    }
+
+    public List<UsedHistoryEntity> getGunInTournament(String tournamentUUID) {
+        return usedHistoryRepository.findAll()
+                .stream()
+                .filter(f->f.getEvidenceUUID()!=null)
+                .filter(f->f.getEvidenceUUID().equals(tournamentUUID))
+                .collect(Collectors.toList());
     }
 }

@@ -946,6 +946,12 @@ public class FilesService {
                     float score = scoreList.get(j).getScore();
                     String scoreOuterTen = String.valueOf(scoreList.get(j).getOuterTen() - scoreList.get(j).getInnerTen());
                     String scoreInnerTen = String.valueOf(scoreList.get(j).getInnerTen());
+                    if (scoreOuterTen.startsWith("0")) {
+                        scoreOuterTen = "";
+                    }
+                    if (scoreInnerTen.startsWith("0")) {
+                        scoreInnerTen = "";
+                    }
                     String o1 = scoreInnerTen.replace(".0", ""), o2 = scoreOuterTen.replace(".0", "");
                     if (scoreList.get(j).getInnerTen() == 0) {
                         o1 = scoreInnerTen = "";
@@ -956,7 +962,7 @@ public class FilesService {
                     DecimalFormat myFormatter = new DecimalFormat("###.####");
                     String result = myFormatter.format(score);
                     if (score == 100) {
-                        result = "100.0000";
+                        result = "100,0000";
                     }
                     if (scoreList.get(j).isDnf()) {
                         result = "DNF";
@@ -1620,7 +1626,7 @@ public class FilesService {
 
     public FilesEntity generateAllMembersList() throws IOException, DocumentException {
 
-        String fileName = "Lista_klubowiczów_na_dzień " + LocalDate.now() + ".pdf";
+        String fileName = "Lista_obecności_klubowiczów " + LocalDate.now() + ".pdf";
 
         Document document = new Document(PageSize.A4);
         PdfWriter writer = PdfWriter.getInstance(document,
@@ -1641,7 +1647,7 @@ public class FilesService {
 
         String now = hour + ":" + minute;
 
-        Paragraph title = new Paragraph("Lista klubowiczów na dzień " + LocalDate.now(), font(14, 1));
+        Paragraph title = new Paragraph("Lista obecności klubowiczów na dzień " + LocalDate.now(), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
         document.add(title);
         document.add(newLine);

@@ -63,6 +63,13 @@ public class ArmoryController {
     public ResponseEntity<?> getHistoryOfCaliber(@RequestParam String caliberUUID) {
         return ResponseEntity.ok(armoryService.getHistoryOfCaliber(caliberUUID));
     }
+
+    @GetMapping("/getHistoryGuns")
+    public ResponseEntity<?> getHistoryGuns(@RequestParam String firstDate, @RequestParam String secondDate) {
+        LocalDate parseFirstDate = LocalDate.parse(firstDate);
+        LocalDate parseSecondDate = LocalDate.parse(secondDate);
+        return ResponseEntity.ok(armoryService.getHistoryGuns(parseFirstDate,parseSecondDate));
+    }
     @GetMapping("/getGunsUsedInDate")
     public  ResponseEntity<?> getGunsUsedInDate(@RequestParam LocalDate date){
         return armoryService.getListGunsUsedInDate(date);

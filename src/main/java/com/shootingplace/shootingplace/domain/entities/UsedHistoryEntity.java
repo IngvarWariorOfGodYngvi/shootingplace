@@ -21,6 +21,7 @@ public class UsedHistoryEntity {
     @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
     private String uuid;
 
+    private String gunName;
     private String gunUUID;
     private String gunSerialNumber;
     private LocalDate date;
@@ -31,6 +32,14 @@ public class UsedHistoryEntity {
 
     public String getUuid() {
         return uuid;
+    }
+
+    public String getGunName() {
+        return gunName;
+    }
+
+    public void setGunName(String gunName) {
+        this.gunName = gunName;
     }
 
     public String getGunUUID() {

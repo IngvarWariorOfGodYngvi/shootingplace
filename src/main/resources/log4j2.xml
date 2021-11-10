@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="PROD">
+<Configuration status="ALL">
     <Appenders>
         <Console name="LogToConsole" target="SYSTEM_OUT">
             <PatternLayout
@@ -14,11 +14,11 @@
         </File>
     </Appenders>
     <Loggers>
-        <Logger name="com.shootingplace.shootingplace" level="debug" additivity="false">
+        <Logger name="com.shootingplace.shootingplace" level="all" additivity="false">
             <AppenderRef ref="LogToFile"/>
             <AppenderRef ref="LogToConsole"/>
         </Logger>
-        <Root level="warn">
+        <Root level="info">
             <AppenderRef ref="LogToFile"/>
             <AppenderRef ref="LogToConsole"/>
         </Root>

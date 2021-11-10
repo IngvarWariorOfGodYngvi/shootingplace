@@ -521,14 +521,14 @@ public class MemberService {
 //      license valid
         long count1 = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
-                .filter(f->f.getLicense().getNumber()!=null)
-                .filter(f->f.getLicense().isValid())
+                .filter(f -> f.getLicense().getNumber() != null)
+                .filter(f -> f.getLicense().isValid())
                 .count();
 
 //      license not valid
         long count2 = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
-                .filter(f->f.getLicense().getNumber()!=null)
+                .filter(f -> f.getLicense().getNumber() != null)
                 .filter(f -> !f.getLicense().isValid())
                 .count();
 
@@ -567,6 +567,16 @@ public class MemberService {
                 .filter(f -> f.getValidForYear().equals(LocalDate.now().getYear()))
                 .filter(LicensePaymentHistoryEntity::isNew)
                 .count();
+        long count10 = memberRepository.findAll().stream()
+                .filter(f -> !f.getErased())
+                .filter(MemberEntity::getAdult)
+                .filter(MemberEntity::getActive)
+                .count();
+        long count11 = memberRepository.findAll().stream()
+                .filter(f -> !f.getErased())
+                .filter(MemberEntity::getAdult)
+                .filter(f -> !f.getActive())
+                .count();
         list.add(count);
         list.add(count1);
         list.add(count2);
@@ -577,6 +587,8 @@ public class MemberService {
         list.add(count7);
         list.add(count8);
         list.add(count9);
+        list.add(count10);
+        list.add(count11);
 
 
         return list;
@@ -830,7 +842,8 @@ public class MemberService {
 
         return ResponseEntity.ok(memberEntity);
     }
-    public List<Member> getMembersToReportToThePolice(){
+
+    public List<Member> getMembersToReportToThePolice() {
         LocalDate notValidLicense = LocalDate.now().minusYears(1);
         List<Member> members = new ArrayList<>();
         List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
@@ -840,7 +853,7 @@ public class MemberService {
                 .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName))
                 .collect(Collectors.toList());
-        memberEntityList.forEach(e->members.add(Mapping.map(e)));
+        memberEntityList.forEach(e -> members.add(Mapping.map(e)));
         return members;
     }
 

@@ -96,7 +96,7 @@ public class ContributionServiceTest {
         ResponseEntity<?> responseEntity = contributionService.addContribution(uuid, date, pinCode);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Przedłużono składkę" + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Przedłużono składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\""));
 
     }
 
