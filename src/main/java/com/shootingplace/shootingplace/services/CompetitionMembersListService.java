@@ -35,17 +35,19 @@ public class CompetitionMembersListService {
         this.tournamentRepository = tournamentRepository;
     }
 
-    public boolean addScoreToCompetitionList(String competitionUUID, int legitimationNumber, int otherPerson) {
+    public String addScoreToCompetitionList(String tournamentUUID, String competitionName, int legitimationNumber, int otherPerson) {
+        String competitionUUID = getCompetitionIDByName(competitionName, tournamentUUID);
         CompetitionMembersListEntity list = competitionMembersListRepository.findById(competitionUUID).orElseThrow(EntityNotFoundException::new);
         List<ScoreEntity> scoreList = list.getScoreList();
 
-
+        String failed = "Nie można dodać bo osoba już się znajduje na liście";
+        String success = "Dodano Osobę do";
         if (legitimationNumber > 0) {
             MemberEntity member = memberRepository.findAll().stream().filter(f -> f.getLegitimationNumber().equals(legitimationNumber)).findFirst().orElse(null);
             boolean match = scoreList.stream().anyMatch(f -> f.getMember() == member);
             if (match) {
                 LOG.info("Nie można dodać bo osoba już się znajduje na liście");
-                return false;
+                return failed.concat(" " + competitionName);
             } else {
                 ScoreEntity score = scoreService.createScore(0, 0, 0, 0, competitionUUID, member, null);
                 scoreList.add(score);
@@ -59,7 +61,7 @@ public class CompetitionMembersListService {
                 if (member != null) {
                     historyService.addCompetitionRecord(member.getUuid(), list);
                 }
-                return true;
+                return success.concat(" " + competitionName);
             }
         }
         if (otherPerson > 0) {
@@ -68,7 +70,7 @@ public class CompetitionMembersListService {
                 boolean match1 = scoreList.stream().anyMatch(a -> a.getOtherPersonEntity() == otherPersonEntity);
                 if (match1) {
                     LOG.info("Nie można dodać bo osoba już się znajduje na liście");
-                    return false;
+                    return failed.concat(" " + competitionName);
                 } else {
                     ScoreEntity score = scoreService.createScore(0, 0, 0, 0, competitionUUID, null, otherPersonEntity);
                     scoreList.add(score);
@@ -78,17 +80,19 @@ public class CompetitionMembersListService {
                             .reversed());
                     LOG.info("Dodano Obcego Zawodnika do Listy");
                     competitionMembersListRepository.saveAndFlush(list);
-                    return true;
+                    return success.concat(" " + competitionName);
                 }
             }
         } else {
-            return false;
+            return "coś poszło nie tak";
         }
-        return false;
+        return "coś poszło nie tak";
     }
 
 
-    public boolean removeScoreFromList(String competitionUUID, int legitimationNumber, int otherPerson) {
+    public String removeScoreFromList(String tournamentUUID, String competitionName, int legitimationNumber, int otherPerson) {
+
+        String competitionUUID = getCompetitionIDByName(competitionName, tournamentUUID);
         CompetitionMembersListEntity list = competitionMembersListRepository.findById(competitionUUID).orElseThrow(EntityNotFoundException::new);
         List<ScoreEntity> scoreList = list.getScoreList();
         ScoreEntity score;
@@ -105,12 +109,12 @@ public class CompetitionMembersListService {
         if (score.getMember() != null) {
             historyService.removeCompetitionRecord(score.getMember().getUuid(), list);
         }
-        return true;
+        return "Usunięto osobę do Listy " + competitionName;
     }
 
-    public String getIDByName(String name, String tournamentUUID) {
+    public String getCompetitionIDByName(String competitionName, String tournamentUUID) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
-        return "\"" + tournamentEntity.getCompetitionsList().stream().filter(f -> f.getName().equals(name)).findFirst().orElseThrow(EntityNotFoundException::new).getUuid() + "\"";
+        return tournamentEntity.getCompetitionsList().stream().filter(f -> f.getName().equals(competitionName)).findFirst().orElseThrow(EntityNotFoundException::new).getUuid();
     }
 
     public boolean removeListFromTournament(String tournamentUUID, String competitionUUID) {
@@ -154,6 +158,31 @@ public class CompetitionMembersListService {
 
     }
 
+    public String getMetricNumber(String legNumber, int otherID, String tournamentUUID) {
+
+        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+        List<Integer> metricNumber = new ArrayList<>();
+        if (otherID > 0) {
+            tournamentEntity.getCompetitionsList()
+                    .forEach(e -> e.getScoreList().stream()
+                            .filter(f -> f.getOtherPersonEntity() != null)
+                            .filter(f -> f.getOtherPersonEntity().getId().equals(otherID))
+                            .forEach(g -> {
+                                metricNumber.add(g.getMetricNumber());
+                            }));
+        } else {
+            tournamentEntity.getCompetitionsList()
+                    .forEach(e -> e.getScoreList().stream()
+                            .filter(f -> f.getMember() != null)
+                            .filter(f -> f.getMember().getLegitimationNumber().equals(Integer.valueOf(legNumber)))
+                            .forEach(g -> {
+                                metricNumber.add(g.getMetricNumber());
+                            }));
+        }
+        return "\"" + metricNumber.get(0) + "\"";
+
+    }
+
     public List<String> getMemberStartsInTournament(int legNumber, int otherID, String tournamentUUID) {
 
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
@@ -189,7 +218,7 @@ public class CompetitionMembersListService {
                     .filter(f -> f.getName().equals(competitionName))
                     .findFirst().orElseThrow(EntityNotFoundException::new)
                     .getScoreList()
-                    .stream().filter(f->f.getOtherPersonEntity()!=null)
+                    .stream().filter(f -> f.getOtherPersonEntity() != null)
                     .filter(f -> f.getOtherPersonEntity().getId().equals(otherID))
                     .findFirst().orElseThrow(EntityNotFoundException::new);
         } else {
@@ -199,7 +228,7 @@ public class CompetitionMembersListService {
                     .findFirst().orElseThrow(EntityNotFoundException::new)
                     .getScoreList()
                     .stream()
-                    .filter(f->f.getMember()!=null)
+                    .filter(f -> f.getMember() != null)
                     .filter(f -> f.getMember().getLegitimationNumber().equals(legNumber))
                     .findFirst().orElseThrow(EntityNotFoundException::new);
         }

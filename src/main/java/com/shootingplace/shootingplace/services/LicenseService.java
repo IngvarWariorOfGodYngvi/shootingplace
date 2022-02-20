@@ -1,57 +1,62 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.domain.entities.HistoryEntity;
 import com.shootingplace.shootingplace.domain.entities.LicenseEntity;
 import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
 import com.shootingplace.shootingplace.domain.entities.MemberEntity;
 import com.shootingplace.shootingplace.domain.models.License;
+import com.shootingplace.shootingplace.domain.models.LicensePaymentHistoryDTO;
 import com.shootingplace.shootingplace.domain.models.MemberDTO;
+import com.shootingplace.shootingplace.repositories.HistoryRepository;
 import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
 import com.shootingplace.shootingplace.repositories.LicenseRepository;
 import com.shootingplace.shootingplace.repositories.MemberRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
-import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class LicenseService {
 
-    @Autowired
-    private Clock clock;
-
-    public LocalDate now(){
-        return LocalDate.now(clock);
-    }
+//    @Autowired
+//    private Clock clock;
+//
+//    public LocalDate now() {
+//        return LocalDate.now(clock);
+//    }
 
     private final MemberRepository memberRepository;
     private final LicenseRepository licenseRepository;
     private final HistoryService historyService;
     private final ChangeHistoryService changeHistoryService;
     private final LicensePaymentHistoryRepository licensePaymentHistoryRepository;
+    private final HistoryRepository historyRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
     public LicenseService(MemberRepository memberRepository,
-                          LicenseRepository licenseRepository, HistoryService historyService, ChangeHistoryService changeHistoryService, LicensePaymentHistoryRepository licensePaymentHistoryRepository) {
+                          LicenseRepository licenseRepository, HistoryService historyService, ChangeHistoryService changeHistoryService, LicensePaymentHistoryRepository licensePaymentHistoryRepository, HistoryRepository historyRepository) {
         this.memberRepository = memberRepository;
         this.licenseRepository = licenseRepository;
         this.historyService = historyService;
         this.changeHistoryService = changeHistoryService;
         this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
+        this.historyRepository = historyRepository;
     }
 
     public List<MemberDTO> getMembersNamesAndLicense() {
         List<MemberDTO> list = new ArrayList<>();
         memberRepository.findAll()
                 .stream().filter(f -> !f.getErased())
+                .filter(MemberEntity::getPzss)
                 .forEach(e -> {
                     if (e.getLicense().getNumber() != null && e.getLicense().isValid()) {
                         list.add(Mapping.map2DTO(e));
@@ -65,6 +70,7 @@ public class LicenseService {
         List<MemberDTO> list = new ArrayList<>();
         memberRepository.findAll()
                 .stream().filter(f -> !f.getErased())
+                .filter(MemberEntity::getPzss)
                 .forEach(e -> {
                     if (e.getLicense().getNumber() != null && !e.getLicense().isValid()) {
                         list.add(Mapping.map2DTO(e));
@@ -118,12 +124,12 @@ public class LicenseService {
         }
         if (license.getValidThru() != null) {
             licenseEntity.setValidThru(LocalDate.of(license.getValidThru().getYear(), 12, 31));
-            if (license.getValidThru().getYear() >= now().getYear()) {
+            if (license.getValidThru().getYear() >= LocalDate.now().getYear()) {
                 licenseEntity.setValid(true);
             }
             LOG.info("zaktualizowano datę licencji");
         } else {
-            licenseEntity.setValidThru(LocalDate.of(now().getYear(), 12, 31));
+            licenseEntity.setValidThru(LocalDate.of(LocalDate.now().getYear(), 12, 31));
             licenseEntity.setValid(true);
             LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
         }
@@ -134,7 +140,7 @@ public class LicenseService {
     }
 
     public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date, String pinCode) {
-        if(!memberRepository.existsById(memberUUID)){
+        if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
@@ -159,7 +165,7 @@ public class LicenseService {
         }
         if (date != null) {
             license.setValidThru(date);
-            license.setValid(license.getValidThru().getYear() >= now().getYear());
+            license.setValid(license.getValidThru().getYear() >= LocalDate.now().getYear());
         }
         licenseRepository.saveAndFlush(license);
         changeHistoryService.addRecordToChangeHistory(pinCode, license.getClass().getSimpleName() + " updateLicense", memberEntity.getUuid());
@@ -173,12 +179,12 @@ public class LicenseService {
 
 
         if (licenseEntity.getNumber() != null && licenseEntity.isPaid()) {
-            if (now().isAfter(LocalDate.of(licenseEntity.getValidThru().getYear(), 11, 1)) || licenseEntity.getValidThru().isBefore(now())) {
+            if (LocalDate.now().isAfter(LocalDate.of(licenseEntity.getValidThru().getYear(), 11, 1)) || licenseEntity.getValidThru().isBefore(LocalDate.now())) {
                 licenseEntity.setValidThru(LocalDate.of((licenseEntity.getValidThru().getYear() + 1), 12, 31));
-                licenseEntity.setValid(licenseEntity.getValidThru().getYear() >= now().getYear());
+                licenseEntity.setValid(licenseEntity.getValidThru().getYear() >= LocalDate.now().getYear());
                 if (license.getPistolPermission() != null) {
                     if (!memberEntity.getShootingPatent().getPistolPermission() && memberEntity.getAdult()) {
-                        LOG.error("Brak Patentu");
+                        LOG.error("Brak Patentu - Pistolet");
                     }
                     if (license.getPistolPermission() != null && memberEntity.getShootingPatent().getPistolPermission()) {
                         if (!license.getPistolPermission()) {
@@ -190,7 +196,7 @@ public class LicenseService {
                 }
                 if (license.getRiflePermission() != null) {
                     if (!memberEntity.getShootingPatent().getRiflePermission() && memberEntity.getAdult()) {
-                        LOG.error("Brak Patentu");
+                        LOG.error("Brak Patentu - Karabin");
                     }
                     if (license.getRiflePermission() != null && memberEntity.getShootingPatent().getRiflePermission()) {
                         if (!license.getRiflePermission()) {
@@ -202,7 +208,7 @@ public class LicenseService {
                 }
                 if (license.getShotgunPermission() != null) {
                     if (!memberEntity.getShootingPatent().getShotgunPermission() && memberEntity.getAdult()) {
-                        LOG.error("Brak Patentu");
+                        LOG.error("Brak Patentu - Strzelba");
                     }
                     if (license.getShotgunPermission() != null && memberEntity.getShootingPatent().getShotgunPermission()) {
                         if (!license.getShotgunPermission()) {
@@ -292,4 +298,71 @@ public class LicenseService {
                 .build();
     }
 
+    public ResponseEntity<?> prolongAllLicense(List<String> licenseList, String pinCode) {
+        List<String> responseList = new ArrayList<>();
+        for (String s : licenseList) {
+            MemberEntity memberEntity = memberRepository.findById(s).orElse(null);
+            LicenseEntity licenseEntity;
+
+            if (memberEntity == null) {
+                LOG.info("Nie znaleziono osoby o podanym ID");
+                responseList.add("Nie znaleziono osoby");
+            } else {
+                if (memberEntity.getLicense() != null) {
+                    licenseEntity = memberEntity.getLicense();
+                    License license = Mapping.map(licenseEntity);
+                    ResponseEntity<?> responseEntity = renewLicenseValid(s, license);
+                    if (responseEntity.getStatusCodeValue() == 200) {
+                        responseList.add("Przedłużono Licencję " + memberEntity.getFirstName() + " " + memberEntity.getSecondName());
+                    }
+                } else {
+                    LOG.info(memberEntity.getSecondName() + " Nie posiada Licencji");
+                    responseList.add(memberEntity.getSecondName() + " Nie posiada licencji");
+                }
+                changeHistoryService.addRecordToChangeHistory(pinCode, getClass().getSimpleName() + "prolongAllLicense", s);
+            }
+        }
+        return ResponseEntity.ok(responseList);
+    }
+
+    public List<?> getAllLicencePayment() {
+
+        List<LicensePaymentHistoryDTO> list1 = new ArrayList<>();
+        memberRepository.findAll().stream()
+                .filter(f -> !f.getErased())
+                .forEach(member -> member.getHistory().getLicensePaymentHistory()
+                        .forEach(g -> list1.add(LicensePaymentHistoryDTO.builder()
+                                .paymentUuid(g.getUuid())
+                                .firstName(member.getFirstName())
+                                .secondName(member.getSecondName())
+                                .active(member.getActive())
+                                .adult(member.getAdult())
+                                .legitimationNumber(member.getLegitimationNumber())
+                                .memberUUID(member.getUuid())
+                                .isPayInPZSSPortal(g.isPayInPZSSPortal())
+                                .date(g.getDate())
+                                .licenseUUID(g.getUuid())
+                                .validForYear(g.getValidForYear())
+                                .isNew(g.isNew())
+                                .build())));
+        return list1.stream()
+                .filter(f -> !f.isPayInPZSSPortal()).sorted(Comparator.comparing(LicensePaymentHistoryDTO::getDate).thenComparing(LicensePaymentHistoryDTO::getSecondName).thenComparing(LicensePaymentHistoryDTO::getFirstName)).collect(Collectors.toList());
+    }
+
+    public ResponseEntity<?> removeLicensePaymentRecord(String paymentUUID, String pinCode) {
+
+        LicensePaymentHistoryEntity licensePaymentHistoryEntity = licensePaymentHistoryRepository.findById(paymentUUID).orElseThrow(EntityNotFoundException::new);
+
+        MemberEntity memberEntity = memberRepository.findById(licensePaymentHistoryEntity.getMemberUUID()).orElseThrow(EntityNotFoundException::new);
+
+        HistoryEntity history = memberEntity.getHistory();
+
+        history.getLicensePaymentHistory().remove(licensePaymentHistoryEntity);
+
+        historyRepository.save(history);
+
+        licensePaymentHistoryRepository.delete(licensePaymentHistoryEntity);
+
+        return ResponseEntity.ok("udało się");
+    }
 }

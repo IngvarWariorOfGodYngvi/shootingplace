@@ -68,10 +68,11 @@ public class ArmoryController {
     public ResponseEntity<?> getHistoryGuns(@RequestParam String firstDate, @RequestParam String secondDate) {
         LocalDate parseFirstDate = LocalDate.parse(firstDate);
         LocalDate parseSecondDate = LocalDate.parse(secondDate);
-        return ResponseEntity.ok(armoryService.getHistoryGuns(parseFirstDate,parseSecondDate));
+        return ResponseEntity.ok(armoryService.getHistoryGuns(parseFirstDate, parseSecondDate));
     }
+
     @GetMapping("/getGunsUsedInDate")
-    public  ResponseEntity<?> getGunsUsedInDate(@RequestParam LocalDate date){
+    public ResponseEntity<?> getGunsUsedInDate(@RequestParam LocalDate date) {
         return armoryService.getListGunsUsedInDate(date);
     }
 
@@ -100,32 +101,20 @@ public class ArmoryController {
     @Transactional
     @PostMapping("/addGun")
     public ResponseEntity<?> addGunEntity(@RequestBody Gun gun) {
-        if (armoryService.addGunEntity(gun)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return armoryService.addGunEntity(gun);
     }
 
     @Transactional
     @PostMapping("/editGun")
     public ResponseEntity<?> editGunEntity(@RequestBody Gun gun) {
-        if (armoryService.editGunEntity(gun)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return armoryService.editGunEntity(gun);
     }
 
     @PutMapping("/remove")
     public ResponseEntity<?> removeGun(@RequestParam String gunUUID, @RequestParam String pinCode) {
         if (changeHistoryService.comparePinCode(pinCode)) {
 
-            if (armoryService.removeGun(gunUUID, pinCode)) {
-                return ResponseEntity.ok().build();
-            } else {
-                return ResponseEntity.badRequest().build();
-            }
+            return armoryService.removeGun(gunUUID, pinCode);
         } else {
             return ResponseEntity.status(403).body("Brak dostępu");
         }
@@ -136,10 +125,7 @@ public class ArmoryController {
         if (caliber.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        if (caliberService.createNewCaliber(caliber)) {
-            return ResponseEntity.status(201).build();
-        } else
-            return ResponseEntity.badRequest().build();
+        return caliberService.createNewCaliber((caliber));
     }
 
     @PostMapping("/newGunTypeName")
@@ -147,10 +133,7 @@ public class ArmoryController {
         if (nameType.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        if (armoryService.createNewGunStore(nameType)) {
-            return ResponseEntity.status(200).build();
-        } else
-            return ResponseEntity.badRequest().build();
+        return armoryService.createNewGunStore(nameType);
     }
 
     @PatchMapping("/addImageToGun")

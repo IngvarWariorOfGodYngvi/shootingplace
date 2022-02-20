@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -180,8 +181,18 @@ public class TournamentController {
     }
 
     @PutMapping("/addCompetition/{tournamentUUID}")
-    public ResponseEntity<?> addCompetitionListToTournament(@PathVariable String tournamentUUID, @RequestParam String competitionUUID) {
-        return tournamentService.addNewCompetitionListToTournament(tournamentUUID, competitionUUID);
+    public ResponseEntity<?> addCompetitionListToTournament(@PathVariable String tournamentUUID, @RequestParam List<String> competitionsUUID) {
+
+        List<String> list = new ArrayList<>();
+
+        competitionsUUID.forEach(e->list.add(tournamentService.addNewCompetitionListToTournament(tournamentUUID,e)));
+
+        if(!list.isEmpty()){
+            return ResponseEntity.ok(list);
+        }else{
+            return ResponseEntity.badRequest().body("pusta lista");
+        }
+
     }
 
     @Transactional

@@ -87,9 +87,12 @@ public class MemberServiceTest {
         int number = 1;
         //when
         when(memberRepository.findByLegitimationNumber(any(Integer.class))).thenReturn(Optional.ofNullable(findByLegitimationNumber(number)));
-        MemberEntity member = memberService.getMember(number);
+        when(memberRepository.existsByLegitimationNumber(any(Integer.class))).thenReturn(existsByLegitimationNumber(number));
+        ResponseEntity<?> responseEntity = memberService.getMember(number);
         //then
-        assertThat(member.getEmail(), Matchers.equalTo("sample1@mail.com"));
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+        assertThat(responseEntity.getBody(), Matchers.equalTo(membersList.get(0)));
+//        assertThat(member.getEmail(), Matchers.equalTo("sample1@mail.com"));
     }
 
     @Test
@@ -902,7 +905,6 @@ public class MemberServiceTest {
         ResponseEntity<?> responseEntity = memberService.changePzss(uuid);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Wskazano, że Klubowicz jest wpisany do Portalu PZSS\""));
     }
 
     @Test
@@ -1073,6 +1075,10 @@ public class MemberServiceTest {
         return membersList.stream().anyMatch(f -> f.getUuid().equals(uuid));
     }
 
+    private boolean existsByLegitimationNumber(Integer number) {
+        return membersList.stream().anyMatch(f -> f.getLegitimationNumber().equals(number));
+    }
+
     private MemberEntity findByLegitimationNumber(Integer legitimationNumber) {
         return membersList.stream().filter(f -> f.getLegitimationNumber().equals(legitimationNumber)).findFirst().orElseThrow(EntityNotFoundException::new);
     }
@@ -1130,6 +1136,7 @@ public class MemberServiceTest {
                 .club(createClub())
                 .memberPermissions(createMemberPermission())
                 .shootingPatent(createShootingPatent())
+                .pzss(true)
                 .build();
         MemberEntity member2 = MemberEntity.builder()
                 .uuid(String.valueOf(UUID.randomUUID()))
@@ -1145,6 +1152,7 @@ public class MemberServiceTest {
                 .joinDate(LocalDate.now())
                 .club(createClub())
                 .shootingPatent(createShootingPatent())
+                .pzss(true)
                 .build();
         MemberEntity member3 = MemberEntity.builder()
                 .uuid(String.valueOf(UUID.randomUUID()))
@@ -1160,6 +1168,7 @@ public class MemberServiceTest {
                 .joinDate(LocalDate.now())
                 .club(createClub())
                 .shootingPatent(createShootingPatent())
+                .pzss(true)
                 .build();
         MemberEntity member4 = MemberEntity.builder()
                 .uuid(String.valueOf(UUID.randomUUID()))
@@ -1175,6 +1184,7 @@ public class MemberServiceTest {
                 .joinDate(LocalDate.now())
                 .club(createClub())
                 .shootingPatent(createShootingPatent())
+                .pzss(true)
                 .build();
         MemberEntity member5 = MemberEntity.builder()
                 .uuid(String.valueOf(UUID.randomUUID()))
@@ -1190,6 +1200,7 @@ public class MemberServiceTest {
                 .joinDate(LocalDate.now())
                 .club(createClub())
                 .shootingPatent(createShootingPatent())
+                .pzss(true)
                 .build();
         MemberEntity member6 = MemberEntity.builder()
                 .uuid(String.valueOf(UUID.randomUUID()))
@@ -1205,6 +1216,7 @@ public class MemberServiceTest {
                 .joinDate(LocalDate.now())
                 .club(createClub())
                 .shootingPatent(createShootingPatent())
+                .pzss(true)
                 .build();
         MemberEntity member8 = MemberEntity.builder()
                 .uuid(String.valueOf(UUID.randomUUID()))
@@ -1220,6 +1232,7 @@ public class MemberServiceTest {
                 .joinDate(LocalDate.now().minusYears(3))
                 .club(createClub())
                 .shootingPatent(createShootingPatent())
+                .pzss(true)
                 .build();
         list.add(member1);
         list.add(member2);

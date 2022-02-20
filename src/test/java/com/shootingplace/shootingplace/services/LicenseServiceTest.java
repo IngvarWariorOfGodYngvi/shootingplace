@@ -1,5 +1,7 @@
 package com.shootingplace.shootingplace.services;
 
+import com.github.javafaker.Faker;
+import com.github.javafaker.Name;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.models.License;
 import com.shootingplace.shootingplace.domain.models.MemberDTO;
@@ -21,13 +23,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import javax.persistence.EntityNotFoundException;
-import java.time.Clock;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,9 +49,6 @@ public class LicenseServiceTest {
     @Mock
     LicensePaymentHistoryRepository licensePaymentHistoryRepository;
 
-    @Mock
-    private Clock fixedClock;
-
     private final static LocalDate LOCAL_DATE = LocalDate.of(2021, 11, 2);
 
     @InjectMocks
@@ -70,11 +64,7 @@ public class LicenseServiceTest {
     public void init() {
         when(memberRepository.findAll()).thenReturn(membersList);
 
-
         MockitoAnnotations.initMocks(licenseService);
-        fixedClock = Clock.fixed(LOCAL_DATE.atStartOfDay(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
-//        doReturn(fixedClock.instant()).when(clock).instant();
-//        doReturn(fixedClock.getZone()).when(clock).getZone();
 
     }
 
@@ -142,23 +132,23 @@ public class LicenseServiceTest {
 
     }
 
-//    @Test
-//    public void update_license_licence_not_exist_return_true() {
-//        //given
-//        String uuid = membersList.get(0).getUuid();
-//        boolean t = true;
-//        License license = License.builder()
-//                .pistolPermission(t)
-//                .riflePermission(t)
-//                .shotgunPermission(t)
-//                .build();
-//        //when
-//        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
-//        ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, license);
-//        //then
-//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-//        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Zaktualizowano licencję\""));
-//    }
+    @Test
+    public void update_license_licence_not_exist_return_true() {
+        //given
+        String uuid = membersList.get(0).getUuid();
+        boolean t = true;
+        License license = License.builder()
+                .pistolPermission(t)
+                .riflePermission(t)
+                .shotgunPermission(t)
+                .build();
+        //when
+        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
+        ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, license);
+        //then
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Zaktualizowano licencję\""));
+    }
 
 //    @Test
 //    public void update_license_licence_not_exist_return_true1() {
@@ -220,7 +210,7 @@ public class LicenseServiceTest {
                 .riflePermission(t)
                 .shotgunPermission(t)
                 .number(String.valueOf(33))
-                .validThru(LocalDate.now().plusDays(1))
+                .validThru(LocalDate.of(2022, 12, 31))
                 .build();
         //when
         when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
@@ -229,49 +219,48 @@ public class LicenseServiceTest {
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
     }
 
-//    @Test
-//    public void renew_license_valid_wrong_date_return_false() {
-//        //given
-//        String uuid = membersList.get(0).getUuid();
-//        membersList.get(0).getLicense().setPaid(true);
-//        membersList.get(0).getLicense().setValidThru(LocalDate.of(2021, 12, 31));
-//        boolean t = true;
-//        License license = License.builder()
-//                .pistolPermission(t)
-//                .riflePermission(t)
-//                .shotgunPermission(t)
-//                .number(String.valueOf(33))
-//                .validThru(LocalDate.now().plusDays(1))
-//                .build();
-//        //when
-//        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
-//        ResponseEntity<?> responseEntity = licenseService.renewLicenseValid(uuid, license);
-//        //then
-//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.FORBIDDEN));
-//    }
+    @Test
+    public void renew_license_valid_wrong_date_return_false() {
+        //given
+        String uuid = membersList.get(0).getUuid();
+        membersList.get(0).getLicense().setPaid(true);
+        boolean t = true;
+        License license = License.builder()
+                .pistolPermission(t)
+                .riflePermission(t)
+                .shotgunPermission(t)
+                .number(String.valueOf(33))
+                .validThru(LocalDate.of(2022, 12, 31))
+                .build();
+        //when
+        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
+        ResponseEntity<?> responseEntity = licenseService.renewLicenseValid(uuid, license);
+        //then
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.FORBIDDEN));
+    }
 
-//    @Test
-//    public void renew_license_valid_good_date() {
-//
-//        //given
-//        String uuid = membersList.get(0).getUuid();
-//        membersList.get(0).getLicense().setPaid(true);
-//        membersList.get(0).getLicense().setValidThru(LocalDate.of(2021, 12, 31));
-//        boolean t = true;
-//        License license = License.builder()
-//                .pistolPermission(t)
-//                .riflePermission(t)
-//                .shotgunPermission(t)
-//                .number(String.valueOf(33))
-//                .validThru(LocalDate.now().plusDays(1))
-//                .build();
-//        //when
-//        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
-//        ResponseEntity<?> responseEntity = licenseService.renewLicenseValid(uuid, license);
-//        //then
-//        Assert.assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-//
-//    }
+    @Test
+    public void renew_license_valid_good_date() {
+
+        //given
+        String uuid = membersList.get(0).getUuid();
+        membersList.get(0).getLicense().setPaid(true);
+        membersList.get(0).getLicense().setValidThru(LocalDate.of(2021, 12, 31));
+        boolean t = true;
+        License license = License.builder()
+                .pistolPermission(t)
+                .riflePermission(t)
+                .shotgunPermission(t)
+                .number(String.valueOf(33))
+                .validThru(LocalDate.now().plusDays(1))
+                .build();
+        //when
+        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
+        ResponseEntity<?> responseEntity = licenseService.renewLicenseValid(uuid, license);
+        //then
+        Assert.assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+
+    }
 
     @Test
     public void update_license_payment() {
@@ -289,18 +278,6 @@ public class LicenseServiceTest {
 
     }
 
-//    @Test
-//    public void getMembersQuantity() {
-//        //given
-//        //when
-//        when(memberRepository.findAll()).thenReturn(membersList);
-//        List<Integer> membersQuantity = licenseService.getMembersQuantity();
-//        //then
-//        assertThat(membersQuantity.get(0), Matchers.equalTo(1));
-//        assertThat(membersQuantity.get(1), Matchers.equalTo(4));
-//
-//    }
-
     private boolean existsById(String uuid) {
         return membersList.stream().anyMatch(f -> f.getUuid().equals(uuid));
     }
@@ -310,15 +287,20 @@ public class LicenseServiceTest {
     }
 
     private List<MemberEntity> getMemberEntities() {
+
+        Faker faker = new Faker(new Locale("pl-PL"));
+        Name name = faker.name();
+
         List<MemberEntity> list = new ArrayList<>();
         MemberEntity member1 = MemberEntity.builder()
                 .uuid(String.valueOf(UUID.randomUUID()))
-                .firstName("John1")
-                .secondName("Doe1")
-                .email("sample1@mail.com")
+                .firstName(name.firstName())
+                .secondName(name.lastName())
+                .email(faker.internet().emailAddress())
                 .pesel("63011744727").phoneNumber("+48111111111")
                 .IDCard("AAA 999991")
                 .club(createClub())
+                .pzss(true)
                 .legitimationNumber(1)
                 .adult(true).active(true).erased(false)
                 .license(createLicense())
@@ -326,6 +308,7 @@ public class LicenseServiceTest {
                 .joinDate(LocalDate.now())
                 .history(createHistory())
                 .build();
+        System.out.println(member1.getFirstName());
         MemberEntity member2 = MemberEntity.builder()
                 .uuid(String.valueOf(UUID.randomUUID()))
                 .firstName("John2")
@@ -334,6 +317,7 @@ public class LicenseServiceTest {
                 .pesel("77100614134").phoneNumber("+48222222222")
                 .IDCard("AAA 999992")
                 .club(createClub())
+                .pzss(true)
                 .legitimationNumber(2)
                 .adult(true).active(true).erased(false)
                 .license(createLicense())
@@ -349,6 +333,7 @@ public class LicenseServiceTest {
                 .pesel("84102078413").phoneNumber("+48333333333")
                 .IDCard("AAA 999993")
                 .club(createClub())
+                .pzss(true)
                 .legitimationNumber(3)
                 .adult(true).active(false).erased(false)
                 .license(createLicense())
@@ -364,6 +349,7 @@ public class LicenseServiceTest {
                 .pesel("87111483627").phoneNumber("+48444444444")
                 .IDCard("AAA 999994")
                 .club(createClub())
+                .pzss(true)
                 .legitimationNumber(4)
                 .adult(false).active(false).erased(false)
                 .license(createLicense())
@@ -379,6 +365,7 @@ public class LicenseServiceTest {
                 .pesel("79082032935").phoneNumber("+48555555555")
                 .IDCard("AAA 999995")
                 .club(createClub())
+                .pzss(true)
                 .legitimationNumber(5)
                 .adult(true).active(false).erased(true)
                 .license(createLicense())
@@ -394,6 +381,7 @@ public class LicenseServiceTest {
                 .pesel("90031875364").phoneNumber("+48666666666")
                 .IDCard("AAA 999996")
                 .club(createClub())
+                .pzss(true)
                 .legitimationNumber(6)
                 .adult(false).active(false).erased(true)
                 .license(createLicense())
@@ -409,6 +397,7 @@ public class LicenseServiceTest {
                 .pesel("72070186261").phoneNumber("+48888888888")
                 .IDCard("AAA 999998")
                 .club(createClub())
+                .pzss(true)
                 .legitimationNumber(8)
                 .adult(false).active(true).erased(false)
                 .license(createLicense())

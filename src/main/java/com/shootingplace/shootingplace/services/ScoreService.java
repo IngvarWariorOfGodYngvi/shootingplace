@@ -5,6 +5,7 @@ import com.shootingplace.shootingplace.domain.enums.CountingMethod;
 import com.shootingplace.shootingplace.repositories.CompetitionMembersListRepository;
 import com.shootingplace.shootingplace.repositories.ScoreRepository;
 import com.shootingplace.shootingplace.repositories.TournamentRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -128,25 +129,25 @@ public class ScoreService {
                 scoreEntity.setScore(score);
                 scoreRepository.saveAndFlush(scoreEntity);
             } else {
-            int numberOfShots = competitionMembersListEntity.getNumberOfShots();
-            int points;
-            float penalties = numberOfShots - outerTen/*shots*/;
+                int numberOfShots = competitionMembersListEntity.getNumberOfShots();
+                int points;
+                float penalties = numberOfShots - outerTen/*shots*/;
 
-            if (alfa > 0 || charlie > 0 || delta > 0) {
-                outerTen = alfa + charlie + delta;
-                points = (int) ((alfa/*shots*/ * 5) + (charlie * 3) + (delta * 1) + (penalties * -10));
-            } else {
-                points = (int) ((outerTen * 5) + (penalties * -10));
-            }
-            if (outerTen > numberOfShots) {
-                return false;
-            }
-            scoreEntity.setOuterTen(outerTen);
-            if (points < 0) {
-                points = 0;
-            }
-            float hf = points / (innerTen + (procedures * 3)) /*time*/;
-            scoreEntity.setInnerTen(innerTen);
+                if (alfa > 0 || charlie > 0 || delta > 0) {
+                    outerTen = alfa + charlie + delta;
+                    points = (int) ((alfa/*shots*/ * 5) + (charlie * 3) + (delta * 1) + (penalties * -10));
+                } else {
+                    points = (int) ((outerTen * 5) + (penalties * -10));
+                }
+                if (outerTen > numberOfShots) {
+                    return false;
+                }
+                scoreEntity.setOuterTen(outerTen);
+                if (points < 0) {
+                    points = 0;
+                }
+                float hf = points / (innerTen + (procedures * 3)) /*time*/;
+                scoreEntity.setInnerTen(innerTen);
 
                 float hf1;
                 if (scoreList.size() > 1) {
@@ -320,5 +321,25 @@ public class ScoreService {
         competitionMembersListEntity.setScoreList(scoreList);
         competitionMembersListRepository.saveAndFlush(competitionMembersListEntity);
         return true;
+    }
+
+    public ResponseEntity<?> forceSetScore(String scoreUUID, float score) {
+        ScoreEntity scoreEntity = scoreRepository.findById(scoreUUID).orElseThrow(EntityNotFoundException::new);
+
+        String competitionMembersListEntityUUID = scoreEntity.getCompetitionMembersListEntityUUID();
+        CompetitionMembersListEntity competitionMembersListEntity = competitionMembersListRepository.findById(competitionMembersListEntityUUID).orElseThrow(EntityNotFoundException::new);
+
+        scoreEntity.setScore(score);
+        scoreRepository.saveAndFlush(scoreEntity);
+        List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream().filter(f -> !f.isDsq()).filter(f -> !f.isDnf()).sorted(Comparator.comparing(ScoreEntity::getScore).reversed()).collect(Collectors.toList());
+
+        scoreList.sort(Comparator.comparing(ScoreEntity::getScore)
+                .reversed());
+        List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream().filter(f -> f.isDsq() || f.isDnf()).collect(Collectors.toList());
+        scoreList.addAll(collect);
+        competitionMembersListEntity.setScoreList(scoreList);
+        competitionMembersListRepository.saveAndFlush(competitionMembersListEntity);
+
+        return ResponseEntity.ok("\"Ustawiono wynik\"");
     }
 }

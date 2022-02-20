@@ -11,6 +11,8 @@ import java.time.LocalDate;
 @Builder
 public class LicensePaymentHistoryDTO {
 
+    private String paymentUuid;
+
     private String firstName;
 
     private String secondName;
@@ -32,6 +34,14 @@ public class LicensePaymentHistoryDTO {
     private boolean isPayInPZSSPortal;
 
     private boolean isNew;
+
+    public String getPaymentUuid() {
+        return paymentUuid;
+    }
+
+    public void setPaymentUuid(String paymentUuid) {
+        this.paymentUuid = paymentUuid;
+    }
 
     public String getLicenseUUID() {
         return licenseUUID;

@@ -31,8 +31,13 @@ public class MemberController {
     }
 
     @GetMapping("/{number}")
-    public ResponseEntity<MemberEntity> getMember(@PathVariable int number) {
-        return ResponseEntity.ok(memberService.getMember(number));
+    public ResponseEntity<?> getMember(@PathVariable int number) {
+        return memberService.getMember(number);
+    }
+
+    @GetMapping("/ID/{number}")
+    public ResponseEntity<String> getMemberUUIDByLegitimationNumber(@PathVariable int number) {
+        return ResponseEntity.ok(memberService.getMemberUUIDByLegitimationNumber(number));
     }
 
     @GetMapping("/uuid/{uuid}")
@@ -199,6 +204,7 @@ public class MemberController {
     public ResponseEntity<?> getMembersToReportToThePolice() {
         return ResponseEntity.ok(memberService.getMembersToReportToThePolice());
     }
+
     @GetMapping("/getMembersToErase")
     public ResponseEntity<?> getMembersToErase() {
         return ResponseEntity.ok(memberService.getMembersToErase());

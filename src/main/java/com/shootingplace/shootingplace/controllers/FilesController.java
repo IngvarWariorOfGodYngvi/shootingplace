@@ -29,17 +29,6 @@ public class FilesController {
         this.xlsxFiles = xlsxFiles;
     }
 
-    //@Transactional
-//    @PostMapping("/addImage")
-//    public ResponseEntity<?> storeFile(@ModelAttribute MultipartFile file) throws IOException {
-//        System.out.println("coś");
-//        if(filesService.store(file)){
-//            return ResponseEntity.ok().build();
-//        }else {return ResponseEntity.}
-//        return "OK";
-//
-//    }
-
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
         String message = "";
@@ -243,8 +232,9 @@ public class FilesController {
 
         return ResponseEntity.ok(filesService.getAllFilesList());
     }
+
     @GetMapping("/getAllImages")
-    public ResponseEntity<?> getAllImages(){
+    public ResponseEntity<?> getAllImages() {
         return ResponseEntity.ok(filesService.getAllImages());
     }
 
@@ -256,6 +246,11 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_TYPE, filesEntity.getType())
                 .header("filename", filesEntity.getName())
                 .body(filesEntity.getData());
+    }
+
+    @DeleteMapping("/deleteFile")
+    public ResponseEntity<?> deleteFile(@RequestParam String uuid) {
+        return filesService.delete(uuid);
     }
 
 

@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.exceptionHandlers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -31,9 +32,9 @@ public class ExceptionsHandler {
 
     @ExceptionHandler(value = EntityNotFoundException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public String handleEntityNotFoundException(Exception ex) {
+    public ResponseEntity<?> handleEntityNotFoundException(EntityNotFoundException ex) {
         LOG.error(ex.getMessage() + " Nie znaleziono encji więc nie można wykonać żądania");
-        return " Nie znaleziono encji więc nie można wykonać żądania";
+        return ResponseEntity.badRequest().body(" Nie znaleziono encji więc nie można wykonać żądania");
     }
 
 }

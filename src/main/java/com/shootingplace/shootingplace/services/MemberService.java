@@ -108,7 +108,6 @@ public class MemberService {
                 .stream()
                 .filter(f -> !f.getErased())
                 .filter(MemberEntity::getAdult)
-                .filter(MemberEntity::getActive)
                 .collect(Collectors.toList());
         // nie ma żadnych składek
         adultMembers.forEach(e -> {
@@ -119,10 +118,11 @@ public class MemberService {
             //dzisiejsza data jest później niż składka + 3 miesiące
             else {
                 if (e.getHistory().getContributionList().get(0).getValidThru().plusMonths(3).isBefore(LocalDate.now())) {
-                    e.setActive(false);
-                    LOG.info("zmieniono " + e.getSecondName());
-                    memberRepository.saveAndFlush(e);
-
+                    if (e.getActive()) {
+                        e.setActive(false);
+                        LOG.info("zmieniono " + e.getSecondName());
+                        memberRepository.saveAndFlush(e);
+                    }
                 } else {
                     e.setActive(true);
                 }
@@ -134,7 +134,11 @@ public class MemberService {
             }
         });
         //młodzież
-        List<MemberEntity> nonAdultMembers = memberRepository.findAll().stream().filter(f -> !f.getAdult()).filter(MemberEntity::getActive).collect(Collectors.toList());
+        List<MemberEntity> nonAdultMembers = memberRepository.findAll()
+                .stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> !f.getAdult())
+                .collect(Collectors.toList());
         // nie ma żadnych składek
         nonAdultMembers.forEach(e -> {
             if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
@@ -145,10 +149,11 @@ public class MemberService {
                 LocalDate validThru = e.getHistory().getContributionList().get(0).getValidThru();
                 if ((validThru.equals(LocalDate.of(validThru.getYear(), 2, 28)) && validThru.plusMonths(1).isBefore(LocalDate.now()))
                         || (validThru.equals(LocalDate.of(validThru.getYear(), 8, 31)) && validThru.plusMonths(2).isBefore(LocalDate.now()))) {
-                    e.setActive(false);
-                    LOG.info("zmieniono " + e.getSecondName());
-                    memberRepository.saveAndFlush(e);
-
+                    if (e.getActive()) {
+                        e.setActive(false);
+                        LOG.info("zmieniono " + e.getSecondName());
+                        memberRepository.saveAndFlush(e);
+                    }
                 }
             }
             if (e.getLicense().getNumber() != null) {
@@ -414,9 +419,20 @@ public class MemberService {
     }
 
 
-    public MemberEntity getMember(int number) {
-        LOG.info("Wywołano Klubowicza");
-        return memberRepository.findByLegitimationNumber(number).orElseThrow(EntityNotFoundException::new);
+    public ResponseEntity<?> getMember(int number) {
+        if (memberRepository.existsByLegitimationNumber(number)) {
+            MemberEntity memberEntity = memberRepository.findByLegitimationNumber(number).orElse(null);
+            assert memberEntity != null;
+            LOG.info("Wywołano Klubowicza " + memberEntity.getFirstName() + " " + memberEntity.getSecondName());
+            return ResponseEntity.ok(memberEntity);
+        } else {
+            return ResponseEntity.badRequest().body("Klubowicz o podanym numerze legitymacji nie istnieje");
+        }
+
+    }
+
+    public String getMemberUUIDByLegitimationNumber(int number) {
+        return "\"" + memberRepository.findByLegitimationNumber(number).orElseThrow(EntityNotFoundException::new).getUuid() + "\"";
 
     }
 
@@ -522,6 +538,7 @@ public class MemberService {
         long count1 = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> f.getLicense().getNumber() != null)
+                .filter(MemberEntity::getPzss)
                 .filter(f -> f.getLicense().isValid())
                 .count();
 
@@ -529,6 +546,7 @@ public class MemberService {
         long count2 = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> f.getLicense().getNumber() != null)
+                .filter(MemberEntity::getPzss)
                 .filter(f -> !f.getLicense().isValid())
                 .count();
 
@@ -564,7 +582,7 @@ public class MemberService {
                 .filter(f -> !f.isPayInPZSSPortal())
                 .count();
         long count9 = licensePaymentHistoryRepository.findAll().stream()
-                .filter(f -> f.getValidForYear().equals(LocalDate.now().getYear()))
+                .filter(f -> f.getDate().getYear() == LocalDate.now().getYear())
                 .filter(LicensePaymentHistoryEntity::isNew)
                 .count();
         long count10 = memberRepository.findAll().stream()
@@ -653,9 +671,15 @@ public class MemberService {
     public ResponseEntity<?> changePzss(String uuid) {
         if (memberRepository.existsById(uuid)) {
             MemberEntity memberEntity = memberRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
-            memberEntity.setPzss(true);
-            memberRepository.saveAndFlush(memberEntity);
-            return ResponseEntity.ok("\"Wskazano, że Klubowicz jest wpisany do Portalu PZSS\"");
+            if (!memberEntity.getPzss()) {
+                memberEntity.setPzss(true);
+                memberRepository.saveAndFlush(memberEntity);
+                return ResponseEntity.ok("\"Wskazano, że Klubowicz jest wpisany do Portalu PZSS\"");
+            } else {
+                memberEntity.setPzss(false);
+                memberRepository.saveAndFlush(memberEntity);
+                return ResponseEntity.ok("\"Wskazano, że Klubowicz NIE jest wpisany do Portalu PZSS\"");
+            }
         } else {
             return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
         }

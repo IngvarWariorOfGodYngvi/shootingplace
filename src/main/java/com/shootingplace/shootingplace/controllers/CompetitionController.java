@@ -58,6 +58,10 @@ public class CompetitionController {
             return ResponseEntity.badRequest().build();
         }
     }
+    @PutMapping("/forceSetScore")
+    public ResponseEntity<?> forceSetScore(@RequestParam String scoreUUID, @RequestParam float score){
+        return scoreService.forceSetScore(scoreUUID,score);
+    }
 
     @PatchMapping("/ammo")
     public ResponseEntity<?> toggleAmmunitionInScore(@RequestParam String scoreUUID) {

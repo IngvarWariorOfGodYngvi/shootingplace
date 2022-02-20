@@ -5,6 +5,7 @@ import com.shootingplace.shootingplace.domain.models.Club;
 import com.shootingplace.shootingplace.repositories.ClubRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -106,5 +107,20 @@ public class ClubService {
                 .url(club.getUrl())
                 .build());
         return true;
+    }
+
+    public ResponseEntity<?> createNewClub(Club club) {
+
+        clubRepository.saveAndFlush(ClubEntity.builder()
+                .id(1)
+                .name(club.getName())
+                .fullName(club.getFullName())
+                .phoneNumber("+48 " + club.getPhoneNumber())
+                .email(club.getEmail())
+                .address(club.getAddress())
+                .licenseNumber(club.getLicenseNumber())
+                .url(club.getUrl())
+                .build());
+        return ResponseEntity.ok("\"Utworzono nowy Klub\"");
     }
 }

@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -1423,19 +1424,16 @@ public class FilesService {
                 }
                 document.add(table1);
                 if (compShots > 10) {
-                    if (compShots % 10 != 0) {
                         for (int i = 0; i <= 10; i++) {
                             String s = " ";
                             Chunk c = new Chunk(s, font(28, 0));
                             Paragraph p = new Paragraph(c);
                             PdfPCell cell = new PdfPCell(p);
-                            if (i >= secondLoopLength - 1 && i < 10) {
-                                cell.setBorderWidth(0);
-                            }
+
                             table2.addCell(cell);
                         }
                         document.add(table2);
-                    }
+
                 }
             } else {
                 for (int i = 0; i < pointColumnWidths.length; i++) {
@@ -2284,6 +2282,7 @@ public class FilesService {
             List<GunEntity> collect = gunRepository.findAll()
                     .stream()
                     .filter(f -> f.getGunType().equals(list.get(finalI)))
+                    .filter(GunEntity::isInStock)
                     .sorted(Comparator.comparing(GunEntity::getCaliber).thenComparing(GunEntity::getModelName))
                     .collect(Collectors.toList());
             if (collect.size() > 0) {
@@ -2859,8 +2858,14 @@ public class FilesService {
         return LocalDate.of(year, month, day);
     }
 
-    public void delete(FilesEntity filesEntity) {
-        filesRepository.deleteById(filesEntity.getUuid());
+    public ResponseEntity<?> delete(String uuid) {
+
+        if (filesRepository.existsById(uuid)) {
+            filesRepository.deleteById(uuid);
+            return ResponseEntity.ok("Usunięto plik");
+        } else {
+            return ResponseEntity.badRequest().body("Nie udało się usunąć");
+        }
 
     }
 

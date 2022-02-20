@@ -37,6 +37,12 @@ public class LicenseController {
         return ResponseEntity.ok(licenseService.getMembersNamesAndLicenseNotValid());
     }
 
+    @GetMapping("/allLicencePayment")
+    public ResponseEntity<?> getAllLicensePayment() {
+        return ResponseEntity.ok(licenseService.getAllLicencePayment());
+    }
+
+
 //    @GetMapping("/membersQuantity")
 //    public List<Integer> getMembersQuantity() {
 //        return licenseService.getMembersQuantity();
@@ -63,6 +69,15 @@ public class LicenseController {
     @PatchMapping("/{memberUUID}")
     public ResponseEntity<?> renewLicenseValidDate(@PathVariable String memberUUID, @RequestBody License license) {
         return licenseService.renewLicenseValid(memberUUID, license);
+    }
+
+    @PatchMapping("/prolongAll")
+    public ResponseEntity<?> prolongAllLicenseWherePaidInPZSSIsTrue(@RequestParam List<String> licenseList, @RequestParam String pinCode) {
+        if (changeHistoryService.comparePinCode(pinCode)) {
+            return licenseService.prolongAllLicense(licenseList, pinCode);
+        } else {
+            return ResponseEntity.status(403).body("Brak uprawnień");
+        }
     }
 
     @PutMapping("/history/{memberUUID}")
@@ -101,6 +116,16 @@ public class LicenseController {
                 parseDate = LocalDate.parse(paymentDate);
             }
             return licenseService.updateLicensePayment(memberUUID, paymentUUID, parseDate, year, pinCode);
+        } else {
+            return ResponseEntity.status(403).body("Brak dostępu");
+        }
+    }
+
+    @DeleteMapping("/removePayment")
+    public ResponseEntity<?> removeLicensePaymentRecord(@RequestParam String paymentUUID, @RequestParam String pinCode){
+        if (changeHistoryService.comparePinCode(pinCode)) {
+
+            return licenseService.removeLicensePaymentRecord(paymentUUID, pinCode);
         } else {
             return ResponseEntity.status(403).body("Brak dostępu");
         }

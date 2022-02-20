@@ -20,4 +20,6 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String> {
 
     List<MemberEntity> findAllByErasedIsTrue();
 
+    boolean existsByLegitimationNumber(Integer legitimationNumber);
+
 }

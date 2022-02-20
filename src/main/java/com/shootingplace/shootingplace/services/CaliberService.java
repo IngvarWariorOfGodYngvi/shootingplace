@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.CaliberEntity;
 import com.shootingplace.shootingplace.repositories.CaliberRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -118,11 +119,11 @@ public class CaliberService {
                 .ammoUsed(null)
                 .build();
         list.add(caliberEntity5);
-        list.forEach(caliberRepository::save);
+        caliberRepository.saveAll(list);
         return list;
     }
 
-    public boolean createNewCaliber(String caliber) {
+    public ResponseEntity<?> createNewCaliber(String caliber) {
 
         boolean match = caliberRepository.findAll().stream().anyMatch(a -> a.getName().equals(caliber.trim().toLowerCase()));
         if (!match) {
@@ -133,9 +134,9 @@ public class CaliberService {
                     .ammoUsed(null)
                     .build();
             caliberRepository.saveAndFlush(caliberEntity);
-            return true;
+            return ResponseEntity.ok("\"Utworzono nowy kaliber\"");
         } else {
-            return false;
+            return ResponseEntity.badRequest().body("\"Nie udało się utworzyć nowego kalibru\"");
         }
     }
 }

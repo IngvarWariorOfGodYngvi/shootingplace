@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,13 +44,19 @@ public class AmmoInEvidenceService {
             } else {
 //                nadawanie numeru listy
                 int number;
+                List<AmmoEvidenceEntity> all = ammoEvidenceRepository.findAll();
 //                nadawanie numeru od zera
-                if (ammoEvidenceRepository.findAll().size() < 1) {
+                if (all.size() < 1) {
                     number = 1;
-//                    nadawanie kolejnego numeru
+//                nadawanie kolejnego numeru
                 } else {
-                    List<AmmoEvidenceEntity> all = ammoEvidenceRepository.findAll();
-                    number = all.size() + 1;
+                    List<AmmoEvidenceEntity> collect1 = all.stream().filter(f -> f.getDate().getYear() == LocalDate.now().getYear()).collect(Collectors.toList());
+                    all.sort(Comparator.comparing(AmmoEvidenceEntity::getDate).reversed());
+                    if (all.get(0).getDate().getYear() != LocalDate.now().getYear()) {
+                        number = 1;
+                    } else {
+                        number = collect1.size() + 1;
+                    }
                 }
                 String evidenceNumber = number + "-LA-" + LocalDate.now().getYear();
                 AmmoEvidenceEntity buildEvidence = AmmoEvidenceEntity.builder()

@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.ArbiterWorkClass;
+import com.shootingplace.shootingplace.domain.models.CompetitionMembersList;
 import com.shootingplace.shootingplace.domain.models.MemberDTO;
 import com.shootingplace.shootingplace.domain.models.Tournament;
 import com.shootingplace.shootingplace.domain.models.TournamentDTO;
@@ -123,7 +124,7 @@ public class TournamentService {
             } else {
                 commissionRTSArbiter = null;
             }
-
+            List<CompetitionMembersList> collect1 = tournamentEntity.getCompetitionsList().stream().map(Mapping::map).sorted(Comparator.comparing(CompetitionMembersList::getOrdering)).collect(Collectors.toList());
             Tournament tournament = Tournament.builder()
                     .uuid(tournamentEntity.getUuid())
                     .date(tournamentEntity.getDate())
@@ -147,7 +148,7 @@ public class TournamentService {
 
                     .otherArbitersRTSList(tournamentEntity.getOtherArbitersRTSList())
 
-                    .competitionsList(tournamentEntity.getCompetitionsList().stream().map(Mapping::map).collect(Collectors.toList()))
+                    .competitionsList(collect1)
 
                     .build();
 
@@ -493,7 +494,7 @@ public class TournamentService {
         return ResponseEntity.badRequest().body("\"Nie udało się przypisać sędziego\"");
     }
 
-    public ResponseEntity<?> addNewCompetitionListToTournament(String tournamentUUID, String competitionUUID) {
+    public String addNewCompetitionListToTournament(String tournamentUUID, String competitionUUID) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
             if (competitionUUID != null) {
@@ -501,8 +502,8 @@ public class TournamentService {
                 if (!tournamentEntity.getCompetitionsList().isEmpty()) {
                     for (int i = 0; i < tournamentEntity.getCompetitionsList().size(); i++) {
                         if (tournamentEntity.getCompetitionsList().get(i).getName().equals(competition.getName())) {
-                            LOG.info("Nie można dodać konkurencji bo taka już istnieje w zawodach");
-                            return ResponseEntity.badRequest().body("\"Nie można dodać konkurencji bo taka już istnieje w zawodach\"");
+                            LOG.info("konkurencja " + competition.getName() + " jest już dodana");
+                            return "konkurencja " + competition.getName() + " jest już dodana";
                         }
                     }
                 }
@@ -523,11 +524,11 @@ public class TournamentService {
                 competitionsList.add(competitionMembersList);
                 competitionsList.sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
                 tournamentRepository.saveAndFlush(tournamentEntity);
-                LOG.info("Dodano konkurencję do zawodów");
-                return ResponseEntity.ok("\"Dodano konkurencję do zawodów\"");
+                LOG.info("Dodano konkurencję " + competition.getName() + " do zawodów");
+                return "Dodano konkurencję " + competition.getName() + " do zawodów";
             }
         }
-        return ResponseEntity.badRequest().body("\"Nie udało się dodać konkurencji\"");
+        return "Nie udało się dodać konkurencji";
     }
 
     public List<TournamentDTO> getClosedTournaments() {
@@ -777,12 +778,8 @@ public class TournamentService {
     }
 
     public List<UsedHistoryEntity> getListOfGunsOnTournament(String tournamentUUID) {
-        List<UsedHistoryEntity> collect = usedHistoryRepository.findAll().stream().filter(f -> f.getEvidenceUUID().equals(tournamentUUID)).collect(Collectors.toList());
 
-        return collect;
+        return usedHistoryRepository.findAll().stream().filter(f -> f.getEvidenceUUID().equals(tournamentUUID)).collect(Collectors.toList());
     }
 
-    public ResponseEntity<?> addGunToTournament(String tournamentUUID) {
-        return null;
-    }
 }

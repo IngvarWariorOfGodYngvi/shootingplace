@@ -37,4 +37,8 @@ public class ClubController {
             return ResponseEntity.notFound().build();
         }
     }
+    @PostMapping("/create")
+    public ResponseEntity<?> createNewClub(@RequestBody Club clubName){
+        return clubService.createNewClub(clubName);
+    }
 }
