@@ -50,17 +50,18 @@ public class LicenseController {
 
     @PutMapping("/{memberUUID}")
     public ResponseEntity<?> updateLicense(@PathVariable String memberUUID, @RequestBody License license) {
+        // TODO wprowadzić blokadę kodem
         return licenseService.updateLicense(memberUUID, license);
     }
 
     @PutMapping("/forceUpdate")
-    public ResponseEntity<?> updateLicense(@RequestParam String memberUUID, @RequestParam String number, @RequestParam String date, @RequestParam String pinCode) {
+    public ResponseEntity<?> updateLicense(@RequestParam String memberUUID, @RequestParam String number, @RequestParam String date, @RequestParam String pinCode,@RequestParam boolean isPaid) {
         if (changeHistoryService.comparePinCode(pinCode)) {
             LocalDate parseDate = null;
             if (date != null && !date.isEmpty() && !date.equals("null")) {
                 parseDate = LocalDate.parse(date);
             }
-            return licenseService.updateLicense(memberUUID, number, parseDate, pinCode);
+            return licenseService.updateLicense(memberUUID, number, parseDate,isPaid, pinCode);
         } else {
             return ResponseEntity.status(403).body("Brak dostępu");
         }

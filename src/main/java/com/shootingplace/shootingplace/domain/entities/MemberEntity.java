@@ -55,6 +55,8 @@ public class MemberEntity {
     @OneToOne(orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private WeaponPermissionEntity weaponPermission;
 
+    private String imageUUID;
+
     private Boolean active = true;
     private Boolean adult = true;
     private Boolean erased = false;
@@ -71,6 +73,14 @@ public class MemberEntity {
 
     @OneToOne(orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private PersonalEvidenceEntity personalEvidence;
+
+    public String getImageUUID() {
+        return imageUUID;
+    }
+
+    public void setImageUUID(String imageUUID) {
+        this.imageUUID = imageUUID;
+    }
 
     public String getUuid() {
         return uuid;

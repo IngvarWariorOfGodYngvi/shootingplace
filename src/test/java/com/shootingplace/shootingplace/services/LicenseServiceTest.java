@@ -194,7 +194,7 @@ public class LicenseServiceTest {
         LocalDate date = LocalDate.of(2022, 12, 31);
         //when
 //        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
-        ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, licenceNumber, date, pinCodeOK);
+        ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, licenceNumber, date,true, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
 
