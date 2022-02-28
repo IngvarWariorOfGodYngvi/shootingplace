@@ -33,9 +33,7 @@ public class ChangeHistoryService {
     }
 
     public boolean comparePinCode(String pinCode) {
-//        List<UserEntity> collect = userRepository.findAll().stream().filter(f -> f.getPinCode().equals(pinCode)).collect(Collectors.toList());
-////        pinCode.equals("5062") || pinCode.equals("6420") || pinCode.equals("0127")
-//        return !collect.isEmpty();
+
         return userRepository.findAll().stream().anyMatch(f -> f.getPinCode().equals(pinCode));
     }
 

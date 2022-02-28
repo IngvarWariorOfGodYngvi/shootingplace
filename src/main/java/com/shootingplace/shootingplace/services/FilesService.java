@@ -275,9 +275,10 @@ public class FilesService {
         Paragraph p17 = new Paragraph("", font(11, 0));
         Paragraph p18 = new Paragraph("\n\n" + statement, font(11, 0));
         Paragraph p19;
-        if (!memberEntity.getAdult() && LocalDate.now().minusYears(18).isAfter(birthDate)) {
-            p18 = new Paragraph("\n\n" + statement + "\n" + adultAcceptation + "\n\n     Podpis Rodzica / Opiekuna Prawnego\n         ..................................................", font(11, 0));
-
+        if (!memberEntity.getAdult()) {
+            if (LocalDate.now().minusYears(18).isBefore(birthDate)) {
+                p18 = new Paragraph("\n\n" + statement + "\n" + adultAcceptation + "\n\n     Podpis Rodzica / Opiekuna Prawnego\n         ..................................................", font(11, 0));
+            }
             p19 = new Paragraph("\n\n\n\n.............................................", font(11, 0));
         } else {
             p19 = new Paragraph("\n\n\n\n\n\n.............................................", font(11, 0));
@@ -2973,7 +2974,7 @@ public class FilesService {
 
         List<FilesModel> list = new ArrayList<>();
 
-        filesRepository.findAll().stream().filter(f -> f.getDate() != null).filter(f->f.getTime()!=null).forEach(e -> list.add(
+        filesRepository.findAll().stream().filter(f -> f.getDate() != null).filter(f -> f.getTime() != null).forEach(e -> list.add(
                 FilesModel.builder()
                         .uuid(e.getUuid())
                         .date(e.getDate())
@@ -2983,7 +2984,7 @@ public class FilesService {
                         .size(e.getSize())
                         .build()));
         list.sort(Comparator.comparing(FilesModel::getDate).thenComparing(FilesModel::getTime).reversed());
-        filesRepository.findAll().stream().filter(f -> f.getDate() == null).filter(f->f.getTime()!=null).forEach(e -> list.add(
+        filesRepository.findAll().stream().filter(f -> f.getDate() == null).filter(f -> f.getTime() != null).forEach(e -> list.add(
                 FilesModel.builder()
                         .uuid(e.getUuid())
                         .date(e.getDate())

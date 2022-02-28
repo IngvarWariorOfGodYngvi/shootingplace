@@ -8,6 +8,7 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import java.util.Arrays;
 
 @Entity
 @AllArgsConstructor
@@ -35,6 +36,26 @@ public class CompetitionEntity {
     private String countingMethod;
 
     private Integer ordering;
+
+    private Integer practiceShots;
+
+    private String caliberUUID;
+
+    public String getCaliberUUID() {
+        return caliberUUID;
+    }
+
+    public void setCaliberUUID(String caliberUUID) {
+        this.caliberUUID = caliberUUID;
+    }
+
+    public Integer getPracticeShots() {
+        return practiceShots;
+    }
+
+    public void setPracticeShots(Integer practiceShots) {
+        this.practiceShots = practiceShots;
+    }
 
     public Integer getNumberOfShots() {
         return numberOfShots;
@@ -103,5 +124,22 @@ public class CompetitionEntity {
 
     public void setNumberOfManyShots(Integer[] numberOfManyShots) {
         this.numberOfManyShots = numberOfManyShots;
+    }
+
+    @Override
+    public String toString() {
+        return "CompetitionEntity{" +
+                "uuid='" + uuid + '\'' +
+                ", name='" + name + '\'' +
+                ", discipline='" + discipline + '\'' +
+                ", disciplines=" + Arrays.toString(disciplines) +
+                ", numberOfShots=" + numberOfShots +
+                ", numberOfManyShots=" + Arrays.toString(numberOfManyShots) +
+                ", type='" + type + '\'' +
+                ", countingMethod='" + countingMethod + '\'' +
+                ", ordering=" + ordering +
+                ", practiceShots=" + practiceShots +
+                ", caliberUUID='" + caliberUUID + '\'' +
+                '}';
     }
 }

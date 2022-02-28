@@ -197,11 +197,7 @@ public class TournamentController {
 
     @Transactional
     @DeleteMapping("/delete/{tournamentUUID}")
-    public ResponseEntity<?> deleteTournament(@PathVariable String tournamentUUID) {
-        if (tournamentService.deleteTournament(tournamentUUID)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<?> deleteTournament(@PathVariable String tournamentUUID, @RequestParam String pinCode) {
+        return tournamentService.deleteTournament(tournamentUUID, pinCode);
     }
 }

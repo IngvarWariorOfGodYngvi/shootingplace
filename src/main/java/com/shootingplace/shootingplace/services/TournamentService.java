@@ -518,6 +518,8 @@ public class TournamentService {
                         .numberOfShots(competition.getNumberOfShots())
                         .WZSS(tournamentEntity.isWZSS())
                         .ordering(competition.getOrdering())
+                        .caliberUUID(competition.getCaliberUUID())
+                        .practiceShots(competition.getPracticeShots())
                         .build();
                 competitionMembersListRepository.saveAndFlush(competitionMembersList);
                 List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
@@ -539,26 +541,32 @@ public class TournamentService {
         return allDTO;
     }
 
-    public boolean deleteTournament(String tournamentUUID) {
+    public ResponseEntity<?> deleteTournament(String tournamentUUID, String pinCode) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
-        if (tournamentEntity.isOpen()) {
-            if (!tournamentEntity.getCompetitionsList().isEmpty()) {
-                tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList()
-                        .forEach(a -> historyService.removeCompetitionRecord(a.getMember().getUuid(), competitionMembersListRepository.findById(a.getCompetitionMembersListEntityUUID()).orElseThrow(EntityNotFoundException::new))));
+        if (changeHistoryService.comparePinCode(pinCode)) {
+            if (tournamentEntity.isOpen()) {
+                if (!tournamentEntity.getCompetitionsList().isEmpty()) {
+                    tournamentEntity.getCompetitionsList()
+                            .forEach(e -> e.getScoreList()
+                                    .stream().filter(f -> f.getMember() != null)
+                                    .forEach(a -> historyService.removeCompetitionRecord(a.getMember().getUuid(), competitionMembersListRepository.findById(a.getCompetitionMembersListEntityUUID()).orElseThrow(EntityNotFoundException::new))));
+                }
+                if (tournamentEntity.getMainArbiter() != null) {
+                    historyService.removeJudgingRecord(tournamentEntity.getMainArbiter().getUuid(), tournamentEntity.getUuid());
+                }
+                if (tournamentEntity.getCommissionRTSArbiter() != null) {
+                    historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentEntity.getUuid());
+                }
+                if (!tournamentEntity.getArbitersList().isEmpty()) {
+                    tournamentEntity.getArbitersList().forEach(e -> historyService.removeJudgingRecord(e.getUuid(), tournamentEntity.getUuid()));
+                }
+                tournamentRepository.delete(tournamentEntity);
+                return ResponseEntity.ok("\"Zawody zostały usunięte - nie da się już ich przywrócić\"");
+            } else {
+                return ResponseEntity.badRequest().body("\"Coś poszło nie tak i nie udało się usunąć zawodów\"");
             }
-            if (tournamentEntity.getMainArbiter() != null) {
-                historyService.removeJudgingRecord(tournamentEntity.getMainArbiter().getUuid(), tournamentEntity.getUuid());
-            }
-            if (tournamentEntity.getCommissionRTSArbiter() != null) {
-                historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentEntity.getUuid());
-            }
-            if (!tournamentEntity.getArbitersList().isEmpty()) {
-                tournamentEntity.getArbitersList().forEach(e -> historyService.removeJudgingRecord(e.getUuid(), tournamentEntity.getUuid()));
-            }
-            tournamentRepository.delete(tournamentEntity);
-            return true;
         } else {
-            return false;
+            return ResponseEntity.status(403).body("\"Wprowadzono zły kod - Spróbuj ponownie\"");
         }
     }
 

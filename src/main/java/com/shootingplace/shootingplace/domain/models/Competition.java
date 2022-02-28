@@ -24,6 +24,26 @@ public class Competition {
 
     private Integer ordering;
 
+    private Integer practiceShots;
+
+    private String caliberUUID;
+
+    public Integer getPracticeShots() {
+        return practiceShots;
+    }
+
+    public void setPracticeShots(Integer practiceShots) {
+        this.practiceShots = practiceShots;
+    }
+
+    public String getCaliberUUID() {
+        return caliberUUID;
+    }
+
+    public void setCaliberUUID(String caliberUUID) {
+        this.caliberUUID = caliberUUID;
+    }
+
     public String getCountingMethod() {
         return countingMethod;
     }
@@ -87,4 +107,5 @@ public class Competition {
     public void setNumberOfManyShots(Integer[] numberOfManyShots) {
         this.numberOfManyShots = numberOfManyShots;
     }
+
 }
