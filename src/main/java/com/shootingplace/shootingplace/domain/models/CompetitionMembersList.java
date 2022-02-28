@@ -31,8 +31,28 @@ public class CompetitionMembersList {
 
     private Integer ordering;
 
+    private Integer practiceShots;
+
+    private String caliberUUID;
+
     @ManyToMany
     private List<Score> scoreList = new ArrayList<>();
+
+    public Integer getPracticeShots() {
+        return practiceShots;
+    }
+
+    public void setPracticeShots(Integer practiceShots) {
+        this.practiceShots = practiceShots;
+    }
+
+    public String getCaliberUUID() {
+        return caliberUUID;
+    }
+
+    public void setCaliberUUID(String caliberUUID) {
+        this.caliberUUID = caliberUUID;
+    }
 
     public Integer getOrdering() {
         return ordering;

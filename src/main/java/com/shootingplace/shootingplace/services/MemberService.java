@@ -430,6 +430,16 @@ public class MemberService {
         }
 
     }
+    public MemberEntity getMember(String uuid) {
+        if (memberRepository.existsById(uuid)) {
+            MemberEntity memberEntity = memberRepository.findById(uuid).orElse(null);
+            assert memberEntity != null;
+            return memberEntity;
+        } else {
+            return null;
+        }
+
+    }
 
     public String getMemberUUIDByLegitimationNumber(int number) {
         return "\"" + memberRepository.findByLegitimationNumber(number).orElseThrow(EntityNotFoundException::new).getUuid() + "\"";

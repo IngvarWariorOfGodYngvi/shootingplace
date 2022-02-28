@@ -9,6 +9,7 @@ import com.shootingplace.shootingplace.repositories.CompetitionMembersListReposi
 import com.shootingplace.shootingplace.repositories.CompetitionRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -128,7 +129,7 @@ public class CompetitionService {
         }
         if (!competition.getDiscipline().equals("")) {
             if (competition.getDiscipline().equals(Discipline.PISTOL.getName()) || competition.getDiscipline().equals(Discipline.RIFLE.getName()) || competition.getDiscipline().equals(Discipline.SHOTGUN.getName())) {
-
+                System.out.println(competition.toString());
                 CompetitionEntity competitionEntity = CompetitionEntity.builder()
                         .name(competition.getName())
                         .numberOfShots(competition.getNumberOfShots())
@@ -136,6 +137,8 @@ public class CompetitionService {
                         .discipline(competition.getDiscipline())
                         .type(competition.getType())
                         .ordering(size)
+                        .caliberUUID(competition.getCaliberUUID())
+                        .practiceShots(competition.getPracticeShots())
                         .build();
                 if (competition.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                     competitionEntity.setCountingMethod(CountingMethod.NORMAL.getName());
@@ -161,6 +164,8 @@ public class CompetitionService {
                     .numberOfManyShots(competition.getNumberOfManyShots())
                     .type(competition.getType())
                     .ordering(size)
+                    .caliberUUID(competition.getCaliberUUID())
+                    .practiceShots(competition.getPracticeShots())
                     .build();
             if (competition.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                 competitionEntity.setCountingMethod(CountingMethod.NORMAL.getName());
@@ -176,26 +181,36 @@ public class CompetitionService {
         }
     }
 
-    public boolean updateOrderingNumber(String uuid, String orderNumber) {
+    public ResponseEntity<?> updateCompetition(String uuid, Competition competition) {
 
         List<CompetitionEntity> all = competitionRepository.findAll();
 
-        CompetitionEntity competitionEntity = all.stream().filter(f -> f.getOrdering().equals(Integer.parseInt(orderNumber))).findFirst().orElse(null);
+        CompetitionEntity competitionEntity = all.stream().filter(f -> f.getOrdering().equals(competition.getOrdering())).findFirst().orElse(null);
 
         CompetitionEntity one = competitionRepository.getOne(uuid);
         if (competitionEntity != null) {
             competitionEntity.setOrdering(one.getOrdering());
         }
-        one.setOrdering(Integer.valueOf(orderNumber));
-
+        if (competition.getOrdering() != null) {
+            one.setOrdering(competition.getOrdering());
+        }
+        if (competition.getPracticeShots() != null) {
+            one.setPracticeShots(competition.getPracticeShots());
+        }
+        if (competition.getCaliberUUID() != null) {
+            one.setCaliberUUID(competition.getCaliberUUID());
+        }
         competitionRepository.saveAndFlush(one);
         if (competitionEntity != null) {
             competitionRepository.saveAndFlush(competitionEntity);
         }
-        competitionMembersListRepository.findAll().stream().filter(f -> f.getName().equals(one.getName())).forEach(e -> {
-            e.setOrdering(Integer.valueOf(orderNumber));
-            competitionMembersListRepository.saveAndFlush(e);
-        });
-        return true;
+        competitionMembersListRepository.findAll()
+                .stream()
+                .filter(f -> f.getName().equals(one.getName()))
+                .forEach(e -> {
+                    e.setOrdering(competition.getOrdering());
+                    competitionMembersListRepository.saveAndFlush(e);
+                });
+        return ResponseEntity.ok("\"Zaktualizowano zawody\"");
     }
 }

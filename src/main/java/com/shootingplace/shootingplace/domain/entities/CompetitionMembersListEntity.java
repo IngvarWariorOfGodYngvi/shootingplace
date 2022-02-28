@@ -39,6 +39,18 @@ public class CompetitionMembersListEntity {
 
     private Integer ordering;
 
+    private Integer practiceShots;
+
+    private String caliberUUID;
+
+    public String getCaliberUUID() {
+        return caliberUUID;
+    }
+
+    public void setCaliberUUID(String caliberUUID) {
+        this.caliberUUID = caliberUUID;
+    }
+
     @ManyToMany
     private List<ScoreEntity> scoreList = new ArrayList<>();
 
@@ -140,5 +152,13 @@ public class CompetitionMembersListEntity {
 
     public void setNumberOfManyShots(Integer[] numberOfManyShots) {
         this.numberOfManyShots = numberOfManyShots;
+    }
+
+    public Integer getPracticeShots() {
+        return practiceShots;
+    }
+
+    public void setPracticeShots(Integer practiceShots) {
+        this.practiceShots = practiceShots;
     }
 }

@@ -128,18 +128,19 @@ public class LicenseService {
                 licenseEntity.setValid(true);
             }
             LOG.info("zaktualizowano datę licencji");
-        } else {
-            licenseEntity.setValidThru(LocalDate.of(LocalDate.now().getYear(), 12, 31));
-            licenseEntity.setValid(true);
-            LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
         }
-        licenseEntity.setPaid(false);
+//        else {
+//            licenseEntity.setValidThru(LocalDate.of(LocalDate.now().getYear(), 12, 31));
+//            licenseEntity.setValid(true);
+//            LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
+//        }
+//        licenseEntity.setPaid(false);
         licenseRepository.saveAndFlush(licenseEntity);
         LOG.info("Zaktualizowano licencję");
         return ResponseEntity.ok("\"Zaktualizowano licencję\"");
     }
 
-    public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date, String pinCode) {
+    public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date,boolean isPaid, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
         }
@@ -166,6 +167,11 @@ public class LicenseService {
         if (date != null) {
             license.setValidThru(date);
             license.setValid(license.getValidThru().getYear() >= LocalDate.now().getYear());
+        }
+        if(isPaid){
+            if(!license.isPaid()){
+                license.setPaid(true);
+            }
         }
         licenseRepository.saveAndFlush(license);
         changeHistoryService.addRecordToChangeHistory(pinCode, license.getClass().getSimpleName() + " updateLicense", memberEntity.getUuid());

@@ -2,7 +2,9 @@ package com.shootingplace.shootingplace.controllers;
 
 import com.itextpdf.text.DocumentException;
 import com.shootingplace.shootingplace.domain.entities.FilesEntity;
+import com.shootingplace.shootingplace.domain.entities.MemberEntity;
 import com.shootingplace.shootingplace.services.FilesService;
+import com.shootingplace.shootingplace.services.MemberService;
 import com.shootingplace.shootingplace.services.XLSXFiles;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,11 +24,13 @@ public class FilesController {
 
     private final FilesService filesService;
     private final XLSXFiles xlsxFiles;
+    private final MemberService memberService;
 
 
-    public FilesController(FilesService filesService, XLSXFiles xlsxFiles) {
+    public FilesController(FilesService filesService, XLSXFiles xlsxFiles, MemberService memberService) {
         this.filesService = filesService;
         this.xlsxFiles = xlsxFiles;
+        this.memberService = memberService;
     }
 
     @PostMapping("/upload")
@@ -34,6 +38,20 @@ public class FilesController {
         String message = "";
         try {
             filesService.store(file);
+
+            message = "Uploaded the file successfully: " + file.getName();
+            return ResponseEntity.status(HttpStatus.OK).body(message);
+        } catch (Exception e) {
+            message = "Could not upload the file: " + file.getOriginalFilename() + "!";
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(message);
+        }
+    }
+    @PostMapping("/member/{uuid}")
+    public ResponseEntity<?> addImageToMember(@PathVariable String uuid, @RequestParam("file") MultipartFile file){
+        String message = "";
+        try {
+            MemberEntity member = memberService.getMember(uuid);
+            String store = filesService.store(file,member);
 
             message = "Uploaded the file successfully: " + file.getName();
             return ResponseEntity.status(HttpStatus.OK).body(message);

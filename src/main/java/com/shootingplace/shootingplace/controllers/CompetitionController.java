@@ -39,14 +39,10 @@ public class CompetitionController {
         }
     }
 
-    @PutMapping("/ordering")
-    public ResponseEntity<?> updateOrderingNumber(@RequestParam String uuid, @RequestParam String orderNumber) {
+    @PutMapping("/update")
+    public ResponseEntity<?> updateCompetition(@RequestParam String uuid, @RequestBody Competition competition) {
 
-        if (competitionService.updateOrderingNumber(uuid, orderNumber)) {
-            return ResponseEntity.status(200).build();
-        } else {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        return competitionService.updateCompetition(uuid, competition);
     }
 
     @PutMapping("")

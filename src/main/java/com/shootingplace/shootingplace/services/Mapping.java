@@ -252,15 +252,15 @@ public class Mapping {
 
     static HistoryEntity map(History e) {
 
-            return Optional.ofNullable(e).map(h->HistoryEntity.builder()
-                    .licenseHistory(h.getLicenseHistory())
-                    .patentDay(h.getPatentDay())
-                    .patentFirstRecord(h.getPatentFirstRecord())
-                    .licensePaymentHistory(null)
-                    .pistolCounter(h.getPistolCounter())
-                    .rifleCounter(h.getRifleCounter())
-                    .shotgunCounter(h.getShotgunCounter())
-                    .build()).orElse(null);
+        return Optional.ofNullable(e).map(h -> HistoryEntity.builder()
+                .licenseHistory(h.getLicenseHistory())
+                .patentDay(h.getPatentDay())
+                .patentFirstRecord(h.getPatentFirstRecord())
+                .licensePaymentHistory(null)
+                .pistolCounter(h.getPistolCounter())
+                .rifleCounter(h.getRifleCounter())
+                .shotgunCounter(h.getShotgunCounter())
+                .build()).orElse(null);
 
     }
 
@@ -358,6 +358,8 @@ public class Mapping {
                 .type(c.getType())
                 .numberOfShots(c.getNumberOfShots())
                 .ordering(c.getOrdering())
+                .caliberUUID(c.getCaliberUUID())
+                .practiceShots(c.getPracticeShots())
                 .build();
     }
 
