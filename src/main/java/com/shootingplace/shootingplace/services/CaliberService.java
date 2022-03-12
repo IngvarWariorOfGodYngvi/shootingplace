@@ -13,17 +13,18 @@ import java.util.stream.Collectors;
 public class CaliberService {
 
     private final CaliberRepository caliberRepository;
-    
-    public CaliberService(CaliberRepository caliberRepository) {
+    private final ChangeHistoryService changeHistoryService;
+
+    public CaliberService(CaliberRepository caliberRepository, ChangeHistoryService changeHistoryService) {
         this.caliberRepository = caliberRepository;
+        this.changeHistoryService = changeHistoryService;
     }
 
     public List<CaliberEntity> getCalibersList() {
         List<CaliberEntity> caliberEntityList;
         if (caliberRepository.findAll().isEmpty()) {
             caliberEntityList = createAllCalibersEntities();
-        }
-        else {
+        } else {
             caliberEntityList = caliberRepository.findAll();
         }
 
@@ -62,13 +63,12 @@ public class CaliberService {
         List<CaliberEntity> caliberEntityList;
         if (caliberRepository.findAll().isEmpty()) {
             caliberEntityList = createAllCalibersEntities();
-        }
-        else {
+        } else {
             caliberEntityList = caliberRepository.findAll();
         }
         List<CaliberEntity> caliberSortedEntityList = getCaliberSortedEntityList(caliberEntityList);
         List<String> caliberSortedEntityListNames = new ArrayList<>();
-        caliberSortedEntityList.forEach(e-> caliberSortedEntityListNames.add(e.getName()));
+        caliberSortedEntityList.forEach(e -> caliberSortedEntityListNames.add(e.getName()));
 
         return caliberSortedEntityListNames;
 
@@ -123,20 +123,21 @@ public class CaliberService {
         return list;
     }
 
-    public ResponseEntity<?> createNewCaliber(String caliber) {
-
-        boolean match = caliberRepository.findAll().stream().anyMatch(a -> a.getName().equals(caliber.trim().toLowerCase()));
-        if (!match) {
-            CaliberEntity caliberEntity = CaliberEntity.builder()
-                    .name(caliber.trim().toLowerCase())
-                    .quantity(0)
-                    .ammoAdded(null)
-                    .ammoUsed(null)
-                    .build();
-            caliberRepository.saveAndFlush(caliberEntity);
-            return ResponseEntity.ok("\"Utworzono nowy kaliber\"");
-        } else {
-            return ResponseEntity.badRequest().body("\"Nie udało się utworzyć nowego kalibru\"");
-        }
+    public ResponseEntity<?> createNewCaliber(String caliber, String pinCode) {
+        if (changeHistoryService.comparePinCode(pinCode)) {
+            boolean match = caliberRepository.findAll().stream().anyMatch(a -> a.getName().equals(caliber.trim().toLowerCase()));
+            if (!match) {
+                CaliberEntity caliberEntity = CaliberEntity.builder()
+                        .name(caliber.trim().toLowerCase())
+                        .quantity(0)
+                        .ammoAdded(null)
+                        .ammoUsed(null)
+                        .build();
+                caliberRepository.saveAndFlush(caliberEntity);
+                return ResponseEntity.ok("\"Utworzono nowy kaliber\"");
+            } else {
+                return ResponseEntity.badRequest().body("\"Nie udało się utworzyć nowego kalibru\"");
+            }
+        } else return ResponseEntity.status(403).body("\"Błędny kod. Spróbuj ponownie\"");
     }
 }

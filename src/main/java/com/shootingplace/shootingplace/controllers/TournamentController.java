@@ -27,8 +27,8 @@ public class TournamentController {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<List<Tournament>> getListOfTournaments() {
-        return ResponseEntity.ok(tournamentService.getListOfTournaments());
+    public ResponseEntity<?> getListOfTournaments() {
+        return tournamentService.getOpenTournament();
     }
 
     @GetMapping("/gunList")
@@ -106,13 +106,9 @@ public class TournamentController {
     @PatchMapping("/open/{tournamentUUID}")
     public ResponseEntity<?> openTournament(@PathVariable String tournamentUUID, @RequestParam String pinCode) {
         if (changeHistoryService.comparePinCode(pinCode)) {
-            if (tournamentService.openTournament(tournamentUUID, pinCode)) {
-                return ResponseEntity.ok().build();
-            } else {
-                return ResponseEntity.status(418).body("I'm a teapot");
-            }
+            return tournamentService.openTournament(tournamentUUID, pinCode);
         } else {
-            return ResponseEntity.status(403).body("Brak dostępu");
+            return ResponseEntity.status(418).body("I'm a Teapot");
         }
     }
 
@@ -185,11 +181,11 @@ public class TournamentController {
 
         List<String> list = new ArrayList<>();
 
-        competitionsUUID.forEach(e->list.add(tournamentService.addNewCompetitionListToTournament(tournamentUUID,e)));
+        competitionsUUID.forEach(e -> list.add(tournamentService.addNewCompetitionListToTournament(tournamentUUID, e)));
 
-        if(!list.isEmpty()){
+        if (!list.isEmpty()) {
             return ResponseEntity.ok(list);
-        }else{
+        } else {
             return ResponseEntity.badRequest().body("pusta lista");
         }
 

@@ -121,11 +121,11 @@ public class ArmoryController {
     }
 
     @PostMapping("/calibers")
-    public ResponseEntity<?> createNewCaliber(@RequestParam String caliber) {
+    public ResponseEntity<?> createNewCaliber(@RequestParam String caliber, @RequestParam String pinCode) {
         if (caliber.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        return caliberService.createNewCaliber((caliber));
+        return caliberService.createNewCaliber(caliber,pinCode);
     }
 
     @PostMapping("/newGunTypeName")

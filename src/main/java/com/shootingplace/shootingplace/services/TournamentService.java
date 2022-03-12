@@ -101,61 +101,55 @@ public class TournamentService {
     }
 
 
-    public List<Tournament> getListOfTournaments() {
-        LOG.info("Wyświetlono listę zawodów");
+    public ResponseEntity<?> getOpenTournament() {
 
-        List<Tournament> list = new ArrayList<>();
-
-        List<TournamentEntity> collect = tournamentRepository
-                .findAll()
-                .stream()
-                .filter(TournamentEntity::isOpen)
-                .collect(Collectors.toList());
-        for (TournamentEntity tournamentEntity : collect) {
-            MemberDTO mainArbiterDTO;
-            MemberDTO commissionRTSArbiter;
-            if (tournamentEntity.getMainArbiter() != null) {
-                mainArbiterDTO = Mapping.map2DTO(tournamentEntity.getMainArbiter());
-            } else {
-                mainArbiterDTO = null;
-            }
-            if (tournamentEntity.getCommissionRTSArbiter() != null) {
-                commissionRTSArbiter = Mapping.map2DTO(tournamentEntity.getCommissionRTSArbiter());
-            } else {
-                commissionRTSArbiter = null;
-            }
-            List<CompetitionMembersList> collect1 = tournamentEntity.getCompetitionsList().stream().map(Mapping::map).sorted(Comparator.comparing(CompetitionMembersList::getOrdering)).collect(Collectors.toList());
-            Tournament tournament = Tournament.builder()
-                    .uuid(tournamentEntity.getUuid())
-                    .date(tournamentEntity.getDate())
-                    .name(tournamentEntity.getName())
-                    .open(tournamentEntity.isOpen())
-                    .wzss(tournamentEntity.isWZSS())
-
-                    .mainArbiter(mainArbiterDTO)
-
-                    .commissionRTSArbiter(commissionRTSArbiter)
-
-                    .otherMainArbiter(tournamentEntity.getOtherMainArbiter())
-
-                    .otherCommissionRTSArbiter(tournamentEntity.getOtherCommissionRTSArbiter())
-
-                    .arbitersList(tournamentEntity.getArbitersList().stream().map(Mapping::map2DTO).collect(Collectors.toList()))
-
-                    .otherArbitersList(tournamentEntity.getOtherArbitersList())
-
-                    .arbitersRTSList(tournamentEntity.getArbitersRTSList().stream().map(Mapping::map2DTO).collect(Collectors.toList()))
-
-                    .otherArbitersRTSList(tournamentEntity.getOtherArbitersRTSList())
-
-                    .competitionsList(collect1)
-
-                    .build();
-
-            list.add(tournament);
+        List<TournamentEntity> collect = tournamentRepository.findAll().stream().filter(TournamentEntity::isOpen).collect(Collectors.toList());
+        if (collect.size() > 1) {
+            return ResponseEntity.status(409).body("Pojawił się jakiś konflikt i nie można wyświetlić zawodów");
         }
-        return list;
-    }
+        if(collect.size() == 0){
+            return ResponseEntity.status(418).body("Nie ma nic do wyświetlenia");
+        }
+        TournamentEntity tournamentEntity = collect.get(0);
+        MemberDTO mainArbiterDTO;
+        MemberDTO commissionRTSArbiter;
+        if (tournamentEntity.getMainArbiter() != null) {
+            mainArbiterDTO = Mapping.map2DTO(tournamentEntity.getMainArbiter());
+        } else {
+            mainArbiterDTO = null;
+        }
+        if (tournamentEntity.getCommissionRTSArbiter() != null) {
+            commissionRTSArbiter = Mapping.map2DTO(tournamentEntity.getCommissionRTSArbiter());
+        } else {
+            commissionRTSArbiter = null;
+        }
+
+        List<CompetitionMembersList> collect1 = tournamentEntity.getCompetitionsList()
+                .stream().map(Mapping::map)
+                .sorted(Comparator.comparing(CompetitionMembersList::getOrdering))
+                .collect(Collectors.toList());
+
+        Tournament tournament = Tournament.builder()
+                .uuid(tournamentEntity.getUuid())
+                .date(tournamentEntity.getDate())
+                .name(tournamentEntity.getName())
+                .open(tournamentEntity.isOpen())
+                .wzss(tournamentEntity.isWZSS())
+                .mainArbiter(mainArbiterDTO)
+                .commissionRTSArbiter(commissionRTSArbiter)
+                .otherMainArbiter(tournamentEntity.getOtherMainArbiter())
+                .otherCommissionRTSArbiter(tournamentEntity.getOtherCommissionRTSArbiter())
+                .arbitersList(tournamentEntity.getArbitersList().stream().map(Mapping::map2DTO).collect(Collectors.toList()))
+                .otherArbitersList(tournamentEntity.getOtherArbitersList())
+                .arbitersRTSList(tournamentEntity.getArbitersRTSList().stream().map(Mapping::map2DTO).collect(Collectors.toList()))
+                .otherArbitersRTSList(tournamentEntity.getOtherArbitersRTSList())
+                .competitionsList(collect1)
+                .build();
+
+
+        LOG.info("Wyświetlono listę zawodów");
+        return ResponseEntity.ok(tournament);
+}
 
     public ResponseEntity<?> closeTournament(String tournamentUUID) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
@@ -766,9 +760,10 @@ public class TournamentService {
         return list;
     }
 
-    public boolean openTournament(String tournamentUUID, String pinCode) {
+    public ResponseEntity<?> openTournament(String tournamentUUID, String pinCode) {
         if (tournamentRepository.findAll().stream().anyMatch(TournamentEntity::isOpen)) {
-            return false;
+            System.out.println("coś");
+            return ResponseEntity.badRequest().body("\"Nie można otworzyć zawodów gdy inne są otwarte\"");
         } else {
             TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
 
@@ -776,7 +771,7 @@ public class TournamentService {
             tournamentEntity.setOpen(true);
             tournamentRepository.saveAndFlush(tournamentEntity);
             changeHistoryService.addRecordToChangeHistory(pinCode, tournamentEntity.getClass().getSimpleName() + " openTournament", tournamentUUID);
-            return true;
+            return ResponseEntity.ok("\"Otwarto zawody z dnia " + tournamentEntity.getDate() + "\"");
 
         }
     }

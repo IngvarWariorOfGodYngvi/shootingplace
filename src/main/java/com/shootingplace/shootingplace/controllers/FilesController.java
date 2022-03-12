@@ -46,6 +46,7 @@ public class FilesController {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(message);
         }
     }
+
     @PostMapping("/member/{uuid}")
     public ResponseEntity<?> addImageToMember(@PathVariable String uuid, @RequestParam("file") MultipartFile file){
         String message = "";

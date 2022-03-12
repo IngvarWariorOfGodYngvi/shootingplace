@@ -22,10 +22,19 @@ public class MemberDTO {
     private Club club;
     private Boolean pzss;
     private MemberPermissions memberPermissions;
+    private String image;
 
     private Boolean adult = true;
     private Boolean active = true;
     private Boolean erased = true;
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
 
     public String getUuid() {
         return uuid;

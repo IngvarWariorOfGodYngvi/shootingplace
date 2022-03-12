@@ -1171,8 +1171,7 @@ public class FilesService {
 
         Paragraph par2 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " wyraża chęć pogłębiania swojej wiedzy i umiejętności w sporcie strzeleckim przez współzawodnictwo w różnych konkurencjach strzeleckich.", font(12, 0));
         par2.setFirstLineIndent(40);
-        String[] split = club.getLicenseNumber().split("/");
-        String s = split[1];
+        String s = String.valueOf(memberEntity.getLicense().getValidThru().getYear());
         Paragraph par3 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " posiada Patent Strzelecki PZSS oraz ważną Licencję Zawodniczą PZSS na rok " + s, font(12, 0));
         par3.setFirstLineIndent(40);
 
@@ -2525,7 +2524,6 @@ public class FilesService {
         return filesEntity;
     }
 
-
     public FilesEntity getAllErasedMembers() throws IOException, DocumentException {
 
 
@@ -2817,159 +2815,6 @@ public class FilesService {
         return filesEntity;
     }
 
-
-    private String getSex(String pesel) {
-        int i = pesel.charAt(9);
-        if (i % 2 == 0) {
-            return "Pani";
-        } else return "Pan";
-    }
-
-    private byte[] convertToByteArray(String path) throws IOException {
-        File file = new File(path);
-        return Files.readAllBytes(file.toPath());
-
-    }
-
-    private LocalDate birthDay(String pesel) {
-
-        int year;
-        int month;
-        year = 10 * Integer.parseInt(pesel.substring(0, 1));
-        year += Integer.parseInt(pesel.substring(1, 2));
-        month = 10 * Integer.parseInt(pesel.substring(2, 3));
-        month += Integer.parseInt(pesel.substring(3, 4));
-        if (month > 80 && month < 93) {
-            year += 1800;
-        } else if (month > 0 && month < 13) {
-            year += 1900;
-        } else if (month > 20 && month < 33) {
-            year += 2000;
-        } else if (month > 40 && month < 53) {
-            year += 2100;
-        } else if (month > 60 && month < 73) {
-            year += 2200;
-        }
-
-        if (month > 12 && month < 33) {
-            month -= 20;
-        }
-        int day = Integer.parseInt(pesel.substring(4, 6));
-
-        return LocalDate.of(year, month, day);
-    }
-
-    public ResponseEntity<?> delete(String uuid) {
-
-        if (filesRepository.existsById(uuid)) {
-
-            MemberEntity memberEntity = memberRepository.findAll()
-                    .stream()
-                    .filter(f -> f.getImageUUID() != null)
-                    .filter(f -> f.getImageUUID().equals(uuid))
-                    .findFirst()
-                    .orElse(null);
-            if (memberEntity != null) {
-                memberEntity.setImageUUID(null);
-                memberRepository.save(memberEntity);
-            }
-
-            filesRepository.deleteById(uuid);
-            LOG.info("Usunięto plik");
-            return ResponseEntity.ok("\"Usunięto plik\"");
-        } else {
-            return ResponseEntity.badRequest().body("\"Nie udało się usunąć\"");
-        }
-
-    }
-
-    /**
-     * 1 - BOLD , 2 - ITALIC, 3 - BOLDITALIC
-     *
-     * @param size  set font size
-     * @param style set style Bold/Italic/Bolditalic
-     * @return returns new font
-     */
-    private Font font(int size, int style) throws IOException, DocumentException {
-        BaseFont czcionka = BaseFont.createFont("font/times.ttf", BaseFont.IDENTITY_H, BaseFont.CACHED);
-        return new Font(czcionka, size, style);
-    }
-
-    private String dateFormat(LocalDate date) {
-
-        String day = String.valueOf(date.getDayOfMonth());
-        String month = "";
-
-        if (date.getMonth().getValue() == 1) {
-            month = "stycznia";
-        }
-        if (date.getMonth().getValue() == 2) {
-            month = "lutego";
-        }
-        if (date.getMonth().getValue() == 3) {
-            month = "marca";
-        }
-        if (date.getMonth().getValue() == 4) {
-            month = "kwietnia";
-        }
-        if (date.getMonth().getValue() == 5) {
-            month = "maja";
-        }
-        if (date.getMonth().getValue() == 6) {
-            month = "czerwca";
-        }
-        if (date.getMonth().getValue() == 7) {
-            month = "lipca";
-        }
-        if (date.getMonth().getValue() == 8) {
-            month = "sierpnia";
-        }
-        if (date.getMonth().getValue() == 9) {
-            month = "września";
-        }
-        if (date.getMonth().getValue() == 10) {
-            month = "października";
-        }
-        if (date.getMonth().getValue() == 11) {
-            month = "listopada";
-        }
-        if (date.getMonth().getValue() == 12) {
-            month = "grudnia";
-        }
-        String year = String.valueOf(date.getYear());
-
-
-        return day + " " + month + " " + year;
-
-
-    }
-
-
-    @NotNull
-    private String getArbiterClass(String arbiterClass) {
-        switch (arbiterClass) {
-            case "Klasa 3":
-                arbiterClass = "Sędzia Klasy Trzeciej";
-                break;
-            case "Klasa 2":
-                arbiterClass = "Sędzia Klasy Drugiej";
-                break;
-            case "Klasa 1":
-                arbiterClass = "Sędzia Klasy Pierwszej";
-                break;
-            case "Klasa Państwowa":
-                arbiterClass = "Sędzia Klasy Państwowej";
-                break;
-            case "Klasa Międzynarodowa":
-                arbiterClass = "Sędzia Klasy Międzynarodowej";
-                break;
-            default:
-                LOG.info("Nie znaleziono Klasy Sędziowskiej");
-
-        }
-        return arbiterClass;
-    }
-
     public List<FilesModel> getAllFilesList() {
 
         List<FilesModel> list = new ArrayList<>();
@@ -3046,6 +2891,162 @@ public class FilesService {
         );
         model.sort(Comparator.comparing(FilesModel::getDate).thenComparing(FilesModel::getTime).reversed());
         return model;
+    }
+
+    public ResponseEntity<?> delete(String uuid) {
+
+        if (filesRepository.existsById(uuid)) {
+
+            MemberEntity memberEntity = memberRepository.findAll()
+                    .stream()
+                    .filter(f -> f.getImageUUID() != null)
+                    .filter(f -> f.getImageUUID().equals(uuid))
+                    .findFirst()
+                    .orElse(null);
+            if (memberEntity != null) {
+                memberEntity.setImageUUID(null);
+                memberRepository.save(memberEntity);
+            }
+
+            filesRepository.deleteById(uuid);
+            LOG.info("Usunięto plik");
+            return ResponseEntity.ok("\"Usunięto plik\"");
+        } else {
+            return ResponseEntity.badRequest().body("\"Nie udało się usunąć\"");
+        }
+
+    }
+
+    private String getSex(String pesel) {
+        int i = pesel.charAt(9);
+        if (i % 2 == 0) {
+            return "Pani";
+        } else return "Pan";
+    }
+
+    private byte[] convertToByteArray(String path) throws IOException {
+        File file = new File(path);
+        return Files.readAllBytes(file.toPath());
+
+    }
+
+    /**
+     *
+     * @param pesel
+     * @return date of birth in format year-month-day
+     */
+    private LocalDate birthDay(String pesel) {
+
+        int year;
+        int month;
+        year = 10 * Integer.parseInt(pesel.substring(0, 1));
+        year += Integer.parseInt(pesel.substring(1, 2));
+        month = 10 * Integer.parseInt(pesel.substring(2, 3));
+        month += Integer.parseInt(pesel.substring(3, 4));
+        if (month > 80 && month < 93) {
+            year += 1800;
+        } else if (month > 0 && month < 13) {
+            year += 1900;
+        } else if (month > 20 && month < 33) {
+            year += 2000;
+        } else if (month > 40 && month < 53) {
+            year += 2100;
+        } else if (month > 60 && month < 73) {
+            year += 2200;
+        }
+
+        if (month > 12 && month < 33) {
+            month -= 20;
+        }
+        int day = Integer.parseInt(pesel.substring(4, 6));
+
+        return LocalDate.of(year, month, day);
+    }
+
+    /**
+     * 1 - BOLD , 2 - ITALIC, 3 - BOLDITALIC
+     *
+     * @param size  set font size
+     * @param style set style Bold/Italic/Bolditalic
+     * @return returns new font
+     */
+    private Font font(int size, int style) throws IOException, DocumentException {
+        BaseFont czcionka = BaseFont.createFont("font/times.ttf", BaseFont.IDENTITY_H, BaseFont.CACHED);
+        return new Font(czcionka, size, style);
+    }
+
+    private String dateFormat(LocalDate date) {
+
+        String day = String.valueOf(date.getDayOfMonth());
+        String month = "";
+
+        if (date.getMonth().getValue() == 1) {
+            month = "stycznia";
+        }
+        if (date.getMonth().getValue() == 2) {
+            month = "lutego";
+        }
+        if (date.getMonth().getValue() == 3) {
+            month = "marca";
+        }
+        if (date.getMonth().getValue() == 4) {
+            month = "kwietnia";
+        }
+        if (date.getMonth().getValue() == 5) {
+            month = "maja";
+        }
+        if (date.getMonth().getValue() == 6) {
+            month = "czerwca";
+        }
+        if (date.getMonth().getValue() == 7) {
+            month = "lipca";
+        }
+        if (date.getMonth().getValue() == 8) {
+            month = "sierpnia";
+        }
+        if (date.getMonth().getValue() == 9) {
+            month = "września";
+        }
+        if (date.getMonth().getValue() == 10) {
+            month = "października";
+        }
+        if (date.getMonth().getValue() == 11) {
+            month = "listopada";
+        }
+        if (date.getMonth().getValue() == 12) {
+            month = "grudnia";
+        }
+        String year = String.valueOf(date.getYear());
+
+
+        return day + " " + month + " " + year;
+
+
+    }
+
+    @NotNull
+    private String getArbiterClass(String arbiterClass) {
+        switch (arbiterClass) {
+            case "Klasa 3":
+                arbiterClass = "Sędzia Klasy Trzeciej";
+                break;
+            case "Klasa 2":
+                arbiterClass = "Sędzia Klasy Drugiej";
+                break;
+            case "Klasa 1":
+                arbiterClass = "Sędzia Klasy Pierwszej";
+                break;
+            case "Klasa Państwowa":
+                arbiterClass = "Sędzia Klasy Państwowej";
+                break;
+            case "Klasa Międzynarodowa":
+                arbiterClass = "Sędzia Klasy Międzynarodowej";
+                break;
+            default:
+                LOG.info("Nie znaleziono Klasy Sędziowskiej");
+
+        }
+        return arbiterClass;
     }
 
     static class PageStamper extends PdfPageEventHelper {
