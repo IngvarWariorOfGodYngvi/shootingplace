@@ -30,7 +30,7 @@ public class ShootingPatentService {
 
     public ResponseEntity<?> updatePatent(String memberUUID, ShootingPatent shootingPatent) {
 
-        if(!memberRepository.existsById(memberUUID)){
+        if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("\"Nie znaleziono klubowicza\"");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
@@ -78,7 +78,7 @@ public class ShootingPatentService {
         shootingPatentRepository.saveAndFlush(shootingPatentEntity);
         LOG.info("Zaktualizowano patent");
         historyService.updateShootingPatentHistory(memberUUID, shootingPatent);
-        return ResponseEntity.ok("\"Zaktualizowano patent\"");
+        return ResponseEntity.ok("\"Zaktualizowano patent" + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\"");
     }
 
     public ShootingPatent getShootingPatent() {

@@ -19,10 +19,10 @@ public class StatisticsController {
 
 
     @GetMapping("/contributionSum")
-    public ResponseEntity<?> getContributionSum(@RequestParam String firstDate, @RequestParam String secondDate, @RequestParam boolean condition) {
+    public ResponseEntity<?> getContributionSum(@RequestParam String firstDate, @RequestParam String secondDate) {
         LocalDate parseFirstDate = LocalDate.parse(firstDate);
         LocalDate parseSecondDate = LocalDate.parse(secondDate);
-        return ResponseEntity.ok(statisticsService.getContributionSum(parseFirstDate, parseSecondDate,condition));
+        return ResponseEntity.ok(statisticsService.getContributionSum(parseFirstDate, parseSecondDate));
     }
 
     @GetMapping("/joinDateSum")

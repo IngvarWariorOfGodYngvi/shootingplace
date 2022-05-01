@@ -7,6 +7,7 @@ import com.shootingplace.shootingplace.repositories.OtherPersonRepository;
 import com.shootingplace.shootingplace.repositories.TournamentRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -55,7 +56,8 @@ public class CompetitionMembersListService {
                         .reversed().thenComparing(ScoreEntity::getInnerTen)
                         .reversed().thenComparing(ScoreEntity::getOuterTen)
                         .reversed().thenComparing(ScoreEntity::isDnf)
-                        .thenComparing(ScoreEntity::isDsq));
+                        .thenComparing(ScoreEntity::isDsq)
+                        .thenComparing(ScoreEntity::isPk));
                 competitionMembersListRepository.saveAndFlush(list);
                 LOG.info("Dodano Klubowicza do Listy");
                 if (member != null) {
@@ -77,7 +79,9 @@ public class CompetitionMembersListService {
                     scoreList.sort(Comparator.comparing(ScoreEntity::getScore)
                             .reversed().thenComparing(ScoreEntity::getInnerTen)
                             .reversed().thenComparing(ScoreEntity::getOuterTen)
-                            .reversed());
+                            .reversed().thenComparing(ScoreEntity::isDnf)
+                            .thenComparing(ScoreEntity::isDsq)
+                            .thenComparing(ScoreEntity::isPk));
                     LOG.info("Dodano Obcego Zawodnika do Listy");
                     competitionMembersListRepository.saveAndFlush(list);
                     return success.concat(" " + competitionName);
@@ -158,7 +162,7 @@ public class CompetitionMembersListService {
 
     }
 
-    public String getMetricNumber(String legNumber, int otherID, String tournamentUUID) {
+    public ResponseEntity<String> getMetricNumber(String legNumber, int otherID, String tournamentUUID) {
 
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         List<Integer> metricNumber = new ArrayList<>();
@@ -179,7 +183,10 @@ public class CompetitionMembersListService {
                                 metricNumber.add(g.getMetricNumber());
                             }));
         }
-        return "\"" + metricNumber.get(0) + "\"";
+        if(metricNumber.isEmpty()){
+            return ResponseEntity.badRequest().body("\"Taka osoba nie znajduje się na żadnej liście\"");
+        }
+        return ResponseEntity.ok("\"" + metricNumber.get(0) + "\"");
 
     }
 

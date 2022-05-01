@@ -63,11 +63,7 @@ public class OtherPersonController {
             club = "BRAK";
         }
 
-        if (otherPersonService.addPerson(club, person, memberPermissions)) {
-            return ResponseEntity.status(201).build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return otherPersonService.addPerson(club, person, memberPermissions);
 
     }
 

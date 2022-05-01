@@ -242,7 +242,7 @@ public class MemberService {
                 String splinted = value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase() + " ";
                 firstNames.append(splinted);
             }
-            member.setFirstName(firstNames.toString());
+            member.setFirstName(firstNames.toString().trim());
             member.setSecondName(member.getSecondName().toUpperCase());
             member.setEmail(email.toLowerCase());
             member.setJoinDate(joinDate);
@@ -430,6 +430,7 @@ public class MemberService {
         }
 
     }
+
     public MemberEntity getMember(String uuid) {
         if (memberRepository.existsById(uuid)) {
             MemberEntity memberEntity = memberRepository.findById(uuid).orElse(null);
@@ -441,8 +442,14 @@ public class MemberService {
 
     }
 
-    public String getMemberUUIDByLegitimationNumber(int number) {
-        return "\"" + memberRepository.findByLegitimationNumber(number).orElseThrow(EntityNotFoundException::new).getUuid() + "\"";
+    public ResponseEntity<?> getMemberUUIDByLegitimationNumber(int number) {
+
+        if (!memberRepository.existsByLegitimationNumber(number)) {
+            return ResponseEntity.badRequest().body("\"Nie udało się znaleźć takiej osoby\"");
+        }
+        String uuid = memberRepository.findByLegitimationNumber(number).orElseThrow(EntityNotFoundException::new).getUuid();
+
+        return ResponseEntity.ok("\"" + uuid + "\"");
 
     }
 
@@ -680,7 +687,7 @@ public class MemberService {
 
     public ResponseEntity<?> changePzss(String uuid) {
         if (memberRepository.existsById(uuid)) {
-            MemberEntity memberEntity = memberRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
+            MemberEntity memberEntity = memberRepository.getOne(uuid);
             if (!memberEntity.getPzss()) {
                 memberEntity.setPzss(true);
                 memberRepository.saveAndFlush(memberEntity);

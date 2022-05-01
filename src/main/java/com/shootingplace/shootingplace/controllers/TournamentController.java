@@ -98,11 +98,13 @@ public class TournamentController {
         }
     }
 
+    @Transactional
     @PatchMapping("/{tournamentUUID}")
     public ResponseEntity<?> closeTournament(@PathVariable String tournamentUUID) {
         return tournamentService.closeTournament(tournamentUUID);
     }
 
+    @Transactional
     @PatchMapping("/open/{tournamentUUID}")
     public ResponseEntity<?> openTournament(@PathVariable String tournamentUUID, @RequestParam String pinCode) {
         if (changeHistoryService.comparePinCode(pinCode)) {
@@ -112,6 +114,7 @@ public class TournamentController {
         }
     }
 
+    @Transactional
     @PutMapping("/{tournamentUUID}")
     public ResponseEntity<?> updateTournament(@PathVariable String tournamentUUID, @RequestBody Tournament tournament) {
         if (tournamentService.updateTournament(tournamentUUID, tournament)) {
@@ -121,6 +124,7 @@ public class TournamentController {
         }
     }
 
+    @Transactional
     @PutMapping("/addMainArbiter/{tournamentUUID}")
     public ResponseEntity<?> addMainArbiter(@PathVariable String tournamentUUID, @RequestParam int number, @RequestParam int id) {
 
@@ -134,6 +138,7 @@ public class TournamentController {
         }
     }
 
+    @Transactional
     @PutMapping("/addRTSArbiter/{tournamentUUID}")
     public ResponseEntity<?> addRTSArbiter(@PathVariable String tournamentUUID, @RequestParam int number, @RequestParam int id) {
 
@@ -148,6 +153,7 @@ public class TournamentController {
 
     }
 
+    @Transactional
     @PutMapping("/addOthersArbiters/{tournamentUUID}")
     public ResponseEntity<?> addOthersArbiters(@PathVariable String tournamentUUID, @RequestParam int number, @RequestParam int id) {
 
@@ -162,6 +168,7 @@ public class TournamentController {
 
     }
 
+    @Transactional
     @PutMapping("/addOthersRTSArbiters/{tournamentUUID}")
     public ResponseEntity<?> addOthersRTSArbiters(@PathVariable String tournamentUUID, @RequestParam int number, @RequestParam int id) {
 
@@ -176,6 +183,7 @@ public class TournamentController {
 
     }
 
+    @Transactional
     @PutMapping("/addCompetition/{tournamentUUID}")
     public ResponseEntity<?> addCompetitionListToTournament(@PathVariable String tournamentUUID, @RequestParam List<String> competitionsUUID) {
 

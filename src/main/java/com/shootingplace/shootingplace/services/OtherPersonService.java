@@ -10,6 +10,7 @@ import com.shootingplace.shootingplace.repositories.MemberPermissionsRepository;
 import com.shootingplace.shootingplace.repositories.OtherPersonRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -33,7 +34,7 @@ public class OtherPersonService {
         this.memberPermissionsRepository = memberPermissionsRepository;
     }
 
-    public boolean addPerson(String club, OtherPerson person, MemberPermissions permissions) {
+    public ResponseEntity<String> addPerson(String club, OtherPerson person, MemberPermissions permissions) {
 
         MemberPermissionsEntity permissionsEntity = Mapping.map(permissions);
 
@@ -80,7 +81,8 @@ public class OtherPersonService {
                 .club(clubEntity)
                 .build();
         otherPersonRepository.saveAndFlush(otherPersonEntity);
-        return true;
+        LOG.info("Utworzono nową osobę " + otherPersonEntity.getFirstName() + " " + otherPersonEntity.getSecondName());
+        return ResponseEntity.status(201).body("\"Utworzono nową osobę " + otherPersonEntity.getFirstName() + " " + otherPersonEntity.getSecondName() + "\"");
 
     }
 
@@ -143,7 +145,7 @@ public class OtherPersonService {
         }
         if (!one.getClub().getName().equals(clubName)) {
             ClubEntity clubEntity = clubRepository.findAll().stream().filter(f -> f.getName().equals(clubName)).findFirst().orElse(null);
-            if(clubEntity== null){
+            if (clubEntity == null) {
                 {
                     List<ClubEntity> all = clubRepository.findAll();
                     all.sort(Comparator.comparing(ClubEntity::getId).reversed());

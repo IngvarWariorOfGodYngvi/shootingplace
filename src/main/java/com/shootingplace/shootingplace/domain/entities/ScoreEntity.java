@@ -41,6 +41,7 @@ public class ScoreEntity {
 
     private boolean dnf;
     private boolean dsq;
+    private boolean pk;
 
     private String competitionMembersListEntityUUID;
     @OneToOne(orphanRemoval = true)
@@ -140,6 +141,10 @@ public class ScoreEntity {
         this.dsq = !this.dsq;
     }
 
+    public void togglePk() {
+        this.pk = !this.pk;
+    }
+
     public String getName() {
         return name;
     }
@@ -194,5 +199,13 @@ public class ScoreEntity {
 
     public void setDelta(float delta) {
         this.delta = delta;
+    }
+
+    public boolean isPk() {
+        return pk;
+    }
+
+    public void setPk(boolean pk) {
+        this.pk = pk;
     }
 }

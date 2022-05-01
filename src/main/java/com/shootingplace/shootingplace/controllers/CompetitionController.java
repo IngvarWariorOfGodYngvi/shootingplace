@@ -45,58 +45,44 @@ public class CompetitionController {
         return competitionService.updateCompetition(uuid, competition);
     }
 
-    @PutMapping("")
+    @PutMapping("/score/set")
     public ResponseEntity<?> setScore(@RequestParam String scoreUUID, @RequestParam float score, @RequestParam float innerTen, @RequestParam float outerTen, @RequestParam int procedures, @RequestParam float alfa, @RequestParam float charlie, @RequestParam float delta) {
 
-        if (scoreService.setScore(scoreUUID, score, innerTen, outerTen, alfa, charlie, delta, procedures)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return scoreService.setScore(scoreUUID, score, innerTen, outerTen, alfa, charlie, delta, procedures);
     }
-    @PutMapping("/forceSetScore")
+    @PutMapping("/score/forceSetScore")
     public ResponseEntity<?> forceSetScore(@RequestParam String scoreUUID, @RequestParam float score){
         return scoreService.forceSetScore(scoreUUID,score);
     }
 
-    @PatchMapping("/ammo")
+    @PatchMapping("/score/ammo")
     public ResponseEntity<?> toggleAmmunitionInScore(@RequestParam String scoreUUID) {
 
-        if (scoreService.toggleAmmunitionInScore(scoreUUID)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return scoreService.toggleAmmunitionInScore(scoreUUID);
     }
 
-    @PatchMapping("/gun")
+    @PatchMapping("/score/gun")
     public ResponseEntity<?> toggleGunInScore(@RequestParam String scoreUUID) {
 
-        if (scoreService.toggleGunInScore(scoreUUID)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return scoreService.toggleGunInScore(scoreUUID);
     }
 
-    @PatchMapping("/dnf")
+    @PatchMapping("/score/dnf")
     public ResponseEntity<?> toggleDnfScore(@RequestParam String scoreUUID) {
 
-        if (scoreService.toggleDnfScore(scoreUUID)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return scoreService.toggleDnfScore(scoreUUID);
     }
 
-    @PatchMapping("/dsq")
+    @PatchMapping("/score/dsq")
     public ResponseEntity<?> toggleDsqScore(@RequestParam String scoreUUID) {
 
-        if (scoreService.toggleDsqScore(scoreUUID)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return scoreService.toggleDsqScore(scoreUUID);
+    }
+
+    @PatchMapping("/score/pk")
+    public ResponseEntity<?> togglePkScore(@RequestParam String scoreUUID) {
+
+        return scoreService.togglePkScore(scoreUUID);
     }
 
 }

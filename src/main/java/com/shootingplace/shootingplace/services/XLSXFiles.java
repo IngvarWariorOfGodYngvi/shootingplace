@@ -38,7 +38,6 @@ public class XLSXFiles {
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-
     public XLSXFiles(TournamentRepository tournamentRepository, ClubRepository clubRepository, FilesRepository filesRepository) {
         this.tournamentRepository = tournamentRepository;
         this.clubRepository = clubRepository;
@@ -56,6 +55,7 @@ public class XLSXFiles {
 
         XSSFWorkbook workbook = new XSSFWorkbook();
 
+        //style
         XSSFCellStyle cellStyleTitle = workbook.createCellStyle();
         XSSFCellStyle cellStyleDate = workbook.createCellStyle();
         XSSFCellStyle cellStyleCompetitionTitle = workbook.createCellStyle();
@@ -126,9 +126,9 @@ public class XLSXFiles {
             if (!tournamentEntity.getCompetitionsList().get(i).getScoreList().isEmpty()) {
                 CompetitionMembersListEntity competitionMembersListEntity = tournamentEntity.getCompetitionsList().get(i);
 
-                List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream().filter(f -> !f.isDsq()).filter(f -> !f.isDnf()).sorted(Comparator.comparing(ScoreEntity::getScore).reversed()).collect(Collectors.toList());
+                List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream().filter(f -> !f.isDsq()).filter(f -> !f.isDnf()).filter(f -> !f.isPk()).sorted(Comparator.comparing(ScoreEntity::getScore).reversed()).collect(Collectors.toList());
 
-                List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream().filter(f -> f.isDnf() || f.isDsq()).collect(Collectors.toList());
+                List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream().filter(f -> f.isDnf() || f.isDsq() || f.isPk()).collect(Collectors.toList());
                 scoreList.addAll(collect);
                 XSSFRow row2 = sheet.createRow(rc);
                 XSSFCell cell2 = row2.createCell(cc);
@@ -148,7 +148,7 @@ public class XLSXFiles {
                 XSSFCell cell37 = row3.createCell(cc);
 
                 cell31.setCellValue("M-ce");
-                cell32.setCellValue("Imię i Nazwisko");
+                cell32.setCellValue("Nazwisko i Imię");
                 cell33.setCellValue("");
                 cell34.setCellValue("Klub");
                 cell35.setCellValue("Wynik");
@@ -215,6 +215,9 @@ public class XLSXFiles {
                     }
                     if (scoreList.get(j).isDsq()) {
                         result = "DSQ";
+                    }
+                    if (scoreList.get(j).isPk()) {
+                        result = result.concat("(PK)");
                     }
                     if (competitionMembersListEntity.getCountingMethod() != null) {
 

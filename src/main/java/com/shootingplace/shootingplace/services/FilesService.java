@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -81,7 +82,7 @@ public class FilesService {
         }
         LocalDate contribution = contributionEntity.getPaymentDay();
         LocalDate validThru = contributionEntity.getValidThru();
-        String fileName = "Składka_" + memberEntity.getFirstName() + "_" + memberEntity.getSecondName() + "_" + LocalDate.now() + ".pdf";
+        String fileName = "Składka_" + memberEntity.getFirstName() + "_" + memberEntity.getSecondName() + "_" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         String clubFullName = club.getFullName().toUpperCase();
 
@@ -108,9 +109,9 @@ public class FilesService {
             }
         }
         Document document = new Document(PageSize.A4);
-        PdfWriter.getInstance(document,
+        PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-
+        writer.setPageEvent(new PageStamper());
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -217,8 +218,9 @@ public class FilesService {
         String fileName = "Karta_Członkowska_" + memberEntity.getFirstName().trim() + "_" + memberEntity.getSecondName() + ".pdf";
         LocalDate birthDate = birthDay(memberEntity.getPesel());
         Document document = new Document(PageSize.A4);
-        PdfWriter.getInstance(document,
+        PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
 
         document.open();
         document.addTitle(fileName);
@@ -405,12 +407,12 @@ public class FilesService {
         AmmoInEvidenceEntity ammoInEvidenceEntity6 = a.stream().filter(f -> f.getCaliberName().equals(sort[5])).findFirst().orElse(null);
 
         List<AmmoInEvidenceEntity> ammoInEvidenceEntityList2 = a.stream().filter(f ->
-                !f.getCaliberName().equals(sort[0])
-                        && !f.getCaliberName().equals(sort[1])
-                        && !f.getCaliberName().equals(sort[2])
-                        && !f.getCaliberName().equals(sort[3])
-                        && !f.getCaliberName().equals(sort[4])
-                        && !f.getCaliberName().equals(sort[5]))
+                        !f.getCaliberName().equals(sort[0])
+                                && !f.getCaliberName().equals(sort[1])
+                                && !f.getCaliberName().equals(sort[2])
+                                && !f.getCaliberName().equals(sort[3])
+                                && !f.getCaliberName().equals(sort[4])
+                                && !f.getCaliberName().equals(sort[5]))
                 .collect(Collectors.toList());
 
         if (ammoInEvidenceEntity1 != null) {
@@ -442,7 +444,7 @@ public class FilesService {
 
         a.sort(Comparator.comparing(AmmoInEvidenceEntity::getCaliberName));
 
-        String fileName = "Lista_Amunicyjna_" + ammoEvidenceEntity.getDate() + ".pdf";
+        String fileName = "Lista_Amunicyjna_" + ammoEvidenceEntity.getDate().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4);
         PdfWriter writer = PdfWriter.getInstance(document,
@@ -455,7 +457,7 @@ public class FilesService {
 
         Paragraph number = new Paragraph(ammoEvidenceEntity.getNumber(), font(10, 4));
         Paragraph p = new Paragraph(club.getFullName() + "\n", font(14, 1));
-        Paragraph p1 = new Paragraph("Lista rozliczenia amunicji " + ammoEvidenceEntity.getDate(), font(12, 2));
+        Paragraph p1 = new Paragraph("Lista rozliczenia amunicji " + ammoEvidenceEntity.getDate().format(dateFormat()), font(12, 2));
 
         number.setIndentationLeft(450);
         p.setAlignment(1);
@@ -842,11 +844,12 @@ public class FilesService {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         ClubEntity c = clubRepository.getOne(1);
 
-        String fileName = tournamentEntity.getDate() + " " + c.getName() + " " + tournamentEntity.getName() + ".pdf";
+        String fileName = tournamentEntity.getDate().format(dateFormat()) + " " + c.getName() + " " + tournamentEntity.getName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -861,7 +864,7 @@ public class FilesService {
 
 
         Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase() + "\n" + c.getName(), font(13, 1));
-        Paragraph date = new Paragraph("Łódź, " + dateFormat(tournamentEntity.getDate()), font(10, 2));
+        Paragraph date = new Paragraph("Łódź, " + monthFormat(tournamentEntity.getDate()), font(10, 2));
         Paragraph newLine = new Paragraph("\n", font(10, 0));
 
         document.add(title);
@@ -876,9 +879,9 @@ public class FilesService {
             if (!tournamentEntity.getCompetitionsList().get(i).getScoreList().isEmpty()) {
                 CompetitionMembersListEntity competitionMembersListEntity = tournamentEntity.getCompetitionsList().get(i);
 
-                List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream().filter(f -> !f.isDsq()).filter(f -> !f.isDnf()).sorted(Comparator.comparing(ScoreEntity::getScore).reversed()).collect(Collectors.toList());
+                List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream().filter(f -> !f.isDsq()).filter(f -> !f.isDnf()).filter(f -> !f.isPk()).sorted(Comparator.comparing(ScoreEntity::getScore).reversed()).collect(Collectors.toList());
 
-                List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream().filter(f -> f.isDnf() || f.isDsq()).collect(Collectors.toList());
+                List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream().filter(f -> f.isDnf() || f.isDsq() || f.isPk()).collect(Collectors.toList());
                 scoreList.addAll(collect);
                 Paragraph competition = new Paragraph(competitionMembersListEntity.getName(), font(14, 1));
                 competition.add("\n");
@@ -971,6 +974,9 @@ public class FilesService {
                     }
                     if (scoreList.get(j).isDsq()) {
                         result = "DSQ";
+                    }
+                    if (scoreList.get(j).isPk()) {
+                        result = "PK";
                     }
                     if (competitionMembersListEntity.getCountingMethod() != null) {
 
@@ -1126,7 +1132,8 @@ public class FilesService {
         Document document = new Document(PageSize.A4);
         FileOutputStream fileOutputStream = new FileOutputStream(fileName);
         PdfWriter writer = PdfWriter.getInstance(document,
-                fileOutputStream);
+                new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -1143,7 +1150,7 @@ public class FilesService {
             policeAddress = "\nKomendant Wojewódzki Policji w Łodzi\nWydział Postępowań Administracyjnych\n 90-144 Łódź, ul. Sienkiewicza 26";
         }
 
-        Paragraph date = new Paragraph("Łódź, " + LocalDate.now(), font(12, 0));
+        Paragraph date = new Paragraph("Łódź, " + LocalDate.now().format(dateFormat()), font(12, 0));
         date.setAlignment(2);
         Paragraph police = new Paragraph(policeAddress, font(12, 0));
         police.setAlignment(2);
@@ -1164,14 +1171,17 @@ public class FilesService {
             sex = "Pan";
             word = "wystąpił";
         }
-        Paragraph par1 = new Paragraph("" + sex + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + pesel + " jest czynnym członkiem Klubu Strzeleckiego „Dziesiątka” LOK w Łodzi. Numer legitymacji klubowej : " + memberEntity.getLegitimationNumber() + " . " +
+        Paragraph par1 = new Paragraph("" + sex + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + pesel + " jest czynnym członkiem Klubu Strzeleckiego „Dziesiątka” LOK w Łodzi. Numer legitymacji klubowej: " + memberEntity.getLegitimationNumber() + ". " +
                 "Uczestniczy w zawodach i treningach strzeleckich osiągając bardzo dobre wyniki. " +
                 "Czynnie uczestniczy w życiu Klubu. ", font(12, 0));
         par1.setFirstLineIndent(40);
 
         Paragraph par2 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " wyraża chęć pogłębiania swojej wiedzy i umiejętności w sporcie strzeleckim przez współzawodnictwo w różnych konkurencjach strzeleckich.", font(12, 0));
         par2.setFirstLineIndent(40);
-        String s = String.valueOf(memberEntity.getLicense().getValidThru().getYear());
+        String s = "";
+        if (memberEntity.getLicense().getValidThru() != null) {
+            s = String.valueOf(memberEntity.getLicense().getValidThru().getYear());
+        }
         Paragraph par3 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " posiada Patent Strzelecki PZSS oraz ważną Licencję Zawodniczą PZSS na rok " + s, font(12, 0));
         par3.setFirstLineIndent(40);
 
@@ -1228,6 +1238,7 @@ public class FilesService {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         String fileName = memberEntity.getFirstName() + memberEntity.getSecondName().toUpperCase().trim() + ".csv";
         File file = new File(fileName);
+
         String[] tab = new String[5];
 
         LocalDate localDate = birthDay(memberEntity.getPesel());
@@ -1279,11 +1290,11 @@ public class FilesService {
 
         if (otherID != null) {
             OtherPersonEntity otherPersonEntity = otherPersonRepository.findById(Integer.valueOf(otherID)).orElseThrow(EntityNotFoundException::new);
-            name = otherPersonEntity.getSecondName().concat(" " + otherPersonEntity.getFirstName() + " ");
+            name = otherPersonEntity.getSecondName().concat(otherPersonEntity.getFirstName());
             club = otherPersonEntity.getClub().getName();
         } else {
             MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-            name = memberEntity.getSecondName().concat(" " + memberEntity.getFirstName() + " ");
+            name = memberEntity.getSecondName().concat(memberEntity.getFirstName());
             club = memberEntity.getClub().getName();
         }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
@@ -1519,7 +1530,7 @@ public class FilesService {
 
     public FilesEntity generateMembersListWithCondition(boolean condition) throws IOException, DocumentException {
 
-        String fileName = "Lista_klubowiczów_na_dzień " + LocalDate.now() + ".pdf";
+        String fileName = "Lista_klubowiczów_na_dzień " + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
         PdfWriter writer = PdfWriter.getInstance(document,
@@ -1538,7 +1549,7 @@ public class FilesService {
 
         String now = hour + ":" + minute;
 
-        Paragraph title = new Paragraph("Lista klubowiczów na dzień " + LocalDate.now() + " " + now, font(14, 1));
+        Paragraph title = new Paragraph("Lista klubowiczów na dzień " + LocalDate.now().format(dateFormat()) + " " + now, font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
         document.add(title);
         document.add(newLine);
@@ -1624,7 +1635,7 @@ public class FilesService {
 
     public FilesEntity generateAllMembersList() throws IOException, DocumentException {
 
-        String fileName = "Lista_obecności_klubowiczów " + LocalDate.now() + ".pdf";
+        String fileName = "Lista_obecności_klubowiczów " + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4);
         PdfWriter writer = PdfWriter.getInstance(document,
@@ -1645,7 +1656,7 @@ public class FilesService {
 
         String now = hour + ":" + minute;
 
-        Paragraph title = new Paragraph("Lista obecności klubowiczów na dzień " + LocalDate.now(), font(14, 1));
+        Paragraph title = new Paragraph("Lista obecności klubowiczów na dzień " + LocalDate.now().format(dateFormat()), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
         document.add(title);
         document.add(newLine);
@@ -1730,12 +1741,13 @@ public class FilesService {
         Document document = new Document(PageSize.A4);
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
 
         Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase() + "\n" + "„DZIESIĄTKA” ŁÓDŹ", font(13, 1));
-        Paragraph date = new Paragraph("Łódź, " + dateFormat(tournamentEntity.getDate()), font(10, 2));
+        Paragraph date = new Paragraph("Łódź, " + monthFormat(tournamentEntity.getDate()), font(10, 2));
 
         Paragraph listTitle = new Paragraph("WYKAZ SĘDZIÓW", font(13, 0));
         Paragraph newLine = new Paragraph("\n", font(13, 0));
@@ -1767,13 +1779,13 @@ public class FilesService {
         String commissionRTSArbiterClass;
 
         if (tournamentEntity.getCommissionRTSArbiter() != null) {
-            commissionRTSArbiter = tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getSecondName();
-            commissionRTSArbiterClass = tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass();
+            commissionRTSArbiter = tournamentEntity.getCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getCommissionRTSArbiter().getSecondName();
+            commissionRTSArbiterClass = tournamentEntity.getCommissionRTSArbiter().getMemberPermissions().getArbiterClass();
             commissionRTSArbiterClass = getArbiterClass(commissionRTSArbiterClass);
         } else {
             if (tournamentEntity.getOtherCommissionRTSArbiter() != null) {
-                commissionRTSArbiter = tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getSecondName();
-                commissionRTSArbiterClass = tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass();
+                commissionRTSArbiter = tournamentEntity.getOtherCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getOtherCommissionRTSArbiter().getSecondName();
+                commissionRTSArbiterClass = tournamentEntity.getOtherCommissionRTSArbiter().getPermissionsEntity().getArbiterClass();
                 commissionRTSArbiterClass = getArbiterClass(commissionRTSArbiterClass);
             } else {
                 commissionRTSArbiter = "Nie Wskazano";
@@ -1869,11 +1881,12 @@ public class FilesService {
     public FilesEntity generateListOfMembersToReportToPolice() throws
             IOException, DocumentException {
 
-        String fileName = "Lista_osób_do_zgłoszenia_na_Policję " + LocalDate.now() + ".pdf";
+        String fileName = "Lista_osób_do_zgłoszenia_na_Policję " + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -1884,7 +1897,7 @@ public class FilesService {
             minute = String.valueOf(LocalTime.now().getMinute());
         }
         String now = LocalTime.now().getHour() + ":" + minute;
-        Paragraph title = new Paragraph("Lista osób do zgłoszenia na policję " + LocalDate.now() + " " + now, font(14, 1));
+        Paragraph title = new Paragraph("Lista osób do zgłoszenia na policję " + LocalDate.now().format(dateFormat()) + " " + now, font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
 
@@ -1964,14 +1977,14 @@ public class FilesService {
         return filesEntity;
     }
 
-
     public FilesEntity generateAllMembersToErasedList() throws IOException, DocumentException {
 
-        String fileName = "Lista_osób_do_skreślenia_na_dzień" + LocalDate.now() + ".pdf";
+        String fileName = "Lista_osób_do_skreślenia_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -1982,7 +1995,7 @@ public class FilesService {
             minute = String.valueOf(LocalTime.now().getMinute());
         }
         String now = LocalTime.now().getHour() + ":" + minute;
-        Paragraph title = new Paragraph("Lista osób do skreślenia na dzień " + LocalDate.now() + " " + now, font(14, 1));
+        Paragraph title = new Paragraph("Lista osób do skreślenia na dzień " + LocalDate.now().format(dateFormat()) + " " + now, font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
 
@@ -2086,11 +2099,12 @@ public class FilesService {
     public FilesEntity getAllMembersWithLicenceValidAndContributionNotValid() throws IOException, DocumentException {
 
 
-        String fileName = "Lista_osób_bez_składek_z_ważnymi_licencjami_na_dzień" + LocalDate.now() + ".pdf";
+        String fileName = "Lista_osób_bez_składek_z_ważnymi_licencjami_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2101,7 +2115,7 @@ public class FilesService {
             minute = String.valueOf(LocalTime.now().getMinute());
         }
         String now = LocalTime.now().getHour() + ":" + minute;
-        Paragraph title = new Paragraph("Lista osób bez składek z ważnymi licencjami na dzień " + LocalDate.now() + " " + now, font(14, 1));
+        Paragraph title = new Paragraph("Lista osób bez składek z ważnymi licencjami na dzień " + LocalDate.now().format(dateFormat()) + " " + now, font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
 
@@ -2197,7 +2211,7 @@ public class FilesService {
     public FilesEntity getGunRegistry(List<String> guns) throws IOException, DocumentException {
 
 
-        String fileName = "Lista_broni_w_magazynie_na_dzień" + LocalDate.now() + ".pdf";
+        String fileName = "Lista_broni_w_magazynie_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4);
         PdfWriter writer = PdfWriter.getInstance(document,
@@ -2371,11 +2385,12 @@ public class FilesService {
             IOException, DocumentException {
 
 
-        String fileName = "Lista_broni_do_przewozu_na_dzień" + LocalDate.now() + ".pdf";
+        String fileName = "Lista_broni_do_przewozu_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2387,7 +2402,7 @@ public class FilesService {
         }
         String now = LocalTime.now().getHour() + ":" + minute;
         Paragraph title = new Paragraph("Lista jednostek broni do przewozu od dnia " + date + " do dnia " + date1, font(14, 1));
-        Paragraph subtitle = new Paragraph("Wystawiono dnia " + LocalDate.now() + " o godzinie " + now, font(14, 1));
+        Paragraph subtitle = new Paragraph("Wystawiono dnia " + LocalDate.now().format(dateFormat()) + " o godzinie " + now, font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
 
@@ -2527,11 +2542,12 @@ public class FilesService {
     public FilesEntity getAllErasedMembers() throws IOException, DocumentException {
 
 
-        String fileName = "Lista_osób_skreślonych_na_dzień" + LocalDate.now() + ".pdf";
+        String fileName = "Lista_osób_skreślonych_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2542,7 +2558,7 @@ public class FilesService {
             minute = String.valueOf(LocalTime.now().getMinute());
         }
         String now = LocalTime.now().getHour() + ":" + minute;
-        Paragraph title = new Paragraph("Lista osób bez składek z ważnymi licencjami na dzień " + LocalDate.now() + " " + now, font(14, 1));
+        Paragraph title = new Paragraph("Lista osób bez składek z ważnymi licencjami na dzień " + LocalDate.now().format(dateFormat()) + " " + now, font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
 
@@ -2611,7 +2627,7 @@ public class FilesService {
             }
             PdfPCell erasedReasonCell = null;
             if (memberEntity.getErasedEntity() != null) {
-                erasedReasonCell = new PdfPCell(new Paragraph(memberEntity.getErasedEntity().getErasedType() + " " + memberEntity.getErasedEntity().getDate(), font(12, 0)));
+                erasedReasonCell = new PdfPCell(new Paragraph(memberEntity.getErasedEntity().getErasedType() + " " + memberEntity.getErasedEntity().getDate().format(dateFormat()), font(12, 0)));
             }
             memberTable.setWidthPercentage(100);
 
@@ -2717,7 +2733,7 @@ public class FilesService {
         int size = all.size();
         PdfPTable innerTable = new PdfPTable(size);
         for (TournamentEntity tournamentEntity : all) {
-            PdfPCell cell = new PdfPCell(new Paragraph(String.valueOf(tournamentEntity.getDate()), font(10, 1)));
+            PdfPCell cell = new PdfPCell(new Paragraph(String.valueOf(tournamentEntity.getDate().format(dateFormat())), font(10, 1)));
             cell.setBorderWidth(0);
             cell.setHorizontalAlignment(1);
             innerTable.addCell(cell);
@@ -2751,7 +2767,6 @@ public class FilesService {
                 int i = 0; i < all.size(); i++) {
 
             for (int j = 0; j < all.get(i).getCompetitionsList().size(); j++) {
-//                System.out.println(all.get(i).getCompetitionsList().get(j).getName());
                 List<ScoreEntity> scoreList = all.get(i).getCompetitionsList().get(j).getScoreList();
                 for (int h = 0; h < scoreList.size(); h++) {
                     List<ScoreEntity> scores = all.get(i).getCompetitionsList().get(j).getScoreList();
@@ -2794,6 +2809,76 @@ public class FilesService {
                 }
             }
         }
+
+        document.close();
+
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+
+        File file = new File(fileName);
+
+        file.delete();
+        return filesEntity;
+    }
+
+    public FilesEntity getJudgingReportInChosenTime(/*LocalDate from, LocalDate to*/) throws IOException, DocumentException {
+// TODO wprowadzić daty do wyboru
+        String fileName = "raport sędziowania.pdf";
+        Document document = new Document(PageSize.A4);
+        PdfWriter writer = PdfWriter.getInstance(document,
+                new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
+        document.open();
+        document.addTitle(fileName);
+        document.addCreationDate();
+
+        List<MemberEntity> arbiters = memberRepository.findAll()
+                .stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> f.getMemberPermissions().getArbiterNumber() != null)
+                .collect(Collectors.toList());
+
+
+        Paragraph title = new Paragraph("Raport sędziowania „DZIESIĄTKA” ŁÓDŹ", font(13, 1));
+//        Paragraph date = new Paragraph("Łódź, od " + dateFormat(from) + " do " + dateFormat(to), font(10, 2));
+
+        document.add(title);
+//        document.add(date);
+        // dla każdego sędziego
+        for (int i = 0; i < arbiters.size(); i++) {
+            MemberEntity arbiter = arbiters.get(i);
+            if (arbiter.getHistory().getJudgingHistory().size() > 0) {
+                Paragraph arbiterP = new Paragraph(arbiter.getFirstName() + arbiter.getSecondName(), font(10, 1));
+                document.add(arbiterP);
+
+                List<JudgingHistoryEntity> judgingHistory = arbiter.getHistory().getJudgingHistory();
+                // dodawanie jego sędziowania
+                for (int j = 0; j < judgingHistory.size(); j++) {
+
+                    Chunk tournamentIndex = new Chunk(String.valueOf(j + 1) + " ", font(10, 0));
+                    Chunk tournamentName = new Chunk(judgingHistory.get(j).getName() + " ", font(10, 0));
+                    Chunk tournamentDate = new Chunk(judgingHistory.get(j).getDate().format(dateFormat()).toString() + " ", font(10, 0));
+                    Chunk tournamentFunction = new Chunk(judgingHistory.get(j).getJudgingFunction() + " ", font(10, 0));
+                    Paragraph tournament = new Paragraph();
+                    tournament.add(tournamentIndex);
+                    tournament.add(tournamentName);
+                    tournament.add(tournamentDate);
+                    tournament.add(tournamentFunction);
+                    document.add(tournament);
+                }
+            }
+
+        }
+
 
         document.close();
 
@@ -2931,7 +3016,6 @@ public class FilesService {
     }
 
     /**
-     *
      * @param pesel
      * @return date of birth in format year-month-day
      */
@@ -2975,7 +3059,7 @@ public class FilesService {
         return new Font(czcionka, size, style);
     }
 
-    private String dateFormat(LocalDate date) {
+    private String monthFormat(LocalDate date) {
 
         String day = String.valueOf(date.getDayOfMonth());
         String month = "";
@@ -3049,6 +3133,12 @@ public class FilesService {
         return arbiterClass;
     }
 
+    private DateTimeFormatter dateFormat() {
+        String europeanDatePattern = "dd.MM.yyyy";
+        return DateTimeFormatter.ofPattern(europeanDatePattern);
+    }
+
+
     static class PageStamper extends PdfPageEventHelper {
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
@@ -3068,6 +3158,32 @@ public class FilesService {
                 e.printStackTrace();
             }
         }
+
+        @Override
+        public void onStartPage(PdfWriter writer, Document document) {
+            try {
+                // to działa w miejscu docelowym - nieruszać tego
+                String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/pełna-nazwa(małe).bmp";
+                Image image = Image.getInstance(source);
+
+                Rectangle pageSize = document.getPageSize();
+                int multiplicity = 7;
+                image.scaleAbsolute(new Rectangle(16 * multiplicity, 9 * multiplicity));
+                float pw = pageSize.getWidth() / 2;
+                float iw = image.getScaledWidth() / 2;
+                float[] position = {pw - iw, -5};
+
+                image.setAbsolutePosition(position[0], position[1]);
+
+                final PdfContentByte directContent = writer.getDirectContent();
+
+                directContent.addImage(image);
+            } catch (DocumentException | IOException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
+
 
 }

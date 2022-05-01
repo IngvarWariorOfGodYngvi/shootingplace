@@ -85,7 +85,7 @@ public class FilesController {
         FilesEntity filesEntity = filesService.getMemberCSVFile(memberUUID);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_TYPE, filesEntity.getName())
+                .header(HttpHeaders.CONTENT_TYPE, filesEntity.getName().replaceAll("ó", "o"))
                 .body(filesEntity.getData());
     }
 
@@ -121,7 +121,7 @@ public class FilesController {
         FilesEntity filesEntity = xlsxFiles.createAnnouncementInXLSXType(tournamentUUID);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")
                 .body(filesEntity.getData());
     }
 
@@ -231,7 +231,16 @@ public class FilesController {
         FilesEntity filesEntity = filesService.getStartsMetric(memberUUID, otherID, tournamentUUID, competitions, startNumber);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")
+                .body(filesEntity.getData());
+    }
+
+    @GetMapping("/downloadJudgingReport")
+    public ResponseEntity<byte[]> getJudgingReportInChosenTime(/*@RequestParam LocalDate from, @RequestParam LocalDate to*/) throws DocumentException, IOException {
+        FilesEntity filesEntity = filesService.getJudgingReportInChosenTime(/*from,to*/);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")
                 .body(filesEntity.getData());
     }
 
@@ -242,7 +251,7 @@ public class FilesController {
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")
                 .body(filesEntity.getData());
     }
 

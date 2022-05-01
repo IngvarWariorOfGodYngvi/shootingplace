@@ -36,8 +36,8 @@ public class MemberController {
     }
 
     @GetMapping("/ID/{number}")
-    public ResponseEntity<String> getMemberUUIDByLegitimationNumber(@PathVariable int number) {
-        return ResponseEntity.ok(memberService.getMemberUUIDByLegitimationNumber(number));
+    public ResponseEntity<?> getMemberUUIDByLegitimationNumber(@PathVariable int number) {
+        return memberService.getMemberUUIDByLegitimationNumber(number);
     }
 
     @GetMapping("/uuid/{uuid}")

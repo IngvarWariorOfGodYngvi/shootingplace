@@ -34,6 +34,7 @@ public class Score {
 
     private boolean dnf;
     private boolean dsq;
+    private boolean pk;
 
 
     private String competitionMembersListEntityUUID;
@@ -185,5 +186,13 @@ public class Score {
 
     public void setProcedures(int procedures) {
         this.procedures = procedures;
+    }
+
+    public boolean isPk() {
+        return pk;
+    }
+
+    public void setPk(boolean pk) {
+        this.pk = pk;
     }
 }

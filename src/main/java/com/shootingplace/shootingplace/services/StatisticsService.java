@@ -93,7 +93,7 @@ public class StatisticsService {
 
     }
 
-    public List<MemberDTO> getContributionSum(LocalDate firstDate, LocalDate secondDate, boolean condition) {
+    public List<MemberDTO> getContributionSum(LocalDate firstDate, LocalDate secondDate) {
 
         List<MemberEntity> memberEntities = memberRepository.findAll();
 
@@ -112,7 +112,7 @@ public class StatisticsService {
 
         List<MemberDTO> collect1 = new ArrayList<>();
 
-        memberRepository.findAll().stream().filter(f -> f.getAdult().equals(condition))
+        memberRepository.findAll()
                 .forEach(e -> e.getHistory().getContributionList()
                         .stream()
                         .filter(f -> f.getHistoryUUID() != null)

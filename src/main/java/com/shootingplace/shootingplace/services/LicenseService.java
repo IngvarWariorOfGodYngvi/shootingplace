@@ -129,12 +129,12 @@ public class LicenseService {
             }
             LOG.info("zaktualizowano datę licencji");
         }
-//        else {
-//            licenseEntity.setValidThru(LocalDate.of(LocalDate.now().getYear(), 12, 31));
-//            licenseEntity.setValid(true);
-//            LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
-//        }
-//        licenseEntity.setPaid(false);
+        else {
+            licenseEntity.setValidThru(LocalDate.of(LocalDate.now().getYear(), 12, 31));
+            licenseEntity.setValid(true);
+            LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
+        }
+        licenseEntity.setPaid(false);
         licenseRepository.saveAndFlush(licenseEntity);
         LOG.info("Zaktualizowano licencję");
         return ResponseEntity.ok("\"Zaktualizowano licencję\"");

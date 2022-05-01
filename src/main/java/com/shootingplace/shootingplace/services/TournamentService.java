@@ -123,6 +123,14 @@ public class TournamentService {
         } else {
             commissionRTSArbiter = null;
         }
+// DO NOT TOUCH THIS PART
+        tournamentEntity.getCompetitionsList()
+                .forEach(e->
+                {if (e.getOrdering()==null){
+                    CompetitionEntity competitionEntity = competitionRepository.findByNameEquals(e.getName()).orElseThrow(EntityNotFoundException::new);
+                    e.setOrdering(competitionEntity.getOrdering());
+                    competitionMembersListRepository.save(e);
+                }});
 
         List<CompetitionMembersList> collect1 = tournamentEntity.getCompetitionsList()
                 .stream().map(Mapping::map)
@@ -187,7 +195,12 @@ public class TournamentService {
     }
 
     public ResponseEntity<String> removeOtherArbiterFromTournament(String tournamentUUID, int id) {
+
+        if (!tournamentRepository.existsById(tournamentUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono zawodów z tym identyfikatorem\"");
+        }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+
         if (tournamentEntity.isOpen()) {
 
             OtherPersonEntity otherPersonEntity = otherPersonRepository
@@ -209,6 +222,9 @@ public class TournamentService {
     }
 
     public ResponseEntity<String> addMainArbiter(String tournamentUUID, int legitimationNumber) {
+        if (!tournamentRepository.existsById(tournamentUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono zawodów z tym identyfikatorem\"");
+        }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -259,6 +275,9 @@ public class TournamentService {
     }
 
     public ResponseEntity<String> addOtherMainArbiter(String tournamentUUID, int id) {
+        if (!tournamentRepository.existsById(tournamentUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono zawodów z tym identyfikatorem\"");
+        }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -307,6 +326,9 @@ public class TournamentService {
     }
 
     public ResponseEntity<?> addRTSArbiter(String tournamentUUID, int legitimationNumber) {
+        if (!tournamentRepository.existsById(tournamentUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono zawodów z tym identyfikatorem\"");
+        }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -352,6 +374,9 @@ public class TournamentService {
     }
 
     public ResponseEntity<?> addOtherRTSArbiter(String tournamentUUID, int id) {
+        if (!tournamentRepository.existsById(tournamentUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono zawodów z tym identyfikatorem\"");
+        }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -397,6 +422,9 @@ public class TournamentService {
     }
 
     public ResponseEntity<?> addOthersArbiters(String tournamentUUID, int legitimationNumber) {
+        if (!tournamentRepository.existsById(tournamentUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono zawodów z tym identyfikatorem\"");
+        }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
             String function = ArbiterWorkClass.HELP.getName();
@@ -444,6 +472,9 @@ public class TournamentService {
     }
 
     public ResponseEntity<?> addPersonOthersArbiters(String tournamentUUID, int id) {
+        if (!tournamentRepository.existsById(tournamentUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono zawodów z tym identyfikatorem\"");
+        }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -536,6 +567,9 @@ public class TournamentService {
     }
 
     public ResponseEntity<?> deleteTournament(String tournamentUUID, String pinCode) {
+        if (!tournamentRepository.existsById(tournamentUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono zawodów z tym identyfikatorem\"");
+        }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (changeHistoryService.comparePinCode(pinCode)) {
             if (tournamentEntity.isOpen()) {
@@ -578,6 +612,8 @@ public class TournamentService {
                 e.setOrdering(competitionEntity.getOrdering());
                 competitionMembersListRepository.saveAndFlush(e);
             }
+
+
             list.add(e.getName());
         });
 
@@ -585,6 +621,9 @@ public class TournamentService {
     }
 
     public ResponseEntity<?> addOthersRTSArbiters(String tournamentUUID, int legitimationNumber) {
+        if (!tournamentRepository.existsById(tournamentUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono zawodów z tym identyfikatorem\"");
+        }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
             String function = ArbiterWorkClass.RTS_HELP.getName();
@@ -632,6 +671,9 @@ public class TournamentService {
     }
 
     public ResponseEntity<?> addPersonOthersRTSArbiters(String tournamentUUID, int id) {
+        if (!tournamentRepository.existsById(tournamentUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono zawodów z tym identyfikatorem\"");
+        }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -677,6 +719,9 @@ public class TournamentService {
     }
 
     public ResponseEntity<?> removeRTSArbiterFromTournament(String tournamentUUID, int legitimationNumber) {
+        if (!tournamentRepository.existsById(tournamentUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono zawodów z tym identyfikatorem\"");
+        }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
@@ -700,6 +745,9 @@ public class TournamentService {
     }
 
     public ResponseEntity<?> removeRTSOtherArbiterFromTournament(String tournamentUUID, int id) {
+        if (!tournamentRepository.existsById(tournamentUUID)){
+            return ResponseEntity.badRequest().body("\"Nie znaleziono zawodów z tym identyfikatorem\"");
+        }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 

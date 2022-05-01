@@ -32,16 +32,11 @@ public class CompetitionMembersListController {
 
     @GetMapping("/getMetricNumber")
     public ResponseEntity<String> getMetricNumber(@RequestParam String legNumber, @RequestParam int otherID, @RequestParam String tournamentUUID) {
-        return ResponseEntity.ok(competitionMembersListService.getMetricNumber(legNumber, otherID, tournamentUUID));
+        return competitionMembersListService.getMetricNumber(legNumber, otherID, tournamentUUID);
     }
 
     @GetMapping("/getMemberStartsByLegitimation")
     public ResponseEntity<List<String>> getMemberStartsInTournament(@RequestParam int legNumber, @RequestParam int otherID, @RequestParam String tournamentUUID) {
-        return ResponseEntity.ok(competitionMembersListService.getMemberStartsInTournament(legNumber, otherID, tournamentUUID));
-    }
-
-    @GetMapping("/getMemberMetricNumberByLegitimation")
-    public ResponseEntity<List<String>> getMemberMetricNumberByLegitimation(@RequestParam int legNumber, @RequestParam int otherID, @RequestParam String tournamentUUID) {
         return ResponseEntity.ok(competitionMembersListService.getMemberStartsInTournament(legNumber, otherID, tournamentUUID));
     }
 
