@@ -1,7 +1,6 @@
-package com.shootingplace.shootingplace.services;
+package com.shootingplace.shootingplace.users;
 
-import com.shootingplace.shootingplace.domain.entities.UserEntity;
-import com.shootingplace.shootingplace.repositories.UserRepository;
+import com.shootingplace.shootingplace.services.ChangeHistoryService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
@@ -74,7 +73,7 @@ public class UserService {
                     .pinCode(trim1)
                     .active(true)
                     .build();
-            userRepository.saveAndFlush(userEntity);
+            userRepository.save(userEntity);
             return ResponseEntity.status(201).body("\"Utworzono użytkownika " + userEntity.getName() + ".\"");
         }
         return ResponseEntity.status(400).body("\"Istnieje już jeden super-użytkownik : " + userRepository.findAll().stream().filter(UserEntity::isSuperUser).findFirst().orElseThrow(EntityExistsException::new).getName() + ".\"");
@@ -116,7 +115,7 @@ public class UserService {
                     .pinCode(trim1)
                     .active(true)
                     .build();
-            userRepository.saveAndFlush(userEntity);
+            userRepository.save(userEntity);
             changeHistoryService.addRecordToChangeHistory(superPinCode, userEntity.getClass().getSimpleName() + " " + "createUser", userEntity.getUuid());
             return ResponseEntity.status(201).body("\"Utworzono użytkownika " + userEntity.getName() + ".\"");
 

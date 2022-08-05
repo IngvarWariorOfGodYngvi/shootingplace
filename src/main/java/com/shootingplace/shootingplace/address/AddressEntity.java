@@ -1,20 +1,36 @@
-package com.shootingplace.shootingplace.domain.models;
+package com.shootingplace.shootingplace.address;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.validation.constraints.Pattern;
 
+@Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Address {
+public class AddressEntity {
 
+    @Id
+    @GeneratedValue(generator = "id")
+    @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
+    private String uuid;
+
+    @Pattern(regexp = "\\d{2}-\\d{3}")
     private String zipCode;
     private String postOfficeCity;
     private String street;
     private String streetNumber;
     private String flatNumber;
+
+    public String getUuid() {
+        return uuid;
+    }
 
     public String getZipCode() {
         return zipCode;
@@ -55,5 +71,4 @@ public class Address {
     public void setFlatNumber(String flatNumber) {
         this.flatNumber = flatNumber;
     }
-
 }

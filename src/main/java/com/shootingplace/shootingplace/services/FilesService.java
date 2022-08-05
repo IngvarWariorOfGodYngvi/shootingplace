@@ -8,6 +8,7 @@ import com.shootingplace.shootingplace.domain.enums.Discipline;
 import com.shootingplace.shootingplace.domain.models.FilesModel;
 import com.shootingplace.shootingplace.domain.models.MemberRanking;
 import com.shootingplace.shootingplace.domain.models.Score;
+import com.shootingplace.shootingplace.repositories.MemberRepository;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -542,7 +543,7 @@ public class FilesService {
 
     }
 
-    public FilesEntity createApplicationForExtensionOfTheCompetitorsLicense(String memberUUID) throws IOException, DocumentException {
+    public FilesEntity  createApplicationForExtensionOfTheCompetitorsLicense(String memberUUID) throws IOException, DocumentException {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
 
         String fileName = "Wniosek_" + memberEntity.getFirstName() + "_" + memberEntity.getSecondName() + ".pdf";
@@ -1124,7 +1125,7 @@ public class FilesService {
         return filesEntity;
     }
 
-    public FilesEntity CertificateOfClubMembership(String memberUUID, String reason) throws IOException, DocumentException {
+    public FilesEntity CertificateOfClubMembership(String memberUUID, String reason, String city) throws IOException, DocumentException {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         ClubEntity club = clubRepository.getOne(1);
         String fileName = reason + " " + memberEntity.getFirstName().trim().concat(" " + memberEntity.getSecondName().trim()) + ".pdf";
@@ -1146,8 +1147,110 @@ public class FilesService {
         String[] choice = {"ZAŚWIADCZENIE ZWYKŁE", "ZAŚWIADCZENIE DO POLICJI"};
         // pobieranie z ustawień
         String policeAddress = "";
+        String policeCity = "";
+        String policeZipCode = "";
+        String policeStreet = "";
+        String policeStreetNumber = "";
+
+        if (city.equals("Białystok")) {
+            policeCity = "w Białymstoku";
+            policeZipCode = "15-369";
+            policeStreet = "ul. Bema";
+            policeStreetNumber = "4";
+        }
+        if (city.equals("Bydgoszcz")) {
+            policeCity = "w Bydgoszczy";
+            policeZipCode = "85-090";
+            policeStreet = "al. Powstańców Wielkopolskich";
+            policeStreetNumber = "7";
+        }
+        if (city.equals("Gdańsk")) {
+            policeCity = "w Gdańsku";
+            policeZipCode = "80-298";
+            policeStreet = "ul. Harfowa";
+            policeStreetNumber = "60";
+        }
+        if (city.equals("Gorzów Wielkopolski")) {
+            policeCity = "w Gorzowie Wielkopolskim";
+            policeZipCode = "66-400";
+            policeStreet = "ul. Kwiatowa";
+            policeStreetNumber = "10";
+        }
+        if (city.equals("Katowice")) {
+            policeCity = "w Katowicach";
+            policeZipCode = "40-038";
+            policeStreet = "ul. Lompy";
+            policeStreetNumber = "19";
+        }
+        if (city.equals("Kielce")) {
+            policeCity = "w Kielcach";
+            policeZipCode = "25-366";
+            policeStreet = "ul. Śniadeckich";
+            policeStreetNumber = "4";
+        }
+        if (city.equals("Kraków")) {
+            policeCity = "w Krakowie";
+            policeZipCode = "31-571";
+            policeStreet = "ul. Mogilska";
+            policeStreetNumber = "109";
+        }
+        if (city.equals("Lublin")) {
+            policeCity = "w Lublinie";
+            policeZipCode = "20-213";
+            policeStreet = "ul. Gospodarcza";
+            policeStreetNumber = "1b";
+        }
+        if (city.equals("Łódź")) {
+            policeCity = "w Łodzi";
+            policeZipCode = "90-144";
+            policeStreet = "Sienkiewicza";
+            policeStreetNumber = "26";
+        }
+        if (city.equals("Olsztyn")) {
+            policeCity = "w Olsztynie";
+            policeZipCode = "10-049";
+            policeStreet = "ul. Wincentego Pstrowskiego";
+            policeStreetNumber = "3";
+        }
+        if (city.equals("Opole")) {
+            policeCity = "w Opolu";
+            policeZipCode = "46-020";
+            policeStreet = "ul. Powstańców Śląskich";
+            policeStreetNumber = "20";
+        }
+        if (city.equals("Poznań")) {
+            policeCity = "w Poznaniu";
+            policeZipCode = "60-844";
+            policeStreet = "ul. Kochanowskiego";
+            policeStreetNumber = "2a";
+        }
+        if (city.equals("Rzeszów")) {
+            policeCity = "w Rzeszowie";
+            policeZipCode = "35-036";
+            policeStreet = "ul. Dąbrowskiego";
+            policeStreetNumber = "30";
+        }
+        if (city.equals("Szczecin")) {
+            policeCity = "w Szczecinie";
+            policeZipCode = "71-710";
+            policeStreet = "ul. Bardzińska";
+            policeStreetNumber = "1a";
+        }
+        if (city.equals("Warszawa")) {
+            policeCity = "w Warszawie";
+            policeZipCode = "00-150";
+            policeStreet = "ul. Nowolipie";
+            policeStreetNumber = "2";
+        }
+        if (city.equals("Wrocław")) {
+            policeCity = "we Wrocławiu";
+            policeZipCode = "50-040";
+            policeStreet = "ul. Podwale";
+            policeStreetNumber = "31/33";
+        }
+
         if (reason.equals(choice[1])) {
-            policeAddress = "\nKomendant Wojewódzki Policji w Łodzi\nWydział Postępowań Administracyjnych\n 90-144 Łódź, ul. Sienkiewicza 26";
+            policeAddress = "\nKomendant Wojewódzki Policji " + policeCity + "\nWydział Postępowań Administracyjnych\n " + policeZipCode + " " + city + ", " + policeStreet + " " + policeStreetNumber;
         }
 
         Paragraph date = new Paragraph("Łódź, " + LocalDate.now().format(dateFormat()), font(12, 0));
@@ -1290,11 +1393,11 @@ public class FilesService {
 
         if (otherID != null) {
             OtherPersonEntity otherPersonEntity = otherPersonRepository.findById(Integer.valueOf(otherID)).orElseThrow(EntityNotFoundException::new);
-            name = otherPersonEntity.getSecondName().concat(otherPersonEntity.getFirstName());
+            name = otherPersonEntity.getSecondName().concat(" " + otherPersonEntity.getFirstName());
             club = otherPersonEntity.getClub().getName();
         } else {
             MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-            name = memberEntity.getSecondName().concat(memberEntity.getFirstName());
+            name = memberEntity.getSecondName().concat(" " + memberEntity.getFirstName());
             club = memberEntity.getClub().getName();
         }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);

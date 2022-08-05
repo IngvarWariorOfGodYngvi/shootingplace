@@ -6,6 +6,7 @@ import com.shootingplace.shootingplace.domain.models.CompetitionMembersList;
 import com.shootingplace.shootingplace.domain.models.MemberDTO;
 import com.shootingplace.shootingplace.domain.models.Tournament;
 import com.shootingplace.shootingplace.domain.models.TournamentDTO;
+import com.shootingplace.shootingplace.repositories.MemberRepository;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

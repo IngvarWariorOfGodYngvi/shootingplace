@@ -81,7 +81,6 @@ public class MemberController {
         } else {
             erase1 = Boolean.valueOf(erase);
         }
-        memberService.checkMembers();
         return ResponseEntity.ok(memberService.getAllMemberDTO(adult1, active1, erase1));
 
     }

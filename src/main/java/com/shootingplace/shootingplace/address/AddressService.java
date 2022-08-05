@@ -1,9 +1,6 @@
-package com.shootingplace.shootingplace.services;
+package com.shootingplace.shootingplace.address;
 
-import com.shootingplace.shootingplace.domain.entities.AddressEntity;
 import com.shootingplace.shootingplace.domain.entities.MemberEntity;
-import com.shootingplace.shootingplace.domain.models.Address;
-import com.shootingplace.shootingplace.repositories.AddressRepository;
 import com.shootingplace.shootingplace.repositories.MemberRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,7 +60,7 @@ public class AddressService {
             addressEntity.setFlatNumber(address.getFlatNumber().toUpperCase());
             LOG.info("Dodano Numer mieszkania");
         }
-        addressRepository.saveAndFlush(addressEntity);
+        addressRepository.save(addressEntity);
         LOG.info("Zaktualizowano adres");
         return ResponseEntity.ok("\"Zaktualizowano adres\"");
     }

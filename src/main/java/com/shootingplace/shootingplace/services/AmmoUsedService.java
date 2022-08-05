@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.services;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.models.AmmoUsedEvidence;
 import com.shootingplace.shootingplace.domain.models.AmmoUsedPersonal;
+import com.shootingplace.shootingplace.repositories.MemberRepository;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

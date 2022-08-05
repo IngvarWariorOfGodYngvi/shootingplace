@@ -1,14 +1,18 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.address.Address;
+import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.models.*;
+import com.shootingplace.shootingplace.domain.models.Member;
+import com.shootingplace.shootingplace.domain.models.MemberDTO;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Mapping {
 
-    static Member map(MemberEntity e) {
+    public static Member map(MemberEntity e) {
         return Member.builder()
                 .joinDate(e.getJoinDate())
                 .legitimationNumber(e.getLegitimationNumber())
@@ -42,7 +46,7 @@ public class Mapping {
     }
 
 
-    static MemberEntity map(Member e) {
+    public static MemberEntity map(Member e) {
         return MemberEntity.builder()
                 .joinDate(e.getJoinDate())
                 .legitimationNumber(e.getLegitimationNumber())
@@ -81,7 +85,7 @@ public class Mapping {
                 .build();
     }
 
-    static MemberDTO map2DTO(MemberEntity e) {
+    public static MemberDTO map2DTO(MemberEntity e) {
         if (e.getErasedEntity() != null) {
             return Optional.of(e).map(o ->
                     MemberDTO.builder()

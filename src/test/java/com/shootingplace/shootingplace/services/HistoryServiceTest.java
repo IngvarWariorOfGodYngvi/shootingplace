@@ -16,7 +16,6 @@ import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -47,18 +46,18 @@ public class HistoryServiceTest {
         assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie znaleziono płatności\""));
     }
 
-    @Test
-    public void toggle_licence_payment_in_PZSS_return_OK() {
-        //given
-        String uuid = licenseHistoryList.get(0).getUuid();
-        //when
-        when(licensePaymentHistoryRepository.existsById(any(String.class))).thenReturn(existById(uuid));
-        when(licensePaymentHistoryRepository.findById(any(String.class))).thenReturn(Optional.ofNullable(findById(uuid)));
-        ResponseEntity<?> responseEntity = historyService.toggleLicencePaymentInPZSS(uuid);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Oznaczono jako opłacone w Portalu PZSS\""));
-    }
+//    @Test
+//    public void toggle_licence_payment_in_PZSS_return_OK() {
+//        //given
+//        String uuid = licenseHistoryList.get(0).getUuid();
+//        //when
+//        when(licensePaymentHistoryRepository.existsById(any(String.class))).thenReturn(existById(uuid));
+//        when(licensePaymentHistoryRepository.findById(any(String.class))).thenReturn(Optional.ofNullable(findById(uuid)));
+//        ResponseEntity<?> responseEntity = historyService.toggleLicencePaymentInPZSS(uuid);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Oznaczono jako opłacone w Portalu PZSS\""));
+//    }
 
     private LicensePaymentHistoryEntity findById(String uuid) {
         return licenseHistoryList.stream().filter(f->f.getUuid().equals(uuid)).findFirst().orElseThrow(EntityNotFoundException::new);

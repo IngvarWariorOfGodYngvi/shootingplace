@@ -1,10 +1,12 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.address.AddressService;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.ArbiterClass;
 import com.shootingplace.shootingplace.domain.enums.ErasedType;
 import com.shootingplace.shootingplace.domain.models.Member;
 import com.shootingplace.shootingplace.domain.models.MemberDTO;
+import com.shootingplace.shootingplace.repositories.MemberRepository;
 import com.shootingplace.shootingplace.repositories.*;
 import org.hamcrest.Matchers;
 import org.junit.After;

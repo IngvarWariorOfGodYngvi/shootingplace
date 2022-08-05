@@ -60,6 +60,7 @@ public class ShootingPatentServiceTest {
         int i = r.nextInt(100000);
         String year = String.valueOf(LocalDate.now().getYear());
         String monthValue = String.valueOf(LocalDate.now().getMonthValue());
+        MemberEntity memberEntity = membersList.get(0);
         ShootingPatent shootingPatent = ShootingPatent.builder()
                 .patentNumber(i + "/PAT/" + monthValue + year)
                 .dateOfPosting(LocalDate.now())
@@ -74,7 +75,7 @@ public class ShootingPatentServiceTest {
         ResponseEntity<?> responseEntity = shootingPatentService.updatePatent(uuid, shootingPatent);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Zaktualizowano patent\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Zaktualizowano patent "  + memberEntity.getSecondName() + " " + memberEntity.getFirstName()));
     }
 
     @Test
@@ -93,7 +94,7 @@ public class ShootingPatentServiceTest {
         ResponseEntity<?> responseEntity = shootingPatentService.updatePatent(uuid, shootingPatent);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie znaleziono klubowicza\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Nie znaleziono klubowicza"));
     }
 
     @Test
@@ -113,7 +114,7 @@ public class ShootingPatentServiceTest {
         ResponseEntity<?> responseEntity = shootingPatentService.updatePatent(uuid, shootingPatent);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"ktoś już ma taki numer patentu\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("ktoś już ma taki numer patentu"));
     }
 
     @Test

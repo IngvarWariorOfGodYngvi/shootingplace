@@ -1,9 +1,10 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.AddressEntity;
+import com.shootingplace.shootingplace.address.Address;
+import com.shootingplace.shootingplace.address.AddressEntity;
+import com.shootingplace.shootingplace.address.AddressRepository;
+import com.shootingplace.shootingplace.address.AddressService;
 import com.shootingplace.shootingplace.domain.entities.MemberEntity;
-import com.shootingplace.shootingplace.domain.models.Address;
-import com.shootingplace.shootingplace.repositories.AddressRepository;
 import com.shootingplace.shootingplace.repositories.MemberRepository;
 import org.hamcrest.Matchers;
 import org.junit.Test;

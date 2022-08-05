@@ -4,6 +4,7 @@ import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
 import com.shootingplace.shootingplace.domain.models.History;
 import com.shootingplace.shootingplace.domain.models.ShootingPatent;
+import com.shootingplace.shootingplace.repositories.MemberRepository;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,7 +61,7 @@ public class HistoryService {
     }
 
     // Contribution
-    void addContribution(String memberUUID, ContributionEntity contribution) {
+    public void addContribution(String memberUUID, ContributionEntity contribution) {
         HistoryEntity historyEntity = memberRepository
                 .findById(memberUUID)
                 .orElseThrow(EntityNotFoundException::new)
@@ -496,7 +497,7 @@ public class HistoryService {
 
     }
 
-    void changeContributionTime(String memberUUID) {
+   public void changeContributionTime(String memberUUID) {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         LocalDate date;
         if (memberEntity.getHistory().getContributionList().get(0).getValidThru().getDayOfMonth() == 28) {

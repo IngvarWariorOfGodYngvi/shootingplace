@@ -189,8 +189,8 @@ public class FilesController {
     }
 
     @GetMapping("/downloadCertificateOfClubMembership/{memberUUID}")
-    public ResponseEntity<byte[]> CertificateOfClubMembership(@PathVariable String memberUUID, @RequestParam String reason) throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.CertificateOfClubMembership(memberUUID, reason);
+    public ResponseEntity<byte[]> CertificateOfClubMembership(@PathVariable String memberUUID, @RequestParam String reason,@RequestParam String city) throws IOException, DocumentException {
+        FilesEntity filesEntity = filesService.CertificateOfClubMembership(memberUUID, reason, city);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")

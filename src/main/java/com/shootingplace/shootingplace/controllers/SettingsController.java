@@ -2,7 +2,7 @@ package com.shootingplace.shootingplace.controllers;
 
 import com.shootingplace.shootingplace.domain.models.Club;
 import com.shootingplace.shootingplace.services.ClubService;
-import com.shootingplace.shootingplace.services.UserService;
+import com.shootingplace.shootingplace.users.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;

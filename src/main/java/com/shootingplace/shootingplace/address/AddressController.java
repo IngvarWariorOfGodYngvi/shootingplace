@@ -1,7 +1,5 @@
-package com.shootingplace.shootingplace.controllers;
+package com.shootingplace.shootingplace.address;
 
-import com.shootingplace.shootingplace.domain.models.Address;
-import com.shootingplace.shootingplace.services.AddressService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 public class AddressController {
 
     private final AddressService addressService;
-
 
     public AddressController(AddressService addressService) {
         this.addressService = addressService;

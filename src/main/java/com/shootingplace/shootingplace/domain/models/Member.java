@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.domain.models;
 
+import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.domain.entities.ClubEntity;
 import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
 import lombok.AllArgsConstructor;

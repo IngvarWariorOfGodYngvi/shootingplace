@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.domain.entities;
 
+import com.shootingplace.shootingplace.users.UserEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

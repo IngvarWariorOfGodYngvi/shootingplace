@@ -3,11 +3,9 @@ package com.shootingplace.shootingplace.controllers;
 import com.github.javafaker.Faker;
 import com.github.javafaker.Name;
 import com.shootingplace.shootingplace.domain.entities.MemberEntity;
-import com.shootingplace.shootingplace.repositories.MemberRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.ResponseEntity;
 
@@ -27,7 +25,7 @@ public class MemberControllerTest {
     @InjectMocks
     MemberController memberController;
 
-    private List<MemberEntity> membersList = getMemberEntities();
+    private final List<MemberEntity> membersList = getMemberEntities();
 
 //    @Before
 //    public void init() {

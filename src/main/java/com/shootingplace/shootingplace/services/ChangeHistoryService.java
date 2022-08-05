@@ -1,9 +1,9 @@
 package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.ChangeHistoryEntity;
-import com.shootingplace.shootingplace.domain.entities.UserEntity;
+import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.repositories.ChangeHistoryRepository;
-import com.shootingplace.shootingplace.repositories.UserRepository;
+import com.shootingplace.shootingplace.users.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -37,7 +37,7 @@ public class ChangeHistoryService {
         return userRepository.findAll().stream().anyMatch(f -> f.getPinCode().equals(pinCode));
     }
 
-    void addRecordToChangeHistory(String pinCode, String classNamePlusMethod, String uuid) {
+    public void addRecordToChangeHistory(String pinCode, String classNamePlusMethod, String uuid) {
 
         UserEntity userEntity = userRepository.findAll().stream().filter(f -> f.getPinCode().equals(pinCode)).findFirst().orElse(null);
 

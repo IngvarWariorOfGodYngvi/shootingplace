@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.address.AddressService;
 import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
 import com.shootingplace.shootingplace.domain.entities.LicenseEntity;
 import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
@@ -7,7 +8,11 @@ import com.shootingplace.shootingplace.domain.entities.MemberEntity;
 import com.shootingplace.shootingplace.domain.enums.ErasedType;
 import com.shootingplace.shootingplace.domain.models.Member;
 import com.shootingplace.shootingplace.domain.models.MemberDTO;
-import com.shootingplace.shootingplace.repositories.*;
+import com.shootingplace.shootingplace.repositories.MemberRepository;
+import com.shootingplace.shootingplace.repositories.ClubRepository;
+import com.shootingplace.shootingplace.repositories.ErasedRepository;
+import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
+import com.shootingplace.shootingplace.repositories.LicenseRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -525,7 +530,6 @@ public class MemberService {
     }
 
     public List<String> getAllNames() {
-        checkMembers();
 
 
         List<String> list = new ArrayList<>();
@@ -630,7 +634,6 @@ public class MemberService {
     }
 
     public List<MemberDTO> getAllMemberDTO() {
-        checkMembers();
 
         List<MemberDTO> list = new ArrayList<>();
 

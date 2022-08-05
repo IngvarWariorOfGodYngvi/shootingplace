@@ -1,5 +1,6 @@
-package com.shootingplace.shootingplace.domain.entities;
+package com.shootingplace.shootingplace.users;
 
+import com.shootingplace.shootingplace.domain.entities.ChangeHistoryEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -21,7 +22,11 @@ public class UserEntity {
 
     private String name;
 
+    private String secondName;
+
     private String pinCode;
+
+    private String cardNumber;
 
     private boolean superUser;
 
@@ -34,12 +39,28 @@ public class UserEntity {
         return uuid;
     }
 
+    public String getSecondName() {
+        return secondName;
+    }
+
+    public void setSecondName(String secondName) {
+        this.secondName = secondName;
+    }
+
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getCardNumber() {
+        return cardNumber;
+    }
+
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
     }
 
     public List<ChangeHistoryEntity> getList() {

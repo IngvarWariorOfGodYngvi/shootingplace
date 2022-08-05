@@ -143,7 +143,7 @@ public class ContributionService {
     }
 
 
-    ContributionEntity addFirstContribution(String memberUUID, LocalDate contributionPaymentDay) {
+    public ContributionEntity addFirstContribution(String memberUUID, LocalDate contributionPaymentDay) {
 
         ContributionEntity contributionEntity = getContributionEntity(memberUUID, contributionPaymentDay);
         LOG.info("utworzono pierwszą składkę");

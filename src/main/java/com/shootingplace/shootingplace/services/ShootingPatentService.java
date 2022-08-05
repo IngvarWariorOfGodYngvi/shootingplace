@@ -31,7 +31,7 @@ public class ShootingPatentService {
     public ResponseEntity<?> updatePatent(String memberUUID, ShootingPatent shootingPatent) {
 
         if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.badRequest().body("\"Nie znaleziono klubowicza\"");
+            return ResponseEntity.badRequest().body("Nie znaleziono klubowicza");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         ShootingPatentEntity shootingPatentEntity = memberEntity.getShootingPatent();
@@ -46,7 +46,7 @@ public class ShootingPatentService {
 
             if (match && !shootingPatentEntity.getPatentNumber().equals(shootingPatent.getPatentNumber())) {
                 LOG.error("ktoś już ma taki numer patentu");
-                return ResponseEntity.badRequest().body("\"ktoś już ma taki numer patentu\"");
+                return ResponseEntity.badRequest().body("ktoś już ma taki numer patentu");
             } else {
                 shootingPatentEntity.setPatentNumber(shootingPatent.getPatentNumber());
                 LOG.info("Wprowadzono numer patentu");
@@ -78,7 +78,7 @@ public class ShootingPatentService {
         shootingPatentRepository.saveAndFlush(shootingPatentEntity);
         LOG.info("Zaktualizowano patent");
         historyService.updateShootingPatentHistory(memberUUID, shootingPatent);
-        return ResponseEntity.ok("\"Zaktualizowano patent" + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\"");
+        return ResponseEntity.ok("Zaktualizowano patent " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
     }
 
     public ShootingPatent getShootingPatent() {
