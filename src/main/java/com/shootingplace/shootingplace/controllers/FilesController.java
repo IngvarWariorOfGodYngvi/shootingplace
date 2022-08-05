@@ -35,7 +35,7 @@ public class FilesController {
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
-        String message = "";
+        String message;
         try {
             filesService.store(file);
 
@@ -49,7 +49,7 @@ public class FilesController {
 
     @PostMapping("/member/{uuid}")
     public ResponseEntity<?> addImageToMember(@PathVariable String uuid, @RequestParam("file") MultipartFile file){
-        String message = "";
+        String message;
         try {
             MemberEntity member = memberService.getMember(uuid);
             String store = filesService.store(file,member);
@@ -81,7 +81,7 @@ public class FilesController {
     }
 
     @GetMapping("/downloadCSVFile/{memberUUID}")
-    public ResponseEntity<byte[]> getMemberCSVFile(@PathVariable String memberUUID) throws IOException, DocumentException {
+    public ResponseEntity<byte[]> getMemberCSVFile(@PathVariable String memberUUID) throws IOException {
         FilesEntity filesEntity = filesService.getMemberCSVFile(memberUUID);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
@@ -117,7 +117,7 @@ public class FilesController {
     }
 
     @GetMapping("/downloadAnnouncementFromCompetitionXLSX/{tournamentUUID}")
-    public ResponseEntity<byte[]> getAnnouncementFromCompetitionXSLX(@PathVariable String tournamentUUID) throws IOException, DocumentException {
+    public ResponseEntity<byte[]> getAnnouncementFromCompetitionXSLX(@PathVariable String tournamentUUID) throws IOException {
         FilesEntity filesEntity = xlsxFiles.createAnnouncementInXLSXType(tournamentUUID);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
@@ -238,6 +238,14 @@ public class FilesController {
     @GetMapping("/downloadJudgingReport")
     public ResponseEntity<byte[]> getJudgingReportInChosenTime(/*@RequestParam LocalDate from, @RequestParam LocalDate to*/) throws DocumentException, IOException {
         FilesEntity filesEntity = filesService.getJudgingReportInChosenTime(/*from,to*/);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")
+                .body(filesEntity.getData());
+    }
+    @GetMapping("/downloadWorkReport")
+    public ResponseEntity<byte[]> getWorkTimeReport(@RequestParam List<String> month) throws DocumentException, IOException {
+        FilesEntity filesEntity = filesService.getWorkTimeReport(month);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")

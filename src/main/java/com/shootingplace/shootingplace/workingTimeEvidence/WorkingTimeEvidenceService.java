@@ -39,8 +39,6 @@ public class WorkingTimeEvidenceService {
             return closeWTE(entity1, false);
         } else {
 
-//        WorkingTimeEvidenceEntity entity1 = all.stream().filter(f -> f.getCardNumber().equals(number)).filter(f -> !f.isClose()).collect(Collectors.toList()).get(0);
-
             if (userRepository.existsByCardNumber(number)) {
                 UserEntity user = userRepository.findByCardNumber(number);
                 LocalDateTime start = LocalDateTime.now();

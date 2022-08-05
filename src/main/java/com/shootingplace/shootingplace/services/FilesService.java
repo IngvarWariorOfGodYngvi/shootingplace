@@ -8,8 +8,10 @@ import com.shootingplace.shootingplace.domain.enums.Discipline;
 import com.shootingplace.shootingplace.domain.models.FilesModel;
 import com.shootingplace.shootingplace.domain.models.MemberRanking;
 import com.shootingplace.shootingplace.domain.models.Score;
-import com.shootingplace.shootingplace.repositories.MemberRepository;
 import com.shootingplace.shootingplace.repositories.*;
+import com.shootingplace.shootingplace.users.UserRepository;
+import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
+import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +31,10 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,10 +51,12 @@ public class FilesService {
     private final ContributionRepository contributionRepository;
     private final CompetitionRepository competitionRepository;
     private final GunStoreRepository gunStoreRepository;
+    private final WorkingTimeEvidenceRepository workRepo;
+    private final UserRepository userRepo;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository) {
+    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, UserRepository userRepo) {
         this.memberRepository = memberRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.filesRepository = filesRepository;
@@ -61,6 +67,8 @@ public class FilesService {
         this.contributionRepository = contributionRepository;
         this.competitionRepository = competitionRepository;
         this.gunStoreRepository = gunStoreRepository;
+        this.workRepo = workRepo;
+        this.userRepo = userRepo;
     }
 
     FilesEntity createFileEntity(FilesModel filesModel) {
@@ -543,7 +551,7 @@ public class FilesService {
 
     }
 
-    public FilesEntity  createApplicationForExtensionOfTheCompetitorsLicense(String memberUUID) throws IOException, DocumentException {
+    public FilesEntity createApplicationForExtensionOfTheCompetitorsLicense(String memberUUID) throws IOException, DocumentException {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
 
         String fileName = "Wniosek_" + memberEntity.getFirstName() + "_" + memberEntity.getSecondName() + ".pdf";
@@ -1266,7 +1274,7 @@ public class FilesService {
         if (reason.equals(choice[1])) {
             pesel = " PESEL: " + memberEntity.getPesel();
         }
-        String sex, word = "";
+        String sex, word ;
         if (getSex(memberEntity.getPesel()).equals("Pani")) {
             sex = "Pani";
             word = "wystąpiła";
@@ -2836,7 +2844,7 @@ public class FilesService {
         int size = all.size();
         PdfPTable innerTable = new PdfPTable(size);
         for (TournamentEntity tournamentEntity : all) {
-            PdfPCell cell = new PdfPCell(new Paragraph(String.valueOf(tournamentEntity.getDate().format(dateFormat())), font(10, 1)));
+            PdfPCell cell = new PdfPCell(new Paragraph(tournamentEntity.getDate().format(dateFormat()), font(10, 1)));
             cell.setBorderWidth(0);
             cell.setHorizontalAlignment(1);
             innerTable.addCell(cell);
@@ -2957,8 +2965,7 @@ public class FilesService {
         document.add(title);
 //        document.add(date);
         // dla każdego sędziego
-        for (int i = 0; i < arbiters.size(); i++) {
-            MemberEntity arbiter = arbiters.get(i);
+        for (MemberEntity arbiter : arbiters) {
             if (arbiter.getHistory().getJudgingHistory().size() > 0) {
                 Paragraph arbiterP = new Paragraph(arbiter.getFirstName() + arbiter.getSecondName(), font(10, 1));
                 document.add(arbiterP);
@@ -2967,9 +2974,9 @@ public class FilesService {
                 // dodawanie jego sędziowania
                 for (int j = 0; j < judgingHistory.size(); j++) {
 
-                    Chunk tournamentIndex = new Chunk(String.valueOf(j + 1) + " ", font(10, 0));
+                    Chunk tournamentIndex = new Chunk((j + 1) + " ", font(10, 0));
                     Chunk tournamentName = new Chunk(judgingHistory.get(j).getName() + " ", font(10, 0));
-                    Chunk tournamentDate = new Chunk(judgingHistory.get(j).getDate().format(dateFormat()).toString() + " ", font(10, 0));
+                    Chunk tournamentDate = new Chunk(judgingHistory.get(j).getDate().format(dateFormat()) + " ", font(10, 0));
                     Chunk tournamentFunction = new Chunk(judgingHistory.get(j).getJudgingFunction() + " ", font(10, 0));
                     Paragraph tournament = new Paragraph();
                     tournament.add(tournamentIndex);
@@ -3001,6 +3008,109 @@ public class FilesService {
 
         file.delete();
         return filesEntity;
+    }
+
+    public FilesEntity getWorkTimeReport(List<String> month) throws IOException, DocumentException {
+
+        String fileName = "raport_pracy.pdf";
+        Document document = new Document(PageSize.A4);
+        PdfWriter writer = PdfWriter.getInstance(document,
+                new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
+        document.open();
+        document.addTitle(fileName);
+        document.addCreationDate();
+        document.addAuthor("KS DZIESIĄTKA");
+        document.addCreator("Igor Żebrowski");
+        month.forEach(e -> {
+                    String finalMonth = e.toLowerCase(Locale.ROOT);
+                    List<WorkingTimeEvidenceEntity> evidenceEntities = workRepo.findAll()
+                            .stream()
+                            .filter(f -> f.getStop() != null)
+                            .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
+                            .collect(Collectors.toList());
+
+                    userRepo.findAll().forEach(u ->
+                            {
+                                //tutaj tworzę dokument
+                                try {
+                                    Paragraph newLine = new Paragraph(" ", font(13, 1));
+                                    Paragraph title = new Paragraph("Raport Pracy „DZIESIĄTKA” ŁÓDŹ - " + e, font(13, 1));
+                                    Paragraph name = new Paragraph(u.getName() + " " + u.getSecondName(), font(12, 0));
+                                    document.add(title);
+                                    document.add(name);
+                                    document.add(newLine);
+                                } catch (DocumentException | IOException ex) {
+                                    ex.printStackTrace();
+                                }
+                                List<WorkingTimeEvidenceEntity> userWork = evidenceEntities
+                                        .stream()
+                                        .filter(f -> f.getUser().equals(u))
+                                        .sorted(Comparator.comparing(WorkingTimeEvidenceEntity::getStart).reversed())
+                                        .collect(Collectors.toList());
+
+
+                                AtomicInteger workSumHours = new AtomicInteger();
+                                AtomicInteger workSumMinutes = new AtomicInteger();
+                                userWork.forEach(g -> {
+                                            try {
+                                                int workTimeSumHours;
+                                                int workTimeSumMinutes;
+                                                String workTime = g.getWorkTime();
+                                                String formatStart = g.getStart().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
+                                                String formatStop = g.getStop().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
+                                                workTimeSumHours = sumIntFromString(workTime, 0, 2);
+                                                workTimeSumMinutes = sumIntFromString(workTime, 3, 5);
+                                                Paragraph workDay = new Paragraph(formatStart + " - " + formatStop + " - " + workTime, font(10, 0));
+                                                workDay.setAlignment(0);
+                                                document.add(workDay);
+                                                workSumHours.getAndAdd(workTimeSumHours);
+                                                workSumMinutes.getAndAdd(workTimeSumMinutes);
+                                            } catch (DocumentException | IOException ex) {
+                                                ex.printStackTrace();
+                                            }
+                                        }
+
+                                );
+                                try {
+                                    int acquire = workSumMinutes.getAcquire() % 60;
+                                    int acquire1 = workSumMinutes.getAcquire() / 60;
+                                    workSumHours.getAndAdd(acquire1);
+                                    String format = String.format("%02d:%02d",
+                                            workSumHours.getAcquire(), acquire);
+                                    Paragraph sum = new Paragraph("Suma godzin: " + format, font(10, 1));
+                                    sum.setAlignment(2);
+                                    document.add(sum);
+                                    document.newPage();
+                                } catch (DocumentException | IOException ex) {
+                                    ex.printStackTrace();
+                                }
+                            }
+                    );
+                }
+        );
+        document.close();
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+
+        File file = new File(fileName);
+
+        file.delete();
+        return filesEntity;
+    }
+
+    private Integer sumIntFromString(String sequence, int substringStart, int substringEnd) {
+        return Integer.parseInt(sequence.substring(substringStart, substringEnd));
+
     }
 
     public List<FilesModel> getAllFilesList() {
@@ -3119,7 +3229,6 @@ public class FilesService {
     }
 
     /**
-     * @param pesel
      * @return date of birth in format year-month-day
      */
     private LocalDate birthDay(String pesel) {
@@ -3265,7 +3374,7 @@ public class FilesService {
         @Override
         public void onStartPage(PdfWriter writer, Document document) {
             try {
-                // to działa w miejscu docelowym - nieruszać tego
+                // to działa w miejscu docelowym - nie ruszać tego
                 String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/pełna-nazwa(małe).bmp";
                 Image image = Image.getInstance(source);
 
