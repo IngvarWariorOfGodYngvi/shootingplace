@@ -4,5 +4,5 @@ import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserSQLRepository extends UserRepository, JpaRepository<UserEntity,String> {
+interface UserSQLRepository extends UserRepository, JpaRepository<UserEntity,String> {
 }

@@ -4,5 +4,5 @@ import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.address.AddressRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AddressSQLRepository extends AddressRepository, JpaRepository<AddressEntity,String> {
+interface AddressSQLRepository extends AddressRepository, JpaRepository<AddressEntity,String> {
 }
