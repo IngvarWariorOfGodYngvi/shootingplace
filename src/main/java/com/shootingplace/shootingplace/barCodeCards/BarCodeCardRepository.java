@@ -5,5 +5,7 @@ public interface BarCodeCardRepository {
 
     boolean existsByBarCode(String barCode);
 
-    boolean existsByBelongsT(String belongsTo);
+    BarCodeCardEntity findByBarCode(String number);
+
+//    boolean existsByBelongsTo(String belongsTo);
 }

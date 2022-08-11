@@ -2,9 +2,9 @@ package com.shootingplace.shootingplace.controllers;
 
 import com.itextpdf.text.DocumentException;
 import com.shootingplace.shootingplace.domain.entities.FilesEntity;
-import com.shootingplace.shootingplace.domain.entities.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.services.FilesService;
-import com.shootingplace.shootingplace.services.MemberService;
+import com.shootingplace.shootingplace.member.MemberService;
 import com.shootingplace.shootingplace.services.XLSXFiles;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

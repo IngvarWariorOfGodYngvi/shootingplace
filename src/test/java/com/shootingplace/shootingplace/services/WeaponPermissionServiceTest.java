@@ -1,9 +1,9 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.domain.entities.WeaponPermissionEntity;
 import com.shootingplace.shootingplace.domain.models.WeaponPermission;
-import com.shootingplace.shootingplace.repositories.MemberRepository;
+import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.repositories.WeaponPermissionRepository;
 import org.hamcrest.Matchers;
 import org.junit.After;

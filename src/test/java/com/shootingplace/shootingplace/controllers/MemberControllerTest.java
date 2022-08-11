@@ -2,7 +2,8 @@ package com.shootingplace.shootingplace.controllers;
 
 import com.github.javafaker.Faker;
 import com.github.javafaker.Name;
-import com.shootingplace.shootingplace.domain.entities.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberController;
+import com.shootingplace.shootingplace.member.MemberEntity;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;

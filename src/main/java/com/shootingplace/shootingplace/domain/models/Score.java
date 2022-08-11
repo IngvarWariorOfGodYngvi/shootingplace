@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.domain.models;
 
 import com.shootingplace.shootingplace.domain.entities.OtherPersonEntity;
+import com.shootingplace.shootingplace.member.MemberDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

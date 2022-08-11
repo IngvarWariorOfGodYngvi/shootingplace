@@ -24,6 +24,6 @@ public class WorkingTimeEvidenceController {
     @GetMapping("/")
     public ResponseEntity<?> getAllActiveUsers(){
 
-       return ResponseEntity.ok(workService.getAllActiveUsers());
+       return ResponseEntity.ok(workService.getAllUsersInWork());
     }
 }

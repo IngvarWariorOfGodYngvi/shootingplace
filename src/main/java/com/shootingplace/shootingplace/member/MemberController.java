@@ -1,11 +1,7 @@
-package com.shootingplace.shootingplace.controllers;
+package com.shootingplace.shootingplace.member;
 
 
-import com.shootingplace.shootingplace.domain.entities.MemberEntity;
-import com.shootingplace.shootingplace.domain.models.Member;
-import com.shootingplace.shootingplace.domain.models.MemberDTO;
 import com.shootingplace.shootingplace.services.ChangeHistoryService;
-import com.shootingplace.shootingplace.services.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;

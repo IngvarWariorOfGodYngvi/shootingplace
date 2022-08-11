@@ -25,13 +25,13 @@ private final UserService userService;
     }
 
     @PostMapping("/createSuperUser")
-    public ResponseEntity<?> createSuperUser(@RequestParam String name, @RequestParam String pinCode) {
-        return userService.createSuperUser(name, pinCode);
+    public ResponseEntity<?> createSuperUser(@RequestParam String firstName,@RequestParam String secondName, @RequestParam String pinCode) {
+        return userService.createSuperUser(firstName,secondName, pinCode);
     }
 
     @PostMapping("/createUser")
-    public ResponseEntity<?> createUser(@RequestParam String name, @RequestParam String pinCode, @RequestParam String superPinCode) {
-        return userService.createUser(name, pinCode, superPinCode);
+    public ResponseEntity<?> createUser(@RequestParam String firstName,@RequestParam String secondName, @RequestParam String pinCode, @RequestParam String superPinCode) {
+        return userService.createUser(firstName, secondName, pinCode, superPinCode);
     }
 
 }

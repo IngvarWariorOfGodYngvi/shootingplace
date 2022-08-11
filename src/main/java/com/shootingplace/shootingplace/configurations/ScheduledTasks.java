@@ -1,9 +1,10 @@
 package com.shootingplace.shootingplace.configurations;
 
-import com.shootingplace.shootingplace.services.MemberService;
+import com.shootingplace.shootingplace.member.MemberService;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class ScheduledTasks {
@@ -21,6 +22,7 @@ public class ScheduledTasks {
         workServ.closeAllActiveWorkTime();
     }
 
-    @Scheduled(cron = "0 30 20 * * *")
+    @Scheduled(cron = "0 0/15 * * * *")
+    @Transactional
     public void checkMembers() {memberServ.checkMembers();}
 }

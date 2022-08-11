@@ -8,6 +8,8 @@ import com.shootingplace.shootingplace.domain.enums.Discipline;
 import com.shootingplace.shootingplace.domain.models.FilesModel;
 import com.shootingplace.shootingplace.domain.models.MemberRanking;
 import com.shootingplace.shootingplace.domain.models.Score;
+import com.shootingplace.shootingplace.member.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.repositories.*;
 import com.shootingplace.shootingplace.users.UserRepository;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
@@ -3036,7 +3038,7 @@ public class FilesService {
                                 try {
                                     Paragraph newLine = new Paragraph(" ", font(13, 1));
                                     Paragraph title = new Paragraph("Raport Pracy „DZIESIĄTKA” ŁÓDŹ - " + e, font(13, 1));
-                                    Paragraph name = new Paragraph(u.getName() + " " + u.getSecondName(), font(12, 0));
+                                    Paragraph name = new Paragraph(u.getFirstName() + " " + u.getSecondName(), font(12, 0));
                                     document.add(title);
                                     document.add(name);
                                     document.add(newLine);
@@ -3171,7 +3173,7 @@ public class FilesService {
         FilesEntity fileEntity = createFileEntity(build);
 
         member.setImageUUID(fileEntity.getUuid());
-        memberRepository.saveAndFlush(member);
+        memberRepository.save(member);
 
         return fileEntity.getUuid();
     }

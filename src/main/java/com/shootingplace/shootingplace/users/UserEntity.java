@@ -1,6 +1,8 @@
 package com.shootingplace.shootingplace.users;
 
+import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.domain.entities.ChangeHistoryEntity;
+import com.shootingplace.shootingplace.domain.models.Person;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -13,20 +15,20 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UserEntity {
+public class UserEntity extends Person {
 
     @Id
     @GeneratedValue(generator = "id")
     @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
     private String uuid;
 
-    private String name;
+    private String firstName;
 
     private String secondName;
 
     private String pinCode;
-
-    private String cardNumber;
+@OneToMany
+    private List<BarCodeCardEntity> barCodeCardList;
 
     private boolean superUser;
 
@@ -34,6 +36,16 @@ public class UserEntity {
     @OrderBy("dayNow DESC, timeNow DESC")
     @ManyToMany
     private List<ChangeHistoryEntity> changeHistoryEntities;
+
+    private String subType;
+
+    public String getSubType() {
+        return subType;
+    }
+
+    public void setSubType(String subType) {
+        this.subType = subType;
+    }
 
     public String getUuid() {
         return uuid;
@@ -47,20 +59,22 @@ public class UserEntity {
         this.secondName = secondName;
     }
 
-    public String getName() {
-        return name;
+    @Override
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    @Override
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
-    public String getCardNumber() {
-        return cardNumber;
+    public List<BarCodeCardEntity> getBarCodeCardList() {
+        return barCodeCardList;
     }
 
-    public void setCardNumber(String cardNumber) {
-        this.cardNumber = cardNumber;
+    public void setBarCodeCardList(List<BarCodeCardEntity> barCodeCardList) {
+        this.barCodeCardList = barCodeCardList;
     }
 
     public List<ChangeHistoryEntity> getList() {

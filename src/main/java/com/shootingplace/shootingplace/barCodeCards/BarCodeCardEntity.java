@@ -24,9 +24,73 @@ public class BarCodeCardEntity {
 
     private boolean isActive;
     /**
-     *  If Member - enter first name and second name.
-     *  If User - enter name and second name
+     * enter uuid of Member / User
      */
     private String belongsTo;
+    /**
+     * enter Member / User
+     */
+    private String type;
 
+    private String subType;
+
+    private boolean isMaster;
+
+    private int useCounter;
+
+    public void addCountUse() {
+        this.useCounter += 1;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public String getBarCode() {
+        return barCode;
+    }
+
+    public void setBarCode(String barCode) {
+        this.barCode = barCode;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        isActive = active;
+    }
+
+    public String getBelongsTo() {
+        return belongsTo;
+    }
+
+    public String getSubType() {
+        return subType;
+    }
+
+    public void setSubType(String subType) {
+        this.subType = subType;
+    }
+
+    public boolean isMaster() {
+        return isMaster;
+    }
+
+    public void setMaster(boolean master) {
+        isMaster = master;
+    }
+
+    public void setBelongsTo(String belongsTo) {
+        this.belongsTo = belongsTo;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 }

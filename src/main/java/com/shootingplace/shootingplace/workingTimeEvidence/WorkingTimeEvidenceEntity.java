@@ -28,6 +28,8 @@ public class WorkingTimeEvidenceEntity {
     private String cardNumber;
     private String workTime;
     private boolean isClose;
+    private boolean isAutomatedClosed;
+    private boolean toClarify;
     @OneToOne(orphanRemoval = true)
     private UserEntity user;
 
@@ -37,6 +39,26 @@ public class WorkingTimeEvidenceEntity {
 
     public boolean isClose() {
         return isClose;
+    }
+
+    public void setClose(boolean close) {
+        isClose = close;
+    }
+
+    public boolean isAutomatedClosed() {
+        return isAutomatedClosed;
+    }
+
+    public boolean isToClarify() {
+        return toClarify;
+    }
+
+    public void setToClarify(boolean toClarify) {
+        this.toClarify = toClarify;
+    }
+
+    public void setAutomatedClosed(boolean automatedClosed) {
+        isAutomatedClosed = automatedClosed;
     }
 
     public LocalDateTime getStart() {

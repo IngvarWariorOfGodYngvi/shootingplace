@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.domain.models;
 
-import com.shootingplace.shootingplace.domain.entities.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.domain.entities.OtherPersonEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

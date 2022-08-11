@@ -53,7 +53,7 @@ public class ChangeHistoryServiceTest {
         when(changeHistoryRepository.save(any(ChangeHistoryEntity.class))).thenReturn(save(changeHistoryEntity));
         ChangeHistoryEntity changeHistoryEntity1 = changeHistoryService.addRecord(user, desc, uuid);
         //then
-        assertThat(changeHistoryEntity1.getUserEntity().getName(), Matchers.equalTo("User1"));
+        assertThat(changeHistoryEntity1.getUserEntity().getFirstName(), Matchers.equalTo("User1"));
         assertThat(changeHistoryEntity1.getBelongsTo(), Matchers.equalTo(uuid));
     }
 
@@ -139,7 +139,7 @@ public class ChangeHistoryServiceTest {
         return UserEntity.builder()
                 .uuid(String.valueOf(UUID.randomUUID()))
                 .active(true)
-                .name("User" + i)
+                .firstName("User" + i)
                 .changeHistoryEntities(new ArrayList<>())
                 .pinCode(String.valueOf(y))
                 .superUser(superUser)

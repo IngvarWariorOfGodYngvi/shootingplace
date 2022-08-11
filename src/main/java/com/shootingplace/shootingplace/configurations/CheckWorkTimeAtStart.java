@@ -16,6 +16,6 @@ public class CheckWorkTimeAtStart {
 
     @EventListener(ContextRefreshedEvent.class)
     public void contextRefreshedEvent() {
-        workRepo.closeAllActiveWorkTimeAfterCloseApp();
+        workRepo.closeAllActiveWorkTime();
     }
 }

@@ -1,6 +1,9 @@
-package com.shootingplace.shootingplace.domain.entities;
+package com.shootingplace.shootingplace.member;
 
 import com.shootingplace.shootingplace.address.AddressEntity;
+import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
+import com.shootingplace.shootingplace.domain.entities.*;
+import com.shootingplace.shootingplace.domain.models.Person;
 import com.shootingplace.shootingplace.validators.ValidPESEL;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,13 +16,14 @@ import org.springframework.lang.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
+import java.util.List;
 
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class MemberEntity {
+public class MemberEntity extends Person {
 
     @Id
     @GeneratedValue(generator = "id")
@@ -29,6 +33,8 @@ public class MemberEntity {
     private LocalDate joinDate;
     private Integer legitimationNumber;
     private String clubCardBarCode;
+    @OneToMany
+    private List<BarCodeCardEntity> barCodeCardList;
     @NotBlank
     private String firstName;
     @NotBlank
@@ -197,6 +203,14 @@ public class MemberEntity {
 
     public void setErasedEntity(ErasedEntity erasedEntity) {
         this.erasedEntity = erasedEntity;
+    }
+
+    public List<BarCodeCardEntity> getBarCodeCardList() {
+        return barCodeCardList;
+    }
+
+    public void setBarCodeCardList(List<BarCodeCardEntity> barCodeCardList) {
+        this.barCodeCardList = barCodeCardList;
     }
 
     public Boolean getActive() {

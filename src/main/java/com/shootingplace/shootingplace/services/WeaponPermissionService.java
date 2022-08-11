@@ -1,9 +1,9 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.domain.entities.WeaponPermissionEntity;
 import com.shootingplace.shootingplace.domain.models.WeaponPermission;
-import com.shootingplace.shootingplace.repositories.MemberRepository;
+import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.repositories.WeaponPermissionRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,7 +68,7 @@ public class WeaponPermissionService {
         }
         weaponPermissionRepository.saveAndFlush(weaponPermissionEntity);
         memberEntity.setWeaponPermission(weaponPermissionEntity);
-        memberRepository.saveAndFlush(memberEntity);
+        memberRepository.save(memberEntity);
         LOG.info("Zaktualizowano pozwolenie na broń");
         return ResponseEntity.ok("\"Zaktualizowano pozwolenie/dopuszczenie na broń\"");
     }

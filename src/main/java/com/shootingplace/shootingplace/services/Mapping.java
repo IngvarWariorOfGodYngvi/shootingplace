@@ -4,8 +4,9 @@ import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.models.*;
-import com.shootingplace.shootingplace.domain.models.Member;
-import com.shootingplace.shootingplace.domain.models.MemberDTO;
+import com.shootingplace.shootingplace.member.Member;
+import com.shootingplace.shootingplace.member.MemberDTO;
+import com.shootingplace.shootingplace.member.MemberEntity;
 
 import java.util.Optional;
 import java.util.stream.Collectors;

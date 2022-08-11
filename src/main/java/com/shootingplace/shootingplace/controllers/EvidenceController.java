@@ -1,7 +1,7 @@
 //package com.shootingplace.shootingplace.controllers;
 //
 //import com.shootingplace.shootingplace.domain.entities.ElectronicEvidenceEntity;
-//import com.shootingplace.shootingplace.domain.entities.MemberEntity;
+//import com.shootingplace.shootingplace.member.MemberEntity;
 //import com.shootingplace.shootingplace.services.ElectronicEvidenceService;
 //import org.springframework.web.bind.annotation.*;
 //

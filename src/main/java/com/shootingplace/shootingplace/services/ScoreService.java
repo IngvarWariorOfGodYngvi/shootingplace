@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.CountingMethod;
+import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.repositories.CompetitionMembersListRepository;
 import com.shootingplace.shootingplace.repositories.ScoreRepository;
 import com.shootingplace.shootingplace.repositories.TournamentRepository;

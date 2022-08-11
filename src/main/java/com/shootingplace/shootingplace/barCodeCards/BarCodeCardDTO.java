@@ -20,4 +20,8 @@ public class BarCodeCardDTO {
      */
     private String belongsTo;
 
+    private String subType;
+
+    private boolean isMaster;
+
 }

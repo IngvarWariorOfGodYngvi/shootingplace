@@ -1,12 +1,9 @@
-package com.shootingplace.shootingplace.repositories;
-
-import com.shootingplace.shootingplace.domain.entities.MemberEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
+package com.shootingplace.shootingplace.member;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface MemberRepository extends JpaRepository<MemberEntity, String> {
+public interface MemberRepository {
     Optional<MemberEntity> findByPesel(String pesel);
 
     Optional<MemberEntity> findByEmail(String email);
@@ -22,4 +19,13 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String> {
 
     boolean existsByLegitimationNumber(Integer legitimationNumber);
 
+    List<MemberEntity> findAll();
+
+    MemberEntity save(MemberEntity entity);
+
+    boolean existsById(String uuid);
+
+    Optional<MemberEntity> findById(String uuid);
+
+    MemberEntity getOne(String uuid);
 }

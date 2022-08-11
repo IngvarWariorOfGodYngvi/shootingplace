@@ -1,5 +1,7 @@
 package com.shootingplace.shootingplace.workingTimeEvidence;
 
+import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
+import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.slf4j.Logger;
@@ -18,29 +20,41 @@ import java.util.stream.Collectors;
 public class WorkingTimeEvidenceService {
     private final UserRepository userRepository;
     private final WorkingTimeEvidenceRepository workRepo;
+    private final BarCodeCardRepository barCodeCardRepo;
 
     private static final Logger log = LoggerFactory.getLogger(WorkingTimeEvidenceService.class);
 
-    public WorkingTimeEvidenceService(UserRepository userRepository, WorkingTimeEvidenceRepository workRepo) {
+    public WorkingTimeEvidenceService(UserRepository userRepository, WorkingTimeEvidenceRepository workRepo, BarCodeCardRepository barCodeCardRepo) {
         this.userRepository = userRepository;
         this.workRepo = workRepo;
+        this.barCodeCardRepo = barCodeCardRepo;
     }
 
     public String createNewWTE(String number) {
-        String msg;
+        String msg = "";
+        BarCodeCardEntity barCode = barCodeCardRepo.findByBarCode(number);
+        String belongsTo = barCode.getBelongsTo();
+        UserEntity user = userRepository.findById(belongsTo).orElse(null);
+
         List<WorkingTimeEvidenceEntity> all = workRepo.findAll();
+        UserEntity finalUser = user;
         WorkingTimeEvidenceEntity entity1 = all.stream()
                 .filter(Objects::nonNull)
                 .filter(f -> !f.isClose())
-                .filter(f -> f.getCardNumber().equals(number))
+                .filter(f -> f.getUser().equals(finalUser))
                 .findFirst().orElse(null);
+
+        barCode.addCountUse();
+        barCodeCardRepo.save(barCode);
 
         if (entity1 != null) {
             return closeWTE(entity1, false);
         } else {
-
-            if (userRepository.existsByCardNumber(number)) {
-                UserEntity user = userRepository.findByCardNumber(number);
+            belongsTo = barCode.getBelongsTo();
+            user = userRepository.findById(belongsTo).orElse(null);
+            if (user == null) {
+                msg = "nie znaleziono osoby o tym numerze karty";
+            } else {
                 LocalDateTime start = LocalDateTime.now();
 
                 WorkingTimeEvidenceEntity entity = WorkingTimeEvidenceEntity.builder()
@@ -51,13 +65,12 @@ public class WorkingTimeEvidenceService {
                         .user(user).build();
 
                 workRepo.save(entity);
-                msg = user.getName() + " " + user.getSecondName() + " Witaj w Pracy";
-            } else {
-                msg = "nie znaleziono osoby o tym numerze karty";
+                msg = user.getFirstName() + " " + user.getSecondName() + " Witaj w Pracy";
             }
-            log.info(msg);
-            return msg;
         }
+        log.info(msg);
+        return msg;
+
     }
 
 
@@ -65,9 +78,10 @@ public class WorkingTimeEvidenceService {
         String msg;
 
         LocalDateTime stop = LocalDateTime.now();
-
+        entity.setAutomatedClosed(false);
         if (auto) {
             stop = LocalDateTime.now().minusHours(2);
+            entity.setAutomatedClosed(true);
         }
 
         LocalDateTime temp = getTime(entity.getStart(), true);
@@ -75,10 +89,23 @@ public class WorkingTimeEvidenceService {
 
         entity.setStop(stop);
         String s = countTime(temp, temp1);
+        int i = Integer.parseInt(s.substring(0, 2));
+
+        if (i>8) {
+            entity.setToClarify(true);
+        }
+        if(i>24) {
+            i = i % 24;
+            int j= Integer.parseInt(s.substring(3,5));
+            int k= Integer.parseInt(s.substring(6));
+
+            s = String.format("%02d:%02d:%02d",i,j,k);
+        }
+
         entity.setWorkTime(s);
         entity.closeWTE();
         workRepo.save(entity);
-        msg = entity.getUser().getName() + " " + entity.getUser().getSecondName() + " Opuścił Pracę";
+        msg = entity.getUser().getFirstName() + " " + entity.getUser().getSecondName() + " Opuścił Pracę";
         log.info(msg);
         return msg;
     }
@@ -105,6 +132,10 @@ public class WorkingTimeEvidenceService {
         long seconds = tempDateTime.until(stop, ChronoUnit.SECONDS);
 
 
+        if (days > 0) {
+            hours = hours + (24 * days);
+        }
+
         String format = String.format("%02d:%02d:%02d",
                 hours, minutes, seconds);
         log.info("przepracowano: " + format);
@@ -113,11 +144,11 @@ public class WorkingTimeEvidenceService {
     }
 
 
-    public List<String> getAllActiveUsers() {
+    public List<String> getAllUsersInWork() {
 
         List<WorkingTimeEvidenceEntity> list = workRepo.findAll().stream().filter(f -> !f.isClose()).collect(Collectors.toList());
         List<String> list1 = new ArrayList<>();
-        list.forEach(e -> list1.add(e.getUser().getName() + " " + e.getUser().getSecondName()));
+        list.forEach(e -> list1.add(e.getUser().getFirstName() + " " + e.getUser().getSecondName()));
 
         return list1;
     }
@@ -130,8 +161,8 @@ public class WorkingTimeEvidenceService {
                 .collect(Collectors.toList())
                 .forEach(e ->
                 {
-                    LocalTime countTime = LocalTime.parse(countTime(e.getStart(), LocalDateTime.now()));
-                    if (countTime.getHour() > 6) {
+                    String s = countTime(e.getStart(), LocalDateTime.now());
+                    if (Integer.parseInt(s.substring(0,2)) > 6) {
                         closeWTE(e, true);
                     }
 
@@ -145,22 +176,22 @@ public class WorkingTimeEvidenceService {
             if (time.getMinute() < 8) {
                 temp = LocalTime.of(time.getHour(), 0);
             }
-            if (time.getMinute() >= 8 && time.getMinute() < 15) {
+            if (time.getMinute() >= 8 && time.getMinute() <= 15) {
                 temp = LocalTime.of(time.getHour(), 15);
             }
-            if (time.getMinute() > 15 && time.getMinute() < 23) {
+            if (time.getMinute() > 15 && time.getMinute() <= 23) {
                 temp = LocalTime.of(time.getHour(), 15);
             }
-            if (time.getMinute() > 23 && time.getMinute() < 30) {
+            if (time.getMinute() > 23 && time.getMinute() <= 30) {
                 temp = LocalTime.of(time.getHour(), 30);
             }
-            if (time.getMinute() > 30 && time.getMinute() < 38) {
+            if (time.getMinute() > 30 && time.getMinute() <= 38) {
                 temp = LocalTime.of(time.getHour(), 30);
             }
-            if (time.getMinute() > 38 && time.getMinute() < 45) {
+            if (time.getMinute() > 38 && time.getMinute() <= 45) {
                 temp = LocalTime.of(time.getHour(), 45);
             }
-            if (time.getMinute() > 45 && time.getMinute() < 53) {
+            if (time.getMinute() > 45 && time.getMinute() <= 53) {
                 temp = LocalTime.of(time.getHour(), 45);
             }
             if (time.getMinute() > 53) {
@@ -168,19 +199,22 @@ public class WorkingTimeEvidenceService {
             }
 
         } else {
-            if (time.getMinute() > 8) {
+            if (time.getMinute() < 8) {
+                temp = LocalTime.of(time.getHour(), 0);
+            }
+            if (time.getMinute() >= 8) {
                 temp = LocalTime.of(time.getHour(), 15);
             }
-            if (time.getMinute() >= 20 && time.getMinute() < 30) {
+            if (time.getMinute() >= 20 && time.getMinute() <= 30) {
                 temp = LocalTime.of(time.getHour(), 30);
             }
-            if (time.getMinute() > 30 && time.getMinute() < 35) {
+            if (time.getMinute() > 30 && time.getMinute() <= 38) {
                 temp = LocalTime.of(time.getHour(), 30);
             }
-            if (time.getMinute() > 35 && time.getMinute() < 45) {
+            if (time.getMinute() > 38 && time.getMinute() <= 45) {
                 temp = LocalTime.of(time.getHour(), 45);
             }
-            if (time.getMinute() > 45 && time.getMinute() < 50) {
+            if (time.getMinute() > 45 && time.getMinute() <= 50) {
                 temp = LocalTime.of(time.getHour(), 45);
             }
             if (time.getMinute() > 50) {
@@ -192,7 +226,4 @@ public class WorkingTimeEvidenceService {
         return LocalDateTime.of(time.toLocalDate(), temp);
     }
 
-    public void closeAllActiveWorkTimeAfterCloseApp() {
-        closeAllActiveWorkTime();
-    }
 }

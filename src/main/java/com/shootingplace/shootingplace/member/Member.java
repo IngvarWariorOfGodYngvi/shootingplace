@@ -1,19 +1,22 @@
-package com.shootingplace.shootingplace.domain.models;
+package com.shootingplace.shootingplace.member;
 
 import com.shootingplace.shootingplace.address.Address;
+import com.shootingplace.shootingplace.barCodeCards.BarCodeCardDTO;
 import com.shootingplace.shootingplace.domain.entities.ClubEntity;
 import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
+import com.shootingplace.shootingplace.domain.models.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Member {
+public class Member extends Person{
 
     private LocalDate joinDate;
     private Integer legitimationNumber;
@@ -41,6 +44,8 @@ public class Member {
     private PersonalEvidence personalEvidence;
     private boolean pzss;
     private ErasedEntity erasedEntity;
+
+    private List<BarCodeCardDTO> barCodeCardList;
 
     public LocalDate getJoinDate() {
         return joinDate;
@@ -212,5 +217,13 @@ public class Member {
 
     public boolean isPzss() {
         return pzss;
+    }
+
+    public List<BarCodeCardDTO> getBarCodeCardList() {
+        return barCodeCardList;
+    }
+
+    public void setBarCodeCardList(List<BarCodeCardDTO> barCodeCardList) {
+        this.barCodeCardList = barCodeCardList;
     }
 }

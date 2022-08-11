@@ -2,9 +2,9 @@ package com.shootingplace.shootingplace.services;
 
 
 import com.shootingplace.shootingplace.domain.entities.ContributionEntity;
-import com.shootingplace.shootingplace.domain.entities.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.repositories.ContributionRepository;
-import com.shootingplace.shootingplace.repositories.MemberRepository;
+import com.shootingplace.shootingplace.member.MemberRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +104,7 @@ public class ContributionService {
         changeHistoryService.addRecordToChangeHistory(pinCode, contributionEntity.getClass().getSimpleName() + " addContribution", memberUUID);
         memberEntity.setActive(!memberEntity.getHistory().getContributionList().get(0).getValidThru().plusMonths(3).isBefore(LocalDate.now()));
         LOG.info("zmieniono " + memberEntity.getSecondName());
-        memberRepository.saveAndFlush(memberEntity);
+        memberRepository.save(memberEntity);
         return ResponseEntity.ok("\"Przedłużono składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\"");
     }
 
@@ -138,7 +138,7 @@ public class ContributionService {
         historyService.addContribution(memberUUID, contributionEntity);
         changeHistoryService.addRecordToChangeHistory(pinCode, contributionEntity.getClass().getSimpleName() + " addContributionRecord", memberUUID);
         LOG.info("zmieniono " + memberEntity.getSecondName());
-        memberRepository.saveAndFlush(memberEntity);
+        memberRepository.save(memberEntity);
         return ResponseEntity.ok("\"Dodano składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\"");
     }
 
@@ -209,7 +209,7 @@ public class ContributionService {
         contributionRepository.delete(contributionEntity);
         changeHistoryService.addRecordToChangeHistory(pinCode, contributionEntity.getClass().getSimpleName() + " removeContribution", memberUUID);
         LOG.info("zmieniono " + memberEntity.getSecondName());
-        memberRepository.saveAndFlush(memberEntity);
+        memberRepository.save(memberEntity);
 
         return ResponseEntity.ok("\"Usunięto składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\"");
 

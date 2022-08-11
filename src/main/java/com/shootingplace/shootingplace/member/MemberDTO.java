@@ -1,6 +1,7 @@
-package com.shootingplace.shootingplace.domain.models;
+package com.shootingplace.shootingplace.member;
 
 import com.shootingplace.shootingplace.domain.enums.ErasedType;
+import com.shootingplace.shootingplace.domain.models.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,7 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MemberDTO {
+public class MemberDTO extends Person {
     private String uuid;
     private LocalDate joinDate;
     private Integer legitimationNumber;
@@ -23,10 +24,9 @@ public class MemberDTO {
     private Boolean pzss;
     private MemberPermissions memberPermissions;
     private String image;
-
     private Boolean adult = true;
     private Boolean active = true;
-    private Boolean erased = true;
+    private Boolean erased = false;
 
     public String getImage() {
         return image;

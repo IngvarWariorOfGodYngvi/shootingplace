@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.controllers;
 
 import com.shootingplace.shootingplace.domain.models.License;
-import com.shootingplace.shootingplace.domain.models.MemberDTO;
+import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.services.ChangeHistoryService;
 import com.shootingplace.shootingplace.services.HistoryService;
 import com.shootingplace.shootingplace.services.LicenseService;
