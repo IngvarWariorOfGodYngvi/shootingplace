@@ -26,7 +26,7 @@ public class UserService {
     public List<UserDTO> getListOfSuperUser() {
 
         List<UserDTO> list = new ArrayList<>();
-        userRepository.findAll().stream().filter(UserEntity::isSuperUser).forEach(e -> {
+        userRepository.findAll().stream().filter(UserEntity::isSuperUser).filter(f->!f.getSubType().equals(UserSubType.ADMIN.getName())).forEach(e -> {
             list.add(
                     UserDTO.builder()
                             .firstName(e.getFirstName())

@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +26,13 @@ public class BarCodeCardService {
     }
 
     public ResponseEntity<?> createNewCard(BarCodeCardDTO dto) {
+        String adminBarCode = findAdminBarCode(dto.getBarCode());
+        if(!adminBarCode.equals("false")){
+            String s = dto.getBarCode().replaceAll(adminBarCode, "");
+            dto.setBarCode(s);
+            dto.setMaster(true);
+        }
+
 
         if (barCodeCardRepo.existsByBarCode(dto.getBarCode())) {
             return ResponseEntity.badRequest().body("Taki numer jest już do kogoś przypisany - użyj innej karty");
@@ -83,10 +89,17 @@ public class BarCodeCardService {
 
         String[] keyList = new String[adminList.size()];
         int z = 0;
-        for (UserEntity userEntity : adminList) {
+        for (int i = 0; i < adminList.size(); i++) {
+            System.out.println("i: " +i);
+            System.out.println("z: " +z);
+            UserEntity userEntity = adminList.get(i);
             List<BarCodeCardEntity> barCodeCardList = userEntity.getBarCodeCardList();
-            for (BarCodeCardEntity barCodeCardEntity : barCodeCardList) {
+            for (int j = 0; j < barCodeCardList.size(); j++) {
+                System.out.println(j);
+                System.out.println(barCodeCardList.get(j));
+                BarCodeCardEntity barCodeCardEntity = barCodeCardList.get(j);
                 keyList[z] = barCodeCardEntity.getBarCode();
+                //tu coś nie działa
                 z++;
             }
         }
@@ -102,30 +115,21 @@ public class BarCodeCardService {
             if (codeChars.length < key.length) {
                 break;
             }
-
             int y = 0;
-            for (int i = 0; i < codeChars.length; i++) {
-                char q = codeChars[i];
+            for (char q : codeChars) {
                 char k = key[y];
                 if (q != k) {
                     ok[y] = false;
-                    y=0;
+                    y = 0;
                 } else {
                     ok[y] = true;
                     y++;
                 }
-
                 if (y >= ok.length) {
                     break;
                 }
-
             }
-            System.out.println("y:" + y);
-            System.out.println("ok:" + Arrays.toString(ok));
-            System.out.println("ok:" + Arrays.toString(codeChars));
-
-            for (int i = 0; i < ok.length; i++) {
-                boolean b = ok[i];
+            for (boolean b : ok) {
                 if (b) {
                     r = b;
                 } else {
@@ -137,5 +141,62 @@ public class BarCodeCardService {
         }
 
         return ResponseEntity.ok(r);
+    }
+    public String findAdminBarCode(String code) {
+        List<UserEntity> adminList = userRepository.findAll()
+                .stream()
+                .filter(f -> f.getSubType().equals("Admin"))
+                .collect(Collectors.toList());
+
+        String[] keyList = new String[adminList.size()];
+        int z = 0;
+        for (UserEntity userEntity : adminList) {
+            List<BarCodeCardEntity> barCodeCardList = userEntity.getBarCodeCardList();
+            for (BarCodeCardEntity barCodeCardEntity : barCodeCardList) {
+                keyList[z] = barCodeCardEntity.getBarCode();
+                z++;
+            }
+        }
+        boolean r = false;
+        String res = "";
+
+        char[] codeChars = code.toCharArray();
+
+        // idę po długości klucza
+        for (String s : keyList) {
+            char[] key = s.toCharArray();
+            boolean[] ok = new boolean[key.length];
+
+            if (codeChars.length < key.length) {
+                break;
+            }
+            int y = 0;
+            for (char q : codeChars) {
+                char k = key[y];
+                if (q != k) {
+                    ok[y] = false;
+                    y = 0;
+                } else {
+                    ok[y] = true;
+                    y++;
+                }
+                if (y >= ok.length) {
+                    break;
+                }
+            }
+            for (boolean b : ok) {
+                if (b) {
+                    r = b;
+                    res = s;
+                } else {
+                    r = false;
+                    res = "false";
+                    break;
+                }
+            }
+            break;
+        }
+
+        return res;
     }
 }
