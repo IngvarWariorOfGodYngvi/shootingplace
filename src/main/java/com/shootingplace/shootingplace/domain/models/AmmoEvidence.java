@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.domain.models;
 
+import com.shootingplace.shootingplace.file.FilesModel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

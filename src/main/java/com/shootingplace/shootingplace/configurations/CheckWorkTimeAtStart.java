@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.configurations;
 
+import com.shootingplace.shootingplace.domain.enums.UserSubType;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
@@ -16,6 +17,7 @@ public class CheckWorkTimeAtStart {
 
     @EventListener(ContextRefreshedEvent.class)
     public void contextRefreshedEvent() {
-        workRepo.closeAllActiveWorkTime();
+        workRepo.closeAllActiveWorkTime(UserSubType.WORKER.getName());
+        workRepo.closeAllActiveWorkTime(UserSubType.MANAGEMENT.getName());
     }
 }

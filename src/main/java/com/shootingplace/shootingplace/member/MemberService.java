@@ -12,16 +12,19 @@ import com.shootingplace.shootingplace.repositories.LicenseRepository;
 import com.shootingplace.shootingplace.services.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.text.Collator;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -88,7 +91,7 @@ public class MemberService {
                 list.add(Mapping.map(e));
             }
         });
-        list.sort(Comparator.comparing(Member::getSecondName));
+        list.sort(Comparator.comparing(Member::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))));
         LOG.info("Wywołano listę osób z uprawnieniami");
         return list;
     }
@@ -146,35 +149,35 @@ public class MemberService {
                 licenseRepository.saveAndFlush(license);
             }
         });
-//        //młodzież
-//        List<MemberEntity> nonAdultMembers = memberRepository.findAll()
-//                .stream()
-//                .filter(f -> !f.getErased())
-//                .filter(f -> !f.getAdult())
-//                .collect(Collectors.toList());
-//        // nie ma żadnych składek
-//        nonAdultMembers.forEach(e -> {
-//            if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
-//                e.setActive(false);
-//                memberRepository.save(e);
-//            } else {
-//                //dzisiejsza data jest później niż składka + 1 || 2 miesiące
-//                LocalDate validThru = e.getHistory().getContributionList().get(0).getValidThru();
-//                if ((validThru.equals(LocalDate.of(validThru.getYear(), 2, 28)) && validThru.plusMonths(1).isBefore(LocalDate.now()))
-//                        || (validThru.equals(LocalDate.of(validThru.getYear(), 8, 31)) && validThru.plusMonths(2).isBefore(LocalDate.now()))) {
-//                    if (e.getActive()) {
-//                        e.setActive(false);
-//                        LOG.info("zmieniono " + e.getSecondName());
-//                        memberRepository.save(e);
-//                    }
-//                }
-//            }
-//            if (e.getLicense().getNumber() != null) {
-//                LicenseEntity license = e.getLicense();
-//                license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
-//                licenseRepository.saveAndFlush(license);
-//            }
-//        });
+        //młodzież
+        List<MemberEntity> nonAdultMembers = memberRepository.findAll()
+                .stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> !f.getAdult())
+                .collect(Collectors.toList());
+        // nie ma żadnych składek
+        nonAdultMembers.forEach(e -> {
+            if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
+                e.setActive(false);
+                memberRepository.save(e);
+            } else {
+                //dzisiejsza data jest później niż składka + 1 || 2 miesiące
+                LocalDate validThru = e.getHistory().getContributionList().get(0).getValidThru();
+                if ((validThru.equals(LocalDate.of(validThru.getYear(), 2, 28)) && validThru.plusMonths(1).isBefore(LocalDate.now()))
+                        || (validThru.equals(LocalDate.of(validThru.getYear(), 8, 31)) && validThru.plusMonths(2).isBefore(LocalDate.now()))) {
+                    if (e.getActive()) {
+                        e.setActive(false);
+                        LOG.info("zmieniono " + e.getSecondName());
+                        memberRepository.save(e);
+                    }
+                }
+            }
+            if (e.getLicense().getNumber() != null) {
+                LicenseEntity license = e.getLicense();
+                license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
+                licenseRepository.saveAndFlush(license);
+            }
+        });
     }
 
     //--------------------------------------------------------------------------
@@ -387,7 +390,7 @@ public class MemberService {
         if (member.getEmail() != null && !member.getEmail().isEmpty()) {
             if (memberRepository.findByEmail(member.getEmail()).isPresent() && !memberEntity.getEmail().equals(member.getEmail())) {
                 LOG.error("Już ktoś ma taki sam e-mail");
-                return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Uwaga! Już ktoś ma taki sam e-mail\"");
+                return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Uwaga! Już ktoś ma taki sam e-mail");
             } else {
                 memberEntity.setEmail(member.getEmail().trim().toLowerCase());
                 LOG.info("Zaktualizowano pomyślnie Email");
@@ -396,7 +399,7 @@ public class MemberService {
         if (member.getPesel() != null && !member.getPesel().isEmpty()) {
             if (memberRepository.findByPesel(member.getPesel()).isPresent()) {
                 LOG.error("Już ktoś ma taki sam numer PESEL");
-                return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Już ktoś ma taki sam numer PESEL\"");
+                return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Już ktoś ma taki sam numer PESEL");
             } else {
                 memberEntity.setPesel(member.getPesel());
                 LOG.info("Zaktualizowano pomyślnie Numer PESEL");
@@ -419,7 +422,7 @@ public class MemberService {
         if (member.getIDCard() != null && !member.getIDCard().isEmpty()) {
             if (memberRepository.findByIDCard(member.getIDCard().trim()).isPresent() && !memberEntity.getIDCard().equals(member.getIDCard())) {
                 LOG.error("Ktoś już ma taki numer dowodu");
-                return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Ktoś już ma taki numer dowodu\"");
+                return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Ktoś już ma taki numer dowodu");
             } else {
                 memberEntity.setIDCard(member.getIDCard().trim().toUpperCase());
                 LOG.info("Zaktualizowano pomyślnie Numer Dowodu");
@@ -428,7 +431,7 @@ public class MemberService {
 
         memberRepository.save(memberEntity);
 
-        return ResponseEntity.ok("\"Zaktualizowano dane klubowicza\"");
+        return ResponseEntity.ok("Zaktualizowano dane klubowicza " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
     }
 
 
@@ -458,11 +461,11 @@ public class MemberService {
     public ResponseEntity<?> getMemberUUIDByLegitimationNumber(int number) {
 
         if (!memberRepository.existsByLegitimationNumber(number)) {
-            return ResponseEntity.badRequest().body("\"Nie udało się znaleźć takiej osoby\"");
+            return ResponseEntity.badRequest().body("Nie udało się znaleźć takiej osoby");
         }
         String uuid = memberRepository.findByLegitimationNumber(number).orElseThrow(EntityNotFoundException::new).getUuid();
 
-        return ResponseEntity.ok("\"" + uuid + "\"");
+        return ResponseEntity.ok(uuid);
 
     }
 
@@ -549,7 +552,7 @@ public class MemberService {
                         list.add(e.getSecondName().concat(" " + e.getFirstName() + " leg. " + e.getLegitimationNumber()));
                     }
                 });
-        list.sort(Comparator.comparing(String::new));
+        list.sort(Comparator.comparing(String::new,Collator.getInstance(Locale.forLanguageTag("pl"))));
         LOG.info("Lista nazwisk z identyfikatorem");
         return list;
 
@@ -643,8 +646,11 @@ public class MemberService {
     public List<MemberDTO> getAllMemberDTO() {
         List<MemberDTO> list = new ArrayList<>();
 
-        memberRepository.findAll().stream().filter(f -> !f.getErased()).forEach(e -> list.add(Mapping.map2DTO(e)));
-        list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
+        memberRepository.findAll(Sort.by("secondName").descending())
+                .stream()
+                .filter(f -> !f.getErased())
+                .forEach(e -> list.add(Mapping.map2DTO(e)));
+        list.sort(Comparator.comparing(MemberDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))));
         return list;
     }
 
@@ -700,14 +706,14 @@ public class MemberService {
             if (!memberEntity.getPzss()) {
                 memberEntity.setPzss(true);
                 memberRepository.save(memberEntity);
-                return ResponseEntity.ok("\"Wskazano, że Klubowicz jest wpisany do Portalu PZSS\"");
+                return ResponseEntity.ok("Wskazano, że Klubowicz jest wpisany do Portalu PZSS");
             } else {
                 memberEntity.setPzss(false);
                 memberRepository.save(memberEntity);
-                return ResponseEntity.ok("\"Wskazano, że Klubowicz NIE jest wpisany do Portalu PZSS\"");
+                return ResponseEntity.ok("Wskazano, że Klubowicz NIE jest wpisany do Portalu PZSS");
             }
         } else {
-            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
 
     }
@@ -863,23 +869,6 @@ public class MemberService {
 
     public Boolean getMemberEmailPresent(String email) {
         return memberRepository.findByEmail(email).isPresent();
-    }
-
-    public ResponseEntity<?> addBarCode(String uuid, String barcode) {
-
-        if (!memberRepository.existsById(uuid)) {
-            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
-        }
-        if (memberRepository.findByClubCardBarCode(barcode).isPresent()) {
-            return ResponseEntity.badRequest().body("\"Nie można przydzielić numeru bo już jest przypisany do kogoś innego\"");
-        }
-
-        MemberEntity memberEntity = memberRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
-
-        memberEntity.setClubCardBarCode(barcode);
-        memberRepository.save(memberEntity);
-
-        return ResponseEntity.ok("\"Pomyślnie połączono kartę z Klubowiczem \"");
     }
 
     public ResponseEntity<?> findMemberByBarCode(String barcode) {

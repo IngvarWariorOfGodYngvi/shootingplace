@@ -4,6 +4,8 @@ import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.models.*;
+import com.shootingplace.shootingplace.file.FilesEntity;
+import com.shootingplace.shootingplace.file.FilesModel;
 import com.shootingplace.shootingplace.member.Member;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
@@ -370,7 +372,7 @@ public class Mapping {
                 .build();
     }
 
-    static Score map(ScoreEntity s) {
+    public static Score map(ScoreEntity s) {
         if (s.getMember() != null) {
             return Score.builder()
                     .name(s.getName())

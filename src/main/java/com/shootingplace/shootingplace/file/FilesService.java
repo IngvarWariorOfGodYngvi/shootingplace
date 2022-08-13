@@ -1,22 +1,26 @@
-package com.shootingplace.shootingplace.services;
+package com.shootingplace.shootingplace.file;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.CountingMethod;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
-import com.shootingplace.shootingplace.domain.models.FilesModel;
 import com.shootingplace.shootingplace.domain.models.MemberRanking;
 import com.shootingplace.shootingplace.domain.models.Score;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.repositories.*;
+import com.shootingplace.shootingplace.services.Mapping;
+import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -78,7 +82,7 @@ public class FilesService {
         filesModel.setTime(LocalTime.now());
         FilesEntity filesEntity = Mapping.map(filesModel);
         LOG.info(filesModel.getName().trim() + " Encja została zapisana");
-        return filesRepository.saveAndFlush(filesEntity);
+        return filesRepository.save(filesEntity);
 
     }
 
@@ -1276,7 +1280,7 @@ public class FilesService {
         if (reason.equals(choice[1])) {
             pesel = " PESEL: " + memberEntity.getPesel();
         }
-        String sex, word ;
+        String sex, word;
         if (getSex(memberEntity.getPesel()).equals("Pani")) {
             sex = "Pani";
             word = "wystąpiła";
@@ -3012,7 +3016,7 @@ public class FilesService {
         return filesEntity;
     }
 
-    public FilesEntity getWorkTimeReport(List<String> month) throws IOException, DocumentException {
+    public FilesEntity getWorkTimeReport(List<String> month, String workType) throws IOException, DocumentException {
 
         String fileName = "raport_pracy.pdf";
         Document document = new Document(PageSize.A4);
@@ -3030,9 +3034,16 @@ public class FilesService {
                             .stream()
                             .filter(f -> f.getStop() != null)
                             .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
+                            .filter(f -> f.getWorkType().equals(workType))
                             .collect(Collectors.toList());
 
-                    userRepo.findAll().forEach(u ->
+                    Set<UserEntity> users = new HashSet<>();
+                    evidenceEntities.forEach(u -> {
+                        users.add(u.getUser());
+                    });
+
+                    float[] pointColumnWidths = {4F, 14F, 14F, 20F, 48F};
+                    users.forEach(u ->
                             {
                                 //tutaj tworzę dokument
                                 try {
@@ -3042,6 +3053,26 @@ public class FilesService {
                                     document.add(title);
                                     document.add(name);
                                     document.add(newLine);
+                                    PdfPTable titleTable = new PdfPTable(pointColumnWidths);
+                                    titleTable.setWidthPercentage(100);
+
+                                    PdfPCell lp = new PdfPCell(new Paragraph("lp", font(12, 0)));
+                                    PdfPCell start = new PdfPCell(new Paragraph("Start", font(12, 0)));
+                                    PdfPCell stop = new PdfPCell(new Paragraph("Stop", font(12, 0)));
+                                    PdfPCell time = new PdfPCell(new Paragraph("Zaliczony czas", font(12, 0)));
+                                    PdfPCell desc = new PdfPCell(new Paragraph("uwagi", font(12, 0)));
+                                    lp.setFixedHeight(15F);
+                                    titleTable.addCell(lp);
+                                    titleTable.addCell(start);
+                                    titleTable.addCell(stop);
+                                    titleTable.addCell(time);
+                                    titleTable.addCell(desc);
+
+
+                                    document.add(titleTable);
+
+                                    document.add(newLine);
+
                                 } catch (DocumentException | IOException ex) {
                                     ex.printStackTrace();
                                 }
@@ -3054,33 +3085,59 @@ public class FilesService {
 
                                 AtomicInteger workSumHours = new AtomicInteger();
                                 AtomicInteger workSumMinutes = new AtomicInteger();
-                                userWork.forEach(g -> {
-                                            try {
-                                                int workTimeSumHours;
-                                                int workTimeSumMinutes;
-                                                String workTime = g.getWorkTime();
-                                                String formatStart = g.getStart().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
-                                                String formatStop = g.getStop().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
-                                                workTimeSumHours = sumIntFromString(workTime, 0, 2);
-                                                workTimeSumMinutes = sumIntFromString(workTime, 3, 5);
-                                                Paragraph workDay = new Paragraph(formatStart + " - " + formatStop + " - " + workTime, font(10, 0));
-                                                workDay.setAlignment(0);
-                                                document.add(workDay);
-                                                workSumHours.getAndAdd(workTimeSumHours);
-                                                workSumMinutes.getAndAdd(workTimeSumMinutes);
-                                            } catch (DocumentException | IOException ex) {
-                                                ex.printStackTrace();
-                                            }
-                                        }
+                                for (int i = 0; i < userWork.size(); i++) {
+                                    WorkingTimeEvidenceEntity g = userWork.get(i);
+                                    try {
+                                        int workTimeSumHours;
+                                        int workTimeSumMinutes;
+                                        String workTime = g.getWorkTime();
+                                        String formatStart = g.getStart().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
+                                        String formatStop = g.getStop().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
+                                        workTimeSumHours = sumIntFromString(workTime, 0, 2);
+                                        workTimeSumMinutes = sumIntFromString(workTime, 3, 5);
+//                                        Paragraph workDay = new Paragraph(formatStart + " - " + formatStop + " - " + workTime, font(10, 0));
+//                                        workDay.setAlignment(0);
+//                                        document.add(workDay);
+                                        workSumHours.getAndAdd(workTimeSumHours);
+                                        workSumMinutes.getAndAdd(workTimeSumMinutes);
 
-                                );
+                                        PdfPTable userTable = new PdfPTable(pointColumnWidths);
+
+                                        PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(12, 0)));
+                                        PdfPCell startCell = new PdfPCell(new Paragraph(formatStart, font(12, 0)));
+                                        PdfPCell stopCell = new PdfPCell(new Paragraph(formatStop, font(12, 0)));
+                                        PdfPCell timeCell = new PdfPCell(new Paragraph(workTime, font(10, 0)));
+                                        String des = "";
+
+                                        if (g.isAutomatedClosed()) {
+                                            des = des.concat("-Zamknięte automatycznie-");
+                                        }
+                                        if (g.isToClarify()) {
+                                            des = des.concat("-Do wyjaśnienia-");
+                                        }
+                                        PdfPCell descCell = new PdfPCell(new Paragraph(des, font(12, 0)));
+                                        userTable.setWidthPercentage(100);
+
+                                        userTable.addCell(lpCell);
+                                        userTable.addCell(startCell);
+                                        userTable.addCell(stopCell);
+                                        userTable.addCell(timeCell);
+                                        userTable.addCell(descCell);
+
+                                        document.add(userTable);
+
+
+                                    } catch (DocumentException | IOException ex) {
+                                        ex.printStackTrace();
+                                    }
+                                }
                                 try {
                                     int acquire = workSumMinutes.getAcquire() % 60;
                                     int acquire1 = workSumMinutes.getAcquire() / 60;
                                     workSumHours.getAndAdd(acquire1);
                                     String format = String.format("%02d:%02d",
                                             workSumHours.getAcquire(), acquire);
-                                    Paragraph sum = new Paragraph("Suma godzin: " + format, font(10, 1));
+                                    Paragraph sum = new Paragraph("Suma godzin: " + format, font(12, 1));
                                     sum.setAlignment(2);
                                     document.add(sum);
                                     document.newPage();
@@ -3115,11 +3172,11 @@ public class FilesService {
 
     }
 
-    public List<FilesModel> getAllFilesList() {
+    public List<FilesModel> getAllFilesList(Pageable page) {
 
         List<FilesModel> list = new ArrayList<>();
-
-        filesRepository.findAll().stream().filter(f -> f.getDate() != null).filter(f -> f.getTime() != null).forEach(e -> list.add(
+        page = PageRequest.of(page.getPageNumber(), page.getPageSize(), Sort.by("date").and(Sort.by("time")).descending());
+        filesRepository.findAll(page).stream().filter(f -> f.getDate() != null).filter(f -> f.getTime() != null).forEach(e -> list.add(
                 FilesModel.builder()
                         .uuid(e.getUuid())
                         .date(e.getDate())
@@ -3129,7 +3186,7 @@ public class FilesService {
                         .size(e.getSize())
                         .build()));
         list.sort(Comparator.comparing(FilesModel::getDate).thenComparing(FilesModel::getTime).reversed());
-        filesRepository.findAll().stream().filter(f -> f.getDate() == null).filter(f -> f.getTime() != null).forEach(e -> list.add(
+        filesRepository.findAll(page).stream().filter(f -> f.getDate() == null).filter(f -> f.getTime() != null).forEach(e -> list.add(
                 FilesModel.builder()
                         .uuid(e.getUuid())
                         .date(e.getDate())
@@ -3138,7 +3195,6 @@ public class FilesService {
                         .time(e.getTime())
                         .size(e.getSize())
                         .build()));
-
         return list;
 
     }

@@ -5,10 +5,14 @@ import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
+import com.shootingplace.shootingplace.domain.enums.UserSubType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,13 +25,15 @@ public class BarCodeCardService {
     @Autowired
     private MemberRepository memberRepository;
 
+    private static final Logger log = LoggerFactory.getLogger(BarCodeCardService.class);
+
     public BarCodeCardService(BarCodeCardRepository barCodeCardRepo) {
         this.barCodeCardRepo = barCodeCardRepo;
     }
 
     public ResponseEntity<?> createNewCard(BarCodeCardDTO dto) {
         String adminBarCode = findAdminBarCode(dto.getBarCode());
-        if(!adminBarCode.equals("false")){
+        if (!adminBarCode.equals("false")) {
             String s = dto.getBarCode().replaceAll(adminBarCode, "");
             dto.setBarCode(s);
             dto.setMaster(true);
@@ -51,6 +57,8 @@ public class BarCodeCardService {
                     .barCode(dto.getBarCode())
                     .belongsTo(memberEntity.getUuid())
                     .isActive(true)
+                    .isMaster(dto.isMaster())
+                    .activatedDay(LocalDate.now())
                     .type("Member")
                     .build();
             BarCodeCardEntity save = barCodeCardRepo.save(build);
@@ -61,11 +69,20 @@ public class BarCodeCardService {
             person = memberEntity;
 
         } else if (userEntity != null) {
+
+            List<BarCodeCardEntity> allByBelongsTo = barCodeCardRepo.findAllByBelongsTo(userEntity.getUuid());
+            int size = (int) allByBelongsTo.stream().filter(f -> f.getActivatedDay().getMonthValue() == LocalDate.now().getMonthValue()).count();
+            if (size > 2) {
+                return ResponseEntity.badRequest().body("Nie można dodać więcej kart do " + userEntity.getFirstName());
+            }
             build = BarCodeCardEntity.builder()
                     .barCode(dto.getBarCode())
                     .belongsTo(userEntity.getUuid())
                     .isActive(true)
+                    .isMaster(dto.isMaster())
+                    .activatedDay(LocalDate.now())
                     .type("User")
+                    .subType(UserSubType.WORKER.getName())
                     .build();
             BarCodeCardEntity save = barCodeCardRepo.save(build);
             barCodeCardList = userEntity.getBarCodeCardList();
@@ -89,15 +106,12 @@ public class BarCodeCardService {
 
         String[] keyList = new String[adminList.size()];
         int z = 0;
-        for (int i = 0; i < adminList.size(); i++) {
-            System.out.println("i: " +i);
-            System.out.println("z: " +z);
-            UserEntity userEntity = adminList.get(i);
+        for (UserEntity userEntity : adminList) {
             List<BarCodeCardEntity> barCodeCardList = userEntity.getBarCodeCardList();
-            for (int j = 0; j < barCodeCardList.size(); j++) {
-                System.out.println(j);
-                System.out.println(barCodeCardList.get(j));
-                BarCodeCardEntity barCodeCardEntity = barCodeCardList.get(j);
+            if (barCodeCardList.size() < 1) {
+                break;
+            }
+            for (BarCodeCardEntity barCodeCardEntity : barCodeCardList) {
                 keyList[z] = barCodeCardEntity.getBarCode();
                 //tu coś nie działa
                 z++;
@@ -120,7 +134,9 @@ public class BarCodeCardService {
                 char k = key[y];
                 if (q != k) {
                     ok[y] = false;
-                    y = 0;
+                    if (y > 0) {
+                        y -= 1;
+                    }
                 } else {
                     ok[y] = true;
                     y++;
@@ -139,9 +155,21 @@ public class BarCodeCardService {
             }
             break;
         }
-
         return ResponseEntity.ok(r);
     }
+
+    public void deactivateNotMasterCard() {
+        log.info("dezaktywuję karty");
+        List<BarCodeCardEntity> all = barCodeCardRepo.findAll();
+        all.stream()
+                .filter(f -> !f.isMaster())
+                .filter(f -> f.getActivatedDay().getMonthValue() < LocalDate.now().getMonthValue())
+                .forEach(e -> {
+                    e.setActive(false);
+                    barCodeCardRepo.save(e);
+                });
+    }
+
     public String findAdminBarCode(String code) {
         List<UserEntity> adminList = userRepository.findAll()
                 .stream()
@@ -152,6 +180,9 @@ public class BarCodeCardService {
         int z = 0;
         for (UserEntity userEntity : adminList) {
             List<BarCodeCardEntity> barCodeCardList = userEntity.getBarCodeCardList();
+            if (barCodeCardList.size() < 1) {
+                break;
+            }
             for (BarCodeCardEntity barCodeCardEntity : barCodeCardList) {
                 keyList[z] = barCodeCardEntity.getBarCode();
                 z++;

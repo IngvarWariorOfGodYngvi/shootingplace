@@ -113,7 +113,7 @@ public class LicenseServiceTest {
         ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, license);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Brak Patentu\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Brak Patentu"));
     }
 
     @Test
@@ -129,7 +129,7 @@ public class LicenseServiceTest {
         ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, license);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Ktoś już ma taki numer licencji\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Ktoś już ma taki numer licencji"));
 
     }
 
@@ -148,7 +148,7 @@ public class LicenseServiceTest {
         ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, license);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Zaktualizowano licencję\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Zaktualizowano licencję"));
     }
 
 //    @Test
@@ -168,7 +168,7 @@ public class LicenseServiceTest {
 //        ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, license);
 //        //then
 //        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-//        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Zaktualizowano licencję\""));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("Zaktualizowano licencję"));
 //
 //    }
 
@@ -275,7 +275,7 @@ public class LicenseServiceTest {
         ResponseEntity<?> responseEntity = licenseService.updateLicensePayment(uuid, paymentUUID, now, 2022, "0125");
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Poprawiono płatność za licencję\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Poprawiono płatność za licencję"));
 
     }
 

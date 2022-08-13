@@ -1,5 +1,7 @@
 package com.shootingplace.shootingplace.member;
 
+import org.springframework.data.domain.Sort;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -28,4 +30,6 @@ public interface MemberRepository {
     Optional<MemberEntity> findById(String uuid);
 
     MemberEntity getOne(String uuid);
+
+    List<MemberEntity> findAll(Sort sort);
 }

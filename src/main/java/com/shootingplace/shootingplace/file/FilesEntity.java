@@ -1,34 +1,39 @@
-package com.shootingplace.shootingplace.domain.models;
+package com.shootingplace.shootingplace.file;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
+import org.springframework.core.annotation.Order;
 
+import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+@Entity
 @AllArgsConstructor
-@NoArgsConstructor
 @Builder
-public class FilesModel {
-
+public class FilesEntity {
+    @Id
+    @GeneratedValue(generator = "id")
+    @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
     private String uuid;
 
     private String name;
     private String type;
-
+    @Lob
     private byte[] data;
+    @Order
     private LocalDate date;
     private LocalTime time;
     private long size;
-    private Gun gun;
 
-    public Gun getGun() {
-        return gun;
+    public FilesEntity() {
     }
 
-    public void setGun(Gun gun) {
-        this.gun = gun;
+    public FilesEntity(String name, String type, byte[] data) {
+        this.name = name;
+        this.type = type;
+        this.data = data;
     }
 
     public LocalDate getDate() {
@@ -37,6 +42,10 @@ public class FilesModel {
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public String getUuid() {
+        return uuid;
     }
 
     public String getName() {
@@ -61,14 +70,6 @@ public class FilesModel {
 
     public void setData(byte[] data) {
         this.data = data;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
     }
 
     public LocalTime getTime() {

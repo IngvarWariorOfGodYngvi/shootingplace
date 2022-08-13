@@ -32,6 +32,15 @@ public class WorkingTimeEvidenceEntity {
     private boolean toClarify;
     @OneToOne(orphanRemoval = true)
     private UserEntity user;
+    private String workType;
+
+    public String getWorkType() {
+        return workType;
+    }
+
+    public void setWorkType(String workType) {
+        this.workType = workType;
+    }
 
     public void closeWTE(){
         this.isClose = true;

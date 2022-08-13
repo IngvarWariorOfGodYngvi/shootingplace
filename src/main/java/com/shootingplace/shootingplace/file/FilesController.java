@@ -1,11 +1,9 @@
-package com.shootingplace.shootingplace.controllers;
+package com.shootingplace.shootingplace.file;
 
 import com.itextpdf.text.DocumentException;
-import com.shootingplace.shootingplace.domain.entities.FilesEntity;
 import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.services.FilesService;
 import com.shootingplace.shootingplace.member.MemberService;
-import com.shootingplace.shootingplace.services.XLSXFiles;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -244,8 +242,8 @@ public class FilesController {
                 .body(filesEntity.getData());
     }
     @GetMapping("/downloadWorkReport")
-    public ResponseEntity<byte[]> getWorkTimeReport(@RequestParam List<String> month) throws DocumentException, IOException {
-        FilesEntity filesEntity = filesService.getWorkTimeReport(month);
+    public ResponseEntity<byte[]> getWorkTimeReport(@RequestParam List<String> month,@RequestParam String workType) throws DocumentException, IOException {
+        FilesEntity filesEntity = filesService.getWorkTimeReport(month, workType);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")
@@ -264,9 +262,9 @@ public class FilesController {
     }
 
     @GetMapping("/getAllFiles")
-    public ResponseEntity<?> getAllFiles() {
+    public ResponseEntity<?> getAllFiles(Pageable page) {
 
-        return ResponseEntity.ok(filesService.getAllFilesList());
+        return ResponseEntity.ok(filesService.getAllFilesList(page));
     }
 
     @GetMapping("/getAllImages")

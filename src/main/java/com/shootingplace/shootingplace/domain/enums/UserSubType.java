@@ -1,9 +1,10 @@
-package com.shootingplace.shootingplace.users;
+package com.shootingplace.shootingplace.domain.enums;
 
 public enum UserSubType {
     ADMIN("Admin"),
     MANAGEMENT("Zarząd"),
     WORKER("Pracownik"),
+    REVISION_COMMITTEE("Komisja Rewizyjna"),
     MANAGEMENT_WORKER("Pracownik/Zarząd");
     private final String name;
 

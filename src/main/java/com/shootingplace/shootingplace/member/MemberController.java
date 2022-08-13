@@ -190,11 +190,6 @@ public class MemberController {
         return memberService.updateMember(uuid, member);
     }
 
-    @PutMapping("/addBarCode")
-    public ResponseEntity<?> addBarCode(@RequestParam String uuid, @RequestParam String barcode) {
-        return memberService.addBarCode(uuid, barcode);
-    }
-
     @GetMapping("/getMembersToReportToThePolice")
     public ResponseEntity<?> getMembersToReportToThePolice() {
         return ResponseEntity.ok(memberService.getMembersToReportToThePolice());

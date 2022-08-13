@@ -23,7 +23,7 @@ public class AddressService {
 
     public ResponseEntity<?> updateAddress(String memberUUID, Address address) {
         if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).body("\"Nie znaleziono Klubowicza\"");
+            return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).body("Nie znaleziono Klubowicza");
         }
 
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
@@ -62,7 +62,7 @@ public class AddressService {
         }
         addressRepository.save(addressEntity);
         LOG.info("Zaktualizowano adres");
-        return ResponseEntity.ok("\"Zaktualizowano adres\"");
+        return ResponseEntity.ok("Zaktualizowano adres " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
     }
 
     public Address getAddress() {

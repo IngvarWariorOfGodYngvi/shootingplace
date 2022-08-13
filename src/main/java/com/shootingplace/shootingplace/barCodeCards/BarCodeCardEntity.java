@@ -8,6 +8,7 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import java.time.LocalDate;
 
 @Entity
 @AllArgsConstructor
@@ -37,6 +38,16 @@ public class BarCodeCardEntity {
     private boolean isMaster;
 
     private int useCounter;
+
+    private LocalDate activatedDay;
+
+    public LocalDate getActivatedDay() {
+        return activatedDay;
+    }
+
+    public void setActivatedDay(LocalDate activatedDay) {
+        this.activatedDay = activatedDay;
+    }
 
     public void addCountUse() {
         this.useCounter += 1;

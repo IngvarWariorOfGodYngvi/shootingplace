@@ -4,6 +4,8 @@ import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.UsedType;
 import com.shootingplace.shootingplace.domain.models.Caliber;
 import com.shootingplace.shootingplace.domain.models.Gun;
+import com.shootingplace.shootingplace.file.FilesEntity;
+import com.shootingplace.shootingplace.file.FilesRepository;
 import com.shootingplace.shootingplace.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

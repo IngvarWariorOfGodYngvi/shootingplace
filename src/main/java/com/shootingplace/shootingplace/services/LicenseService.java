@@ -17,21 +17,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.text.Collator;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
 public class LicenseService {
-
-//    @Autowired
-//    private Clock clock;
-//
-//    public LocalDate now() {
-//        return LocalDate.now(clock);
-//    }
 
     private final MemberRepository memberRepository;
     private final LicenseRepository licenseRepository;
@@ -62,7 +57,7 @@ public class LicenseService {
                         list.add(Mapping.map2DTO(e));
                     }
                 });
-        list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
+        list.sort(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))));
         return list;
     }
 
@@ -76,7 +71,7 @@ public class LicenseService {
                         list.add(Mapping.map2DTO(e));
                     }
                 });
-        list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
+        list.sort(Comparator.comparing(MemberDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))));
         return list;
     }
 
@@ -85,7 +80,7 @@ public class LicenseService {
         LicenseEntity licenseEntity = memberEntity.getLicense();
         if (memberEntity.getShootingPatent().getPatentNumber() == null && memberEntity.getAdult()) {
             LOG.info("Brak Patentu");
-            return ResponseEntity.badRequest().body("\"Brak Patentu\"");
+            return ResponseEntity.badRequest().body("Brak Patentu");
         }
         if (license.getNumber() != null) {
             boolean match = memberRepository.findAll()
@@ -95,7 +90,7 @@ public class LicenseService {
                     .anyMatch(f -> f.getLicense().getNumber().equals(license.getNumber()));
             if (match && !licenseEntity.getNumber().equals(license.getNumber())) {
                 LOG.error("Ktoś już ma taki numer licencji");
-                return ResponseEntity.badRequest().body("\"Ktoś już ma taki numer licencji\"");
+                return ResponseEntity.badRequest().body("Ktoś już ma taki numer licencji");
             } else {
                 licenseEntity.setNumber(license.getNumber());
                 LOG.info("Dodano numer licencji");
@@ -137,12 +132,12 @@ public class LicenseService {
         licenseEntity.setPaid(false);
         licenseRepository.saveAndFlush(licenseEntity);
         LOG.info("Zaktualizowano licencję");
-        return ResponseEntity.ok("\"Zaktualizowano licencję\"");
+        return ResponseEntity.ok("Zaktualizowano licencję");
     }
 
     public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date,boolean isPaid, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         LicenseEntity license = memberEntity.getLicense();
@@ -157,7 +152,7 @@ public class LicenseService {
 
             if (match && !license.getNumber().equals(number)) {
                 LOG.error("Ktoś już ma taki numer licencji");
-                return ResponseEntity.badRequest().body("\"Ktoś już ma taki numer licencji\"");
+                return ResponseEntity.badRequest().body("Ktoś już ma taki numer licencji");
             } else {
                 license.setNumber(number);
                 LOG.info("Dodano numer licencji");
@@ -175,7 +170,7 @@ public class LicenseService {
         }
         licenseRepository.saveAndFlush(license);
         changeHistoryService.addRecordToChangeHistory(pinCode, license.getClass().getSimpleName() + " updateLicense", memberEntity.getUuid());
-        return ResponseEntity.ok("\"Poprawiono Licencję\"");
+        return ResponseEntity.ok("Poprawiono Licencję");
     }
 
     public ResponseEntity<?> renewLicenseValid(String memberUUID, License license) {
@@ -231,15 +226,15 @@ public class LicenseService {
                 memberEntity.getHistory().setShotgunCounter(0);
                 licenseRepository.saveAndFlush(licenseEntity);
                 LOG.info("Przedłużono licencję");
-                return ResponseEntity.ok().body("\"Przedłużono licencję\"");
+                return ResponseEntity.ok().body("Przedłużono licencję");
 
             } else {
                 LOG.error("Nie można przedłużyć licencji - należy poczekać do 1 listopada");
-                return ResponseEntity.status(403).body("\"Nie można przedłużyć licencji - należy poczekać do 1 listopada\"");
+                return ResponseEntity.status(403).body("Nie można przedłużyć licencji - należy poczekać do 1 listopada");
             }
         } else {
             LOG.error("Nie można przedłużyć licencji");
-            return ResponseEntity.badRequest().body("\"Nie można przedłużyć licencji\"");
+            return ResponseEntity.badRequest().body("Nie można przedłużyć licencji");
         }
     }
 
@@ -258,38 +253,8 @@ public class LicenseService {
         licensePaymentHistoryRepository.saveAndFlush(licensePaymentHistoryEntity);
         changeHistoryService.addRecordToChangeHistory(pinCode, licensePaymentHistoryEntity.getClass().getSimpleName() + " updateLicense", memberEntity.getUuid());
 
-        return ResponseEntity.ok("\"Poprawiono płatność za licencję\"");
+        return ResponseEntity.ok("Poprawiono płatność za licencję");
     }
-
-//    public List<Integer> getMembersQuantity() {
-//
-//        int count2 = (int) memberRepository.findAll().stream()
-//                .filter(MemberEntity::getErased)
-//                .filter(f -> f.getLicense().getNumber() != null)
-//                .filter(f -> !f.getLicense().isValid())
-//                .count();
-//
-//        List<Integer> list = new ArrayList<>();
-//
-//        int count = (int) memberRepository.findAll().stream()
-//                .filter(f->!f.getErased())
-//                .filter(f ->f.getLicense()!=null)
-//                .filter(f -> f.getLicense().getNumber() != null)
-//                .filter(f -> !f.getLicense().isValid())
-//                .count();
-//        int count1 = (int) memberRepository.findAll().stream()
-//                .filter(f->!f.getErased())
-//                .filter(f ->f.getLicense()!=null)
-//                .filter(f -> f.getLicense().getNumber() != null)
-//                .filter(f -> f.getLicense().isValid())
-//                .count();
-//
-//        list.add(count - count2);
-//        list.add(count1);
-//
-//        return list;
-//    }
-
 
     public License getLicense() {
         return License.builder()
@@ -352,7 +317,7 @@ public class LicenseService {
                                 .isNew(g.isNew())
                                 .build())));
         return list1.stream()
-                .filter(f -> !f.isPayInPZSSPortal()).sorted(Comparator.comparing(LicensePaymentHistoryDTO::getDate).thenComparing(LicensePaymentHistoryDTO::getSecondName).thenComparing(LicensePaymentHistoryDTO::getFirstName)).collect(Collectors.toList());
+                .filter(f -> !f.isPayInPZSSPortal()).sorted(Comparator.comparing(LicensePaymentHistoryDTO::getDate).thenComparing(LicensePaymentHistoryDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(LicensePaymentHistoryDTO::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl")))).collect(Collectors.toList());
     }
 
     public ResponseEntity<?> removeLicensePaymentRecord(String paymentUUID, String pinCode) {

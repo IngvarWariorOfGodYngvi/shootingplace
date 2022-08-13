@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.users;
 
+import com.shootingplace.shootingplace.domain.enums.UserSubType;
 import com.shootingplace.shootingplace.services.ChangeHistoryService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

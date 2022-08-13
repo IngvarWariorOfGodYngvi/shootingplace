@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.workingTimeEvidence;
 
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
+import com.shootingplace.shootingplace.domain.enums.UserSubType;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.slf4j.Logger;
@@ -31,8 +32,12 @@ public class WorkingTimeEvidenceService {
     }
 
     public String createNewWTE(String number) {
-        String msg = "";
+        String msg;
         BarCodeCardEntity barCode = barCodeCardRepo.findByBarCode(number);
+        if (!barCode.isActive()) {
+            msg = "Karta jest nieaktywna i n ie można jej użyć ponownie";
+            return msg;
+        }
         String belongsTo = barCode.getBelongsTo();
         UserEntity user = userRepository.findById(belongsTo).orElse(null);
 
@@ -48,7 +53,7 @@ public class WorkingTimeEvidenceService {
         barCodeCardRepo.save(barCode);
 
         if (entity1 != null) {
-            return closeWTE(entity1, false);
+            return closeWTE(entity1, false, barCode);
         } else {
             belongsTo = barCode.getBelongsTo();
             user = userRepository.findById(belongsTo).orElse(null);
@@ -57,12 +62,15 @@ public class WorkingTimeEvidenceService {
             } else {
                 LocalDateTime start = LocalDateTime.now();
 
+                String subType = barCode.getSubType();
+
                 WorkingTimeEvidenceEntity entity = WorkingTimeEvidenceEntity.builder()
                         .start(start)
                         .stop(null)
                         .cardNumber(number)
                         .isClose(false)
-                        .user(user).build();
+                        .user(user)
+                        .workType(subType).build();
 
                 workRepo.save(entity);
                 msg = user.getFirstName() + " " + user.getSecondName() + " Witaj w Pracy";
@@ -74,7 +82,7 @@ public class WorkingTimeEvidenceService {
     }
 
 
-    String closeWTE(WorkingTimeEvidenceEntity entity, boolean auto) {
+    String closeWTE(WorkingTimeEvidenceEntity entity, boolean auto, BarCodeCardEntity barCode) {
         String msg;
 
         LocalDateTime stop = LocalDateTime.now();
@@ -82,6 +90,10 @@ public class WorkingTimeEvidenceService {
         if (auto) {
             stop = LocalDateTime.now().minusHours(2);
             entity.setAutomatedClosed(true);
+        }
+        if (!barCode.isMaster()) {
+            barCode.setActive(false);
+            barCodeCardRepo.save(barCode);
         }
 
         LocalDateTime temp = getTime(entity.getStart(), true);
@@ -91,15 +103,15 @@ public class WorkingTimeEvidenceService {
         String s = countTime(temp, temp1);
         int i = Integer.parseInt(s.substring(0, 2));
 
-        if (i>8) {
+        if (i > 8) {
             entity.setToClarify(true);
         }
-        if(i>24) {
+        if (i > 24) {
             i = i % 24;
-            int j= Integer.parseInt(s.substring(3,5));
-            int k= Integer.parseInt(s.substring(6));
+            int j = Integer.parseInt(s.substring(3, 5));
+            int k = Integer.parseInt(s.substring(6));
 
-            s = String.format("%02d:%02d:%02d",i,j,k);
+            s = String.format("%02d:%02d:%02d", i, j, k);
         }
 
         entity.setWorkTime(s);
@@ -153,20 +165,24 @@ public class WorkingTimeEvidenceService {
         return list1;
     }
 
-    public void closeAllActiveWorkTime() {
-        log.info("zamykam to co jest otwarte");
-        workRepo.findAll()
-                .stream()
-                .filter(f -> !f.isClose())
-                .collect(Collectors.toList())
-                .forEach(e ->
-                {
-                    String s = countTime(e.getStart(), LocalDateTime.now());
-                    if (Integer.parseInt(s.substring(0,2)) > 6) {
-                        closeWTE(e, true);
-                    }
+    public void closeAllActiveWorkTime(String workType) {
+        if (workType.equals(UserSubType.WORKER.getName())) {
+            log.info("zamykam to co jest otwarte");
+            workRepo.findAll()
+                    .stream()
+                    .filter(f -> !f.isClose())
+                    .filter(f -> f.getWorkType().equals(workType))
+                    .collect(Collectors.toList())
+                    .forEach(e ->
+                    {
+                        String s = countTime(e.getStart(), LocalDateTime.now());
+                        BarCodeCardEntity barCode = barCodeCardRepo.findByBarCode(e.getCardNumber());
+                        if (Integer.parseInt(s.substring(0, 2)) > 6) {
+                            closeWTE(e, true, barCode);
+                        }
 
-                });
+                    });
+        }
     }
 
 

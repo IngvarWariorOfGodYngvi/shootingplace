@@ -46,7 +46,7 @@ public class AddressServiceTest {
         ResponseEntity<?> responseEntity = addressService.updateAddress(uuid, address);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Zaktualizowano adres\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Zaktualizowano adres " + memberEntity.getSecondName() + " " + memberEntity.getFirstName()));
     }
 
     @Test
@@ -59,7 +59,7 @@ public class AddressServiceTest {
         ResponseEntity<?> responseEntity = addressService.updateAddress(uuid, address);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.I_AM_A_TEAPOT));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie znaleziono Klubowicza\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Nie znaleziono Klubowicza"));
     }
 
     @Test
