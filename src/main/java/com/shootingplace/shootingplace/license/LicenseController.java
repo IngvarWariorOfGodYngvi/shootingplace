@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.License;
+package com.shootingplace.shootingplace.license;
 
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.services.ChangeHistoryService;

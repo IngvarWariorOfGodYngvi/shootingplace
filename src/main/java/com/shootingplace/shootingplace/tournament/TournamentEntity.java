@@ -1,5 +1,7 @@
-package com.shootingplace.shootingplace.domain.entities;
+package com.shootingplace.shootingplace.tournament;
 
+import com.shootingplace.shootingplace.domain.entities.CompetitionMembersListEntity;
+import com.shootingplace.shootingplace.domain.entities.OtherPersonEntity;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

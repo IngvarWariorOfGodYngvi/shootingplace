@@ -2,7 +2,7 @@ package com.shootingplace.shootingplace.member;
 
 import com.shootingplace.shootingplace.domain.enums.ErasedType;
 import com.shootingplace.shootingplace.domain.models.*;
-import com.shootingplace.shootingplace.License.License;
+import com.shootingplace.shootingplace.license.License;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

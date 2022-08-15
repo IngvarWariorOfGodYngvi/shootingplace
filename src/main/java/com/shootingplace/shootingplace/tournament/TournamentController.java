@@ -1,9 +1,7 @@
-package com.shootingplace.shootingplace.controllers;
+package com.shootingplace.shootingplace.tournament;
 
-import com.shootingplace.shootingplace.domain.models.Tournament;
 import com.shootingplace.shootingplace.services.ArmoryService;
 import com.shootingplace.shootingplace.services.ChangeHistoryService;
-import com.shootingplace.shootingplace.services.TournamentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;

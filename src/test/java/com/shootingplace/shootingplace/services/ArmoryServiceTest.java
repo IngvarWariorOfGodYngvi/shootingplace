@@ -1,11 +1,9 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.repositories.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceRepository;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-
-import static org.junit.Assert.*;
 
 public class ArmoryServiceTest {
 

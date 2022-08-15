@@ -1,8 +1,9 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.AmmoEvidenceEntity;
-import com.shootingplace.shootingplace.domain.models.AmmoDTO;
-import com.shootingplace.shootingplace.repositories.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceService;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoDTO;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceRepository;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Assert;
@@ -93,7 +94,7 @@ public class AmmoEvidenceServiceTest {
         ResponseEntity<?> responseEntity = ammoEvidenceService.closeEvidence(uuid);
         //then
         Assert.assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        Assert.assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie znaleziono listy\""));
+        Assert.assertThat(responseEntity.getBody(), Matchers.equalTo("Nie znaleziono listy"));
     }
 
     @Test
@@ -106,7 +107,7 @@ public class AmmoEvidenceServiceTest {
         ResponseEntity<?> responseEntity = ammoEvidenceService.closeEvidence(uuid);
         //then
         Assert.assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        Assert.assertThat(responseEntity.getBody(), Matchers.equalTo("\"Lista została zamknięta\""));
+        Assert.assertThat(responseEntity.getBody(), Matchers.equalTo("Lista została zamknięta"));
     }
 
     @Test
@@ -128,7 +129,7 @@ public class AmmoEvidenceServiceTest {
         ResponseEntity<?> responseEntity = ammoEvidenceService.openEvidence(uuid, "0125");
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie można otworzyć listy bo inna jest otwarta\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Nie można otworzyć listy bo inna jest otwarta"));
     }
 
     @Test
@@ -144,7 +145,7 @@ public class AmmoEvidenceServiceTest {
         ResponseEntity<?> responseEntity = ammoEvidenceService.openEvidence(uuid, "0125");
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Ręcznie otworzono listę - Pamiętaj by ją zamknąć!\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Ręcznie otworzono listę - Pamiętaj by ją zamknąć!"));
     }
 
     @Test

@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.License;
+package com.shootingplace.shootingplace.license;
 
 import com.shootingplace.shootingplace.domain.entities.HistoryEntity;
 import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;

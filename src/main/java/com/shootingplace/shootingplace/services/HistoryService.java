@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.License.LicenseEntity;
-import com.shootingplace.shootingplace.License.LicenseRepository;
+import com.shootingplace.shootingplace.license.LicenseEntity;
+import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
 import com.shootingplace.shootingplace.domain.models.History;
@@ -9,6 +9,8 @@ import com.shootingplace.shootingplace.domain.models.ShootingPatent;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.repositories.*;
+import com.shootingplace.shootingplace.tournament.TournamentEntity;
+import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
@@ -102,7 +104,7 @@ public class HistoryService {
     }
 
     // license
-   public void addLicenseHistoryRecord(String memberUUID, int index) {
+    public void addLicenseHistoryRecord(String memberUUID, int index) {
         HistoryEntity historyEntity = memberRepository
                 .findById(memberUUID)
                 .orElseThrow(EntityNotFoundException::new)
@@ -347,7 +349,7 @@ public class HistoryService {
         }
     }
 
-    void removeCompetitionRecord(String memberUUID, CompetitionMembersListEntity list) {
+    public void removeCompetitionRecord(String memberUUID, CompetitionMembersListEntity list) {
         HistoryEntity historyEntity = memberRepository.findById(memberUUID)
                 .orElseThrow(EntityNotFoundException::new)
                 .getHistory();
@@ -389,7 +391,7 @@ public class HistoryService {
         historyRepository.saveAndFlush(historyEntity);
     }
 
-    void addJudgingRecord(String memberUUID, String tournamentUUID, String function) {
+    public void addJudgingRecord(String memberUUID, String tournamentUUID, String function) {
 
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
 
@@ -409,7 +411,7 @@ public class HistoryService {
         historyRepository.saveAndFlush(historyEntity);
     }
 
-    void removeJudgingRecord(String memberUUID, String tournamentUUID) {
+    public void removeJudgingRecord(String memberUUID, String tournamentUUID) {
 
         List<JudgingHistoryEntity> judgingHistoryEntityList = memberRepository.findById(memberUUID)
                 .orElseThrow(EntityNotFoundException::new)
@@ -439,7 +441,7 @@ public class HistoryService {
                 .build();
     }
 
-    void updateTournamentEntityInCompetitionHistory(String tournamentUUID) {
+    public void updateTournamentEntityInCompetitionHistory(String tournamentUUID) {
 
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         tournamentEntity.getCompetitionsList().forEach(competitionList -> competitionList
@@ -456,7 +458,7 @@ public class HistoryService {
                         })));
     }
 
-    void updateTournamentInJudgingHistory(String tournamentUUID) {
+    public void updateTournamentInJudgingHistory(String tournamentUUID) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.getArbitersList() != null) {
             tournamentEntity
@@ -500,7 +502,7 @@ public class HistoryService {
 
     }
 
-   public void changeContributionTime(String memberUUID) {
+    public void changeContributionTime(String memberUUID) {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         LocalDate date;
         if (memberEntity.getHistory().getContributionList().get(0).getValidThru().getDayOfMonth() == 28) {

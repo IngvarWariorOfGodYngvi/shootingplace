@@ -1,8 +1,9 @@
 package com.shootingplace.shootingplace.member;
 
-import com.shootingplace.shootingplace.License.LicenseEntity;
-import com.shootingplace.shootingplace.License.LicenseRepository;
-import com.shootingplace.shootingplace.License.LicenseService;
+import com.shootingplace.shootingplace.license.LicenseEntity;
+import com.shootingplace.shootingplace.license.LicenseRepository;
+import com.shootingplace.shootingplace.license.LicenseService;
+import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;
 import com.shootingplace.shootingplace.address.AddressService;
 import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
 import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;

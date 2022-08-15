@@ -1,8 +1,5 @@
-package com.shootingplace.shootingplace.controllers;
+package com.shootingplace.shootingplace.AmmoEvidence;
 
-import com.shootingplace.shootingplace.domain.entities.AmmoEvidenceEntity;
-import com.shootingplace.shootingplace.domain.models.AmmoDTO;
-import com.shootingplace.shootingplace.services.AmmoEvidenceService;
 import com.shootingplace.shootingplace.services.AmmoUsedService;
 import com.shootingplace.shootingplace.services.ChangeHistoryService;
 import org.springframework.http.ResponseEntity;

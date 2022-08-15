@@ -1,16 +1,24 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.License.LicenseEntity;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoDTO;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidence;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.models.*;
 import com.shootingplace.shootingplace.file.FilesEntity;
 import com.shootingplace.shootingplace.file.FilesModel;
-import com.shootingplace.shootingplace.License.License;
+import com.shootingplace.shootingplace.license.License;
 import com.shootingplace.shootingplace.member.Member;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
+import com.shootingplace.shootingplace.tournament.Tournament;
+import com.shootingplace.shootingplace.tournament.TournamentDTO;
+import com.shootingplace.shootingplace.tournament.TournamentEntity;
+import com.shootingplace.shootingplace.weaponPermission.WeaponPermission;
+import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionEntity;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -355,7 +363,7 @@ public class Mapping {
                 .build();
     }
 
-    static CompetitionMembersList map(CompetitionMembersListEntity c) {
+    public static CompetitionMembersList map(CompetitionMembersListEntity c) {
         return CompetitionMembersList.builder()
                 .uuid(c.getUuid())
                 .name(c.getName())
@@ -541,7 +549,7 @@ public class Mapping {
 
     }
 
-    static AmmoDTO map1(AmmoEvidenceEntity a) {
+    public static AmmoDTO map1(AmmoEvidenceEntity a) {
         return AmmoDTO.builder()
                 .evidenceUUID(a.getUuid())
                 .date(a.getDate())
@@ -550,7 +558,7 @@ public class Mapping {
 
     }
 
-    static TournamentDTO map1(TournamentEntity a) {
+    public static TournamentDTO map1(TournamentEntity a) {
         return TournamentDTO.builder()
                 .tournamentUUID(a.getUuid())
                 .date(a.getDate())

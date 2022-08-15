@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.domain.models;
+package com.shootingplace.shootingplace.tournament;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

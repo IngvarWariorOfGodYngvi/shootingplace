@@ -1,5 +1,7 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.models.AmmoUsedEvidence;
 import com.shootingplace.shootingplace.domain.models.AmmoUsedPersonal;
@@ -55,7 +57,7 @@ public class AmmoUsedService {
             if (ammoEvidenceEntity.getDate().isBefore(LocalDate.now())) {
                 ammoEvidenceEntity.setOpen(false);
                 ammoEvidenceEntity.setForceOpen(false);
-                ammoEvidenceRepository.saveAndFlush(ammoEvidenceEntity);
+                ammoEvidenceRepository.save(ammoEvidenceEntity);
                 LOG.info("zamknięto starą listę");
             }
         }

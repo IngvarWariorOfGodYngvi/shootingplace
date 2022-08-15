@@ -18,8 +18,6 @@ public interface MemberRepository {
 
     Optional<MemberEntity> findByIDCard(String IDCard);
 
-    List<MemberEntity> findAllByErasedIsTrue();
-
     boolean existsByLegitimationNumber(Integer legitimationNumber);
 
     List<MemberEntity> findAll();

@@ -1,7 +1,5 @@
-package com.shootingplace.shootingplace.controllers;
+package com.shootingplace.shootingplace.weaponPermission;
 
-import com.shootingplace.shootingplace.domain.models.WeaponPermission;
-import com.shootingplace.shootingplace.services.WeaponPermissionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

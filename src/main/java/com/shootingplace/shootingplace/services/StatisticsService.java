@@ -1,10 +1,10 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.domain.models.*;
 import com.shootingplace.shootingplace.member.MemberDTO;
-import com.shootingplace.shootingplace.repositories.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.repositories.ContributionRepository;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import org.springframework.stereotype.Service;

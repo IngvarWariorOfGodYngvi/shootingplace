@@ -5,7 +5,8 @@ import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.repositories.CompetitionMembersListRepository;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.repositories.OtherPersonRepository;
-import com.shootingplace.shootingplace.repositories.TournamentRepository;
+import com.shootingplace.shootingplace.tournament.TournamentRepository;
+import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
@@ -128,7 +129,7 @@ public class CompetitionMembersListService {
 
         if (competitionMembersListEntity.getScoreList().isEmpty()) {
             tournamentEntity.getCompetitionsList().remove(competitionMembersListEntity);
-            tournamentRepository.saveAndFlush(tournamentEntity);
+            tournamentRepository.save(tournamentEntity);
             competitionMembersListRepository.delete(competitionMembersListEntity);
             return true;
         } else {

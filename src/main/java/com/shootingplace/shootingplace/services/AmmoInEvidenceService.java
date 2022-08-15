@@ -1,9 +1,9 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.domain.entities.AmmoInEvidenceEntity;
 import com.shootingplace.shootingplace.domain.entities.AmmoUsedToEvidenceEntity;
-import com.shootingplace.shootingplace.repositories.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.repositories.AmmoInEvidenceRepository;
 import com.shootingplace.shootingplace.repositories.AmmoUsedToEvidenceEntityRepository;
 import org.apache.logging.log4j.LogManager;
@@ -65,7 +65,7 @@ public class AmmoInEvidenceService {
                         .ammoInEvidenceEntityList(new ArrayList<>())
                         .number(evidenceNumber)
                         .build();
-                ammoEvidenceRepository.saveAndFlush(buildEvidence);
+                ammoEvidenceRepository.save(buildEvidence);
 
                 AmmoInEvidenceEntity build = AmmoInEvidenceEntity.builder()
                         .caliberName(ammoUsedToEvidenceEntity.getCaliberName())
@@ -80,7 +80,7 @@ public class AmmoInEvidenceService {
                 ammoInEvidenceRepository.saveAndFlush(build);
 
                 buildEvidence.getAmmoInEvidenceEntityList().add(build);
-                ammoEvidenceRepository.saveAndFlush(buildEvidence);
+                ammoEvidenceRepository.save(buildEvidence);
                 LOG.info("otworzono nową listę");
             }
 
@@ -167,7 +167,7 @@ public class AmmoInEvidenceService {
                 build.setQuantity(ammoUsedToEvidenceEntity.getCounter());
                 ammoInEvidenceRepository.saveAndFlush(build);
                 ammoEvidenceEntity.getAmmoInEvidenceEntityList().add(build);
-                ammoEvidenceRepository.saveAndFlush(ammoEvidenceEntity);
+                ammoEvidenceRepository.save(ammoEvidenceEntity);
             }
 
         }

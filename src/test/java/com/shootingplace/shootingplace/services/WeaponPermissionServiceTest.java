@@ -1,10 +1,11 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;
 import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.domain.entities.WeaponPermissionEntity;
-import com.shootingplace.shootingplace.domain.models.WeaponPermission;
+import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionEntity;
+import com.shootingplace.shootingplace.weaponPermission.WeaponPermission;
 import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.repositories.WeaponPermissionRepository;
+import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionRepository;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -70,7 +71,7 @@ public class WeaponPermissionServiceTest {
         ResponseEntity<?> responseEntity = weaponPermissionService.updateWeaponPermission(uuid, weaponPermission);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"ktoś już ma taki numer pozwolenia\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("ktoś już ma taki numer pozwolenia"));
     }
 
     @Test
@@ -91,7 +92,7 @@ public class WeaponPermissionServiceTest {
         ResponseEntity<?> responseEntity = weaponPermissionService.updateWeaponPermission(uuid, weaponPermission);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie znaleziono Klubowicza\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Nie znaleziono Klubowicza"));
     }
 
     @Test
@@ -112,7 +113,7 @@ public class WeaponPermissionServiceTest {
         ResponseEntity<?> responseEntity = weaponPermissionService.updateWeaponPermission(uuid, weaponPermission);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"ktoś już ma taki numer dopuszczenia\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("ktoś już ma taki numer dopuszczenia"));
     }
 
     @Test
@@ -134,7 +135,7 @@ public class WeaponPermissionServiceTest {
         ResponseEntity<?> responseEntity = weaponPermissionService.updateWeaponPermission(uuid, weaponPermission);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Zaktualizowano pozwolenie/dopuszczenie na broń\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Zaktualizowano pozwolenie/dopuszczenie na broń"));
     }
 
     @Test
@@ -146,7 +147,7 @@ public class WeaponPermissionServiceTest {
         ResponseEntity<?> responseEntity = weaponPermissionService.removeWeaponPermission(uuid, false, false);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie znaleziono Klubowicza\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Nie znaleziono Klubowicza"));
     }
 
     @Test
@@ -159,7 +160,7 @@ public class WeaponPermissionServiceTest {
         ResponseEntity<?> responseEntity = weaponPermissionService.removeWeaponPermission(uuid, true, true);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Usunięto pozwolenie/dopuszczenie\""
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Usunięto pozwolenie/dopuszczenie"
         ));
     }
 

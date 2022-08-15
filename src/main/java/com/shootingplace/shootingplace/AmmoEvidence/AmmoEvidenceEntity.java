@@ -1,5 +1,6 @@
-package com.shootingplace.shootingplace.domain.entities;
+package com.shootingplace.shootingplace.AmmoEvidence;
 
+import com.shootingplace.shootingplace.domain.entities.AmmoInEvidenceEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

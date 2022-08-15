@@ -2,14 +2,14 @@ package com.shootingplace.shootingplace.services;
 
 import com.github.javafaker.Faker;
 import com.github.javafaker.Name;
-import com.shootingplace.shootingplace.License.LicenseEntity;
-import com.shootingplace.shootingplace.License.LicenseService;
+import com.shootingplace.shootingplace.license.LicenseEntity;
+import com.shootingplace.shootingplace.license.LicenseService;
 import com.shootingplace.shootingplace.domain.entities.*;
-import com.shootingplace.shootingplace.License.License;
+import com.shootingplace.shootingplace.license.License;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
-import com.shootingplace.shootingplace.License.LicenseRepository;
+import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import org.hamcrest.Matchers;
 import org.junit.After;

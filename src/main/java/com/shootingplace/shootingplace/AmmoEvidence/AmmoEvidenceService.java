@@ -1,12 +1,12 @@
-package com.shootingplace.shootingplace.services;
+package com.shootingplace.shootingplace.AmmoEvidence;
 
-import com.shootingplace.shootingplace.domain.entities.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.domain.entities.GunEntity;
 import com.shootingplace.shootingplace.domain.entities.UsedHistoryEntity;
-import com.shootingplace.shootingplace.domain.models.AmmoDTO;
-import com.shootingplace.shootingplace.repositories.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.repositories.GunRepository;
 import com.shootingplace.shootingplace.repositories.UsedHistoryRepository;
+import com.shootingplace.shootingplace.services.ArmoryService;
+import com.shootingplace.shootingplace.services.ChangeHistoryService;
+import com.shootingplace.shootingplace.services.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
@@ -53,16 +53,16 @@ public class AmmoEvidenceService {
 
     public ResponseEntity<?> closeEvidence(String evidenceUUID) {
         if (!ammoEvidenceRepository.existsById(evidenceUUID)) {
-            return ResponseEntity.badRequest().body("\"Nie znaleziono listy\"");
+            return ResponseEntity.badRequest().body("Nie znaleziono listy");
         }
         AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository
                 .findById(evidenceUUID)
                 .orElseThrow(EntityNotFoundException::new);
         ammoEvidenceEntity.setOpen(false);
         ammoEvidenceEntity.setForceOpen(false);
-        ammoEvidenceRepository.saveAndFlush(ammoEvidenceEntity);
+        ammoEvidenceRepository.save(ammoEvidenceEntity);
         LOG.info("zamknięto");
-        return ResponseEntity.ok("\"Lista została zamknięta\"");
+        return ResponseEntity.ok("Lista została zamknięta");
     }
 
     public List<AmmoDTO> getClosedEvidences() {
@@ -75,7 +75,7 @@ public class AmmoEvidenceService {
 
     public ResponseEntity<?> openEvidence(String evidenceUUID, String pinCode) {
         if (ammoEvidenceRepository.findAll().stream().anyMatch(AmmoEvidenceEntity::isOpen)) {
-            return ResponseEntity.badRequest().body("\"Nie można otworzyć listy bo inna jest otwarta\"");
+            return ResponseEntity.badRequest().body("Nie można otworzyć listy bo inna jest otwarta");
 
         } else {
             AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository
@@ -83,10 +83,10 @@ public class AmmoEvidenceService {
                     .orElseThrow(EntityNotFoundException::new);
             ammoEvidenceEntity.setOpen(true);
             ammoEvidenceEntity.setForceOpen(true);
-            ammoEvidenceRepository.saveAndFlush(ammoEvidenceEntity);
+            ammoEvidenceRepository.save(ammoEvidenceEntity);
             LOG.info("otworzono");
             changeHistoryService.addRecordToChangeHistory(pinCode, ammoEvidenceEntity.getClass().getSimpleName() + " openAmmoEvidenceList", evidenceUUID);
-            return ResponseEntity.ok().body("\"Ręcznie otworzono listę - Pamiętaj by ją zamknąć!\"");
+            return ResponseEntity.ok().body("Ręcznie otworzono listę - Pamiętaj by ją zamknąć!");
         }
     }
 

@@ -1,14 +1,18 @@
-package com.shootingplace.shootingplace.services;
+package com.shootingplace.shootingplace.tournament;
 
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.ArbiterWorkClass;
 import com.shootingplace.shootingplace.domain.models.CompetitionMembersList;
 import com.shootingplace.shootingplace.member.MemberDTO;
-import com.shootingplace.shootingplace.domain.models.Tournament;
-import com.shootingplace.shootingplace.domain.models.TournamentDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.repositories.*;
+import com.shootingplace.shootingplace.repositories.CompetitionMembersListRepository;
+import com.shootingplace.shootingplace.repositories.CompetitionRepository;
+import com.shootingplace.shootingplace.repositories.OtherPersonRepository;
+import com.shootingplace.shootingplace.repositories.UsedHistoryRepository;
+import com.shootingplace.shootingplace.services.ChangeHistoryService;
+import com.shootingplace.shootingplace.services.HistoryService;
+import com.shootingplace.shootingplace.services.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
@@ -65,7 +69,7 @@ public class TournamentService {
         }
 
 
-        tournamentRepository.saveAndFlush(tournamentEntity);
+        tournamentRepository.save(tournamentEntity);
         LOG.info("Stworzono nowe zawody " + tournamentEntity.getName());
 
         return ResponseEntity.status(201).body("\"" + tournamentEntity.getUuid() + "\"");
@@ -92,7 +96,7 @@ public class TournamentService {
                 tournamentEntity.setDate(tournament.getDate());
                 LOG.info("Zmieniono datę zawodów");
             }
-            tournamentRepository.saveAndFlush(tournamentEntity);
+            tournamentRepository.save(tournamentEntity);
             historyService.updateTournamentEntityInCompetitionHistory(tournamentUUID);
             historyService.updateTournamentInJudgingHistory(tournamentUUID);
             return true;
@@ -166,7 +170,7 @@ public class TournamentService {
         if (tournamentEntity.isOpen()) {
             LOG.info("Zawody " + tournamentEntity.getName() + " zostały zamknięte");
             tournamentEntity.setOpen(false);
-            tournamentRepository.saveAndFlush(tournamentEntity);
+            tournamentRepository.save(tournamentEntity);
             return ResponseEntity.ok("\"Zawody zostały zamknięte\"");
         } else {
             return ResponseEntity.badRequest().body("\"Nie można zamknąć zawodów\"");
@@ -189,7 +193,7 @@ public class TournamentService {
             historyService.removeJudgingRecord(memberEntity.getUuid(), tournamentUUID);
             list.remove(memberEntity);
 
-            tournamentRepository.saveAndFlush(tournamentEntity);
+            tournamentRepository.save(tournamentEntity);
 
             return ResponseEntity.ok("\"Usunięto Sędziego\"");
         }
@@ -216,7 +220,7 @@ public class TournamentService {
 
             list.remove(otherPersonEntity);
 
-            tournamentRepository.saveAndFlush(tournamentEntity);
+            tournamentRepository.save(tournamentEntity);
 
             return ResponseEntity.ok("\"Usunięto Sędziego\"");
         }
@@ -264,7 +268,7 @@ public class TournamentService {
                         tournamentEntity.setOtherMainArbiter(null);
 
                     }
-                    tournamentRepository.saveAndFlush(tournamentEntity);
+                    tournamentRepository.save(tournamentEntity);
                     LOG.info("Ustawiono sędziego głównego zawodów");
                     historyService.addJudgingRecord(memberEntity.getUuid(), tournamentUUID, function);
                     return ResponseEntity.ok("\"Ustawiono sędziego głównego zawodów\"");
@@ -316,7 +320,7 @@ public class TournamentService {
                         tournamentEntity.setMainArbiter(null);
                         tournamentEntity.setOtherMainArbiter(otherPersonEntity);
                     }
-                    tournamentRepository.saveAndFlush(tournamentEntity);
+                    tournamentRepository.save(tournamentEntity);
                     LOG.info("Ustawiono sędziego głównego zawodów");
                     return ResponseEntity.ok("\"Ustawiono sędziego głównego zawodów\"");
                 } else {
@@ -363,7 +367,7 @@ public class TournamentService {
                         historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentUUID);
                     }
                     tournamentEntity.setCommissionRTSArbiter(memberEntity);
-                    tournamentRepository.saveAndFlush(tournamentEntity);
+                    tournamentRepository.save(tournamentEntity);
                     LOG.info("Ustawiono sędziego RTS");
                     historyService.addJudgingRecord(memberEntity.getUuid(), tournamentUUID, function);
                     return ResponseEntity.ok("\"Ustawiono sędziego RTS\"");
@@ -412,7 +416,7 @@ public class TournamentService {
                     }
                     tournamentEntity.setOtherCommissionRTSArbiter(otherPersonEntity);
                     tournamentEntity.setCommissionRTSArbiter(null);
-                    tournamentRepository.saveAndFlush(tournamentEntity);
+                    tournamentRepository.save(tournamentEntity);
                     LOG.info("Ustawiono sędziego biura obliczeń");
                     return ResponseEntity.ok("\"Ustawiono sędziego RTSń\"");
                 } else {
@@ -464,7 +468,7 @@ public class TournamentService {
                 list.sort(Comparator.comparing(MemberEntity::getSecondName));
 
                 tournamentEntity.setArbitersList(list);
-                tournamentRepository.saveAndFlush(tournamentEntity);
+                tournamentRepository.save(tournamentEntity);
                 LOG.info("Dodano sędziego pomocniczego");
                 historyService.addJudgingRecord(memberEntity.getUuid(), tournamentUUID, function);
                 return ResponseEntity.ok("\"Ustawiono sędziego pomocniczego\"");
@@ -513,7 +517,7 @@ public class TournamentService {
                 list.sort(Comparator.comparing(OtherPersonEntity::getSecondName));
 
                 tournamentEntity.setOtherArbitersList(list);
-                tournamentRepository.saveAndFlush(tournamentEntity);
+                tournamentRepository.save(tournamentEntity);
                 LOG.info("Dodano sędziego pomocniczego");
                 return ResponseEntity.ok("\"Ustawiono sędziego pomocniczego\"");
             }
@@ -552,7 +556,7 @@ public class TournamentService {
                 List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
                 competitionsList.add(competitionMembersList);
                 competitionsList.sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
-                tournamentRepository.saveAndFlush(tournamentEntity);
+                tournamentRepository.save(tournamentEntity);
                 LOG.info("Dodano konkurencję " + competition.getName() + " do zawodów");
                 return "Dodano konkurencję " + competition.getName() + " do zawodów";
             }
@@ -663,7 +667,7 @@ public class TournamentService {
                 list.sort(Comparator.comparing(MemberEntity::getSecondName));
 
                 tournamentEntity.setArbitersRTSList(list);
-                tournamentRepository.saveAndFlush(tournamentEntity);
+                tournamentRepository.save(tournamentEntity);
                 LOG.info("Dodano sędziego biura obliczeń");
                 historyService.addJudgingRecord(memberEntity.getUuid(), tournamentUUID, function);
                 return ResponseEntity.ok("\"Ustawiono sędziego biura obliczeń\"");
@@ -712,7 +716,7 @@ public class TournamentService {
                 list.sort(Comparator.comparing(OtherPersonEntity::getSecondName));
 
                 tournamentEntity.setOtherArbitersRTSList(list);
-                tournamentRepository.saveAndFlush(tournamentEntity);
+                tournamentRepository.save(tournamentEntity);
                 LOG.info("Dodano sędziego biura obliczeń");
                 return ResponseEntity.ok("\"Ustawiono sędziego biura obliczeń\"");
             }
@@ -739,7 +743,7 @@ public class TournamentService {
             historyService.removeJudgingRecord(memberEntity.getUuid(), tournamentUUID);
             list.remove(memberEntity);
 
-            tournamentRepository.saveAndFlush(tournamentEntity);
+            tournamentRepository.save(tournamentEntity);
 
             return ResponseEntity.ok("\"Usunięto sędziego\"");
         }
@@ -764,7 +768,7 @@ public class TournamentService {
 
             list.remove(otherPersonEntity);
 
-            tournamentRepository.saveAndFlush(tournamentEntity);
+            tournamentRepository.save(tournamentEntity);
 
             return ResponseEntity.ok("\"Usunięto sędziego\"");
         }
@@ -812,14 +816,13 @@ public class TournamentService {
 
     public ResponseEntity<?> openTournament(String tournamentUUID, String pinCode) {
         if (tournamentRepository.findAll().stream().anyMatch(TournamentEntity::isOpen)) {
-            System.out.println("coś");
             return ResponseEntity.badRequest().body("\"Nie można otworzyć zawodów gdy inne są otwarte\"");
         } else {
             TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
 
             LOG.info("Zawody " + tournamentEntity.getName() + " zostały otwarte");
             tournamentEntity.setOpen(true);
-            tournamentRepository.saveAndFlush(tournamentEntity);
+            tournamentRepository.save(tournamentEntity);
             changeHistoryService.addRecordToChangeHistory(pinCode, tournamentEntity.getClass().getSimpleName() + " openTournament", tournamentUUID);
             return ResponseEntity.ok("\"Otwarto zawody z dnia " + tournamentEntity.getDate() + "\"");
 

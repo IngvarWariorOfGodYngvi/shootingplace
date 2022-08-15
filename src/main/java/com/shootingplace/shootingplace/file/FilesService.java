@@ -2,6 +2,8 @@ package com.shootingplace.shootingplace.file;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.CountingMethod;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
@@ -11,6 +13,8 @@ import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.repositories.*;
 import com.shootingplace.shootingplace.services.Mapping;
+import com.shootingplace.shootingplace.tournament.TournamentEntity;
+import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
