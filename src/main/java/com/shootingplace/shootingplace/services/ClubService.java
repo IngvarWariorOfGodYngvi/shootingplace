@@ -24,14 +24,12 @@ public class ClubService {
     }
 
     public List<ClubEntity> getAllClubs() {
-        LOG.info("Wywołano listę klubów");
         List<ClubEntity> all = clubRepository.findAll();
         all.sort(Comparator.comparing(ClubEntity::getName));
         return all;
     }
 
     public List<String> getAllClubsToTournament() {
-        LOG.info("Wywołano listę klubów do zawodów");
         List<String> list = new ArrayList<>();
         clubRepository.findAll().stream()
                 .filter(f -> f.getId() != 1 && f.getId() != 2)

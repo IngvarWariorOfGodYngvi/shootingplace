@@ -5,6 +5,7 @@ import com.shootingplace.shootingplace.barCodeCards.BarCodeCardDTO;
 import com.shootingplace.shootingplace.domain.entities.ClubEntity;
 import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
 import com.shootingplace.shootingplace.domain.models.*;
+import com.shootingplace.shootingplace.License.License;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

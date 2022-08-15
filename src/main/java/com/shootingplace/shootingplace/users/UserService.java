@@ -46,7 +46,8 @@ public class UserService {
                     UserDTO.builder()
                             .firstName(e.getFirstName())
                             .secondName(e.getSecondName())
-                            .uuid(e.getUuid()).build()
+                            .uuid(e.getUuid())
+                            .subType(e.getSubType()).build()
             )
             ;
         });
@@ -105,7 +106,7 @@ public class UserService {
 
     }
 
-    public ResponseEntity<?> createUser(String firstName, String secondName, String pinCode, String superPinCode) {
+    public ResponseEntity<?> createUser(String firstName, String secondName,String subType, String pinCode, String superPinCode) {
 
         if (userRepository.findAll().stream().filter(f -> f.getPinCode().equals(superPinCode)).anyMatch(UserEntity::isSuperUser)) {
 
@@ -144,7 +145,7 @@ public class UserService {
                     .superUser(false)
                     .firstName(trim.toString())
                     .secondName(trim1.toString())
-                    .subType(UserSubType.MANAGEMENT.getName())
+                    .subType(subType)
                     .pinCode(trim2)
                     .active(true)
                     .build();

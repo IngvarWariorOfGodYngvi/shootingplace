@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.domain.models;
+package com.shootingplace.shootingplace.License;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

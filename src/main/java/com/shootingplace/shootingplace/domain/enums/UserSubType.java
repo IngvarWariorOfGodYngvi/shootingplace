@@ -5,6 +5,7 @@ public enum UserSubType {
     MANAGEMENT("Zarząd"),
     WORKER("Pracownik"),
     REVISION_COMMITTEE("Komisja Rewizyjna"),
+    VISITOR("Gość"),
     MANAGEMENT_WORKER("Pracownik/Zarząd");
     private final String name;
 

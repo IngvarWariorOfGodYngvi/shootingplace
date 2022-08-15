@@ -1,5 +1,7 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.License.LicenseEntity;
+import com.shootingplace.shootingplace.License.LicenseRepository;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
 import com.shootingplace.shootingplace.domain.models.History;
@@ -100,7 +102,7 @@ public class HistoryService {
     }
 
     // license
-    void addLicenseHistoryRecord(String memberUUID, int index) {
+   public void addLicenseHistoryRecord(String memberUUID, int index) {
         HistoryEntity historyEntity = memberRepository
                 .findById(memberUUID)
                 .orElseThrow(EntityNotFoundException::new)
@@ -221,7 +223,7 @@ public class HistoryService {
         }
 
         licenseEntity.setPaid(true);
-        licenseRepository.saveAndFlush(licenseEntity);
+        licenseRepository.save(licenseEntity);
         return ResponseEntity.ok("\"Dodano płatność za Licencję\"");
 
     }
@@ -331,16 +333,16 @@ public class HistoryService {
         if (historyEntity.getPistolCounter() >= 4 || historyEntity.getRifleCounter() >= 4 || historyEntity.getShotgunCounter() >= 4) {
             if (historyEntity.getPistolCounter() >= 4 && (historyEntity.getRifleCounter() >= 2 || historyEntity.getShotgunCounter() >= 2)) {
                 memberEntity.getLicense().setCanProlong(true);
-                licenseRepository.saveAndFlush(memberEntity.getLicense());
+                licenseRepository.save(memberEntity.getLicense());
             }
             if (historyEntity.getRifleCounter() >= 4 && (historyEntity.getPistolCounter() >= 2 || historyEntity.getShotgunCounter() >= 2)) {
                 memberEntity.getLicense().setCanProlong(true);
-                licenseRepository.saveAndFlush(memberEntity.getLicense());
+                licenseRepository.save(memberEntity.getLicense());
 
             }
             if (historyEntity.getShotgunCounter() >= 4 && (historyEntity.getRifleCounter() >= 2 || historyEntity.getPistolCounter() >= 2)) {
                 memberEntity.getLicense().setCanProlong(true);
-                licenseRepository.saveAndFlush(memberEntity.getLicense());
+                licenseRepository.save(memberEntity.getLicense());
             }
         }
     }

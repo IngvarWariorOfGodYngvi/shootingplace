@@ -1,10 +1,8 @@
-package com.shootingplace.shootingplace.controllers;
+package com.shootingplace.shootingplace.License;
 
-import com.shootingplace.shootingplace.domain.models.License;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.services.ChangeHistoryService;
 import com.shootingplace.shootingplace.services.HistoryService;
-import com.shootingplace.shootingplace.services.LicenseService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -41,12 +39,6 @@ public class LicenseController {
     public ResponseEntity<?> getAllLicensePayment() {
         return ResponseEntity.ok(licenseService.getAllLicencePayment());
     }
-
-
-//    @GetMapping("/membersQuantity")
-//    public List<Integer> getMembersQuantity() {
-//        return licenseService.getMembersQuantity();
-//    }
 
     @PutMapping("/{memberUUID}")
     public ResponseEntity<?> updateLicense(@PathVariable String memberUUID, @RequestBody License license) {

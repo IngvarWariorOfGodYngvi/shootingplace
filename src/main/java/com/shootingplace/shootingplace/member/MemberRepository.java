@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.member;
 
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,5 +32,5 @@ public interface MemberRepository {
 
     MemberEntity getOne(String uuid);
 
-    List<MemberEntity> findAll(Sort sort);
+    Page<MemberEntity> findAll(Pageable page);
 }

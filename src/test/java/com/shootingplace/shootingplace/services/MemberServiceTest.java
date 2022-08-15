@@ -1,5 +1,7 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.License.LicenseEntity;
+import com.shootingplace.shootingplace.License.LicenseService;
 import com.shootingplace.shootingplace.address.AddressService;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.ArbiterClass;
@@ -8,7 +10,7 @@ import com.shootingplace.shootingplace.member.*;
 import com.shootingplace.shootingplace.repositories.ClubRepository;
 import com.shootingplace.shootingplace.repositories.ErasedRepository;
 import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
-import com.shootingplace.shootingplace.repositories.LicenseRepository;
+import com.shootingplace.shootingplace.License.LicenseRepository;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;

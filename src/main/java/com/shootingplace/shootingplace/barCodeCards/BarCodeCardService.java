@@ -5,7 +5,6 @@ import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
-import com.shootingplace.shootingplace.domain.enums.UserSubType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,9 +38,12 @@ public class BarCodeCardService {
             dto.setMaster(true);
         }
 
-
         if (barCodeCardRepo.existsByBarCode(dto.getBarCode())) {
             return ResponseEntity.badRequest().body("Taki numer jest już do kogoś przypisany - użyj innej karty");
+        }
+        String bc = dto.getBarCode();
+        if (bc.equals("null") || bc.isEmpty() || bc.isBlank()) {
+            return ResponseEntity.badRequest().body("Nie podano numeru Karty");
         }
         MemberEntity memberEntity = null;
         UserEntity userEntity = userRepository.findById(dto.getBelongsTo()).orElse(null);
@@ -54,7 +56,7 @@ public class BarCodeCardService {
         List<BarCodeCardEntity> barCodeCardList;
         if (memberEntity != null) {
             build = BarCodeCardEntity.builder()
-                    .barCode(dto.getBarCode())
+                    .barCode(bc)
                     .belongsTo(memberEntity.getUuid())
                     .isActive(true)
                     .isMaster(dto.isMaster())
@@ -76,13 +78,13 @@ public class BarCodeCardService {
                 return ResponseEntity.badRequest().body("Nie można dodać więcej kart do " + userEntity.getFirstName());
             }
             build = BarCodeCardEntity.builder()
-                    .barCode(dto.getBarCode())
+                    .barCode(bc)
                     .belongsTo(userEntity.getUuid())
                     .isActive(true)
                     .isMaster(dto.isMaster())
                     .activatedDay(LocalDate.now())
                     .type("User")
-                    .subType(UserSubType.WORKER.getName())
+                    .subType(dto.getSubType())
                     .build();
             BarCodeCardEntity save = barCodeCardRepo.save(build);
             barCodeCardList = userEntity.getBarCodeCardList();

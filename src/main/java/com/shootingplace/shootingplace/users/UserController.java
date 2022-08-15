@@ -30,8 +30,8 @@ private final UserService userService;
     }
 
     @PostMapping("/createUser")
-    public ResponseEntity<?> createUser(@RequestParam String firstName,@RequestParam String secondName, @RequestParam String pinCode, @RequestParam String superPinCode) {
-        return userService.createUser(firstName, secondName, pinCode, superPinCode);
+    public ResponseEntity<?> createUser(@RequestParam String firstName,@RequestParam String secondName,@RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode) {
+        return userService.createUser(firstName, secondName,subType, pinCode, superPinCode);
     }
 
 }

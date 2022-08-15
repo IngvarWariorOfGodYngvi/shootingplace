@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.member;
 
+import com.shootingplace.shootingplace.License.LicenseEntity;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.domain.entities.*;

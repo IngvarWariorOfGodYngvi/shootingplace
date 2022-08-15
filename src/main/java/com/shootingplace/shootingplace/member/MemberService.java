@@ -1,17 +1,20 @@
 package com.shootingplace.shootingplace.member;
 
+import com.shootingplace.shootingplace.License.LicenseEntity;
+import com.shootingplace.shootingplace.License.LicenseRepository;
+import com.shootingplace.shootingplace.License.LicenseService;
 import com.shootingplace.shootingplace.address.AddressService;
 import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
-import com.shootingplace.shootingplace.domain.entities.LicenseEntity;
 import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
 import com.shootingplace.shootingplace.domain.enums.ErasedType;
 import com.shootingplace.shootingplace.repositories.ClubRepository;
 import com.shootingplace.shootingplace.repositories.ErasedRepository;
 import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
-import com.shootingplace.shootingplace.repositories.LicenseRepository;
 import com.shootingplace.shootingplace.services.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -146,7 +149,7 @@ public class MemberService {
             if (e.getLicense().getNumber() != null) {
                 LicenseEntity license = e.getLicense();
                 license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
-                licenseRepository.saveAndFlush(license);
+                licenseRepository.save(license);
             }
         });
         //młodzież
@@ -175,7 +178,7 @@ public class MemberService {
             if (e.getLicense().getNumber() != null) {
                 LicenseEntity license = e.getLicense();
                 license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
-                licenseRepository.saveAndFlush(license);
+                licenseRepository.save(license);
             }
         });
     }
@@ -645,8 +648,8 @@ public class MemberService {
 
     public List<MemberDTO> getAllMemberDTO() {
         List<MemberDTO> list = new ArrayList<>();
-
-        memberRepository.findAll(Sort.by("secondName").descending())
+        Pageable pageable = PageRequest.of(0, memberRepository.findAll().size(),Sort.by("secondName").descending());
+        memberRepository.findAll(pageable)
                 .stream()
                 .filter(f -> !f.getErased())
                 .forEach(e -> list.add(Mapping.map2DTO(e)));

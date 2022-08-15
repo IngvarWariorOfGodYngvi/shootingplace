@@ -1,11 +1,13 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.License.LicenseEntity;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.models.*;
 import com.shootingplace.shootingplace.file.FilesEntity;
 import com.shootingplace.shootingplace.file.FilesModel;
+import com.shootingplace.shootingplace.License.License;
 import com.shootingplace.shootingplace.member.Member;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
@@ -183,7 +185,7 @@ public class Mapping {
                         .build()).orElse(null);
     }
 
-    static License map(LicenseEntity l) {
+    public static License map(LicenseEntity l) {
         return Optional.ofNullable(l)
                 .map(e -> License.builder()
                         .number(e.getNumber())

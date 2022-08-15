@@ -35,7 +35,7 @@ public class WorkingTimeEvidenceService {
         String msg;
         BarCodeCardEntity barCode = barCodeCardRepo.findByBarCode(number);
         if (!barCode.isActive()) {
-            msg = "Karta jest nieaktywna i n ie można jej użyć ponownie";
+            msg = "Karta jest nieaktywna i nie można jej użyć ponownie";
             return msg;
         }
         String belongsTo = barCode.getBelongsTo();

@@ -1,16 +1,16 @@
-package com.shootingplace.shootingplace.services;
+package com.shootingplace.shootingplace.License;
 
 import com.shootingplace.shootingplace.domain.entities.HistoryEntity;
-import com.shootingplace.shootingplace.domain.entities.LicenseEntity;
 import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
 import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.domain.models.License;
 import com.shootingplace.shootingplace.domain.models.LicensePaymentHistoryDTO;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.repositories.HistoryRepository;
 import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
-import com.shootingplace.shootingplace.repositories.LicenseRepository;
 import com.shootingplace.shootingplace.member.MemberRepository;
+import com.shootingplace.shootingplace.services.ChangeHistoryService;
+import com.shootingplace.shootingplace.services.HistoryService;
+import com.shootingplace.shootingplace.services.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
@@ -130,7 +130,7 @@ public class LicenseService {
             LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
         }
         licenseEntity.setPaid(false);
-        licenseRepository.saveAndFlush(licenseEntity);
+        licenseRepository.save(licenseEntity);
         LOG.info("Zaktualizowano licencję");
         return ResponseEntity.ok("Zaktualizowano licencję");
     }
@@ -168,7 +168,7 @@ public class LicenseService {
                 license.setPaid(true);
             }
         }
-        licenseRepository.saveAndFlush(license);
+        licenseRepository.save(license);
         changeHistoryService.addRecordToChangeHistory(pinCode, license.getClass().getSimpleName() + " updateLicense", memberEntity.getUuid());
         return ResponseEntity.ok("Poprawiono Licencję");
     }
@@ -224,7 +224,7 @@ public class LicenseService {
                 memberEntity.getHistory().setPistolCounter(0);
                 memberEntity.getHistory().setRifleCounter(0);
                 memberEntity.getHistory().setShotgunCounter(0);
-                licenseRepository.saveAndFlush(licenseEntity);
+                licenseRepository.save(licenseEntity);
                 LOG.info("Przedłużono licencję");
                 return ResponseEntity.ok().body("Przedłużono licencję");
 

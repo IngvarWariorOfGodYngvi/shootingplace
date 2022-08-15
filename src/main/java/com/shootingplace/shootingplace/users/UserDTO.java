@@ -16,4 +16,6 @@ public class UserDTO {
     private String firstName;
 
     private String secondName;
+
+    private String subType;
 }

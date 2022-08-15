@@ -33,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.text.Collator;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -124,6 +125,8 @@ public class FilesService {
             }
         }
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -233,6 +236,8 @@ public class FilesService {
         String fileName = "Karta_Członkowska_" + memberEntity.getFirstName().trim() + "_" + memberEntity.getSecondName() + ".pdf";
         LocalDate birthDate = birthDay(memberEntity.getPesel());
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -462,6 +467,8 @@ public class FilesService {
         String fileName = "Lista_Amunicyjna_" + ammoEvidenceEntity.getDate().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -563,6 +570,8 @@ public class FilesService {
         String fileName = "Wniosek_" + memberEntity.getFirstName() + "_" + memberEntity.getSecondName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(fileName));
         document.open();
         document.addTitle(fileName);
@@ -862,6 +871,8 @@ public class FilesService {
         String fileName = tournamentEntity.getDate().format(dateFormat()) + " " + c.getName() + " " + tournamentEntity.getName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -1145,6 +1156,8 @@ public class FilesService {
         String fileName = reason + " " + memberEntity.getFirstName().trim().concat(" " + memberEntity.getSecondName().trim()) + ".pdf";
 
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         FileOutputStream fileOutputStream = new FileOutputStream(fileName);
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -1421,8 +1434,12 @@ public class FilesService {
         String fileName = "metryki_" + name + ".pdf";
 
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
+
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -1650,13 +1667,16 @@ public class FilesService {
         String fileName = "Lista_klubowiczów_na_dzień " + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
 
-        List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).filter(f -> f.getAdult().equals(condition)).sorted(Comparator.comparing(MemberEntity::getSecondName)).collect(Collectors.toList());
+        List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).filter(f -> f.getAdult().equals(condition)).sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))).collect(Collectors.toList());
 
         String hour = String.valueOf(LocalTime.now().getHour());
         String minute = String.valueOf(LocalTime.now().getMinute());
@@ -1753,17 +1773,19 @@ public class FilesService {
     public FilesEntity generateAllMembersList() throws IOException, DocumentException {
 
         String fileName = "Lista_obecności_klubowiczów " + LocalDate.now().format(dateFormat()) + ".pdf";
-
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
 
         document.open();
+        document.setMarginMirroringTopBottom(true);
         document.addTitle(fileName);
         document.addCreationDate();
 
-        List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).sorted(Comparator.comparing(MemberEntity::getSecondName)).collect(Collectors.toList());
+        List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))).collect(Collectors.toList());
 
         String hour = String.valueOf(LocalTime.now().getHour());
         String minute = String.valueOf(LocalTime.now().getMinute());
@@ -1775,6 +1797,7 @@ public class FilesService {
 
         Paragraph title = new Paragraph("Lista obecności klubowiczów na dzień " + LocalDate.now().format(dateFormat()), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
+
         document.add(title);
         document.add(newLine);
 
@@ -1856,6 +1879,8 @@ public class FilesService {
         String fileName = "Lista_sędziów_na_zawodach_" + tournamentEntity.getName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -2001,6 +2026,8 @@ public class FilesService {
         String fileName = "Lista_osób_do_zgłoszenia_na_Policję " + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -2026,7 +2053,7 @@ public class FilesService {
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(f -> !f.getLicense().isValid())
                 .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
         float[] pointColumnWidths = {7F, 44F, 17F, 17F};
 
@@ -2099,6 +2126,8 @@ public class FilesService {
         String fileName = "Lista_osób_do_skreślenia_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -2123,7 +2152,7 @@ public class FilesService {
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getActive())
                 .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
         float[] pointColumnWidths = {4F, 42F, 14F, 14F, 14F, 14F};
 
@@ -2219,6 +2248,8 @@ public class FilesService {
         String fileName = "Lista_osób_bez_składek_z_ważnymi_licencjami_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -2244,7 +2275,7 @@ public class FilesService {
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(f -> f.getLicense().isValid())
                 .filter(f -> !f.getActive())
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
         float[] pointColumnWidths = {4F, 42F, 14F, 14F, 14F, 14F};
 
@@ -2331,6 +2362,8 @@ public class FilesService {
         String fileName = "Lista_broni_w_magazynie_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         document.open();
@@ -2505,6 +2538,8 @@ public class FilesService {
         String fileName = "Lista_broni_do_przewozu_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -2662,6 +2697,8 @@ public class FilesService {
         String fileName = "Lista_osób_skreślonych_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -2684,7 +2721,7 @@ public class FilesService {
 
         List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
                 .filter(MemberEntity::getErased)
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
         float[] pointColumnWidths = {4F, 28F, 10F, 10F, 14F, 14F, 36F};
 
@@ -2786,6 +2823,8 @@ public class FilesService {
         String fileName = "Lista_rankingowa.pdf";
         ClubEntity club = clubRepository.getOne(1);
         Document document = new Document(PageSize.A4.rotate());
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         document.open();
@@ -2951,6 +2990,8 @@ public class FilesService {
 // TODO wprowadzić daty do wyboru
         String fileName = "raport sędziowania.pdf";
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -3020,6 +3061,8 @@ public class FilesService {
 
         String fileName = "raport_pracy.pdf";
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F,35F,50F,50F);
+        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -3043,6 +3086,7 @@ public class FilesService {
                     });
 
                     float[] pointColumnWidths = {4F, 14F, 14F, 20F, 48F};
+                    AtomicInteger pageNumb= new AtomicInteger();
                     users.forEach(u ->
                             {
                                 //tutaj tworzę dokument
@@ -3106,7 +3150,7 @@ public class FilesService {
                                         PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(12, 0)));
                                         PdfPCell startCell = new PdfPCell(new Paragraph(formatStart, font(12, 0)));
                                         PdfPCell stopCell = new PdfPCell(new Paragraph(formatStop, font(12, 0)));
-                                        PdfPCell timeCell = new PdfPCell(new Paragraph(workTime, font(10, 0)));
+                                        PdfPCell timeCell = new PdfPCell(new Paragraph(workTime, font(12, 0)));
                                         String des = "";
 
                                         if (g.isAutomatedClosed()) {
@@ -3140,10 +3184,13 @@ public class FilesService {
                                     Paragraph sum = new Paragraph("Suma godzin: " + format, font(12, 1));
                                     sum.setAlignment(2);
                                     document.add(sum);
-                                    document.newPage();
+                                    pageNumb.addAndGet(1);
+                                    if(pageNumb.get() <users.size()){
+                                    document.newPage();}
                                 } catch (DocumentException | IOException ex) {
                                     ex.printStackTrace();
                                 }
+
                             }
                     );
                 }
@@ -3266,9 +3313,9 @@ public class FilesService {
 
             filesRepository.deleteById(uuid);
             LOG.info("Usunięto plik");
-            return ResponseEntity.ok("\"Usunięto plik\"");
+            return ResponseEntity.ok("Usunięto plik");
         } else {
-            return ResponseEntity.badRequest().body("\"Nie udało się usunąć\"");
+            return ResponseEntity.badRequest().body("Nie udało się usunąć");
         }
 
     }
@@ -3413,7 +3460,7 @@ public class FilesService {
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
             final int currentPageNumber = writer.getCurrentPageNumber();
-
+            document.setMargins(35F,35F,50F,50F);
             try {
                 final Rectangle pageSize = document.getPageSize();
                 final PdfContentByte directContent = writer.getDirectContent();
@@ -3432,6 +3479,8 @@ public class FilesService {
         @Override
         public void onStartPage(PdfWriter writer, Document document) {
             try {
+//                document.setMargins(35F,35F,50F,50F);
+//                System.out.println(document.bottomMargin());
                 // to działa w miejscu docelowym - nie ruszać tego
                 String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/pełna-nazwa(małe).bmp";
                 Image image = Image.getInstance(source);
