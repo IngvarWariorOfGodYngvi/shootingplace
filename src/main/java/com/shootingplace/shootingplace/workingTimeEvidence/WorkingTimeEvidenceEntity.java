@@ -34,6 +34,10 @@ public class WorkingTimeEvidenceEntity {
     private UserEntity user;
     private String workType;
 
+    public String getUuid() {
+        return uuid;
+    }
+
     public String getWorkType() {
         return workType;
     }

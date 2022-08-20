@@ -23,6 +23,15 @@ public class FilesModel {
     private LocalTime time;
     private long size;
     private Gun gun;
+    private int version;
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void incrementVersion() {
+        this.version += 1;
+    }
 
     public Gun getGun() {
         return gun;

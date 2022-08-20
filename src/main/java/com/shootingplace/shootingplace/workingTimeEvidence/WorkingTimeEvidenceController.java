@@ -26,4 +26,9 @@ public class WorkingTimeEvidenceController {
 
        return ResponseEntity.ok(workService.getAllUsersInWork());
     }
+
+    @GetMapping("/month")
+    public ResponseEntity<?> getAllWorkingTimeEvidenceInMonth(@RequestParam String month){
+        return ResponseEntity.ok(workService.getAllWorkingTimeEvidenceInMonth(month));
+    }
 }

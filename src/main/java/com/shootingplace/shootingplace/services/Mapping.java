@@ -19,6 +19,8 @@ import com.shootingplace.shootingplace.tournament.TournamentDTO;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermission;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionEntity;
+import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceDTO;
+import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -464,6 +466,7 @@ public class Mapping {
                 .date(e.getDate())
                 .time(e.getTime())
                 .size(e.getSize())
+                .version(e.getVersion())
                 .build()).orElse(null);
     }
 
@@ -476,6 +479,7 @@ public class Mapping {
                 .date(e.getDate())
                 .time(e.getTime())
                 .size(e.getSize())
+                .version(e.getVersion())
                 .build()).orElse(null);
     }
 
@@ -589,5 +593,17 @@ public class Mapping {
                 .serialNumber(c.getSerialNumber())
                 .uuid(c.getUuid())
                 .build();
+    }
+    public static WorkingTimeEvidenceDTO map(WorkingTimeEvidenceEntity e){
+        return WorkingTimeEvidenceDTO.builder()
+                .cardNumber(e.getCardNumber())
+                .workTime(e.getWorkTime())
+                .workType(e.getWorkType())
+                .isAutomatedClosed(e.isAutomatedClosed())
+                .start(e.getStart())
+                .stop(e.getStop())
+                .toClarify(e.isToClarify())
+                .user(e.getUser().getUuid())
+                .uuid(e.getUuid()).build();
     }
 }

@@ -3,18 +3,19 @@ package com.shootingplace.shootingplace.workingTimeEvidence;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
 import com.shootingplace.shootingplace.domain.enums.UserSubType;
+import com.shootingplace.shootingplace.services.Mapping;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,49 +37,71 @@ public class WorkingTimeEvidenceService {
         BarCodeCardEntity barCode = barCodeCardRepo.findByBarCode(number);
         if (!barCode.isActive()) {
             msg = "Karta jest nieaktywna i nie można jej użyć ponownie";
+            log.info(msg);
             return msg;
         }
         String belongsTo = barCode.getBelongsTo();
+
+        // szukam osoby do której należy karta
         UserEntity user = userRepository.findById(belongsTo).orElse(null);
 
-        List<WorkingTimeEvidenceEntity> all = workRepo.findAll();
-        UserEntity finalUser = user;
-        WorkingTimeEvidenceEntity entity1 = all.stream()
-                .filter(Objects::nonNull)
+        // biorę wszystkie niezamknięte wiersze z obecnego miesiąca gdzie występuje osoba
+        WorkingTimeEvidenceEntity entity1 = workRepo.findAll()
+                .stream()
                 .filter(f -> !f.isClose())
-                .filter(f -> f.getUser().equals(finalUser))
+                .filter(f -> f.getStart().getMonth().equals(LocalDateTime.now().getMonth()))
+                .filter(f -> f.getUser().equals(user))
                 .findFirst().orElse(null);
+//
+//        WorkingTimeEvidenceEntity entity1 = all.stream()
+//                .filter(Objects::nonNull)
+//                .findFirst().orElse(null);
 
-        barCode.addCountUse();
-        barCodeCardRepo.save(barCode);
+        // jeżeli jedna osoba jest zalogowana jako pracownik a odbije się jako zarząd to pracownika ma zamykać a otwierać zarząd
+
 
         if (entity1 != null) {
-            return closeWTE(entity1, false, barCode);
-        } else {
-            belongsTo = barCode.getBelongsTo();
-            user = userRepository.findById(belongsTo).orElse(null);
-            if (user == null) {
-                msg = "nie znaleziono osoby o tym numerze karty";
+            if (!barCode.getSubType().equals(entity1.getWorkType())) {
+                msg = closeWTE(entity1, false, barCode);
+                String msg1 = openWTE(barCode, number);
+                return msg + " " + msg1;
             } else {
-                LocalDateTime start = LocalDateTime.now();
 
-                String subType = barCode.getSubType();
-
-                WorkingTimeEvidenceEntity entity = WorkingTimeEvidenceEntity.builder()
-                        .start(start)
-                        .stop(null)
-                        .cardNumber(number)
-                        .isClose(false)
-                        .user(user)
-                        .workType(subType).build();
-
-                workRepo.save(entity);
-                msg = user.getFirstName() + " " + user.getSecondName() + " Witaj w Pracy";
+                return closeWTE(entity1, false, barCode);
             }
+
+        } else {
+            msg = openWTE(barCode, number);
+            return msg;
         }
+    }
+
+    String openWTE(BarCodeCardEntity barCode, String number) {
+        String msg;
+        String belongsTo = barCode.getBelongsTo();
+        UserEntity user = userRepository.findById(belongsTo).orElse(null);
+        if (user == null) {
+            msg = "nie znaleziono osoby o tym numerze karty";
+        } else {
+            LocalDateTime start = LocalDateTime.now();
+
+            String subType = barCode.getSubType();
+
+            WorkingTimeEvidenceEntity entity = WorkingTimeEvidenceEntity.builder()
+                    .start(start)
+                    .stop(null)
+                    .cardNumber(number)
+                    .isClose(false)
+                    .user(user)
+                    .workType(subType).build();
+
+            workRepo.save(entity);
+            msg = user.getFirstName() + " " + user.getSecondName() + " Witaj w Pracy";
+        }
+        barCode.addCountUse();
+        barCodeCardRepo.save(barCode);
         log.info(msg);
         return msg;
-
     }
 
 
@@ -122,7 +145,7 @@ public class WorkingTimeEvidenceService {
         return msg;
     }
 
-    private String countTime(LocalDateTime start, LocalDateTime stop) {
+    public String countTime(LocalDateTime start, LocalDateTime stop) {
 
         LocalDateTime tempDateTime = LocalDateTime.from(start);
 
@@ -186,7 +209,7 @@ public class WorkingTimeEvidenceService {
     }
 
 
-    private LocalDateTime getTime(LocalDateTime time, boolean in) {
+    public LocalDateTime getTime(LocalDateTime time, boolean in) {
         LocalTime temp = time.toLocalTime();
         if (in) {
             if (time.getMinute() < 8) {
@@ -242,4 +265,18 @@ public class WorkingTimeEvidenceService {
         return LocalDateTime.of(time.toLocalDate(), temp);
     }
 
+    public List<WorkingTimeEvidenceDTO> getAllWorkingTimeEvidenceInMonth(String month) {
+        List<WorkingTimeEvidenceDTO> WTEDTO = new ArrayList<>();
+        List<WorkingTimeEvidenceEntity> pl = workRepo.findAll().stream().filter(f -> f.getStart().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(month)).collect(Collectors.toList());
+        pl.forEach(e -> {
+            WorkingTimeEvidenceDTO map = Mapping.map(e);
+            UserEntity userEntity = userRepository.findById(map.getUser()).orElseThrow(EntityNotFoundException::new);
+            String name = userEntity.getSecondName() + " " + userEntity.getFirstName();
+            map.setUser(name);
+            WTEDTO.add(map);
+        });
+        return WTEDTO;
+
+
+    }
 }

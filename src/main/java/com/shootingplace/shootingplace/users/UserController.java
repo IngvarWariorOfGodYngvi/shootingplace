@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin
 public class UserController {
 
-private final UserService userService;
+    private final UserService userService;
 
     public UserController(UserService userService) {
         this.userService = userService;
@@ -25,13 +25,18 @@ private final UserService userService;
     }
 
     @PostMapping("/createSuperUser")
-    public ResponseEntity<?> createSuperUser(@RequestParam String firstName,@RequestParam String secondName, @RequestParam String pinCode) {
-        return userService.createSuperUser(firstName,secondName, pinCode);
+    public ResponseEntity<?> createSuperUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam String pinCode) {
+        return userService.createSuperUser(firstName, secondName, pinCode);
     }
 
     @PostMapping("/createUser")
-    public ResponseEntity<?> createUser(@RequestParam String firstName,@RequestParam String secondName,@RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode) {
-        return userService.createUser(firstName, secondName,subType, pinCode, superPinCode);
+    public ResponseEntity<?> createUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode) {
+        return userService.createUser(firstName, secondName, subType, pinCode, superPinCode);
+    }
+
+    @GetMapping("/checkPinCode")
+    public ResponseEntity<?> checkPinCode(@RequestParam String pinCode, @RequestParam String uuid) {
+        return userService.checkPinCode(pinCode, uuid);
     }
 
 }

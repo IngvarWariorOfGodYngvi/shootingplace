@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -242,8 +243,8 @@ public class FilesController {
                 .body(filesEntity.getData());
     }
     @GetMapping("/downloadWorkReport")
-    public ResponseEntity<byte[]> getWorkTimeReport(@RequestParam List<String> month,@RequestParam String workType) throws DocumentException, IOException {
-        FilesEntity filesEntity = filesService.getWorkTimeReport(month, workType);
+    public ResponseEntity<byte[]> getWorkTimeReport(@RequestParam String month, @RequestParam String workType, @RequestParam boolean detailed, @Nullable @RequestParam boolean incrementVersion) throws DocumentException, IOException {
+        FilesEntity filesEntity = filesService.getWorkTimeReport(month, workType,detailed,incrementVersion);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")

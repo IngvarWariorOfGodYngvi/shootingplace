@@ -16,9 +16,9 @@ import com.shootingplace.shootingplace.services.Mapping;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
-import com.shootingplace.shootingplace.users.UserRepository;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
+import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +40,7 @@ import java.nio.file.Files;
 import java.text.Collator;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
@@ -63,11 +64,11 @@ public class FilesService {
     private final CompetitionRepository competitionRepository;
     private final GunStoreRepository gunStoreRepository;
     private final WorkingTimeEvidenceRepository workRepo;
-    private final UserRepository userRepo;
+    private final WorkingTimeEvidenceService workServ;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, UserRepository userRepo) {
+    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ) {
         this.memberRepository = memberRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.filesRepository = filesRepository;
@@ -79,7 +80,7 @@ public class FilesService {
         this.competitionRepository = competitionRepository;
         this.gunStoreRepository = gunStoreRepository;
         this.workRepo = workRepo;
-        this.userRepo = userRepo;
+        this.workServ = workServ;
     }
 
     FilesEntity createFileEntity(FilesModel filesModel) {
@@ -129,7 +130,7 @@ public class FilesService {
             }
         }
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -240,7 +241,7 @@ public class FilesService {
         String fileName = "Karta_Członkowska_" + memberEntity.getFirstName().trim() + "_" + memberEntity.getSecondName() + ".pdf";
         LocalDate birthDate = birthDay(memberEntity.getPesel());
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -471,7 +472,7 @@ public class FilesService {
         String fileName = "Lista_Amunicyjna_" + ammoEvidenceEntity.getDate().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -574,7 +575,7 @@ public class FilesService {
         String fileName = "Wniosek_" + memberEntity.getFirstName() + "_" + memberEntity.getSecondName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(fileName));
         document.open();
@@ -875,7 +876,7 @@ public class FilesService {
         String fileName = tournamentEntity.getDate().format(dateFormat()) + " " + c.getName() + " " + tournamentEntity.getName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -1160,9 +1161,9 @@ public class FilesService {
         String fileName = reason + " " + memberEntity.getFirstName().trim().concat(" " + memberEntity.getSecondName().trim()) + ".pdf";
 
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
-        FileOutputStream fileOutputStream = new FileOutputStream(fileName);
+//        FileOutputStream fileOutputStream = new FileOutputStream(fileName);
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -1438,7 +1439,7 @@ public class FilesService {
         String fileName = "metryki_" + name + ".pdf";
 
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -1671,7 +1672,7 @@ public class FilesService {
         String fileName = "Lista_klubowiczów_na_dzień " + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -1778,7 +1779,7 @@ public class FilesService {
 
         String fileName = "Lista_obecności_klubowiczów " + LocalDate.now().format(dateFormat()) + ".pdf";
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -1883,7 +1884,7 @@ public class FilesService {
         String fileName = "Lista_sędziów_na_zawodach_" + tournamentEntity.getName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -2030,7 +2031,7 @@ public class FilesService {
         String fileName = "Lista_osób_do_zgłoszenia_na_Policję " + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -2130,7 +2131,7 @@ public class FilesService {
         String fileName = "Lista_osób_do_skreślenia_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -2252,7 +2253,7 @@ public class FilesService {
         String fileName = "Lista_osób_bez_składek_z_ważnymi_licencjami_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -2366,10 +2367,11 @@ public class FilesService {
         String fileName = "Lista_broni_w_magazynie_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2542,7 +2544,7 @@ public class FilesService {
         String fileName = "Lista_broni_do_przewozu_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -2701,7 +2703,7 @@ public class FilesService {
         String fileName = "Lista_osób_skreślonych_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -2827,10 +2829,11 @@ public class FilesService {
         String fileName = "Lista_rankingowa.pdf";
         ClubEntity club = clubRepository.getOne(1);
         Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2994,7 +2997,7 @@ public class FilesService {
 // TODO wprowadzić daty do wyboru
         String fileName = "raport sędziowania.pdf";
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -3057,15 +3060,20 @@ public class FilesService {
 
         File file = new File(fileName);
 
+        //noinspection ResultOfMethodCallIgnored
         file.delete();
         return filesEntity;
     }
 
-    public FilesEntity getWorkTimeReport(List<String> month, String workType) throws IOException, DocumentException {
-
-        String fileName = "raport_pracy.pdf";
+    public FilesEntity getWorkTimeReport(String month, String workType, boolean detailed, boolean incrementVersion) throws IOException, DocumentException {
+        int reportNumber = 1;
+        String fileName = "raport_pracy_" + month + "_" + reportNumber + ".pdf";
+        List<FilesEntity> collect = filesRepository.findAll().stream().filter(f -> f.getName().contains("raport_pracy_" + month)).collect(Collectors.toList());
+        if (incrementVersion && !collect.isEmpty()) {
+            reportNumber = collect.stream().max(Comparator.comparing(FilesEntity::getVersion)).orElseThrow(EntityNotFoundException::new).getVersion();
+        }
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F,35F,50F,50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -3075,130 +3083,192 @@ public class FilesService {
         document.addCreationDate();
         document.addAuthor("KS DZIESIĄTKA");
         document.addCreator("Igor Żebrowski");
-        month.forEach(e -> {
-                    String finalMonth = e.toLowerCase(Locale.ROOT);
-                    List<WorkingTimeEvidenceEntity> evidenceEntities = workRepo.findAll()
+
+        String finalMonth = month.toLowerCase(Locale.ROOT);
+        int pl = 0;
+        switch (finalMonth) {
+            case "styczeń":
+                pl = 1;
+                break;
+            case "luty":
+                pl = 2;
+                break;
+            case "marzec":
+                pl = 3;
+                break;
+            case "kwiecień":
+                pl = 4;
+                break;
+            case "maj":
+                pl = 5;
+                break;
+            case "czerwiec":
+                pl = 6;
+                break;
+            case "lipiec":
+                pl = 7;
+                break;
+            case "sierpień":
+                pl = 8;
+                break;
+            case "wrzesień":
+                pl = 9;
+                break;
+            case "październik":
+                pl = 10;
+                break;
+            case "listopad":
+                pl = 11;
+                break;
+            case "grudzień":
+                pl = 12;
+                break;
+        }
+
+        List<WorkingTimeEvidenceEntity> evidenceEntities = workRepo.findAll()
+                .stream()
+                .filter(f -> f.getStop() != null)
+                .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
+                .filter(f -> f.getWorkType().equals(workType))
+                .collect(Collectors.toList());
+
+        Set<UserEntity> users = new HashSet<>();
+        evidenceEntities.forEach(u -> {
+            users.add(u.getUser());
+        });
+
+        float[] pointColumnWidths = {4F, 14F, 14F, 14F, 20F, 48F};
+        AtomicInteger pageNumb = new AtomicInteger();
+        int finalPl = pl;
+        int fontSize = 12;
+        int finalReportNumber = reportNumber;
+        users.forEach(u ->
+                {
+                    //tutaj tworzę dokument
+                    try {
+                        Paragraph newLine = new Paragraph(" ", font(13, 1));
+                        Paragraph title = new Paragraph("Raport Pracy „DZIESIĄTKA” ŁÓDŹ - " + finalPl + "/" + evidenceEntities.get(0).getStop().getYear() + "/" + finalReportNumber, font(13, 1));
+                        Paragraph name = new Paragraph(u.getFirstName() + " " + u.getSecondName() + " szczegółowy", font(fontSize, 0));
+                        if (!detailed) {
+                            name = new Paragraph(u.getFirstName() + " " + u.getSecondName(), font(fontSize, 0));
+                        }
+                        document.add(title);
+                        document.add(name);
+                        document.add(newLine);
+                        PdfPTable titleTable = new PdfPTable(pointColumnWidths);
+                        titleTable.setWidthPercentage(100);
+
+                        PdfPCell lp = new PdfPCell(new Paragraph("lp", font(fontSize, 0)));
+                        PdfPCell start = new PdfPCell(new Paragraph("Start", font(fontSize, 0)));
+                        PdfPCell stop = new PdfPCell(new Paragraph("Stop", font(fontSize, 0)));
+                        PdfPCell time = new PdfPCell(new Paragraph("Zliczony czas", font(fontSize, 0)));
+                        PdfPCell accepted = new PdfPCell(new Paragraph("Zatwierdzony czas", font(fontSize, 0)));
+                        PdfPCell desc = new PdfPCell(new Paragraph("Uwagi", font(fontSize, 0)));
+                        lp.setFixedHeight(15F);
+                        titleTable.addCell(lp);
+                        titleTable.addCell(start);
+                        titleTable.addCell(stop);
+                        titleTable.addCell(time);
+                        titleTable.addCell(accepted);
+                        titleTable.addCell(desc);
+
+
+                        document.add(titleTable);
+
+                        document.add(newLine);
+
+                    } catch (DocumentException | IOException ex) {
+                        ex.printStackTrace();
+                    }
+                    List<WorkingTimeEvidenceEntity> userWork = evidenceEntities
                             .stream()
-                            .filter(f -> f.getStop() != null)
-                            .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
-                            .filter(f -> f.getWorkType().equals(workType))
+                            .filter(f -> f.getUser().equals(u))
+                            .sorted(Comparator.comparing(WorkingTimeEvidenceEntity::getStart).reversed())
                             .collect(Collectors.toList());
 
-                    Set<UserEntity> users = new HashSet<>();
-                    evidenceEntities.forEach(u -> {
-                        users.add(u.getUser());
-                    });
 
-                    float[] pointColumnWidths = {4F, 14F, 14F, 20F, 48F};
-                    AtomicInteger pageNumb= new AtomicInteger();
-                    users.forEach(u ->
-                            {
-                                //tutaj tworzę dokument
-                                try {
-                                    Paragraph newLine = new Paragraph(" ", font(13, 1));
-                                    Paragraph title = new Paragraph("Raport Pracy „DZIESIĄTKA” ŁÓDŹ - " + e, font(13, 1));
-                                    Paragraph name = new Paragraph(u.getFirstName() + " " + u.getSecondName(), font(12, 0));
-                                    document.add(title);
-                                    document.add(name);
-                                    document.add(newLine);
-                                    PdfPTable titleTable = new PdfPTable(pointColumnWidths);
-                                    titleTable.setWidthPercentage(100);
-
-                                    PdfPCell lp = new PdfPCell(new Paragraph("lp", font(12, 0)));
-                                    PdfPCell start = new PdfPCell(new Paragraph("Start", font(12, 0)));
-                                    PdfPCell stop = new PdfPCell(new Paragraph("Stop", font(12, 0)));
-                                    PdfPCell time = new PdfPCell(new Paragraph("Zaliczony czas", font(12, 0)));
-                                    PdfPCell desc = new PdfPCell(new Paragraph("uwagi", font(12, 0)));
-                                    lp.setFixedHeight(15F);
-                                    titleTable.addCell(lp);
-                                    titleTable.addCell(start);
-                                    titleTable.addCell(stop);
-                                    titleTable.addCell(time);
-                                    titleTable.addCell(desc);
-
-
-                                    document.add(titleTable);
-
-                                    document.add(newLine);
-
-                                } catch (DocumentException | IOException ex) {
-                                    ex.printStackTrace();
-                                }
-                                List<WorkingTimeEvidenceEntity> userWork = evidenceEntities
-                                        .stream()
-                                        .filter(f -> f.getUser().equals(u))
-                                        .sorted(Comparator.comparing(WorkingTimeEvidenceEntity::getStart).reversed())
-                                        .collect(Collectors.toList());
-
-
-                                AtomicInteger workSumHours = new AtomicInteger();
-                                AtomicInteger workSumMinutes = new AtomicInteger();
-                                for (int i = 0; i < userWork.size(); i++) {
-                                    WorkingTimeEvidenceEntity g = userWork.get(i);
-                                    try {
-                                        int workTimeSumHours;
-                                        int workTimeSumMinutes;
-                                        String workTime = g.getWorkTime();
-                                        String formatStart = g.getStart().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
-                                        String formatStop = g.getStop().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
-                                        workTimeSumHours = sumIntFromString(workTime, 0, 2);
-                                        workTimeSumMinutes = sumIntFromString(workTime, 3, 5);
-//                                        Paragraph workDay = new Paragraph(formatStart + " - " + formatStop + " - " + workTime, font(10, 0));
-//                                        workDay.setAlignment(0);
-//                                        document.add(workDay);
-                                        workSumHours.getAndAdd(workTimeSumHours);
-                                        workSumMinutes.getAndAdd(workTimeSumMinutes);
-
-                                        PdfPTable userTable = new PdfPTable(pointColumnWidths);
-
-                                        PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(12, 0)));
-                                        PdfPCell startCell = new PdfPCell(new Paragraph(formatStart, font(12, 0)));
-                                        PdfPCell stopCell = new PdfPCell(new Paragraph(formatStop, font(12, 0)));
-                                        PdfPCell timeCell = new PdfPCell(new Paragraph(workTime, font(12, 0)));
-                                        String des = "";
-
-                                        if (g.isAutomatedClosed()) {
-                                            des = des.concat("-Zamknięte automatycznie-");
-                                        }
-                                        if (g.isToClarify()) {
-                                            des = des.concat("-Do wyjaśnienia-");
-                                        }
-                                        PdfPCell descCell = new PdfPCell(new Paragraph(des, font(12, 0)));
-                                        userTable.setWidthPercentage(100);
-
-                                        userTable.addCell(lpCell);
-                                        userTable.addCell(startCell);
-                                        userTable.addCell(stopCell);
-                                        userTable.addCell(timeCell);
-                                        userTable.addCell(descCell);
-
-                                        document.add(userTable);
-
-
-                                    } catch (DocumentException | IOException ex) {
-                                        ex.printStackTrace();
-                                    }
-                                }
-                                try {
-                                    int acquire = workSumMinutes.getAcquire() % 60;
-                                    int acquire1 = workSumMinutes.getAcquire() / 60;
-                                    workSumHours.getAndAdd(acquire1);
-                                    String format = String.format("%02d:%02d",
-                                            workSumHours.getAcquire(), acquire);
-                                    Paragraph sum = new Paragraph("Suma godzin: " + format, font(12, 1));
-                                    sum.setAlignment(2);
-                                    document.add(sum);
-                                    pageNumb.addAndGet(1);
-                                    if(pageNumb.get() <users.size()){
-                                    document.newPage();}
-                                } catch (DocumentException | IOException ex) {
-                                    ex.printStackTrace();
-                                }
-
+                    AtomicInteger workSumHours = new AtomicInteger();
+                    AtomicInteger workSumMinutes = new AtomicInteger();
+                    for (int i = 0; i < userWork.size(); i++) {
+                        WorkingTimeEvidenceEntity g = userWork.get(i);
+                        try {
+                            LocalDateTime start = g.getStart();
+                            LocalDateTime stop = g.getStop();
+                            String workTime = workServ.countTime(start, stop);
+                            //do poprawy
+                            if (!detailed) {
+                                start = workServ.getTime(g.getStart(), true);
+                                stop = workServ.getTime(g.getStop(), false);
+                                workTime = g.getWorkTime();
                             }
-                    );
+                            int workTimeSumHours;
+                            int workTimeSumMinutes;
+
+                            String formatStart = start.format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
+                            String formatStop = stop.format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
+
+                            if (!detailed) {
+                                formatStart = start.format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm"));
+                                formatStop = stop.format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm"));
+                            }
+                            workTimeSumHours = sumIntFromString(workTime, 0, 2);
+                            workTimeSumMinutes = sumIntFromString(workTime, 3, 5);
+                            workSumHours.getAndAdd(workTimeSumHours);
+                            workSumMinutes.getAndAdd(workTimeSumMinutes);
+
+                            PdfPTable userTable = new PdfPTable(pointColumnWidths);
+
+                            PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(fontSize, 0)));
+                            PdfPCell startCell = new PdfPCell(new Paragraph(formatStart, font(fontSize, 0)));
+                            PdfPCell stopCell = new PdfPCell(new Paragraph(formatStop, font(fontSize, 0)));
+                            PdfPCell timeCell = new PdfPCell(new Paragraph(workTime.substring(0, 5), font(fontSize, 0)));
+                            PdfPCell acceptedCell = new PdfPCell(new Paragraph(workTime.substring(0, 5) + " z", font(fontSize, 0)));
+                            String des = "";
+
+                            if (g.isAutomatedClosed()) {
+                                des = des.concat("-Zamknięte automatycznie-");
+                            }
+                            if (g.isToClarify()) {
+                                des = des.concat("-Do wyjaśnienia-");
+                            }
+                            PdfPCell descCell = new PdfPCell(new Paragraph(des, font(fontSize, 0)));
+                            userTable.setWidthPercentage(100);
+
+                            userTable.addCell(lpCell);
+                            userTable.addCell(startCell);
+                            userTable.addCell(stopCell);
+                            userTable.addCell(timeCell);
+                            userTable.addCell(acceptedCell);
+                            userTable.addCell(descCell);
+
+                            document.add(userTable);
+
+
+                        } catch (DocumentException | IOException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                    try {
+                        int acquire = workSumMinutes.getAcquire() % 60;
+                        int acquire1 = workSumMinutes.getAcquire() / 60;
+                        workSumHours.getAndAdd(acquire1);
+                        String format = String.format("%02d:%02d",
+                                workSumHours.getAcquire(), acquire);
+                        Paragraph sum = new Paragraph("Suma godzin: " + format, font(fontSize, 1));
+                        sum.setAlignment(2);
+                        document.add(sum);
+                        pageNumb.addAndGet(1);
+                        if (pageNumb.get() < users.size()) {
+                            document.newPage();
+                            document.resetPageCount();
+                        }
+                    } catch (DocumentException | IOException ex) {
+                        ex.printStackTrace();
+                    }
+
                 }
         );
+
         document.close();
 
         byte[] data = convertToByteArray(fileName);
@@ -3207,13 +3277,13 @@ public class FilesService {
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
                 .size(data.length)
+                .version(reportNumber)
                 .build();
 
         FilesEntity filesEntity =
                 createFileEntity(filesModel);
 
         File file = new File(fileName);
-
         file.delete();
         return filesEntity;
     }
@@ -3464,7 +3534,7 @@ public class FilesService {
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
             final int currentPageNumber = writer.getCurrentPageNumber();
-            document.setMargins(35F,35F,50F,50F);
+            document.setMargins(35F, 35F, 50F, 50F);
             try {
                 final Rectangle pageSize = document.getPageSize();
                 final PdfContentByte directContent = writer.getDirectContent();

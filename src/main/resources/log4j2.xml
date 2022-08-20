@@ -14,10 +14,6 @@
         </File>
     </Appenders>
     <Loggers>
-        <Logger name="com.shootingplace.shootingplace" level="all" additivity="false">
-            <AppenderRef ref="LogToFile"/>
-            <AppenderRef ref="LogToConsole"/>
-        </Logger>
         <Root level="info">
             <AppenderRef ref="LogToFile"/>
             <AppenderRef ref="LogToConsole"/>

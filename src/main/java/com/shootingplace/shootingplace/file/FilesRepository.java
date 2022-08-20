@@ -18,5 +18,7 @@ public interface FilesRepository {
     Optional<FilesEntity> findById(String uuid);
 
     Page<FilesEntity> findAll(Pageable page);
+
+    Optional<FilesEntity> findByName(String fileName);
 }
 

@@ -26,14 +26,24 @@ public class FilesEntity {
     private LocalDate date;
     private LocalTime time;
     private long size;
+    private int version;
 
     public FilesEntity() {
     }
 
-    public FilesEntity(String name, String type, byte[] data) {
+    public FilesEntity(String name, String type, byte[] data, int version) {
         this.name = name;
         this.type = type;
         this.data = data;
+        this.version = version;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void incrementVersion() {
+        this.version += 1;
     }
 
     public LocalDate getDate() {

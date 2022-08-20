@@ -27,7 +27,7 @@ public class UserService {
     public List<UserDTO> getListOfSuperUser() {
 
         List<UserDTO> list = new ArrayList<>();
-        userRepository.findAll().stream().filter(UserEntity::isSuperUser).filter(f->!f.getSubType().equals(UserSubType.ADMIN.getName())).forEach(e -> {
+        userRepository.findAll().stream().filter(UserEntity::isSuperUser).filter(f -> !f.getSubType().equals(UserSubType.ADMIN.getName())).forEach(e -> {
             list.add(
                     UserDTO.builder()
                             .firstName(e.getFirstName())
@@ -106,7 +106,7 @@ public class UserService {
 
     }
 
-    public ResponseEntity<?> createUser(String firstName, String secondName,String subType, String pinCode, String superPinCode) {
+    public ResponseEntity<?> createUser(String firstName, String secondName, String subType, String pinCode, String superPinCode) {
 
         if (userRepository.findAll().stream().filter(f -> f.getPinCode().equals(superPinCode)).anyMatch(UserEntity::isSuperUser)) {
 
@@ -160,5 +160,14 @@ public class UserService {
 
     public ResponseEntity<?> deactivateUser(String name) {
         return null;
+    }
+
+    public ResponseEntity<?> checkPinCode(String pinCode, String uuid) {
+
+        if (userRepository.findById(uuid).orElseThrow(EntityExistsException::new).getPinCode().equals(pinCode)) {
+            return ResponseEntity.ok(true);
+        } else {
+            return ResponseEntity.badRequest().body(false);
+        }
     }
 }
