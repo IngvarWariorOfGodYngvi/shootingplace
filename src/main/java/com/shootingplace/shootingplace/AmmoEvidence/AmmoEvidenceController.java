@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.AmmoEvidence;
 
 import com.shootingplace.shootingplace.services.AmmoUsedService;
-import com.shootingplace.shootingplace.services.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;

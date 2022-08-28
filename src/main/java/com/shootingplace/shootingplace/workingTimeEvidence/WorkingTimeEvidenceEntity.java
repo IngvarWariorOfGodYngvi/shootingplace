@@ -27,12 +27,14 @@ public class WorkingTimeEvidenceEntity {
     private LocalDateTime stop;
     private String cardNumber;
     private String workTime;
+    private boolean isAccepted;
     private boolean isClose;
     private boolean isAutomatedClosed;
     private boolean toClarify;
     @OneToOne(orphanRemoval = true)
     private UserEntity user;
     private String workType;
+
 
     public String getUuid() {
         return uuid;
@@ -112,5 +114,13 @@ public class WorkingTimeEvidenceEntity {
 
     public void setWorkTime(String workTime) {
         this.workTime = workTime;
+    }
+
+    public boolean isAccepted() {
+        return isAccepted;
+    }
+
+    public void setAccepted(boolean accepted) {
+        isAccepted = accepted;
     }
 }

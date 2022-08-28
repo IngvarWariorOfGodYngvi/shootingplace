@@ -1234,9 +1234,9 @@ public class FilesService {
         }
         if (city.equals("Łódź")) {
             policeCity = "w Łodzi";
-            policeZipCode = "90-144";
-            policeStreet = "Sienkiewicza";
-            policeStreetNumber = "26";
+            policeZipCode = "91-048";
+            policeStreet = "Lutomierska";
+            policeStreetNumber = "108/112";
         }
         if (city.equals("Olsztyn")) {
             policeCity = "w Olsztynie";
@@ -3065,13 +3065,15 @@ public class FilesService {
         return filesEntity;
     }
 
-    public FilesEntity getWorkTimeReport(String month, String workType, boolean detailed, boolean incrementVersion) throws IOException, DocumentException {
+    public FilesEntity getWorkTimeReport(String month, String workType, String uuid, boolean detailed, boolean incrementVersion) throws IOException, DocumentException {
         int reportNumber = 1;
         String fileName = "raport_pracy_" + month + "_" + reportNumber + ".pdf";
         List<FilesEntity> collect = filesRepository.findAll().stream().filter(f -> f.getName().contains("raport_pracy_" + month)).collect(Collectors.toList());
-        if (incrementVersion && !collect.isEmpty()) {
+
+        if (!collect.isEmpty()) {
             reportNumber = collect.stream().max(Comparator.comparing(FilesEntity::getVersion)).orElseThrow(EntityNotFoundException::new).getVersion();
         }
+
         Document document = new Document(PageSize.A4);
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
@@ -3085,69 +3087,40 @@ public class FilesService {
         document.addCreator("Igor Żebrowski");
 
         String finalMonth = month.toLowerCase(Locale.ROOT);
-        int pl = 0;
-        switch (finalMonth) {
-            case "styczeń":
-                pl = 1;
-                break;
-            case "luty":
-                pl = 2;
-                break;
-            case "marzec":
-                pl = 3;
-                break;
-            case "kwiecień":
-                pl = 4;
-                break;
-            case "maj":
-                pl = 5;
-                break;
-            case "czerwiec":
-                pl = 6;
-                break;
-            case "lipiec":
-                pl = 7;
-                break;
-            case "sierpień":
-                pl = 8;
-                break;
-            case "wrzesień":
-                pl = 9;
-                break;
-            case "październik":
-                pl = 10;
-                break;
-            case "listopad":
-                pl = 11;
-                break;
-            case "grudzień":
-                pl = 12;
-                break;
+        int pl = number(finalMonth);
+        List<WorkingTimeEvidenceEntity> evidenceEntities;
+        if (uuid != null) {
+            evidenceEntities = workRepo.findAll()
+                    .stream()
+                    .filter(f -> f.getUser().getUuid().equals(uuid))
+                    .filter(f -> f.getStop() != null)
+                    .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
+                    .filter(f -> f.getWorkType().equals(workType))
+                    .collect(Collectors.toList());
+        } else {
+
+            evidenceEntities = workRepo.findAll()
+                    .stream()
+                    .filter(f -> f.getStop() != null)
+                    .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
+                    .filter(f -> f.getWorkType().equals(workType))
+                    .collect(Collectors.toList());
+
         }
 
-        List<WorkingTimeEvidenceEntity> evidenceEntities = workRepo.findAll()
-                .stream()
-                .filter(f -> f.getStop() != null)
-                .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
-                .filter(f -> f.getWorkType().equals(workType))
-                .collect(Collectors.toList());
-
         Set<UserEntity> users = new HashSet<>();
-        evidenceEntities.forEach(u -> {
-            users.add(u.getUser());
-        });
+        evidenceEntities.forEach(u -> users.add(u.getUser()));
 
-        float[] pointColumnWidths = {4F, 14F, 14F, 14F, 20F, 48F};
+        float[] pointColumnWidths = {4F, 12F, 12F, 14F, 24F, 48F};
         AtomicInteger pageNumb = new AtomicInteger();
-        int finalPl = pl;
         int fontSize = 12;
         int finalReportNumber = reportNumber;
+                        Paragraph newLine = new Paragraph(" ", font(13, 1));
         users.forEach(u ->
                 {
                     //tutaj tworzę dokument
                     try {
-                        Paragraph newLine = new Paragraph(" ", font(13, 1));
-                        Paragraph title = new Paragraph("Raport Pracy „DZIESIĄTKA” ŁÓDŹ - " + finalPl + "/" + evidenceEntities.get(0).getStop().getYear() + "/" + finalReportNumber, font(13, 1));
+                        Paragraph title = new Paragraph("Raport Pracy „DZIESIĄTKA” ŁÓDŹ - " + pl + "/" + evidenceEntities.get(0).getStop().getYear() + "/" + finalReportNumber, font(13, 1));
                         Paragraph name = new Paragraph(u.getFirstName() + " " + u.getSecondName() + " szczegółowy", font(fontSize, 0));
                         if (!detailed) {
                             name = new Paragraph(u.getFirstName() + " " + u.getSecondName(), font(fontSize, 0));
@@ -3161,8 +3134,8 @@ public class FilesService {
                         PdfPCell lp = new PdfPCell(new Paragraph("lp", font(fontSize, 0)));
                         PdfPCell start = new PdfPCell(new Paragraph("Start", font(fontSize, 0)));
                         PdfPCell stop = new PdfPCell(new Paragraph("Stop", font(fontSize, 0)));
-                        PdfPCell time = new PdfPCell(new Paragraph("Zliczony czas", font(fontSize, 0)));
-                        PdfPCell accepted = new PdfPCell(new Paragraph("Zatwierdzony czas", font(fontSize, 0)));
+                        PdfPCell time = new PdfPCell(new Paragraph("Czas pracy", font(fontSize, 0)));
+                        PdfPCell accepted = new PdfPCell(new Paragraph("Czy Zatwierdzony", font(fontSize, 0)));
                         PdfPCell desc = new PdfPCell(new Paragraph("Uwagi", font(fontSize, 0)));
                         lp.setFixedHeight(15F);
                         titleTable.addCell(lp);
@@ -3222,14 +3195,17 @@ public class FilesService {
                             PdfPCell startCell = new PdfPCell(new Paragraph(formatStart, font(fontSize, 0)));
                             PdfPCell stopCell = new PdfPCell(new Paragraph(formatStop, font(fontSize, 0)));
                             PdfPCell timeCell = new PdfPCell(new Paragraph(workTime.substring(0, 5), font(fontSize, 0)));
-                            PdfPCell acceptedCell = new PdfPCell(new Paragraph(workTime.substring(0, 5) + " z", font(fontSize, 0)));
+                            PdfPCell acceptedCell = new PdfPCell(new Paragraph("oczekuje na zatwierdzenie", font(fontSize, 0)));
+                            if (g.isAccepted()) {
+                                acceptedCell = new PdfPCell(new Paragraph("tak", font(fontSize, 0)));
+                            }
                             String des = "";
 
                             if (g.isAutomatedClosed()) {
                                 des = des.concat("-Zamknięte automatycznie-");
                             }
                             if (g.isToClarify()) {
-                                des = des.concat("-Do wyjaśnienia-");
+                                des = des.concat("-Nadgodziny-");
                             }
                             PdfPCell descCell = new PdfPCell(new Paragraph(des, font(fontSize, 0)));
                             userTable.setWidthPercentage(100);
@@ -3258,10 +3234,20 @@ public class FilesService {
                         sum.setAlignment(2);
                         document.add(sum);
                         pageNumb.addAndGet(1);
+
+                        Paragraph sign = new Paragraph("Dokument Zatwierdził          ", font(fontSize, 0));
+                        sign.setAlignment(2);
+                        Paragraph dots = new Paragraph(".....................................          ", font(fontSize, 0));
+                        dots.setAlignment(2);
+                        document.add(newLine);
+                        document.add(newLine);
+                        document.add(sign);
+                        document.add(newLine);
+                        document.add(dots);
                         if (pageNumb.get() < users.size()) {
                             document.newPage();
-                            document.resetPageCount();
                         }
+                        document.resetPageCount();
                     } catch (DocumentException | IOException ex) {
                         ex.printStackTrace();
                     }
@@ -3288,9 +3274,51 @@ public class FilesService {
         return filesEntity;
     }
 
+    private int number(String finalMonth) {
+        int pl = 0;
+        switch (finalMonth) {
+            case "styczeń":
+                pl = 1;
+                break;
+            case "luty":
+                pl = 2;
+                break;
+            case "marzec":
+                pl = 3;
+                break;
+            case "kwiecień":
+                pl = 4;
+                break;
+            case "maj":
+                pl = 5;
+                break;
+            case "czerwiec":
+                pl = 6;
+                break;
+            case "lipiec":
+                pl = 7;
+                break;
+            case "sierpień":
+                pl = 8;
+                break;
+            case "wrzesień":
+                pl = 9;
+                break;
+            case "październik":
+                pl = 10;
+                break;
+            case "listopad":
+                pl = 11;
+                break;
+            case "grudzień":
+                pl = 12;
+                break;
+        }
+        return pl;
+    }
+
     private Integer sumIntFromString(String sequence, int substringStart, int substringEnd) {
         return Integer.parseInt(sequence.substring(substringStart, substringEnd));
-
     }
 
     public List<FilesModel> getAllFilesList(Pageable page) {

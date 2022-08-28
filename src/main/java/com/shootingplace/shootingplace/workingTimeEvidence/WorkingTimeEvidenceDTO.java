@@ -19,6 +19,7 @@ public class WorkingTimeEvidenceDTO {
     private LocalDateTime stop;
     private String cardNumber;
     private String workTime;
+    private boolean isAccepted;
     private boolean isClose;
     private boolean isAutomatedClosed;
     private boolean toClarify;

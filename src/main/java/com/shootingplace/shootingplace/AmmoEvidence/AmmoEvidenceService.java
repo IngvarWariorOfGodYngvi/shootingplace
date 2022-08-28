@@ -1,11 +1,11 @@
 package com.shootingplace.shootingplace.AmmoEvidence;
 
 import com.shootingplace.shootingplace.domain.entities.GunEntity;
-import com.shootingplace.shootingplace.domain.entities.UsedHistoryEntity;
+import com.shootingplace.shootingplace.history.UsedHistoryEntity;
 import com.shootingplace.shootingplace.repositories.GunRepository;
-import com.shootingplace.shootingplace.repositories.UsedHistoryRepository;
+import com.shootingplace.shootingplace.history.UsedHistoryRepository;
 import com.shootingplace.shootingplace.services.ArmoryService;
-import com.shootingplace.shootingplace.services.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.services.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.users;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,6 +23,11 @@ public class UserController {
     @GetMapping("/userList")
     public ResponseEntity<?> getListOfUser() {
         return ResponseEntity.ok(userService.getListOfUser());
+    }
+
+    @GetMapping("/allUsers")
+    public ResponseEntity<?> getListOfAllUsers(@Nullable @RequestParam String type) {
+        return ResponseEntity.ok(userService.getListOfAllUsersNoAdmin(type));
     }
 
     @PostMapping("/createSuperUser")

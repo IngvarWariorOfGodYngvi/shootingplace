@@ -32,7 +32,7 @@ public class ScheduledTasks {
         workServ.closeAllActiveWorkTime(UserSubType.MANAGEMENT.getName());
     }
 
-    @Scheduled(cron = "0 0/15 * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void checkMembers() {memberServ.checkMembers();}
 

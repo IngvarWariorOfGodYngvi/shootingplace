@@ -1,15 +1,16 @@
 package com.shootingplace.shootingplace.users;
 
 import com.shootingplace.shootingplace.domain.enums.UserSubType;
-import com.shootingplace.shootingplace.services.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.services.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityExistsException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -26,32 +27,38 @@ public class UserService {
 
     public List<UserDTO> getListOfSuperUser() {
 
-        List<UserDTO> list = new ArrayList<>();
-        userRepository.findAll().stream().filter(UserEntity::isSuperUser).filter(f -> !f.getSubType().equals(UserSubType.ADMIN.getName())).forEach(e -> {
-            list.add(
-                    UserDTO.builder()
-                            .firstName(e.getFirstName())
-                            .secondName(e.getSecondName())
-                            .uuid(e.getUuid()).build()
-            )
-            ;
-        });
-        return list;
+        return userRepository.findAll()
+                .stream()
+                .filter(UserEntity::isSuperUser)
+                .filter(f -> !f.getSubType().equals(UserSubType.ADMIN.getName()))
+                .map(Mapping::map)
+                .collect(Collectors.toList());
     }
 
     public List<UserDTO> getListOfUser() {
-        List<UserDTO> list = new ArrayList<>();
-        userRepository.findAll().stream().filter(f -> !f.isSuperUser()).forEach(e -> {
-            list.add(
-                    UserDTO.builder()
-                            .firstName(e.getFirstName())
-                            .secondName(e.getSecondName())
-                            .uuid(e.getUuid())
-                            .subType(e.getSubType()).build()
-            )
-            ;
-        });
-        return list;
+        return userRepository.findAll()
+                .stream()
+                .filter(f -> !f.isSuperUser())
+                .map(Mapping::map)
+                .collect(Collectors.toList());
+    }
+
+    public List<UserDTO> getListOfAllUsersNoAdmin(String subType) {
+
+        if (subType != null) {
+            return userRepository.findAll()
+                    .stream()
+                    .filter(f -> !f.getSubType().equals(UserSubType.ADMIN.getName()))
+                    .filter(f -> f.getSubType().contains(subType))
+                    .map(Mapping::map)
+                    .collect(Collectors.toList());
+        } else {
+            return userRepository.findAll()
+                    .stream()
+                    .filter(f -> !f.getSubType().equals(UserSubType.ADMIN.getName()))
+                    .map(Mapping::map)
+                    .collect(Collectors.toList());
+        }
     }
 
     public ResponseEntity<?> createSuperUser(String firstName, String secondName, String pinCode) {

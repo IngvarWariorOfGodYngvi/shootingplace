@@ -1,11 +1,10 @@
-package com.shootingplace.shootingplace.services;
+package com.shootingplace.shootingplace.history;
 
-import com.shootingplace.shootingplace.license.LicenseEntity;
-import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
-import com.shootingplace.shootingplace.domain.models.History;
 import com.shootingplace.shootingplace.domain.models.ShootingPatent;
+import com.shootingplace.shootingplace.license.LicenseEntity;
+import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.repositories.*;
@@ -86,10 +85,10 @@ public class HistoryService {
         historyEntity.setContributionsList(contributionList);
 
         LOG.info("Dodano rekord w historii składek");
-        historyRepository.saveAndFlush(historyEntity);
+        historyRepository.save(historyEntity);
     }
 
-    void removeContribution(String memberUUID, ContributionEntity contribution) {
+    public void removeContribution(String memberUUID, ContributionEntity contribution) {
         HistoryEntity historyEntity = memberRepository
                 .findById(memberUUID)
                 .orElseThrow(EntityNotFoundException::new)
@@ -100,7 +99,7 @@ public class HistoryService {
         contribution.setHistoryUUID(null);
         contributionRepository.saveAndFlush(contribution);
         LOG.info("Usunięto składkę");
-        historyRepository.saveAndFlush(historyEntity);
+        historyRepository.save(historyEntity);
     }
 
     // license
@@ -125,7 +124,7 @@ public class HistoryService {
             }
         }
         historyEntity.setLicenseHistory(licenseTab);
-        historyRepository.saveAndFlush(historyEntity);
+        historyRepository.save(historyEntity);
     }
 
     void addDateToPatentPermissions(String memberUUID, LocalDate date, int index) {
@@ -173,7 +172,7 @@ public class HistoryService {
             LOG.info("Już wpisano datę pierwszego nadania patentu");
         }
         historyEntity.setPatentDay(dateTab);
-        historyRepository.saveAndFlush(historyEntity);
+        historyRepository.save(historyEntity);
 
     }
 
@@ -218,7 +217,7 @@ public class HistoryService {
                 historyEntity.setLicensePaymentHistory(list);
             }
             LOG.info("Dodano wpis o nowej płatności za licencję " + LocalDate.now());
-            historyRepository.saveAndFlush(historyEntity);
+            historyRepository.save(historyEntity);
 
         } else {
             return ResponseEntity.badRequest().body("\"Licencja na ten moment jest opłacona\"");
@@ -257,7 +256,7 @@ public class HistoryService {
 
     }
 
-    void addCompetitionRecord(String memberUUID, CompetitionMembersListEntity list) {
+    public void addCompetitionRecord(String memberUUID, CompetitionMembersListEntity list) {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
 
         CompetitionHistoryEntity competitionHistoryEntity = createCompetitionHistoryEntity(list.getAttachedToTournament(), list.getDate(), list.getDiscipline(), list.getDisciplines(), list.getUuid());
@@ -329,7 +328,7 @@ public class HistoryService {
         historyEntity.setShotgunCounter(collectShotgun.size() + shotgunC);
 
         LOG.info("Dodano wpis w historii startów.");
-        historyRepository.saveAndFlush(historyEntity);
+        historyRepository.save(historyEntity);
 
 
         if (historyEntity.getPistolCounter() >= 4 || historyEntity.getRifleCounter() >= 4 || historyEntity.getShotgunCounter() >= 4) {
@@ -362,7 +361,7 @@ public class HistoryService {
 
         }
         historyEntity.getCompetitionHistory().remove(competitionHistoryEntity);
-        historyRepository.saveAndFlush(historyEntity);
+        historyRepository.save(historyEntity);
 
         List<String> list1 = new ArrayList<>();
         if (competitionHistoryEntity.getDisciplines() != null) {
@@ -388,7 +387,7 @@ public class HistoryService {
 
 
         LOG.info("Zaktualizowano wpis w historii startów");
-        historyRepository.saveAndFlush(historyEntity);
+        historyRepository.save(historyEntity);
     }
 
     public void addJudgingRecord(String memberUUID, String tournamentUUID, String function) {
@@ -408,7 +407,7 @@ public class HistoryService {
         judgingHistoryRepository.saveAndFlush(judgingHistoryEntity);
         historyEntity.setJudgingHistory(judgingHistory);
 
-        historyRepository.saveAndFlush(historyEntity);
+        historyRepository.save(historyEntity);
     }
 
     public void removeJudgingRecord(String memberUUID, String tournamentUUID) {
@@ -427,7 +426,7 @@ public class HistoryService {
                 .orElseThrow(EntityNotFoundException::new)
                 .getHistory();
         historyEntity.setJudgingHistory(judgingHistoryEntityList);
-        historyRepository.saveAndFlush(historyEntity);
+        historyRepository.save(historyEntity);
         judgingHistoryRepository.delete(any);
 
     }
@@ -537,7 +536,7 @@ public class HistoryService {
             if (shootingPatentEntity.getDateOfPosting() != null) {
                 historyEntity.setPatentFirstRecord(true);
             }
-            historyRepository.saveAndFlush(historyEntity);
+            historyRepository.save(historyEntity);
         }
     }
 

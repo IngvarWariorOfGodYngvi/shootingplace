@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.domain.entities.ShootingPatentEntity;
 import com.shootingplace.shootingplace.domain.models.ShootingPatent;

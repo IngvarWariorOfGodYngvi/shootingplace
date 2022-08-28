@@ -1,6 +1,9 @@
-package com.shootingplace.shootingplace.domain.models;
+package com.shootingplace.shootingplace.history;
 
 import com.shootingplace.shootingplace.domain.entities.JudgingHistoryEntity;
+import com.shootingplace.shootingplace.domain.models.CompetitionHistory;
+import com.shootingplace.shootingplace.domain.models.Contribution;
+import com.shootingplace.shootingplace.domain.models.LicensePaymentHistory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

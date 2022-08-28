@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.controllers;
 
-import com.shootingplace.shootingplace.services.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.services.ContributionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;

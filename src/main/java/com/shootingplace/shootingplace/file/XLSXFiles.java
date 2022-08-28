@@ -140,7 +140,6 @@ public class XLSXFiles {
                 cell2.setCellValue(competitionMembersListEntity.getName());
                 sheet.addMergedRegion(new CellRangeAddress(rc, rc++, 0, 6));
                 XSSFRow row3 = sheet.createRow(rc);
-                cc = 0;
                 XSSFCell cell31 = row3.createCell(cc++);
                 XSSFCell cell32 = row3.createCell(cc++);
                 XSSFCell cell33 = row3.createCell(cc++);

@@ -4,6 +4,7 @@ import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceService;
 import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.AmmoEvidence.AmmoDTO;
 import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Assert;

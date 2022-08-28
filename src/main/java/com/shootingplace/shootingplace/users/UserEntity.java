@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.users;
 
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
-import com.shootingplace.shootingplace.domain.entities.ChangeHistoryEntity;
+import com.shootingplace.shootingplace.history.ChangeHistoryEntity;
 import com.shootingplace.shootingplace.domain.models.Person;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

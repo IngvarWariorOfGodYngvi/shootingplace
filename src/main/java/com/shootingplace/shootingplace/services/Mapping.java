@@ -3,20 +3,23 @@ package com.shootingplace.shootingplace.services;
 import com.shootingplace.shootingplace.AmmoEvidence.AmmoDTO;
 import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidence;
 import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceEntity;
-import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.models.*;
 import com.shootingplace.shootingplace.file.FilesEntity;
 import com.shootingplace.shootingplace.file.FilesModel;
+import com.shootingplace.shootingplace.history.History;
+import com.shootingplace.shootingplace.history.HistoryEntity;
 import com.shootingplace.shootingplace.license.License;
+import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.member.Member;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.tournament.Tournament;
 import com.shootingplace.shootingplace.tournament.TournamentDTO;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
+import com.shootingplace.shootingplace.users.UserDTO;
+import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermission;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceDTO;
@@ -87,19 +90,6 @@ public class Mapping {
                 .build();
     }
 
-    private static ClubEntity map(Club e) {
-        return ClubEntity.builder()
-                .id(e.getId())
-                .name(e.getName())
-                .fullName(e.getFullName())
-                .licenseNumber(e.getLicenseNumber())
-                .phoneNumber(e.getPhoneNumber())
-                .email(e.getEmail())
-                .address(e.getAddress())
-                .url(e.getUrl())
-                .build();
-    }
-
     public static MemberDTO map2DTO(MemberEntity e) {
         if (e.getErasedEntity() != null) {
             return Optional.of(e).map(o ->
@@ -140,19 +130,6 @@ public class Mapping {
 
     }
 
-    static MemberEntity map2DTO(MemberDTO e) {
-        return MemberEntity.builder()
-                .uuid(e.getUuid())
-                .firstName(e.getFirstName())
-                .secondName(e.getSecondName())
-                .adult(e.getAdult())
-                .active(e.getActive())
-                .erased(e.getErased())
-                .pzss(e.getPzss())
-                .legitimationNumber(e.getLegitimationNumber())
-                .joinDate(e.getJoinDate())
-                .build();
-    }
 
     static MemberAmmo map3(MemberEntity e) {
         return MemberAmmo.builder()
@@ -245,20 +222,6 @@ public class Mapping {
                         .build()).orElse(null);
     }
 
-    static ContributionEntity map(Contribution c) {
-        return Optional.ofNullable(c).map(e -> ContributionEntity.builder()
-                .validThru(e.getValidThru())
-                .paymentDay(e.getPaymentDay())
-                .build()).orElse(null);
-    }
-
-    static Contribution map(ContributionEntity c) {
-        return Optional.ofNullable(c).map(e -> Contribution.builder()
-                .validThru(e.getValidThru())
-                .paymentDay(e.getPaymentDay())
-                .build()).orElse(null);
-    }
-
     static History map(HistoryEntity r) {
         return Optional.ofNullable(r).map(e -> History.builder()
                 .licenseHistory(e.getLicenseHistory())
@@ -291,26 +254,6 @@ public class Mapping {
                 .validForYear(l.getValidForYear())
                 .memberUUID(l.getMemberUUID())
                 .build();
-    }
-
-    static LicensePaymentHistoryEntity map(LicensePaymentHistory l) {
-        return LicensePaymentHistoryEntity.builder()
-                .date(l.getDate())
-                .validForYear(l.getValidForYear())
-                .memberUUID(l.getMemberUUID())
-                .build();
-    }
-
-    static ElectronicEvidence map(ElectronicEvidenceEntity el) {
-        return Optional.ofNullable(el).map((e -> ElectronicEvidence.builder()
-                .date(e.getDate())
-                .build())).orElse(null);
-    }
-
-    static ElectronicEvidenceEntity map(ElectronicEvidence el) {
-        return Optional.ofNullable(el).map((e -> ElectronicEvidenceEntity.builder()
-                .date(e.getDate())
-                .build())).orElse(null);
     }
 
     static WeaponPermission map(WeaponPermissionEntity w) {
@@ -349,20 +292,6 @@ public class Mapping {
                 .arbiterPermissionValidThru(e.getArbiterPermissionValidThru())
                 .shootingLeaderNumber(e.getShootingLeaderNumber())
                 .build()).orElse(null);
-    }
-
-    static Tournament map(TournamentEntity t) {
-        return Tournament.builder()
-                .name(t.getName())
-                .date(t.getDate())
-                .open(t.isOpen())
-                .wzss(t.isWZSS())
-                .mainArbiter(map2DTO(t.getMainArbiter()))
-                .commissionRTSArbiter(map2DTO(t.getCommissionRTSArbiter()))
-                .otherMainArbiter(t.getOtherMainArbiter())
-                .otherCommissionRTSArbiter(t.getOtherCommissionRTSArbiter())
-                .competitionsList(t.getCompetitionsList().stream().map(Mapping::map).collect(Collectors.toList()))
-                .build();
     }
 
     public static CompetitionMembersList map(CompetitionMembersListEntity c) {
@@ -432,30 +361,6 @@ public class Mapping {
         }
     }
 
-    static TournamentEntity map(Tournament t) {
-        return TournamentEntity.builder()
-                .name(t.getName())
-                .date(t.getDate())
-                .open(t.isOpen())
-                .WZSS(t.isWzss())
-                .mainArbiter(Mapping.map2DTO(t.getMainArbiter()))
-                .commissionRTSArbiter(map2DTO(t.getCommissionRTSArbiter()))
-                .otherMainArbiter(t.getOtherMainArbiter())
-                .otherCommissionRTSArbiter(t.getOtherCommissionRTSArbiter())
-                .build();
-    }
-
-    static Competition map(CompetitionEntity c) {
-        return Competition.builder()
-                .name(c.getName())
-                .build();
-    }
-
-    static CompetitionEntity map(Competition c) {
-        return CompetitionEntity.builder()
-                .name(c.getName())
-                .build();
-    }
 
     public static FilesEntity map(FilesModel f) {
         return Optional.ofNullable(f).map(e -> FilesEntity.builder()
@@ -602,8 +507,18 @@ public class Mapping {
                 .isAutomatedClosed(e.isAutomatedClosed())
                 .start(e.getStart())
                 .stop(e.getStop())
+                .isAccepted(e.isAccepted())
                 .toClarify(e.isToClarify())
                 .user(e.getUser().getUuid())
                 .uuid(e.getUuid()).build();
+    }
+
+    public static UserDTO map(UserEntity u) {
+        return UserDTO.builder().firstName(u.getFirstName())
+                .secondName(u.getSecondName())
+                .uuid(u.getUuid())
+                .subType(u.getSubType())
+                .build();
+
     }
 }

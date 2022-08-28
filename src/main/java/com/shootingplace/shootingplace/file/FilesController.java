@@ -243,8 +243,8 @@ public class FilesController {
                 .body(filesEntity.getData());
     }
     @GetMapping("/downloadWorkReport")
-    public ResponseEntity<byte[]> getWorkTimeReport(@RequestParam String month, @RequestParam String workType, @RequestParam boolean detailed, @Nullable @RequestParam boolean incrementVersion) throws DocumentException, IOException {
-        FilesEntity filesEntity = filesService.getWorkTimeReport(month, workType,detailed,incrementVersion);
+    public ResponseEntity<byte[]> getWorkTimeReport(@RequestParam String month, @RequestParam String workType,@Nullable @RequestParam String uuid, @RequestParam boolean detailed, @Nullable @RequestParam boolean incrementVersion) throws DocumentException, IOException {
+        FilesEntity filesEntity = filesService.getWorkTimeReport(month, workType,uuid, detailed,incrementVersion);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")

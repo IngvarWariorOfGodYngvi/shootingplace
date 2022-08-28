@@ -1,15 +1,15 @@
 package com.shootingplace.shootingplace.license;
 
-import com.shootingplace.shootingplace.domain.entities.HistoryEntity;
+import com.shootingplace.shootingplace.history.HistoryEntity;
 import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.domain.models.LicensePaymentHistoryDTO;
 import com.shootingplace.shootingplace.member.MemberDTO;
-import com.shootingplace.shootingplace.repositories.HistoryRepository;
+import com.shootingplace.shootingplace.history.HistoryRepository;
 import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
 import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.services.ChangeHistoryService;
-import com.shootingplace.shootingplace.services.HistoryService;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.services.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

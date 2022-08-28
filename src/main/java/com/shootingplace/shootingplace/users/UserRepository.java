@@ -13,4 +13,6 @@ public interface UserRepository {
     UserEntity save(UserEntity entity);
 
     Optional<UserEntity> findById(String uuid);
+
+    boolean existsById(String uuid);
 }

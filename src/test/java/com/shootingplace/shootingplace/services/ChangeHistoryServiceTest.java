@@ -1,8 +1,9 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.ChangeHistoryEntity;
+import com.shootingplace.shootingplace.history.ChangeHistoryEntity;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.users.UserEntity;
-import com.shootingplace.shootingplace.repositories.ChangeHistoryRepository;
+import com.shootingplace.shootingplace.history.ChangeHistoryRepository;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.hamcrest.Matchers;
 import org.junit.Test;

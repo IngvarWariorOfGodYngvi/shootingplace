@@ -1,8 +1,6 @@
-package com.shootingplace.shootingplace.services;
+package com.shootingplace.shootingplace.history;
 
-import com.shootingplace.shootingplace.domain.entities.ChangeHistoryEntity;
 import com.shootingplace.shootingplace.users.UserEntity;
-import com.shootingplace.shootingplace.repositories.ChangeHistoryRepository;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +20,7 @@ public class ChangeHistoryService {
     }
 
 
-    ChangeHistoryEntity addRecord(UserEntity user, String classNamePlusMethod, String memberUUID) {
+    public ChangeHistoryEntity addRecord(UserEntity user, String classNamePlusMethod, String memberUUID) {
         return changeHistoryRepository.save(ChangeHistoryEntity.builder()
                 .userEntity(user)
                 .classNamePlusMethod(classNamePlusMethod)

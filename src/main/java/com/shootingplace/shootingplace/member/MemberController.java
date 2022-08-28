@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.member;
 
 
-import com.shootingplace.shootingplace.services.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;

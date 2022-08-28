@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.domain.entities;
+package com.shootingplace.shootingplace.history;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

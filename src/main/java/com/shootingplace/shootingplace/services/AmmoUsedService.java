@@ -97,7 +97,7 @@ public class AmmoUsedService {
                             .build();
                     validateAmmo(ammoUsedPersonal);
                     if (starEvidence(ammoUsedEvidence)) {
-                        return ResponseEntity.ok("\"Dodano do listy " + name + " " + caliberName + "\"");
+                        return ResponseEntity.ok("Dodano do listy " + name + " " + caliberName + "");
                     }
 
                 }
@@ -121,7 +121,7 @@ public class AmmoUsedService {
                             .build();
                     boolean b = starEvidence(ammoUsedEvidence);
                     if (b) {
-                        return ResponseEntity.ok("\"Dodano do listy " + name + " " + caliberName + "\"");
+                        return ResponseEntity.ok("Dodano do listy " + name + " " + caliberName + "");
                     }
                 }
             }
@@ -153,7 +153,7 @@ public class AmmoUsedService {
                         .build();
                 validateAmmo(ammoUsedPersonal);
                 if (starEvidence(ammoUsedEvidence)) {
-                    return ResponseEntity.ok("\"Zwrócono do magazynu " + name + " " + caliberName + "\"");
+                    return ResponseEntity.ok("Zwrócono do magazynu " + name + " " + caliberName + "");
                 }
             }
             else {
@@ -173,12 +173,12 @@ public class AmmoUsedService {
                         .date(LocalDate.now())
                         .build();
                 if (starEvidence(ammoUsedEvidence)) {
-                    return ResponseEntity.ok("\"Zwrócono do magazynu " + name + " " + caliberName + "\"");
+                    return ResponseEntity.ok("Zwrócono do magazynu " + name + " " + caliberName);
                 }
             }
 
         }
-        return ResponseEntity.badRequest().body("\"Coś poszło nie tak - Sprawdź stany magazynowe " + caliberName + "\"");
+        return ResponseEntity.badRequest().body("Coś poszło nie tak - Sprawdź stany magazynowe " + caliberName);
     }
 
     private void validateAmmo(AmmoUsedPersonal ammoUsedpersonal) {

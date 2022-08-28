@@ -2,6 +2,8 @@ package com.shootingplace.shootingplace.services;
 
 
 import com.shootingplace.shootingplace.domain.entities.ContributionEntity;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.repositories.ContributionRepository;
 import com.shootingplace.shootingplace.member.MemberRepository;

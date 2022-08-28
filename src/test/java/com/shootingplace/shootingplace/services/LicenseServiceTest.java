@@ -2,6 +2,9 @@ package com.shootingplace.shootingplace.services;
 
 import com.github.javafaker.Faker;
 import com.github.javafaker.Name;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.HistoryEntity;
+import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseService;
 import com.shootingplace.shootingplace.domain.entities.*;

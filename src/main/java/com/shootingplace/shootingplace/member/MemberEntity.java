@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.member;
 
+import com.shootingplace.shootingplace.history.HistoryEntity;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;

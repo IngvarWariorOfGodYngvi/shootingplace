@@ -27,6 +27,13 @@ public class ExceptionsHandler {
         LOG.error(ex.getMessage() + " Wprowadzono nieprawidłowe dane");
         return " Wprowadzono nieprawidłowe dane";
     }
+
+    @ExceptionHandler(value = IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public String handleIllegalArgumentException(IllegalArgumentException ex) {
+        LOG.info(ex.getMessage() + " " + ex.getCause());
+        return "Wprowadzono błędne dane";
+    }
 //
 //    @ExceptionHandler(value = EntityNotFoundException.class)
 //    @ResponseStatus(HttpStatus.BAD_REQUEST)
