@@ -26,7 +26,7 @@ public class FilesEntity {
     private LocalDate date;
     private LocalTime time;
     private long size;
-    private int version;
+    private int version = 0;
 
     public FilesEntity() {
     }
@@ -42,6 +42,9 @@ public class FilesEntity {
         return version;
     }
 
+    public void setVersion(int version) {
+        this.version = version;
+    }
     public void incrementVersion() {
         this.version += 1;
     }

@@ -179,10 +179,8 @@ public class WorkingTimeEvidenceService {
             hours = hours + (24 * days);
         }
 
-        String format = String.format("%02d:%02d:%02d",
+        return String.format("%02d:%02d:%02d",
                 hours, minutes, seconds);
-        log.info("przepracowano: " + format);
-        return format;
 
     }
 
@@ -309,7 +307,7 @@ public class WorkingTimeEvidenceService {
             List<WorkingTimeEvidenceDTO> pl2 = pl1.stream()
                     .filter(f -> f.getUser().equals(e))
                     .map(Mapping::map)
-                    .sorted(Comparator.comparing(WorkingTimeEvidenceDTO::getWorkType))
+                    .sorted(Comparator.comparing(WorkingTimeEvidenceDTO::getWorkType).thenComparing(WorkingTimeEvidenceDTO::getStart).reversed())
                     .collect(Collectors.toList());
             pl2.forEach(g -> {
                 int workTimeSumHours;
@@ -403,7 +401,7 @@ public class WorkingTimeEvidenceService {
                     System.out.println("sprawdzam");
                     FilesEntity file = collect.get(0);
                     System.out.println(file.getVersion());
-                    file.incrementVersion();
+                    file.setVersion(file.getVersion() + 1);
                     filesRepo.save(file);
                     System.out.println(file.getVersion());
                 }

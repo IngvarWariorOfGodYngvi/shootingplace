@@ -3067,11 +3067,16 @@ public class FilesService {
 
     public FilesEntity getWorkTimeReport(String month, String workType, String uuid, boolean detailed, boolean incrementVersion) throws IOException, DocumentException {
         int reportNumber = 1;
+        System.out.println(reportNumber);
         String fileName = "raport_pracy_" + month + "_" + reportNumber + ".pdf";
         List<FilesEntity> collect = filesRepository.findAll().stream().filter(f -> f.getName().contains("raport_pracy_" + month)).collect(Collectors.toList());
-
+        System.out.println(reportNumber);
         if (!collect.isEmpty()) {
+            System.out.println("wchodzę");
+            System.out.println(collect.size());
             reportNumber = collect.stream().max(Comparator.comparing(FilesEntity::getVersion)).orElseThrow(EntityNotFoundException::new).getVersion();
+            System.out.println(reportNumber);
+//            reportNumber = collect.stream().max(Comparator.comparing(FilesEntity::getVersion)).orElseThrow(EntityNotFoundException::new).getVersion();
         }
 
         Document document = new Document(PageSize.A4);
@@ -3115,12 +3120,14 @@ public class FilesService {
         AtomicInteger pageNumb = new AtomicInteger();
         int fontSize = 12;
         int finalReportNumber = reportNumber;
-                        Paragraph newLine = new Paragraph(" ", font(13, 1));
+        System.out.println(reportNumber);
+        Paragraph newLine = new Paragraph(" ", font(13, 1));
         users.forEach(u ->
                 {
                     //tutaj tworzę dokument
                     try {
                         Paragraph title = new Paragraph("Raport Pracy „DZIESIĄTKA” ŁÓDŹ - " + pl + "/" + evidenceEntities.get(0).getStop().getYear() + "/" + finalReportNumber, font(13, 1));
+                        System.out.println(finalReportNumber);
                         Paragraph name = new Paragraph(u.getFirstName() + " " + u.getSecondName() + " szczegółowy", font(fontSize, 0));
                         if (!detailed) {
                             name = new Paragraph(u.getFirstName() + " " + u.getSecondName(), font(fontSize, 0));
@@ -3256,7 +3263,7 @@ public class FilesService {
         );
 
         document.close();
-
+        System.out.println(reportNumber);
         byte[] data = convertToByteArray(fileName);
         FilesModel filesModel = FilesModel.builder()
                 .name(fileName)
