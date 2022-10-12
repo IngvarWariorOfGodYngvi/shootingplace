@@ -1,10 +1,14 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.contributions.ContributionEntity;
+import com.shootingplace.shootingplace.contributions.ContributionService;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryEntity;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseService;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentService;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;
 import com.shootingplace.shootingplace.address.AddressService;
 import com.shootingplace.shootingplace.domain.entities.*;
@@ -877,7 +881,7 @@ public class MemberServiceTest {
         ResponseEntity<?> responseEntity = memberService.changeAdult(uuid, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Klubowicz należy już do grupy powszechnej\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Klubowicz należy już do grupy powszechnej"));
     }
 
     @Test
@@ -890,7 +894,7 @@ public class MemberServiceTest {
         ResponseEntity<?> responseEntity = memberService.changeAdult(uuid, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Klubowicz ma za krótki staż jako młodzież\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Klubowicz ma za krótki staż jako młodzież"));
     }
 
     @Test
@@ -1002,7 +1006,7 @@ public class MemberServiceTest {
         ResponseEntity<?> responseEntity = memberService.addNewMember(member, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.CREATED));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"" + memberEntity.getUuid() + "\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo(memberEntity.getUuid()));
     }
 
     @Test
@@ -1028,7 +1032,7 @@ public class MemberServiceTest {
         ResponseEntity<?> responseEntity = memberService.addNewMember(member, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.CREATED));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"" + memberEntity.getUuid() + "\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo(memberEntity.getUuid()));
     }
 
     @Test
@@ -1054,7 +1058,7 @@ public class MemberServiceTest {
         ResponseEntity<?> responseEntity = memberService.addNewMember(member, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.CREATED));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"" + memberEntity.getUuid() + "\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo(memberEntity.getUuid()));
     }
 
     private List<Member> erasedList() {

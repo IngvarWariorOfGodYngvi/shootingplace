@@ -2,10 +2,11 @@ package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.domain.entities.ShootingPatentEntity;
-import com.shootingplace.shootingplace.domain.models.ShootingPatent;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatent;
 import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.repositories.ShootingPatentRepository;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentRepository;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentService;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;

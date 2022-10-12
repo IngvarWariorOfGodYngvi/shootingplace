@@ -1,6 +1,8 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.armory.ArmoryService;
+import com.shootingplace.shootingplace.armory.CaliberService;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;

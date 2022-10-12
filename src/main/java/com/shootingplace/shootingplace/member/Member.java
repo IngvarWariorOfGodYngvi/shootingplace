@@ -7,6 +7,7 @@ import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
 import com.shootingplace.shootingplace.domain.models.*;
 import com.shootingplace.shootingplace.history.History;
 import com.shootingplace.shootingplace.license.License;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatent;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermission;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

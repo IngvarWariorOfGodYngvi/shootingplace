@@ -1,11 +1,12 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.armory.Caliber;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.domain.models.*;
 import com.shootingplace.shootingplace.member.MemberDTO;
-import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceRepository;
-import com.shootingplace.shootingplace.repositories.ContributionRepository;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import org.springframework.stereotype.Service;
 
@@ -101,7 +102,7 @@ public class StatisticsService {
         memberEntities.forEach(t -> t.getHistory().getContributionList().forEach(g -> {
             if (g.getHistoryUUID() == null) {
                 g.setHistoryUUID(t.getUuid());
-                contributionRepository.saveAndFlush(g);
+                contributionRepository.save(g);
             }
         }));
 
@@ -133,7 +134,7 @@ public class StatisticsService {
             MemberEntity memberEntity = memberRepository.findAll().stream().max(Comparator.comparing(MemberEntity::getLegitimationNumber)).orElseThrow();
             value = memberEntity.getLegitimationNumber();
         }
-        return "\"" + value + "\"";
+        return String.valueOf(value);
     }
 
     public String getActualYearMemberCounts() {

@@ -15,4 +15,6 @@ public interface UserRepository {
     Optional<UserEntity> findById(String uuid);
 
     boolean existsById(String uuid);
+
+    UserEntity getOne(String uuid);
 }

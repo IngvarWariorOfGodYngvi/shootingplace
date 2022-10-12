@@ -1,9 +1,6 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceService;
-import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceEntity;
-import com.shootingplace.shootingplace.AmmoEvidence.AmmoDTO;
-import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.ammoEvidence.*;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -60,7 +57,7 @@ public class AmmoEvidenceServiceTest {
         //given
         boolean open = true;
         //when
-        List<AmmoEvidenceEntity> allEvidences = ammoEvidenceService.getAllEvidences(open);
+        List<AmmoEvidenceDTO> allEvidences = ammoEvidenceService.getAllEvidences(open);
         //then
         Assert.assertThat(allEvidences, Matchers.hasSize(1));
     }
@@ -70,7 +67,7 @@ public class AmmoEvidenceServiceTest {
         //given
         boolean open = false;
         //when
-        List<AmmoEvidenceEntity> allEvidences = ammoEvidenceService.getAllEvidences(open);
+        List<AmmoEvidenceDTO> allEvidences = ammoEvidenceService.getAllEvidences(open);
         //then
         Assert.assertThat(allEvidences, Matchers.hasSize(9));
     }

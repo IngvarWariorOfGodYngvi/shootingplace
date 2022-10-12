@@ -5,6 +5,7 @@ import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -34,6 +35,12 @@ public class MemberController {
     @GetMapping("/ID/{number}")
     public ResponseEntity<?> getMemberUUIDByLegitimationNumber(@PathVariable int number) {
         return memberService.getMemberUUIDByLegitimationNumber(number);
+    }
+
+    @GetMapping("/phone/{phoneNumber}")
+    public ResponseEntity<?> getMemberUUIDByPhoneNumber(@PathVariable String phoneNumber) {
+        System.out.println("coś");
+        return memberService.getMemberUUIDByPhoneNumber(phoneNumber);
     }
 
     @GetMapping("/uuid/{uuid}")
@@ -165,7 +172,7 @@ public class MemberController {
     public ResponseEntity<?> getErasedType() {
         return ResponseEntity.ok(memberService.getErasedType());
     }
-
+@Transactional
     @PostMapping("/")
     public ResponseEntity<?> addMember(@RequestBody @Valid Member member, @RequestParam String pinCode) {
         if (changeHistoryService.comparePinCode(pinCode)) {

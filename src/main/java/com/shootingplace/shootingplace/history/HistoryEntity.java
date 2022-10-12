@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.history;
 
 import com.shootingplace.shootingplace.domain.entities.CompetitionHistoryEntity;
-import com.shootingplace.shootingplace.domain.entities.ContributionEntity;
+import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.domain.entities.JudgingHistoryEntity;
 import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
 import lombok.AllArgsConstructor;
@@ -34,9 +34,9 @@ public class HistoryEntity {
     private Boolean patentFirstRecord = false;
     private LocalDate[] patentDay;
 
-    private Integer pistolCounter = 0;
-    private Integer rifleCounter = 0;
-    private Integer shotgunCounter = 0;
+    private Integer pistolCounter;
+    private Integer rifleCounter;
+    private Integer shotgunCounter;
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("date DESC")
     private List<CompetitionHistoryEntity> competitionHistory;

@@ -109,8 +109,13 @@ public class ClubService {
 
     public ResponseEntity<?> createNewClub(Club club) {
 
+        Integer id = clubRepository.findAll()
+                .stream()
+                .max(Comparator.comparing(ClubEntity::getId)).orElseThrow(EntityNotFoundException::new)
+                .getId() + 1;
+
         clubRepository.saveAndFlush(ClubEntity.builder()
-                .id(1)
+                .id(id)
                 .name(club.getName())
                 .fullName(club.getFullName())
                 .phoneNumber("+48 " + club.getPhoneNumber())
@@ -119,6 +124,6 @@ public class ClubService {
                 .licenseNumber(club.getLicenseNumber())
                 .url(club.getUrl())
                 .build());
-        return ResponseEntity.ok("\"Utworzono nowy Klub\"");
+        return ResponseEntity.ok("Utworzono nowy Klub");
     }
 }

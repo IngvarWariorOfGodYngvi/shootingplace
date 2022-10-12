@@ -1,19 +1,21 @@
 package com.shootingplace.shootingplace.member;
 
+import com.shootingplace.shootingplace.address.AddressService;
+import com.shootingplace.shootingplace.contributions.ContributionService;
+import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
+import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
+import com.shootingplace.shootingplace.domain.enums.ErasedType;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.license.LicenseService;
-import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;
-import com.shootingplace.shootingplace.address.AddressService;
-import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
-import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
-import com.shootingplace.shootingplace.domain.enums.ErasedType;
 import com.shootingplace.shootingplace.repositories.ClubRepository;
 import com.shootingplace.shootingplace.repositories.ErasedRepository;
 import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
 import com.shootingplace.shootingplace.services.*;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentService;
+import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.PageRequest;
@@ -63,8 +65,7 @@ public class MemberService {
                          MemberPermissionsService memberPermissionsService,
                          PersonalEvidenceService personalEvidenceService,
                          ClubRepository clubRepository,
-                         ChangeHistoryService changeHistoryService,
-                         ErasedRepository erasedRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository) {
+                         ErasedRepository erasedRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, Logic logic, ChangeHistoryService changeHistoryService) {
         this.memberRepository = memberRepository;
         this.addressService = addressService;
         this.licenseService = licenseService;
@@ -76,9 +77,9 @@ public class MemberService {
         this.memberPermissionsService = memberPermissionsService;
         this.personalEvidenceService = personalEvidenceService;
         this.clubRepository = clubRepository;
-        this.changeHistoryService = changeHistoryService;
         this.erasedRepository = erasedRepository;
         this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
+        this.changeHistoryService = changeHistoryService;
     }
 
 
@@ -97,7 +98,7 @@ public class MemberService {
                 list.add(Mapping.map(e));
             }
         });
-        list.sort(Comparator.comparing(Member::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))));
+        list.sort(Comparator.comparing(Member::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))));
         LOG.info("Wywołano listę osób z uprawnieniami");
         return list;
     }
@@ -111,6 +112,7 @@ public class MemberService {
         list.sort(Comparator.comparing(String::new));
         return list;
     }
+
     public void checkMembers() {
         LOG.info("Sprawdzam składki i licencje");
         // dorośli
@@ -284,13 +286,16 @@ public class MemberService {
             member.setPzss(false);
             member.setErasedEntity(null);
             member.setActive(true);
-            memberEntity = memberRepository.save(Mapping.map(member));
-            historyService.addContribution(memberEntity.getUuid(),
-                    contributionService.addFirstContribution(memberEntity.getUuid(), LocalDate.now()));
-        }
-        changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " addNewMember", memberEntity.getUuid());
 
-        return ResponseEntity.status(HttpStatus.CREATED).contentType(MediaType.APPLICATION_JSON).body("\"" + memberEntity.getUuid() + "\"");
+            ResponseEntity<?> response = getStringResponseEntity(pinCode, Mapping.map(member), HttpStatus.CREATED, "addNewMember", Mapping.map(member).getUuid());
+
+            if (response.getStatusCode().equals(HttpStatus.CREATED)) {
+                memberEntity = memberRepository.save(Mapping.map(member));
+                historyService.addContribution(memberEntity.getUuid(),
+                        contributionService.addFirstContribution(memberEntity.getUuid(), LocalDate.now()));
+            }
+            return response;
+        }
 
 
     }
@@ -300,42 +305,48 @@ public class MemberService {
     public ResponseEntity<?> activateOrDeactivateMember(String memberUUID, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
-            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        memberEntity.toggleActive();
-        memberRepository.save(memberEntity);
-        LOG.info("Zmieniono status");
-        changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " activateOrDeactivateMember", memberEntity.getUuid());
-        return ResponseEntity.ok("\"Zmieniono status aktywny/nieaktywny\"");
+
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "activateOrDeactivateMember", "Zmieniono status aktywny/nieaktywny");
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            memberEntity.toggleActive();
+            memberRepository.save(memberEntity);
+            LOG.info("Zmieniono status");
+        }
+
+        return response;
     }
 
     public ResponseEntity<?> changeAdult(String memberUUID, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
-            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         if (memberEntity.getAdult()) {
             LOG.info("Klubowicz należy już do grupy powszechnej");
-            return ResponseEntity.badRequest().body("\"Klubowicz należy już do grupy powszechnej\"");
+            return ResponseEntity.badRequest().body("Klubowicz należy już do grupy powszechnej");
         }
         if (LocalDate.now().minusYears(1).minusDays(1).isBefore(memberEntity.getJoinDate())) {
             LOG.info("Klubowicz ma za krótki staż jako młodzież");
-            return ResponseEntity.badRequest().body("\"Klubowicz ma za krótki staż jako młodzież\"");
+            return ResponseEntity.badRequest().body("Klubowicz ma za krótki staż jako młodzież");
         }
-        memberEntity.setAdult(true);
-        memberRepository.save(memberEntity);
-        historyService.changeContributionTime(memberUUID);
-        LOG.info("Klubowicz należy od teraz do grupy dorosłej : " + LocalDate.now());
-        changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " changeAdult", memberEntity.getUuid());
-        return ResponseEntity.ok("\"Klubowicz należy od teraz do grupy dorosłej\"");
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "changeAdult", "Klubowicz należy od teraz do grupy dorosłej");
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            memberEntity.setAdult(true);
+            memberRepository.save(memberEntity);
+            historyService.changeContributionTime(memberUUID);
+            LOG.info("Klubowicz należy od teraz do grupy dorosłej : " + LocalDate.now());
+        }
+        return response;
     }
 
     public ResponseEntity<?> eraseMember(String memberUUID, String erasedType, LocalDate erasedDate, String additionalDescription, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
-            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         if (!memberEntity.getErased()) {
@@ -351,9 +362,11 @@ public class MemberService {
             memberEntity.setPzss(false);
             LOG.info("Klubowicz skreślony : " + LocalDate.now());
         }
-        memberRepository.save(memberEntity);
-        changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " eraseMember", memberEntity.getUuid());
-        return ResponseEntity.ok("\"Usunięto Klubowicza\"");
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "eraseMember", "Usunięto Klubowicza");
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            memberRepository.save(memberEntity);
+        }
+        return response;
     }
 
     //--------------------------------------------------------------------------
@@ -558,7 +571,7 @@ public class MemberService {
                         list.add(e.getSecondName().concat(" " + e.getFirstName() + " leg. " + e.getLegitimationNumber()));
                     }
                 });
-        list.sort(Comparator.comparing(String::new,Collator.getInstance(Locale.forLanguageTag("pl"))));
+        list.sort(Comparator.comparing(String::new, Collator.getInstance(Locale.forLanguageTag("pl"))));
         LOG.info("Lista nazwisk z identyfikatorem");
         return list;
 
@@ -651,12 +664,12 @@ public class MemberService {
 
     public List<MemberDTO> getAllMemberDTO() {
         List<MemberDTO> list = new ArrayList<>();
-        Pageable pageable = PageRequest.of(0, memberRepository.findAll().size(),Sort.by("secondName").descending());
+        Pageable pageable = PageRequest.of(0, memberRepository.findAll().size(), Sort.by("secondName").descending());
         memberRepository.findAll(pageable)
                 .stream()
                 .filter(f -> !f.getErased())
                 .forEach(e -> list.add(Mapping.map2DTO(e)));
-        list.sort(Comparator.comparing(MemberDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))));
+        list.sort(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))));
         return list;
     }
 
@@ -923,5 +936,28 @@ public class MemberService {
                 .collect(Collectors.toList());
         memberEntityList.forEach(e -> members.add(Mapping.map(e)));
         return members;
+    }
+
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, String body) {
+        ResponseEntity<String> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        if (memberEntity.getUuid() == null) {
+            memberEntity.setUuid("nowy");
+        }
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " " + methodName + " ", memberEntity.getUuid());
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
+    }
+
+    public ResponseEntity<?> getMemberUUIDByPhoneNumber(String phoneNumber) {
+        phoneNumber.replaceAll(" ", "");
+        if(!phoneNumber.startsWith("+48")){
+            phoneNumber = "+48" +phoneNumber;
+        }
+        System.out.println(phoneNumber);
+        MemberEntity member = memberRepository.findByPhoneNumber(phoneNumber).orElse(null);
+
+        return member!=null ? ResponseEntity.ok(Mapping.map(member)) : ResponseEntity.badRequest().body("coś poszło nie tak");
     }
 }

@@ -17,6 +17,8 @@ public class StartConfiguration {
     private final ClubRepository clubRepository;
 
     public StartConfiguration(ClubRepository clubRepository) {
+
+
         this.clubRepository = clubRepository;
     }
 

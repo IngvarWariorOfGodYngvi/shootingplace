@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.domain.models;
 
-import com.shootingplace.shootingplace.domain.entities.AmmoUsedEntity;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoUsedEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

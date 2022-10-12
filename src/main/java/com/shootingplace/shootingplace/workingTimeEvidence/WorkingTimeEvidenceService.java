@@ -195,23 +195,22 @@ public class WorkingTimeEvidenceService {
     }
 
     public void closeAllActiveWorkTime(String workType) {
-        if (workType.equals(UserSubType.WORKER.getName())) {
-            log.info("zamykam to co jest otwarte");
-            workRepo.findAll()
-                    .stream()
-                    .filter(f -> !f.isClose())
-                    .filter(f -> f.getWorkType().equals(workType))
-                    .collect(Collectors.toList())
-                    .forEach(e ->
-                    {
-                        String s = countTime(e.getStart(), LocalDateTime.now());
-                        BarCodeCardEntity barCode = barCodeCardRepo.findByBarCode(e.getCardNumber());
-                        if (Integer.parseInt(s.substring(0, 2)) > 6) {
-                            closeWTE(e, true, barCode);
-                        }
+        log.info("zamykam to co jest otwarte");
+        workRepo.findAll()
+                .stream()
+                .filter(f -> !f.isClose())
+                .filter(f -> f.getWorkType().equals(workType))
+                .collect(Collectors.toList())
+                .forEach(e ->
+                {
+                    String s = countTime(e.getStart(), LocalDateTime.now());
+                    BarCodeCardEntity barCode = barCodeCardRepo.findByBarCode(e.getCardNumber());
+                    if (Integer.parseInt(s.substring(0, 2)) > 6) {
+                        closeWTE(e, true, barCode);
+                    }
 
-                    });
-        }
+                });
+
     }
 
 
@@ -309,22 +308,33 @@ public class WorkingTimeEvidenceService {
                     .map(Mapping::map)
                     .sorted(Comparator.comparing(WorkingTimeEvidenceDTO::getWorkType).thenComparing(WorkingTimeEvidenceDTO::getStart).reversed())
                     .collect(Collectors.toList());
-            pl2.forEach(g -> {
-                int workTimeSumHours;
-                int workTimeSumMinutes;
+
+            for (int i = 0; i < pl2.size(); i++) {
+
+//            pl2.forEach(g -> {
+                WorkingTimeEvidenceDTO g = pl2.get(i);
                 LocalDateTime start = getTime(g.getStart(), true);
                 LocalDateTime stop = getTime(g.getStop(), false);
                 String workTime = countTime(start, stop);
+                System.out.println(workTime);
+
+
+                int workTimeSumHours;
+                int workTimeSumMinutes;
+
+
                 workTimeSumHours = sumIntFromString(workTime, 0, 2);
                 workTimeSumMinutes = sumIntFromString(workTime, 3, 5);
-                workSumMinutes.addAndGet(workTimeSumMinutes);
-                workSumHours.addAndGet(workTimeSumHours);
-                int acquire = workSumMinutes.getAcquire() % 60;
-                int acquire1 = workSumMinutes.getAcquire() / 60;
-                workSumHours.getAndAdd(acquire1);
-                format.set(String.format("%02d:%02d",
-                        workSumHours.getAcquire(), acquire));
-            });
+                workSumHours.getAndAdd(workTimeSumHours);
+                workSumMinutes.getAndAdd(workTimeSumMinutes);
+
+            }
+            int acquire = workSumMinutes.getAcquire() % 60;
+            int acquire1 = workSumMinutes.getAcquire() / 60;
+            workSumHours.getAndAdd(acquire1);
+            format.set(String.format("%02d:%02d",
+                    workSumHours.getAcquire(), acquire));
+            System.out.println(format);
 
 
             UserWithWorkingTimeList build = UserWithWorkingTimeList.builder()
@@ -439,5 +449,10 @@ public class WorkingTimeEvidenceService {
 
 
         return ResponseEntity.ok(list);
+    }
+
+    public boolean isInWork(UserEntity userEntity) {
+        return workRepo.findAll().stream().filter(f -> !f.isClose()).anyMatch(e -> e.getUser().equals(userEntity));
+
     }
 }

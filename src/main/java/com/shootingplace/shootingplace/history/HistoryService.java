@@ -1,13 +1,16 @@
 package com.shootingplace.shootingplace.history;
 
+import com.shootingplace.shootingplace.contributions.ContributionEntity;
+import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
-import com.shootingplace.shootingplace.domain.models.ShootingPatent;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatent;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.repositories.*;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import org.apache.logging.log4j.LogManager;
@@ -97,7 +100,7 @@ public class HistoryService {
                 .getContributionList()
                 .remove(contribution);
         contribution.setHistoryUUID(null);
-        contributionRepository.saveAndFlush(contribution);
+        contributionRepository.save(contribution);
         LOG.info("Usunięto składkę");
         historyRepository.save(historyEntity);
     }
@@ -514,7 +517,7 @@ public class HistoryService {
                 .validThru(date)
                 .historyUUID(memberEntity.getHistory().getUuid())
                 .build();
-        contributionRepository.saveAndFlush(contribution);
+        contributionRepository.save(contribution);
         addContribution(memberUUID, contribution);
     }
 

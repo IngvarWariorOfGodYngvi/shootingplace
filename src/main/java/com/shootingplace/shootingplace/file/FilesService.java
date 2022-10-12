@@ -2,8 +2,15 @@ package com.shootingplace.shootingplace.file;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
-import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceEntity;
-import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceEntity;
+import com.shootingplace.shootingplace.armory.GunEntity;
+import com.shootingplace.shootingplace.armory.GunRepository;
+import com.shootingplace.shootingplace.armory.GunStoreEntity;
+import com.shootingplace.shootingplace.armory.GunStoreRepository;
+import com.shootingplace.shootingplace.contributions.ContributionEntity;
+import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.enums.CountingMethod;
 import com.shootingplace.shootingplace.domain.enums.Discipline;
@@ -277,7 +284,7 @@ public class FilesService {
         } else {
             group = "MŁODZIEŻOWA";
         }
-        Paragraph p1 = new Paragraph("Karta Członkowska\n", font(14, 2));
+        Paragraph p1 = new Paragraph("Karta Członkowska\n", font(13, 2));
         Phrase p2 = new Phrase(group, font(14, 1));
         Paragraph p3 = new Paragraph("\nNazwisko i Imię : ", font(11, 0));
         Phrase p4 = new Phrase(memberEntity.getSecondName() + " " + memberEntity.getFirstName(), font(18, 1));
@@ -286,7 +293,7 @@ public class FilesService {
         Paragraph p7 = new Paragraph("\nData Wstąpienia : ", font(11, 0));
         Phrase p8 = new Phrase(String.valueOf(memberEntity.getJoinDate()), font(15, 0));
         Paragraph p9 = new Paragraph("\nData Urodzenia : ", font(11, 0));
-        Phrase p10 = new Phrase(String.valueOf(birthDate));
+        Phrase p10 = new Phrase(String.valueOf(birthDate), font(11, 0));
         Paragraph p11 = new Paragraph("PESEL : " + memberEntity.getPesel(), font(11, 0));
         Paragraph p12 = new Paragraph("", font(11, 0));
         Phrase p13 = new Phrase(memberEntity.getIDCard());
@@ -2152,13 +2159,22 @@ public class FilesService {
 
         document.add(title);
         document.add(newLine);
-        LocalDate notValidContribution = LocalDate.of(LocalDate.now().getYear(), 12, 31).minusYears(2);
-        List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
+        LocalDate notValidContributionAdult = LocalDate.of(LocalDate.now().getYear(), 12, 31).minusYears(2);
+        LocalDate notValidContributionNoAdult = LocalDate.of(LocalDate.now().getYear(), 8, 31).minusYears(1).minusMonths(6);
+        List<MemberEntity> memberEntityListAdult = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
+                .filter(MemberEntity::getAdult)
                 .filter(f -> !f.getActive())
-                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
+                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContributionAdult))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
+
+        memberEntityListAdult.addAll(memberRepository.findAll().stream()
+                .filter(f-> !f.getErased())
+                .filter(f->!f.getAdult())
+                .filter(f->f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContributionNoAdult))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .collect(Collectors.toList()));
         float[] pointColumnWidths = {4F, 42F, 14F, 14F, 14F, 14F};
 
 
@@ -2184,9 +2200,9 @@ public class FilesService {
 
         document.add(newLine);
 
-        for (int i = 0; i < memberEntityList.size(); i++) {
+        for (int i = 0; i < memberEntityListAdult.size(); i++) {
 
-            MemberEntity memberEntity = memberEntityList.get(i);
+            MemberEntity memberEntity = memberEntityListAdult.get(i);
 
             String memberEntityName = memberEntity.getSecondName().concat(" " + memberEntity.getFirstName());
 
@@ -2616,8 +2632,9 @@ public class FilesService {
 
         document.add(titleTable);
 
-        List<GunEntity> collect1 = new ArrayList<>(gunRepository.findAllById(guns));
-
+        List<GunEntity> collect1 = new ArrayList<>();
+        List<GunEntity> finalCollect = collect1;
+        guns.forEach(e-> finalCollect.add(gunRepository.getOne(e)));
         collect1 = collect1.stream().sorted(Comparator.comparing(GunEntity::getCaliber).thenComparing(GunEntity::getModelName)).collect(Collectors.toList());
 
         for (int j = 0; j < collect1.size(); j++) {
@@ -3067,20 +3084,16 @@ public class FilesService {
 
     public FilesEntity getWorkTimeReport(String month, String workType, String uuid, boolean detailed, boolean incrementVersion) throws IOException, DocumentException {
         int reportNumber = 1;
-        System.out.println(reportNumber);
         String fileName = "raport_pracy_" + month + "_" + reportNumber + ".pdf";
         List<FilesEntity> collect = filesRepository.findAll().stream().filter(f -> f.getName().contains("raport_pracy_" + month)).collect(Collectors.toList());
-        System.out.println(reportNumber);
         if (!collect.isEmpty()) {
-            System.out.println("wchodzę");
-            System.out.println(collect.size());
             reportNumber = collect.stream().max(Comparator.comparing(FilesEntity::getVersion)).orElseThrow(EntityNotFoundException::new).getVersion();
-            System.out.println(reportNumber);
 //            reportNumber = collect.stream().max(Comparator.comparing(FilesEntity::getVersion)).orElseThrow(EntityNotFoundException::new).getVersion();
         }
 
         Document document = new Document(PageSize.A4);
         document.setMargins(35F, 35F, 50F, 50F);
+        // to musi zostać by spowolnić program bo inaczej nie robi tego co powinien
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -3120,14 +3133,12 @@ public class FilesService {
         AtomicInteger pageNumb = new AtomicInteger();
         int fontSize = 12;
         int finalReportNumber = reportNumber;
-        System.out.println(reportNumber);
         Paragraph newLine = new Paragraph(" ", font(13, 1));
         users.forEach(u ->
                 {
                     //tutaj tworzę dokument
                     try {
                         Paragraph title = new Paragraph("Raport Pracy „DZIESIĄTKA” ŁÓDŹ - " + pl + "/" + evidenceEntities.get(0).getStop().getYear() + "/" + finalReportNumber, font(13, 1));
-                        System.out.println(finalReportNumber);
                         Paragraph name = new Paragraph(u.getFirstName() + " " + u.getSecondName() + " szczegółowy", font(fontSize, 0));
                         if (!detailed) {
                             name = new Paragraph(u.getFirstName() + " " + u.getSecondName(), font(fontSize, 0));
@@ -3563,7 +3574,6 @@ public class FilesService {
         String europeanDatePattern = "dd.MM.yyyy";
         return DateTimeFormatter.ofPattern(europeanDatePattern);
     }
-
 
     static class PageStamper extends PdfPageEventHelper {
         @Override

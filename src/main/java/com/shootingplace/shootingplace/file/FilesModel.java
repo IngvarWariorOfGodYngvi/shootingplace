@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.file;
 
-import com.shootingplace.shootingplace.domain.models.Gun;
+import com.shootingplace.shootingplace.armory.Gun;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

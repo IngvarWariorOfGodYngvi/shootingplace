@@ -1,7 +1,9 @@
 package com.shootingplace.shootingplace.users;
 
 import com.shootingplace.shootingplace.domain.enums.UserSubType;
+import com.shootingplace.shootingplace.history.ChangeHistoryRepository;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.services.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityExistsException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,12 +20,16 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final ChangeHistoryService changeHistoryService;
+    private final ChangeHistoryRepository changeHistoryRepo;
+    private final MemberRepository memberRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public UserService(UserRepository userRepository, ChangeHistoryService changeHistoryService) {
+    public UserService(UserRepository userRepository, ChangeHistoryService changeHistoryService, ChangeHistoryRepository changeHistoryRepo, MemberRepository memberRepository) {
         this.userRepository = userRepository;
         this.changeHistoryService = changeHistoryService;
+        this.changeHistoryRepo = changeHistoryRepo;
+        this.memberRepository = memberRepository;
     }
 
     public List<UserDTO> getListOfSuperUser() {
@@ -176,5 +183,20 @@ public class UserService {
         } else {
             return ResponseEntity.badRequest().body(false);
         }
+    }
+
+    public ResponseEntity<?> getUserActions(String uuid) {
+        UserEntity one = userRepository.getOne(uuid);
+
+        List<ChangeHistoryDTO> all = one.getList()
+                .stream()
+                .map(Mapping::map)
+                .sorted(Comparator.comparing(ChangeHistoryDTO::getDayNow).thenComparing(ChangeHistoryDTO::getTimeNow).reversed())
+                .collect(Collectors.toList());
+        all.forEach(e -> {
+            memberRepository.findById(e.getBelongsTo()).ifPresent(member -> e.setBelongsTo(member.getSecondName().concat(" " + member.getFirstName())));
+        });
+        return ResponseEntity.ok(all);
+
     }
 }

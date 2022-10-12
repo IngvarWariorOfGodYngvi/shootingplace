@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.services;
 
 import com.github.javafaker.Faker;
 import com.github.javafaker.Name;
+import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryEntity;
 import com.shootingplace.shootingplace.history.HistoryService;
@@ -14,6 +15,7 @@ import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
 import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.member.MemberRepository;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Assert;

@@ -1,18 +1,20 @@
 package com.shootingplace.shootingplace.license;
 
-import com.shootingplace.shootingplace.history.HistoryEntity;
 import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
-import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.domain.models.LicensePaymentHistoryDTO;
-import com.shootingplace.shootingplace.member.MemberDTO;
-import com.shootingplace.shootingplace.history.HistoryRepository;
-import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
-import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.HistoryEntity;
+import com.shootingplace.shootingplace.history.HistoryRepository;
 import com.shootingplace.shootingplace.history.HistoryService;
+import com.shootingplace.shootingplace.member.MemberDTO;
+import com.shootingplace.shootingplace.member.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberRepository;
+import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
 import com.shootingplace.shootingplace.services.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -71,7 +73,7 @@ public class LicenseService {
                         list.add(Mapping.map2DTO(e));
                     }
                 });
-        list.sort(Comparator.comparing(MemberDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))));
+        list.sort(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))));
         return list;
     }
 
@@ -123,8 +125,7 @@ public class LicenseService {
                 licenseEntity.setValid(true);
             }
             LOG.info("zaktualizowano datę licencji");
-        }
-        else {
+        } else {
             licenseEntity.setValidThru(LocalDate.of(LocalDate.now().getYear(), 12, 31));
             licenseEntity.setValid(true);
             LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
@@ -135,7 +136,7 @@ public class LicenseService {
         return ResponseEntity.ok("Zaktualizowano licencję");
     }
 
-    public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date,boolean isPaid, String pinCode) {
+    public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date, boolean isPaid, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
@@ -163,14 +164,15 @@ public class LicenseService {
             license.setValidThru(date);
             license.setValid(license.getValidThru().getYear() >= LocalDate.now().getYear());
         }
-        if(isPaid){
-            if(!license.isPaid()){
+        if (isPaid) {
+            if (!license.isPaid()) {
                 license.setPaid(true);
             }
         }
         licenseRepository.save(license);
-        changeHistoryService.addRecordToChangeHistory(pinCode, license.getClass().getSimpleName() + " updateLicense", memberEntity.getUuid());
-        return ResponseEntity.ok("Poprawiono Licencję");
+        return getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "updateLicense", "Poprawiono Licencję");
+//        changeHistoryService.addRecordToChangeHistory(pinCode, license.getClass().getSimpleName() + " updateLicense", memberEntity.getUuid());
+//        return ResponseEntity.ok("Poprawiono Licencję");
     }
 
     public ResponseEntity<?> renewLicenseValid(String memberUUID, License license) {
@@ -249,11 +251,11 @@ public class LicenseService {
         if (year != null) {
             licensePaymentHistoryEntity.setValidForYear(year);
         }
-
-        licensePaymentHistoryRepository.saveAndFlush(licensePaymentHistoryEntity);
-        changeHistoryService.addRecordToChangeHistory(pinCode, licensePaymentHistoryEntity.getClass().getSimpleName() + " updateLicense", memberEntity.getUuid());
-
-        return ResponseEntity.ok("Poprawiono płatność za licencję");
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "updateLicensePayment", "Poprawiono płatność za licencję");
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            licensePaymentHistoryRepository.saveAndFlush(licensePaymentHistoryEntity);
+        }
+        return response;
     }
 
     public License getLicense() {
@@ -271,29 +273,38 @@ public class LicenseService {
 
     public ResponseEntity<?> prolongAllLicense(List<String> licenseList, String pinCode) {
         List<String> responseList = new ArrayList<>();
-        for (String s : licenseList) {
-            MemberEntity memberEntity = memberRepository.findById(s).orElse(null);
-            LicenseEntity licenseEntity;
+        String s1 = "";
 
-            if (memberEntity == null) {
-                LOG.info("Nie znaleziono osoby o podanym ID");
-                responseList.add("Nie znaleziono osoby");
-            } else {
-                if (memberEntity.getLicense() != null) {
-                    licenseEntity = memberEntity.getLicense();
-                    License license = Mapping.map(licenseEntity);
-                    ResponseEntity<?> responseEntity = renewLicenseValid(s, license);
-                    if (responseEntity.getStatusCodeValue() == 200) {
-                        responseList.add("Przedłużono Licencję " + memberEntity.getFirstName() + " " + memberEntity.getSecondName());
-                    }
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, null, HttpStatus.OK, "prolongAllLicense", responseList);
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            for (String s : licenseList) {
+                MemberEntity memberEntity = memberRepository.findById(s).orElse(null);
+                LicenseEntity licenseEntity;
+
+                if (memberEntity == null) {
+                    LOG.info("Nie znaleziono osoby o podanym ID");
+                    responseList.add("Nie znaleziono osoby");
                 } else {
-                    LOG.info(memberEntity.getSecondName() + " Nie posiada Licencji");
-                    responseList.add(memberEntity.getSecondName() + " Nie posiada licencji");
+                    if (memberEntity.getLicense() != null) {
+                        licenseEntity = memberEntity.getLicense();
+                        License license = Mapping.map(licenseEntity);
+                        ResponseEntity<?> responseEntity = renewLicenseValid(s, license);
+                        if (responseEntity.getStatusCodeValue() == 200) {
+                            responseList.add("Przedłużono Licencję " + memberEntity.getFirstName() + " " + memberEntity.getSecondName());
+                        }
+                    } else {
+                        LOG.info(memberEntity.getSecondName() + " Nie posiada Licencji");
+                        responseList.add(memberEntity.getSecondName() + " Nie posiada licencji");
+                    }
+                    s1 = s1.concat(s);
+
                 }
-                changeHistoryService.addRecordToChangeHistory(pinCode, getClass().getSimpleName() + "prolongAllLicense", s);
             }
+            return getStringResponseEntity(pinCode, null, HttpStatus.OK, "prolongAllLicense", responseList);
+        } else {
+            return response;
         }
-        return ResponseEntity.ok(responseList);
+//        return ResponseEntity.ok(responseList);
     }
 
     public List<?> getAllLicencePayment() {
@@ -317,7 +328,7 @@ public class LicenseService {
                                 .isNew(g.isNew())
                                 .build())));
         return list1.stream()
-                .filter(f -> !f.isPayInPZSSPortal()).sorted(Comparator.comparing(LicensePaymentHistoryDTO::getDate).thenComparing(LicensePaymentHistoryDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(LicensePaymentHistoryDTO::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl")))).collect(Collectors.toList());
+                .filter(f -> !f.isPayInPZSSPortal()).sorted(Comparator.comparing(LicensePaymentHistoryDTO::getDate).thenComparing(LicensePaymentHistoryDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(LicensePaymentHistoryDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl")))).collect(Collectors.toList());
     }
 
     public ResponseEntity<?> removeLicensePaymentRecord(String paymentUUID, String pinCode) {
@@ -331,9 +342,19 @@ public class LicenseService {
         history.getLicensePaymentHistory().remove(licensePaymentHistoryEntity);
 
         historyRepository.save(history);
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "removeLicensePaymentRecord", "udało się");
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            licensePaymentHistoryRepository.delete(licensePaymentHistoryEntity);
+        }
+        return response;
+    }
 
-        licensePaymentHistoryRepository.delete(licensePaymentHistoryEntity);
-
-        return ResponseEntity.ok("udało się");
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, Object body) {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " " + methodName + " ", memberEntity.getUuid());
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
     }
 }

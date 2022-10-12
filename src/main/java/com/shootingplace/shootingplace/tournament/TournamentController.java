@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.tournament;
 
-import com.shootingplace.shootingplace.services.ArmoryService;
+import com.shootingplace.shootingplace.armory.ArmoryService;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;

@@ -6,6 +6,7 @@ import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.models.Person;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.validators.ValidPESEL;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionEntity;
 import lombok.AllArgsConstructor;

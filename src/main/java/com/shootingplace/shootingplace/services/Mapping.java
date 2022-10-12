@@ -1,14 +1,19 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.AmmoEvidence.AmmoDTO;
-import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidence;
-import com.shootingplace.shootingplace.AmmoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
+import com.shootingplace.shootingplace.ammoEvidence.*;
+import com.shootingplace.shootingplace.armory.Caliber;
+import com.shootingplace.shootingplace.armory.CaliberEntity;
+import com.shootingplace.shootingplace.armory.Gun;
+import com.shootingplace.shootingplace.armory.GunEntity;
+import com.shootingplace.shootingplace.contributions.Contribution;
+import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.domain.models.*;
 import com.shootingplace.shootingplace.file.FilesEntity;
 import com.shootingplace.shootingplace.file.FilesModel;
+import com.shootingplace.shootingplace.history.ChangeHistoryEntity;
 import com.shootingplace.shootingplace.history.History;
 import com.shootingplace.shootingplace.history.HistoryEntity;
 import com.shootingplace.shootingplace.license.License;
@@ -16,8 +21,11 @@ import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.member.Member;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatent;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentDTO;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
+import com.shootingplace.shootingplace.users.ChangeHistoryDTO;
 import com.shootingplace.shootingplace.users.UserDTO;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermission;
@@ -222,16 +230,34 @@ public class Mapping {
                         .build()).orElse(null);
     }
 
-    static History map(HistoryEntity r) {
-        return Optional.ofNullable(r).map(e -> History.builder()
+    static History map(HistoryEntity e) {
+        return History.builder()
+                .contributionList(e.getContributionList().stream().map(Mapping::map).collect(Collectors.toList()))
                 .licenseHistory(e.getLicenseHistory())
+                .competitionHistory(e.getCompetitionHistory().stream().map(Mapping::map).collect(Collectors.toList()))
                 .patentDay(e.getPatentDay())
                 .patentFirstRecord(e.getPatentFirstRecord())
                 .licensePaymentHistory(e.getLicensePaymentHistory().stream().map(Mapping::map).collect(Collectors.toList()))
                 .pistolCounter(e.getPistolCounter())
                 .rifleCounter(e.getRifleCounter())
                 .shotgunCounter(e.getShotgunCounter())
-                .build()).orElse(null);
+                .build();
+    }
+
+    private static CompetitionHistory map(CompetitionHistoryEntity e) {
+        return CompetitionHistory.builder()
+                .date(e.getDate())
+                .discipline(e.getDiscipline())
+                .name(e.getName())
+                .build();
+    }
+
+    private static Contribution map(ContributionEntity e) {
+        return Contribution.builder()
+                .historyUUID(e.getHistoryUUID())
+                .paymentDay(e.getPaymentDay())
+                .validThru(e.getValidThru())
+                .build();
     }
 
     static HistoryEntity map(History e) {
@@ -387,20 +413,20 @@ public class Mapping {
                 .version(e.getVersion())
                 .build()).orElse(null);
     }
-
-    public static AmmoEvidenceEntity map(AmmoEvidence a) {
-        return Optional.ofNullable(a).map(e -> AmmoEvidenceEntity.builder()
-                .number(e.getNumber())
-                .date(e.getDate())
-                .build()).orElse(null);
-    }
-
-    public static AmmoEvidence map(AmmoEvidenceEntity a) {
-        return Optional.ofNullable(a).map(e -> AmmoEvidence.builder()
-                .number(e.getNumber())
-                .date(e.getDate())
-                .build()).orElse(null);
-    }
+//
+//    public static AmmoEvidenceEntity map(AmmoEvidence a) {
+//        return Optional.ofNullable(a).map(e -> AmmoEvidenceEntity.builder()
+//                .number(e.getNumber())
+//                .date(e.getDate())
+//                .build()).orElse(null);
+//    }
+//
+//    public static AmmoEvidence map(AmmoEvidenceEntity a) {
+//        return Optional.ofNullable(a).map(e -> AmmoEvidence.builder()
+//                .number(e.getNumber())
+//                .date(e.getDate())
+//                .build()).orElse(null);
+//    }
 
     public static Caliber map(CaliberEntity c) {
         return Optional.ofNullable(c).map(e -> Caliber.builder()
@@ -499,7 +525,8 @@ public class Mapping {
                 .uuid(c.getUuid())
                 .build();
     }
-    public static WorkingTimeEvidenceDTO map(WorkingTimeEvidenceEntity e){
+
+    public static WorkingTimeEvidenceDTO map(WorkingTimeEvidenceEntity e) {
         return WorkingTimeEvidenceDTO.builder()
                 .cardNumber(e.getCardNumber())
                 .workTime(e.getWorkTime())
@@ -520,5 +547,42 @@ public class Mapping {
                 .subType(u.getSubType())
                 .build();
 
+    }
+
+    public static ChangeHistoryDTO map(ChangeHistoryEntity c) {
+        return ChangeHistoryDTO.builder()
+                .belongsTo(c.getBelongsTo())
+                .timeNow(c.getTimeNow())
+                .dayNow(c.getDayNow())
+                .classNamePlusMethod(c.getClassNamePlusMethod())
+                .build();
+    }
+
+    public static AmmoEvidenceDTO map(AmmoEvidenceEntity a) {
+        return AmmoEvidenceDTO.builder()
+                .uuid(a.getUuid())
+                .number(a.getNumber())
+                .date(a.getDate())
+                .open(a.isOpen())
+                .forceOpen(a.isForceOpen())
+                .ammoInEvidenceDTOList(a.getAmmoInEvidenceEntityList().stream().map(Mapping::map).collect(Collectors.toList()))
+                .build();
+    }
+
+    public static AmmoInEvidenceDTO map(AmmoInEvidenceEntity a) {
+        return AmmoInEvidenceDTO.builder()
+                .caliberName(a.getCaliberName())
+                .ammoUsedToEvidenceDTOList(a.getAmmoUsedToEvidenceEntityList().stream().map(Mapping::map).collect(Collectors.toList()))
+                .quantity(a.getQuantity())
+                .build();
+    }
+
+    private static AmmoUsedToEvidenceDTO map(AmmoUsedToEvidenceEntity a) {
+        return AmmoUsedToEvidenceDTO.builder()
+                .caliberName(a.getCaliberName())
+                .counter(a.getCounter())
+                .date(a.getDate())
+                .name(a.getName())
+                .build();
     }
 }

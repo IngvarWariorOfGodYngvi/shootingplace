@@ -29,6 +29,10 @@ public class UserController {
     public ResponseEntity<?> getListOfAllUsers(@Nullable @RequestParam String type) {
         return ResponseEntity.ok(userService.getListOfAllUsersNoAdmin(type));
     }
+    @GetMapping("/userActions")
+    public ResponseEntity<?> getUserActions(@RequestParam String uuid) {
+        return userService.getUserActions(uuid);
+    }
 
     @PostMapping("/createSuperUser")
     public ResponseEntity<?> createSuperUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam String pinCode) {

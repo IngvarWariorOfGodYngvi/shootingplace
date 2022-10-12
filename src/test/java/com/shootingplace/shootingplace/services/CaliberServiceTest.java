@@ -1,7 +1,8 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.CaliberEntity;
-import com.shootingplace.shootingplace.repositories.CaliberRepository;
+import com.shootingplace.shootingplace.armory.CaliberEntity;
+import com.shootingplace.shootingplace.armory.CaliberService;
+import com.shootingplace.shootingplace.armory.CaliberRepository;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;

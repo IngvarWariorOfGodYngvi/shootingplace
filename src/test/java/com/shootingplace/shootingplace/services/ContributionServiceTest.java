@@ -1,11 +1,13 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.contributions.ContributionEntity;
+import com.shootingplace.shootingplace.contributions.ContributionService;
 import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryEntity;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.repositories.ContributionRepository;
+import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -82,7 +84,7 @@ public class ContributionServiceTest {
         ResponseEntity<?> responseEntity = contributionService.addContribution(uuid, date, pinCode);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie znaleziono Klubowicza\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Nie znaleziono Klubowicza"));
 
     }
 
@@ -100,7 +102,7 @@ public class ContributionServiceTest {
         ResponseEntity<?> responseEntity = contributionService.addContribution(uuid, date, pinCode);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Przedłużono składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName() + "\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Przedłużono składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName()));
 
     }
 

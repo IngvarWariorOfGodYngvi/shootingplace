@@ -2,7 +2,7 @@ package com.shootingplace.shootingplace.history;
 
 import com.shootingplace.shootingplace.domain.entities.JudgingHistoryEntity;
 import com.shootingplace.shootingplace.domain.models.CompetitionHistory;
-import com.shootingplace.shootingplace.domain.models.Contribution;
+import com.shootingplace.shootingplace.contributions.Contribution;
 import com.shootingplace.shootingplace.domain.models.LicensePaymentHistory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,6 +46,14 @@ public class History {
 
     public void setLicensePaymentHistory(List<LicensePaymentHistory> licensePaymentHistory) {
         this.licensePaymentHistory = licensePaymentHistory;
+    }
+
+    public List<Contribution> getContributionList() {
+        return contributionList;
+    }
+
+    public List<CompetitionHistory> getCompetitionHistory() {
+        return competitionHistory;
     }
 
     public Boolean getPatentFirstRecord() {
