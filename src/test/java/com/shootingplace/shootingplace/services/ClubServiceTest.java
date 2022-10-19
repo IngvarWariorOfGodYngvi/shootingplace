@@ -1,8 +1,9 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.ClubEntity;
-import com.shootingplace.shootingplace.domain.models.Club;
-import com.shootingplace.shootingplace.repositories.ClubRepository;
+import com.shootingplace.shootingplace.club.ClubEntity;
+import com.shootingplace.shootingplace.club.Club;
+import com.shootingplace.shootingplace.club.ClubRepository;
+import com.shootingplace.shootingplace.club.ClubService;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;

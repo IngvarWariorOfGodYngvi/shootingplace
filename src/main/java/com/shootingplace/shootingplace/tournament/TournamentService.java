@@ -1,11 +1,8 @@
 package com.shootingplace.shootingplace.tournament;
 
-import com.shootingplace.shootingplace.domain.entities.CompetitionEntity;
-import com.shootingplace.shootingplace.domain.entities.CompetitionMembersListEntity;
-import com.shootingplace.shootingplace.domain.entities.OtherPersonEntity;
-import com.shootingplace.shootingplace.domain.entities.ScoreEntity;
-import com.shootingplace.shootingplace.domain.enums.ArbiterWorkClass;
-import com.shootingplace.shootingplace.domain.models.CompetitionMembersList;
+import com.shootingplace.shootingplace.competition.CompetitionEntity;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
+import com.shootingplace.shootingplace.enums.ArbiterWorkClass;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.history.UsedHistoryEntity;
@@ -13,10 +10,9 @@ import com.shootingplace.shootingplace.history.UsedHistoryRepository;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.repositories.CompetitionMembersListRepository;
-import com.shootingplace.shootingplace.repositories.CompetitionRepository;
-import com.shootingplace.shootingplace.repositories.OtherPersonRepository;
-import com.shootingplace.shootingplace.services.Mapping;
+import com.shootingplace.shootingplace.competition.CompetitionRepository;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
+import com.shootingplace.shootingplace.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -560,7 +556,7 @@ public class TournamentService {
                         .caliberUUID(competition.getCaliberUUID())
                         .practiceShots(competition.getPracticeShots())
                         .build();
-                competitionMembersListRepository.saveAndFlush(competitionMembersList);
+                competitionMembersListRepository.save(competitionMembersList);
                 List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
                 competitionsList.add(competitionMembersList);
                 competitionsList.sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
@@ -626,10 +622,8 @@ public class TournamentService {
                 System.out.println(e.getName());
                 CompetitionEntity competitionEntity = competitionRepository.findAll().stream().filter(f -> f.getName().equals(e.getName())).findFirst().orElseThrow(EntityNotFoundException::new);
                 e.setOrdering(competitionEntity.getOrdering());
-                competitionMembersListRepository.saveAndFlush(e);
+                competitionMembersListRepository.save(e);
             }
-
-
             list.add(e.getName());
         });
 

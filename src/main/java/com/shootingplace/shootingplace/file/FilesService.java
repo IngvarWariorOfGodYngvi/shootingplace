@@ -9,19 +9,22 @@ import com.shootingplace.shootingplace.armory.GunEntity;
 import com.shootingplace.shootingplace.armory.GunRepository;
 import com.shootingplace.shootingplace.armory.GunStoreEntity;
 import com.shootingplace.shootingplace.armory.GunStoreRepository;
+import com.shootingplace.shootingplace.club.ClubEntity;
+import com.shootingplace.shootingplace.club.ClubRepository;
+import com.shootingplace.shootingplace.competition.CompetitionEntity;
+import com.shootingplace.shootingplace.competition.CompetitionRepository;
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
-import com.shootingplace.shootingplace.domain.entities.*;
-import com.shootingplace.shootingplace.domain.enums.CountingMethod;
-import com.shootingplace.shootingplace.domain.enums.Discipline;
-import com.shootingplace.shootingplace.domain.models.MemberRanking;
-import com.shootingplace.shootingplace.domain.models.Score;
+import com.shootingplace.shootingplace.enums.CountingMethod;
+import com.shootingplace.shootingplace.enums.Discipline;
+import com.shootingplace.shootingplace.history.CompetitionHistoryEntity;
+import com.shootingplace.shootingplace.history.JudgingHistoryEntity;
+import com.shootingplace.shootingplace.tournament.*;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.repositories.*;
-import com.shootingplace.shootingplace.services.Mapping;
-import com.shootingplace.shootingplace.tournament.TournamentEntity;
-import com.shootingplace.shootingplace.tournament.TournamentRepository;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
@@ -1431,7 +1434,7 @@ public class FilesService {
         String club;
 
         if (otherID != null) {
-            OtherPersonEntity otherPersonEntity = otherPersonRepository.findById(Integer.valueOf(otherID)).orElseThrow(EntityNotFoundException::new);
+            OtherPersonEntity otherPersonEntity = otherPersonRepository.findById(Integer.parseInt(otherID)).orElseThrow(EntityNotFoundException::new);
             name = otherPersonEntity.getSecondName().concat(" " + otherPersonEntity.getFirstName());
             club = otherPersonEntity.getClub().getName();
         } else {
@@ -1458,7 +1461,7 @@ public class FilesService {
 
         List<String> comp = competitions.stream().filter(value -> !value.contains(" pneumatyczny ") && !value.contains(" pneumatyczna ")).sorted().collect(Collectors.toList());
         competitions.stream().filter(competition -> competition.contains("pneumatyczny") || competition.contains(" pneumatyczna ")).sorted().forEach(comp::add);
-        Paragraph newLine = new Paragraph("\n", font(11, 0));
+        Paragraph newLine = new Paragraph("\n", font(9, 0));
         for (int j = 0; j < comp.size(); j++) {
 
             int d = Integer.parseInt(startNumber);
@@ -2840,174 +2843,6 @@ public class FilesService {
         file.delete();
         return filesEntity;
 
-    }
-
-    public FilesEntity getRankingCompetitions() throws IOException, DocumentException {
-        String fileName = "Lista_rankingowa.pdf";
-        ClubEntity club = clubRepository.getOne(1);
-        Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
-        document.open();
-        document.addTitle(fileName);
-        document.addCreationDate();
-
-        Paragraph title = new Paragraph("Lista Rankingowa " + club.getName(), font(13, 1));
-        Paragraph date = new Paragraph(String.valueOf(LocalDate.now().getYear()), font(10, 2));
-        Paragraph newLine = new Paragraph("\n", font(10, 0));
-
-        document.add(title);
-        document.add(date);
-        document.add(newLine);
-
-        PdfPTable mainTable = new PdfPTable(1);
-        mainTable.setWidthPercentage(100);
-
-        List<TournamentEntity> all = tournamentRepository.findAll().stream().filter(TournamentEntity::isRanking).collect(Collectors.toList());
-
-        List<List<MemberRanking>> ranking = new ArrayList<>();
-
-        for (int i = 0; i < all.size(); i++) {
-            List<MemberRanking> innerRanking = new ArrayList<>();
-
-            for (int j = 0; j < all.get(i).getCompetitionsList().size(); j++) {
-                List<ScoreEntity> scoreList = all.get(i).getCompetitionsList().get(j).getScoreList();
-                for (ScoreEntity scoreEntity : scoreList) {
-
-                    if (scoreEntity.getMember() != null) {
-
-                        List<Score> scores = new ArrayList<>();
-                        MemberEntity member = scoreEntity.getMember();
-                        scores.add(Mapping.map(scoreEntity));
-                        MemberRanking mr = MemberRanking.builder()
-                                .uuid(member.getUuid())
-                                .competitionName(all.get(i).getCompetitionsList().get(j).getName())
-                                .firstName(member.getFirstName())
-                                .secondName(member.getSecondName())
-                                .scores(scores)
-                                .build();
-                        if (i == 0) {
-                            innerRanking.add(mr);
-                            ranking.add(innerRanking);
-                        }
-                    }
-                }
-            }
-        }
-
-        for (int l = 0; l < all.size(); l++) {
-            List<MemberRanking> memberRankingList = ranking.get(l);
-            for (MemberRanking mr : memberRankingList) {
-                for (int n = 0; l < mr.getScores().size(); n++) {
-                    Score score = mr.getScores().get(l);
-                    System.out.println(l + " " + mr.getCompetitionName() + " " + mr.getSecondName() + " " + score.getScore());
-                }
-            }
-        }
-
-        float[] pointColumnWidths = {10F, 30F, 50F, 10F};
-        PdfPTable tableLabel = new PdfPTable(pointColumnWidths);
-        int size = all.size();
-        PdfPTable innerTable = new PdfPTable(size);
-        for (TournamentEntity tournamentEntity : all) {
-            PdfPCell cell = new PdfPCell(new Paragraph(tournamentEntity.getDate().format(dateFormat()), font(10, 1)));
-            cell.setBorderWidth(0);
-            cell.setHorizontalAlignment(1);
-            innerTable.addCell(cell);
-        }
-
-        PdfPCell cellLabel = new PdfPCell(new Paragraph("M-ce", font(10, 1)));
-        PdfPCell cellLabel1 = new PdfPCell(new Paragraph("Imię i Nazwisko", font(10, 1)));
-        PdfPCell cellLabel2 = new PdfPCell(innerTable);
-        PdfPCell cellLabel3 = new PdfPCell(new Paragraph("Wynik", font(10, 1)));
-
-        document.add(newLine);
-        cellLabel.setHorizontalAlignment(Element.ALIGN_CENTER);
-        cellLabel1.setHorizontalAlignment(Element.ALIGN_CENTER);
-        cellLabel2.setHorizontalAlignment(Element.ALIGN_CENTER);
-        cellLabel3.setHorizontalAlignment(Element.ALIGN_CENTER);
-
-        cellLabel.setBorderWidth(0);
-        cellLabel1.setBorderWidth(0);
-        cellLabel2.setBorderWidth(0);
-        cellLabel3.setBorderWidth(0);
-
-        tableLabel.setWidthPercentage(100F);
-        tableLabel.addCell(cellLabel);
-        tableLabel.addCell(cellLabel1);
-        tableLabel.addCell(cellLabel2);
-        tableLabel.addCell(cellLabel3);
-
-        document.add(tableLabel);
-        document.add(newLine);
-        for (
-                int i = 0; i < all.size(); i++) {
-
-            for (int j = 0; j < all.get(i).getCompetitionsList().size(); j++) {
-                List<ScoreEntity> scoreList = all.get(i).getCompetitionsList().get(j).getScoreList();
-                for (int h = 0; h < scoreList.size(); h++) {
-                    List<ScoreEntity> scores = all.get(i).getCompetitionsList().get(j).getScoreList();
-
-                    PdfPTable memberTable = new PdfPTable(pointColumnWidths);
-                    PdfPTable innerMemberTable = new PdfPTable(all.size());
-
-                    memberTable.setWidthPercentage(100);
-                    innerMemberTable.setWidthPercentage(100);
-
-                    Paragraph place = new Paragraph(String.valueOf(j), font(10, 0));
-                    Paragraph fullScore = new Paragraph("pełen wynik", font(10, 0));
-
-                    PdfPCell cell = new PdfPCell(place);
-                    PdfPCell cell1;
-                    PdfPCell cell2 = new PdfPCell(innerMemberTable);
-                    PdfPCell cell3 = new PdfPCell(fullScore);
-                    cell.setBorderWidth(0);
-                    cell2.setBorderWidth(0);
-                    cell3.setBorderWidth(0);
-                    MemberEntity member = scores.get(h).getMember();
-                    if (member != null) {
-                        Paragraph member1 = new Paragraph(member.getSecondName().concat(" " + member.getFirstName()), font(10, 0));
-                        cell1 = new PdfPCell(member1);
-                        cell1.setBorderWidth(0);
-                        memberTable.addCell(cell);
-                        memberTable.addCell(cell1);
-                        PdfPCell cell4 = new PdfPCell();
-                        for (int g = 0; g < all.size(); g++) {
-                            if (g == i) {
-                                Paragraph score = new Paragraph(String.valueOf(scoreList.get(h).getScore()), font(10, 0));
-                                cell4 = new PdfPCell(score);
-                            }
-                            innerMemberTable.addCell(cell4);
-                        }
-                        memberTable.addCell(cell2);
-                        memberTable.addCell(cell3);
-                        document.add(memberTable);
-                    }
-                }
-            }
-        }
-
-        document.close();
-
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
-
-        File file = new File(fileName);
-
-        file.delete();
-        return filesEntity;
     }
 
     public FilesEntity getJudgingReportInChosenTime(/*LocalDate from, LocalDate to*/) throws IOException, DocumentException {

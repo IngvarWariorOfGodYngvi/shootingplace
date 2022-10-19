@@ -1,13 +1,13 @@
 package com.shootingplace.shootingplace.file;
 
-import com.shootingplace.shootingplace.domain.entities.ClubEntity;
-import com.shootingplace.shootingplace.domain.entities.CompetitionMembersListEntity;
-import com.shootingplace.shootingplace.domain.entities.ScoreEntity;
+import com.shootingplace.shootingplace.club.ClubEntity;
+import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
+import com.shootingplace.shootingplace.tournament.ScoreEntity;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
-import com.shootingplace.shootingplace.domain.enums.CountingMethod;
-import com.shootingplace.shootingplace.repositories.ClubRepository;
+import com.shootingplace.shootingplace.enums.CountingMethod;
+import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
-import com.shootingplace.shootingplace.services.Mapping;
+import com.shootingplace.shootingplace.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;

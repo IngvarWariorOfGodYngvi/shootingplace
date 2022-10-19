@@ -71,4 +71,10 @@ public class AddressEntity {
     public void setFlatNumber(String flatNumber) {
         this.flatNumber = flatNumber;
     }
+
+    @Override
+    public String toString() {
+        String flatNumber = this.flatNumber!=null? this.flatNumber:"";
+        return postOfficeCity + " " + zipCode + " " + street + " " + streetNumber + " " + flatNumber;
+    }
 }

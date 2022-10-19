@@ -1,8 +1,8 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
 import com.shootingplace.shootingplace.history.HistoryService;
-import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryRepository;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;

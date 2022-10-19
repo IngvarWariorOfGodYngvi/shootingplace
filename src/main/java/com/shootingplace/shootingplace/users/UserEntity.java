@@ -2,7 +2,7 @@ package com.shootingplace.shootingplace.users;
 
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.history.ChangeHistoryEntity;
-import com.shootingplace.shootingplace.domain.models.Person;
+import com.shootingplace.shootingplace.domain.Person;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -25,6 +25,8 @@ public class UserEntity extends Person {
     private String firstName;
 
     private String secondName;
+
+    private int legitimationNumber;
 
     private String pinCode;
 @OneToMany
@@ -83,6 +85,14 @@ public class UserEntity extends Person {
 
     public void setList(List<ChangeHistoryEntity> changeHistoryEntities) {
         this.changeHistoryEntities = changeHistoryEntities;
+    }
+
+    public int getLegitimationNumber() {
+        return legitimationNumber;
+    }
+
+    public void setLegitimationNumber(int legitimationNumber) {
+        this.legitimationNumber = legitimationNumber;
     }
 
     public boolean isSuperUser() {

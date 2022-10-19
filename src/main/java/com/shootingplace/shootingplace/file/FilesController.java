@@ -124,15 +124,6 @@ public class FilesController {
                 .body(filesEntity.getData());
     }
 
-    @GetMapping("/downloadRanking")
-    public ResponseEntity<byte[]> getRankingCompetitions() throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.getRankingCompetitions();
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                .body(filesEntity.getData());
-    }
-
     @GetMapping("/downloadAllMembers")
     public ResponseEntity<byte[]> getAllMembersToTable(@RequestParam boolean condition) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.generateMembersListWithCondition(condition);

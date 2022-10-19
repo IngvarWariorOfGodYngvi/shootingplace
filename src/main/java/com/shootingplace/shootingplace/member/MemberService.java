@@ -2,18 +2,16 @@ package com.shootingplace.shootingplace.member;
 
 import com.shootingplace.shootingplace.address.AddressService;
 import com.shootingplace.shootingplace.contributions.ContributionService;
-import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
-import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
-import com.shootingplace.shootingplace.domain.enums.ErasedType;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
+import com.shootingplace.shootingplace.enums.ErasedType;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.license.LicenseService;
-import com.shootingplace.shootingplace.repositories.ClubRepository;
-import com.shootingplace.shootingplace.repositories.ErasedRepository;
-import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
-import com.shootingplace.shootingplace.services.*;
+import com.shootingplace.shootingplace.club.ClubRepository;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryRepository;
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentService;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;
 import org.apache.logging.log4j.LogManager;
@@ -47,7 +45,6 @@ public class MemberService {
     private final HistoryService historyService;
     private final WeaponPermissionService weaponPermissionService;
     private final MemberPermissionsService memberPermissionsService;
-    private final PersonalEvidenceService personalEvidenceService;
     private final ClubRepository clubRepository;
     private final ChangeHistoryService changeHistoryService;
     private final ErasedRepository erasedRepository;
@@ -63,9 +60,8 @@ public class MemberService {
                          HistoryService historyService,
                          WeaponPermissionService weaponPermissionService,
                          MemberPermissionsService memberPermissionsService,
-                         PersonalEvidenceService personalEvidenceService,
                          ClubRepository clubRepository,
-                         ErasedRepository erasedRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, Logic logic, ChangeHistoryService changeHistoryService) {
+                         ErasedRepository erasedRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, ChangeHistoryService changeHistoryService) {
         this.memberRepository = memberRepository;
         this.addressService = addressService;
         this.licenseService = licenseService;
@@ -75,7 +71,6 @@ public class MemberService {
         this.historyService = historyService;
         this.weaponPermissionService = weaponPermissionService;
         this.memberPermissionsService = memberPermissionsService;
-        this.personalEvidenceService = personalEvidenceService;
         this.clubRepository = clubRepository;
         this.erasedRepository = erasedRepository;
         this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
@@ -116,6 +111,7 @@ public class MemberService {
     public void checkMembers() {
         LOG.info("Sprawdzam składki i licencje");
         // dorośli
+        historyService.checkStarts();
         List<MemberEntity> adultMembers = memberRepository
                 .findAll()
                 .stream()
@@ -266,6 +262,9 @@ public class MemberService {
                 String splinted = value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase() + " ";
                 firstNames.append(splinted);
             }
+            PersonalEvidence peBuild = PersonalEvidence.builder()
+                    .ammoList(new ArrayList<>())
+                    .build();
             member.setFirstName(firstNames.toString().trim());
             member.setSecondName(member.getSecondName().toUpperCase());
             member.setEmail(email.toLowerCase());
@@ -282,7 +281,7 @@ public class MemberService {
             member.setHistory(historyService.getHistory());
             member.setWeaponPermission(weaponPermissionService.getWeaponPermission());
             member.setMemberPermissions(memberPermissionsService.getMemberPermissions());
-            member.setPersonalEvidence(personalEvidenceService.getPersonalEvidence());
+            member.setPersonalEvidence(peBuild);
             member.setPzss(false);
             member.setErasedEntity(null);
             member.setActive(true);
@@ -952,12 +951,12 @@ public class MemberService {
 
     public ResponseEntity<?> getMemberUUIDByPhoneNumber(String phoneNumber) {
         phoneNumber.replaceAll(" ", "");
-        if(!phoneNumber.startsWith("+48")){
-            phoneNumber = "+48" +phoneNumber;
+        if (!phoneNumber.startsWith("+48")) {
+            phoneNumber = "+48" + phoneNumber;
         }
         System.out.println(phoneNumber);
         MemberEntity member = memberRepository.findByPhoneNumber(phoneNumber).orElse(null);
 
-        return member!=null ? ResponseEntity.ok(Mapping.map(member)) : ResponseEntity.badRequest().body("coś poszło nie tak");
+        return member != null ? ResponseEntity.ok(Mapping.map(member)) : ResponseEntity.badRequest().body("coś poszło nie tak");
     }
 }

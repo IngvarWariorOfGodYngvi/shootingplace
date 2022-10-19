@@ -1,11 +1,12 @@
 package com.shootingplace.shootingplace.workingTimeEvidence;
 
+import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordsService;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
-import com.shootingplace.shootingplace.domain.enums.UserSubType;
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.file.FilesEntity;
 import com.shootingplace.shootingplace.file.FilesRepository;
-import com.shootingplace.shootingplace.services.Mapping;
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.slf4j.Logger;
@@ -30,14 +31,16 @@ public class WorkingTimeEvidenceService {
     private final WorkingTimeEvidenceRepository workRepo;
     private final BarCodeCardRepository barCodeCardRepo;
     private final FilesRepository filesRepo;
+    private final RegistrationRecordsService recordsService;
 
     private static final Logger log = LoggerFactory.getLogger(WorkingTimeEvidenceService.class);
 
-    public WorkingTimeEvidenceService(UserRepository userRepository, WorkingTimeEvidenceRepository workRepo, BarCodeCardRepository barCodeCardRepo, FilesRepository filesRepo) {
+    public WorkingTimeEvidenceService(UserRepository userRepository, WorkingTimeEvidenceRepository workRepo, BarCodeCardRepository barCodeCardRepo, FilesRepository filesRepo, RegistrationRecordsService recordsService) {
         this.userRepository = userRepository;
         this.workRepo = workRepo;
         this.barCodeCardRepo = barCodeCardRepo;
         this.filesRepo = filesRepo;
+        this.recordsService = recordsService;
     }
 
     public String createNewWTE(String number) {
@@ -52,7 +55,9 @@ public class WorkingTimeEvidenceService {
 
         // szukam osoby do której należy karta
         UserEntity user = userRepository.findById(belongsTo).orElse(null);
-
+        if (user != null) {
+            recordsService.createRecordInBook(user.getLegitimationNumber(), 0);
+        }
         // biorę wszystkie niezamknięte wiersze z obecnego miesiąca gdzie występuje osoba
         WorkingTimeEvidenceEntity entity1 = workRepo.findAll()
                 .stream()

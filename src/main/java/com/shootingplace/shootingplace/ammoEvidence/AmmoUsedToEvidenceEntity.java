@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.ammoEvidence;
 
-import com.shootingplace.shootingplace.domain.entities.OtherPersonEntity;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

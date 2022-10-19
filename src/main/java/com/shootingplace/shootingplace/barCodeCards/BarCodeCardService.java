@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.barCodeCards;
 
-import com.shootingplace.shootingplace.domain.models.Person;
+import com.shootingplace.shootingplace.domain.Person;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.users.UserEntity;

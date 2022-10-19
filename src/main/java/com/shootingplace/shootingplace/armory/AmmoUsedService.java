@@ -1,11 +1,13 @@
 package com.shootingplace.shootingplace.armory;
 
 import com.shootingplace.shootingplace.ammoEvidence.*;
-import com.shootingplace.shootingplace.domain.entities.*;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.repositories.*;
-import com.shootingplace.shootingplace.services.Mapping;
+import com.shootingplace.shootingplace.member.PersonalEvidenceEntity;
+import com.shootingplace.shootingplace.member.PersonalEvidenceRepository;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
+import com.shootingplace.shootingplace.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
@@ -201,7 +203,7 @@ public class AmmoUsedService {
             ammoUsedRepository.save(ammoUsedEntity);
             personalEvidence.getAmmoList().add(ammoUsedEntity);
             personalEvidence.getAmmoList().sort(Comparator.comparing(AmmoUsedEntity::getCaliberName));
-            personalEvidenceRepository.saveAndFlush(personalEvidence);
+            personalEvidenceRepository.save(personalEvidence);
         } else {
             AmmoUsedEntity ammoUsedEntity = personalEvidence
                     .getAmmoList()

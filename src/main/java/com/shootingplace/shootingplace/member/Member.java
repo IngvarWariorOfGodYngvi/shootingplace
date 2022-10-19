@@ -2,9 +2,8 @@ package com.shootingplace.shootingplace.member;
 
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardDTO;
-import com.shootingplace.shootingplace.domain.entities.ClubEntity;
-import com.shootingplace.shootingplace.domain.entities.ErasedEntity;
-import com.shootingplace.shootingplace.domain.models.*;
+import com.shootingplace.shootingplace.club.ClubEntity;
+import com.shootingplace.shootingplace.domain.Person;
 import com.shootingplace.shootingplace.history.History;
 import com.shootingplace.shootingplace.license.License;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatent;
@@ -20,7 +19,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Member extends Person{
+public class Member extends Person {
 
     private LocalDate joinDate;
     private Integer legitimationNumber;

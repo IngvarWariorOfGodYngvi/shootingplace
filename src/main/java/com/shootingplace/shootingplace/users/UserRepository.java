@@ -4,9 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository {
-//    UserEntity findByCardNumber(String number);
-
-//    boolean existsByCardNumber(String number);
 
     List<UserEntity> findAll();
 

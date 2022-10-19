@@ -1,23 +1,22 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionService;
-import com.shootingplace.shootingplace.history.ChangeHistoryService;
-import com.shootingplace.shootingplace.history.HistoryEntity;
-import com.shootingplace.shootingplace.history.HistoryService;
+import com.shootingplace.shootingplace.history.*;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseService;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentService;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;
 import com.shootingplace.shootingplace.address.AddressService;
-import com.shootingplace.shootingplace.domain.entities.*;
-import com.shootingplace.shootingplace.domain.enums.ArbiterClass;
-import com.shootingplace.shootingplace.domain.enums.ErasedType;
+import com.shootingplace.shootingplace.enums.ArbiterClass;
+import com.shootingplace.shootingplace.enums.ErasedType;
 import com.shootingplace.shootingplace.member.*;
-import com.shootingplace.shootingplace.repositories.ClubRepository;
-import com.shootingplace.shootingplace.repositories.ErasedRepository;
-import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
+import com.shootingplace.shootingplace.club.ClubRepository;
+import com.shootingplace.shootingplace.member.ErasedRepository;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryRepository;
 import com.shootingplace.shootingplace.license.LicenseRepository;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -67,8 +66,6 @@ public class MemberServiceTest {
     WeaponPermissionService weaponPermissionService;
     @Mock
     MemberPermissionsService memberPermissionsService;
-    @Mock
-    PersonalEvidenceService personalEvidenceService;
     @Mock
     ContributionService contributionService;
     @Mock

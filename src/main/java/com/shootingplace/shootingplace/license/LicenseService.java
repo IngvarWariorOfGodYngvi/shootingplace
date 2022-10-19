@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.license;
 
-import com.shootingplace.shootingplace.domain.entities.LicensePaymentHistoryEntity;
-import com.shootingplace.shootingplace.domain.models.LicensePaymentHistoryDTO;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryDTO;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryEntity;
 import com.shootingplace.shootingplace.history.HistoryRepository;
@@ -9,8 +9,8 @@ import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.repositories.LicensePaymentHistoryRepository;
-import com.shootingplace.shootingplace.services.Mapping;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryRepository;
+import com.shootingplace.shootingplace.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -253,7 +253,7 @@ public class LicenseService {
         }
         ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "updateLicensePayment", "Poprawiono płatność za licencję");
         if (response.getStatusCode().equals(HttpStatus.OK)) {
-            licensePaymentHistoryRepository.saveAndFlush(licensePaymentHistoryEntity);
+            licensePaymentHistoryRepository.save(licensePaymentHistoryEntity);
         }
         return response;
     }

@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.configurations;
 
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardService;
-import com.shootingplace.shootingplace.domain.enums.UserSubType;
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.member.MemberService;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,10 +1,10 @@
 package com.shootingplace.shootingplace.users;
 
-import com.shootingplace.shootingplace.domain.enums.UserSubType;
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.history.ChangeHistoryRepository;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.services.Mapping;
+import com.shootingplace.shootingplace.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;

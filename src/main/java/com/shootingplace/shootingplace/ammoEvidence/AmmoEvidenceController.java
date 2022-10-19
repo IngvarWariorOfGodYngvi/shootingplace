@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.ammoEvidence;
 
+import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordsService;
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.http.ResponseEntity;
@@ -16,11 +17,13 @@ public class AmmoEvidenceController {
     private final AmmoEvidenceService ammoEvidenceService;
     private final AmmoUsedService ammoUsedService;
     private final ChangeHistoryService changeHistoryService;
+    private final RegistrationRecordsService recordsService;
 
-    public AmmoEvidenceController(AmmoEvidenceService ammoEvidenceService, AmmoUsedService ammoUsedService, ChangeHistoryService changeHistoryService) {
+    public AmmoEvidenceController(AmmoEvidenceService ammoEvidenceService, AmmoUsedService ammoUsedService, ChangeHistoryService changeHistoryService, RegistrationRecordsService recordsService) {
         this.ammoEvidenceService = ammoEvidenceService;
         this.ammoUsedService = ammoUsedService;
         this.changeHistoryService = changeHistoryService;
+        this.recordsService = recordsService;
     }
 
 
@@ -29,6 +32,7 @@ public class AmmoEvidenceController {
     @PostMapping("/ammo")
     public ResponseEntity<?> createAmmoUsed(@RequestParam String caliberUUID, @RequestParam Integer legitimationNumber, @RequestParam int otherID, @RequestParam Integer counter) {
         if (counter != 0) {
+            recordsService.createRecordInBook(legitimationNumber,otherID);
             return ammoUsedService.addAmmoUsedEntity(caliberUUID, legitimationNumber, otherID, counter);
         } else {
             return ResponseEntity.badRequest().build();
