@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.setting;
+package com.shootingplace.shootingplace.settings;
 
 import com.shootingplace.shootingplace.address.AddressEntity;
 import lombok.AllArgsConstructor;

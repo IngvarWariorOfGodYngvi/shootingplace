@@ -94,6 +94,15 @@ public class Mapping {
                 .build();
     }
 
+    public static MemberInfo map1(MemberEntity e) {
+        return MemberInfo.builder()
+                .firstName(e.getFirstName())
+                .secondName(e.getSecondName())
+                .isActive(e.getActive())
+                .legitimationNumber(e.getLegitimationNumber())
+                .isAdult(e.getAdult()).build();
+    }
+
     public static MemberDTO map2DTO(MemberEntity e) {
         if (e.getErasedEntity() != null) {
             return Optional.of(e).map(o ->
@@ -109,7 +118,6 @@ public class Mapping {
                             .pzss(e.getPzss())
                             .legitimationNumber(e.getLegitimationNumber())
                             .license(map(e.getLicense()))
-                            .club(Mapping.map(e.getClub()))
                             .joinDate(e.getJoinDate())
                             .memberPermissions(map(e.getMemberPermissions()))
                             .build()).orElse(null);
@@ -126,7 +134,6 @@ public class Mapping {
                             .pzss(e.getPzss())
                             .legitimationNumber(e.getLegitimationNumber())
                             .license(map(e.getLicense()))
-                            .club(Mapping.map(e.getClub()))
                             .joinDate(e.getJoinDate())
                             .memberPermissions(map(e.getMemberPermissions()))
                             .build()).orElse(null);

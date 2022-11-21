@@ -1,21 +1,25 @@
 package com.shootingplace.shootingplace.statistics;
 
-import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
-import com.shootingplace.shootingplace.armory.Caliber;
-import com.shootingplace.shootingplace.history.LicensePaymentHistoryDTO;
-import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.member.MemberDTO;
-import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
-import com.shootingplace.shootingplace.contributions.ContributionRepository;
-import com.shootingplace.shootingplace.member.MemberRepository;
+import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoUsedToEvidenceEntity;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoUsedToEvidenceEntityRepository;
+import com.shootingplace.shootingplace.armory.Caliber;
+import com.shootingplace.shootingplace.contributions.ContributionRepository;
+import com.shootingplace.shootingplace.history.CompetitionHistoryEntity;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryDTO;
+import com.shootingplace.shootingplace.member.MemberDTO;
+import com.shootingplace.shootingplace.member.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,11 +28,15 @@ public class StatisticsService {
     private final MemberRepository memberRepository;
     private final ContributionRepository contributionRepository;
     private final AmmoEvidenceRepository ammoEvidenceRepository;
+    private final AmmoUsedToEvidenceEntityRepository used;
+    private final RegistrationRecordRepository rrrepo;
 
-    public StatisticsService(MemberRepository memberRepository, ContributionRepository contributionRepository, AmmoEvidenceRepository ammoEvidenceRepository) {
+    public StatisticsService(MemberRepository memberRepository, ContributionRepository contributionRepository, AmmoEvidenceRepository ammoEvidenceRepository, AmmoUsedToEvidenceEntityRepository used, RegistrationRecordRepository rrrepo) {
         this.memberRepository = memberRepository;
         this.contributionRepository = contributionRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
+        this.used = used;
+        this.rrrepo = rrrepo;
     }
 
     public List<List<MemberDTO>> joinMonthSum(int year) {
@@ -215,5 +223,64 @@ public class StatisticsService {
                         )));
         ammoList.sort(Comparator.comparing(MemberAmmo::getSecondName));
         return ammoList;
+    }
+
+    private MemberAmmo getMemberAmmoTakes(String uuid) {
+
+        List<AmmoUsedToEvidenceEntity> collect = used.findAll()
+                .stream()
+                .filter(f->f.getMemberEntity()!=null)
+                .filter(f -> f.getMemberEntity().getUuid().equals(uuid))
+                .collect(Collectors.toList());
+        MemberAmmo memberAmmo = Mapping.map3(memberRepository.findById(uuid).orElseThrow(EntityNotFoundException::new));
+        List<Caliber> list = new ArrayList<>();
+        memberAmmo.setCaliber(list);
+        collect.forEach(e -> {
+
+            if (memberAmmo.getCaliber().stream().anyMatch(a -> a.getName().equals(e.getCaliberName()))) {
+                Caliber caliber = memberAmmo.getCaliber().stream().filter(f -> f.getName().equals(e.getCaliberName())).findFirst().orElseThrow(EntityNotFoundException::new);
+                Integer quantity = caliber.getQuantity();
+                caliber.setQuantity(quantity + e.getCounter());
+            } else {
+                Caliber caliber1 = Caliber.builder()
+                        .name(e.getCaliberName())
+                        .quantity(e.getCounter())
+                        .build();
+                List<Caliber> clist = memberAmmo.getCaliber();
+                clist.add(caliber1);
+                memberAmmo.setCaliber(clist);
+
+            }
+        });
+        return memberAmmo;
+    }
+
+    public ResponseEntity<?> getPersonalStatistics(String uuid) {
+
+        MemberEntity member = memberRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
+
+        int cc = member.getHistory().getContributionList().size();
+        long vc = rrrepo.findAll().stream().filter(f -> f.getPeselOrID().equals(member.getPesel())).count();
+        long mffv = member.getJoinDate().until(LocalDate.now(), ChronoUnit.MONTHS);
+        MemberAmmo a = getMemberAmmoTakes(uuid);
+        Map<LocalDate,String> competitionHistory = new HashMap<>();
+
+        //            competitionHistory.put(e.getDate(),e.getName());
+        Set<CompetitionHistoryEntity> ch = new HashSet<>(member.getHistory().getCompetitionHistory());
+        int chc = ch.size();
+        //        Set<Map.Entry<LocalDate,String>> entrySet = competitionHistory.entrySet();
+//        for(Map.Entry<LocalDate,String> entry: entrySet) {
+//            entry.getValue()
+//            System.out.println(entry.getKey() + " : " + entry.getValue());
+//        }
+
+        PersonalStatistics ps = PersonalStatistics.builder()
+                .contributionCounter(cc)
+                .visitCounter((int) vc)
+                .monthsFromFirstVisit((int) mffv)
+                .ammo(a)
+                .competitionHistoryCounter(chc).build();
+
+        return ResponseEntity.ok(ps);
     }
 }

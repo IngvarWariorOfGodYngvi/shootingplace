@@ -29,4 +29,11 @@ public class Caliber {
         this.quantity = quantity;
     }
 
+    @Override
+    public String toString() {
+        return "Caliber{" +
+                "name='" + name + '\'' +
+                ", quantity=" + quantity +
+                '}';
+    }
 }

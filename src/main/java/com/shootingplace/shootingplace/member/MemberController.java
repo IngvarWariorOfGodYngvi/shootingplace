@@ -1,6 +1,8 @@
 package com.shootingplace.shootingplace.member;
 
 
+import com.shootingplace.shootingplace.address.Address;
+import com.shootingplace.shootingplace.domain.MemberWithAddress;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,10 +39,10 @@ public class MemberController {
         return memberService.getMemberUUIDByLegitimationNumber(number);
     }
 
-    @GetMapping("/phone/{phoneNumber}")
-    public ResponseEntity<?> getMemberUUIDByPhoneNumber(@PathVariable String phoneNumber) {
+    @GetMapping("/PESEL/{PESELNumber}")
+    public ResponseEntity<?> getMemberByPESELNumber(@PathVariable String PESELNumber) {
         System.out.println("coś");
-        return memberService.getMemberUUIDByPhoneNumber(phoneNumber);
+        return memberService.getMemberByPESELNumber(PESELNumber);
     }
 
     @GetMapping("/uuid/{uuid}")
@@ -54,7 +56,7 @@ public class MemberController {
     }
 
     @GetMapping("/getAllNames")
-    public List<String> getAllNames() {
+    public List<MemberInfo> getAllNames() {
         return memberService.getAllNames();
     }
 
@@ -172,16 +174,19 @@ public class MemberController {
     public ResponseEntity<?> getErasedType() {
         return ResponseEntity.ok(memberService.getErasedType());
     }
-@Transactional
+
+    @Transactional
     @PostMapping("/")
-    public ResponseEntity<?> addMember(@RequestBody @Valid Member member, @RequestParam String pinCode) {
+    public ResponseEntity<?> addMember(@RequestBody @Valid MemberWithAddress memberWithAddress,@RequestParam boolean returningToClub, @RequestParam String pinCode) {
         if (changeHistoryService.comparePinCode(pinCode)) {
             ResponseEntity<?> result;
+            Member member = memberWithAddress.getMember();
+            Address address = memberWithAddress.getAddress();
             if (member.getPesel().isEmpty() || member.getPhoneNumber().isEmpty() || member.getFirstName().isEmpty() || member.getSecondName().isEmpty() || member.getIDCard().isEmpty()) {
-                result = ResponseEntity.status(406).body("\"Uwaga! Nie podano wszystkich lub żadnej informacji\"");
+                result = ResponseEntity.status(406).body("Uwaga! Nie podano wszystkich lub żadnej informacji");
             } else {
                 try {
-                    result = memberService.addNewMember(member, pinCode);
+                    result = memberService.addNewMember(member,address,returningToClub, pinCode);
                 } catch (IllegalArgumentException e) {
                     result = ResponseEntity.status(HttpStatus.CONFLICT).build();
                 }

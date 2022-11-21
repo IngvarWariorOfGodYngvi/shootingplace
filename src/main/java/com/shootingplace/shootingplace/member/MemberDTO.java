@@ -1,6 +1,5 @@
 package com.shootingplace.shootingplace.member;
 
-import com.shootingplace.shootingplace.club.Club;
 import com.shootingplace.shootingplace.domain.Person;
 import com.shootingplace.shootingplace.enums.ErasedType;
 import com.shootingplace.shootingplace.license.License;
@@ -22,21 +21,12 @@ public class MemberDTO extends Person {
     private ErasedType erasedType;
     private Erased erasedEntity;
     private License license;
-    private Club club;
     private Boolean pzss;
     private MemberPermissions memberPermissions;
     private String image;
     private Boolean adult = true;
     private Boolean active = true;
     private Boolean erased = false;
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
 
     public String getUuid() {
         return uuid;
@@ -48,10 +38,6 @@ public class MemberDTO extends Person {
 
     public LocalDate getJoinDate() {
         return joinDate;
-    }
-
-    public void setJoinDate(LocalDate joinDate) {
-        this.joinDate = joinDate;
     }
 
     public Integer getLegitimationNumber() {
@@ -122,24 +108,16 @@ public class MemberDTO extends Person {
         return erasedEntity;
     }
 
-    public void setErasedEntity(Erased erasedEntity) {
-        this.erasedEntity = erasedEntity;
-    }
-
-    public Club getClub() {
-        return club;
-    }
-
-    public void setClub(Club club) {
-        this.club = club;
-    }
-
     public ErasedType getErasedType() {
         return erasedType;
     }
 
     public void setErasedType(ErasedType erasedType) {
         this.erasedType = erasedType;
+    }
+
+    public String getImage() {
+        return image;
     }
 
     public MemberPermissions getMemberPermissions() {

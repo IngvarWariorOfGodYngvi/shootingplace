@@ -23,6 +23,7 @@ public class AddressService {
 
     public ResponseEntity<?> updateAddress(String memberUUID, Address address) {
         if (!memberRepository.existsById(memberUUID)) {
+            LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).body("Nie znaleziono Klubowicza");
         }
 

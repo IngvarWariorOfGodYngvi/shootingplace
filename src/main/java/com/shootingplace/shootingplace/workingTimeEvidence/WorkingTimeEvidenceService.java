@@ -183,7 +183,6 @@ public class WorkingTimeEvidenceService {
         if (days > 0) {
             hours = hours + (24 * days);
         }
-
         return String.format("%02d:%02d:%02d",
                 hours, minutes, seconds);
 

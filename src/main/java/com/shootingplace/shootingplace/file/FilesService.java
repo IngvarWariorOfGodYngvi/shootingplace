@@ -251,8 +251,8 @@ public class FilesService {
         String fileName = "Karta_Członkowska_" + memberEntity.getFirstName().trim() + "_" + memberEntity.getSecondName() + ".pdf";
         LocalDate birthDate = birthDay(memberEntity.getPesel());
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
+        document.setMargins(20F, 20F, 35F, 55F);
+        System.out.println(document.bottomMargin() + document.bottomMargin() + document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -316,11 +316,11 @@ public class FilesService {
             if (LocalDate.now().minusYears(18).isBefore(birthDate)) {
                 p18 = new Paragraph("\n\n" + statement + "\n" + adultAcceptation + "\n\n     Podpis Rodzica / Opiekuna Prawnego\n         ..................................................", font(11, 0));
             }
-            p19 = new Paragraph("\n\n\n\n.............................................", font(11, 0));
+            p19 = new Paragraph("\n\n\n\n.............................................", font(9, 0));
         } else {
-            p19 = new Paragraph("\n\n\n\n\n\n.............................................", font(11, 0));
+            p19 = new Paragraph("\n\n\n\n\n\n.............................................", font(9, 0));
         }
-        Phrase p20 = new Phrase("                                                              ");
+        Phrase p20 = new Phrase("                                                                                                 ");
         Phrase p21 = new Phrase("............................................................");
         Paragraph p22 = new Paragraph("miejscowość, data i podpis Klubowicza", font(11, 0));
         Phrase p23 = new Phrase("                                                                 ");
@@ -709,7 +709,7 @@ public class FilesService {
         names.setIndentationLeft(150);
         year.setIndentationLeft(350);
 
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 11; i++) {
 
             document.add(newLine);
         }
@@ -721,7 +721,7 @@ public class FilesService {
             document.add(newLine);
         }
         document.add(pesel);
-        document.add(new Paragraph("\n", font(4, 0)));
+        document.add(new Paragraph("\n", font(3, 0)));
         for (int i = 0; i < 1; i++) {
 
             document.add(newLine);
@@ -3414,7 +3414,7 @@ public class FilesService {
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
             final int currentPageNumber = writer.getCurrentPageNumber();
-            document.setMargins(35F, 35F, 50F, 50F);
+            document.setMargins(20F, 20F, 35F, 55F);
             try {
                 final Rectangle pageSize = document.getPageSize();
                 final PdfContentByte directContent = writer.getDirectContent();

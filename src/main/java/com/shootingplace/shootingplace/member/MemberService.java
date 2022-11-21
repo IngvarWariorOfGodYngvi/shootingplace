@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.member;
 
+import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressService;
 import com.shootingplace.shootingplace.contributions.ContributionService;
 import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
@@ -185,13 +186,18 @@ public class MemberService {
     }
 
     //--------------------------------------------------------------------------
-    public ResponseEntity<?> addNewMember(Member member, String pinCode) {
+    public ResponseEntity<?> addNewMember(Member member, Address address, boolean returningToClub, String pinCode) {
         MemberEntity memberEntity;
 
         List<MemberEntity> memberEntityList = memberRepository.findAll();
-        if (memberRepository.findByPesel(member.getPesel()).isPresent()) {
-            LOG.error("Ktoś już ma taki numer PESEL");
-            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Uwaga! Ktoś już ma taki numer PESEL\"");
+        MemberEntity member1 = memberEntityList.stream().filter(f -> f.getPesel().equals(member.getPesel())).findFirst().orElse(null);
+        if (member1 != null) {
+            if (returningToClub && member1.getErased()) {
+                LOG.info("Ktoś z usuniętych ma taki numer PESEL");
+            } else {
+                LOG.error("Ktoś już ma taki numer PESEL");
+                return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Uwaga! Ktoś już ma taki numer PESEL");
+            }
         }
         String finalEmail = member.getEmail();
         boolean anyMatch = memberEntityList.stream()
@@ -200,22 +206,35 @@ public class MemberService {
                 .filter(f -> !f.getEmail().isEmpty())
                 .anyMatch(f -> f.getEmail().equals(finalEmail));
         if (anyMatch) {
-            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Uwaga! Ktoś już ma taki e-mail\" " + finalEmail);
+            if (returningToClub) {
+                LOG.info("Ktoś z usuniętych już ma taki e-mail");
+            } else {
+                LOG.info("Ktoś już ma taki e-mail");
+                return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Uwaga! Ktoś już ma taki e-mail");
+            }
         }
         if (member.getLegitimationNumber() != null) {
             if (memberRepository.findByLegitimationNumber(member.getLegitimationNumber()).isPresent()) {
-                if (memberEntityList.stream().filter(MemberEntity::getErased).anyMatch(e -> e.getLegitimationNumber().equals(member.getLegitimationNumber()))) {
-                    LOG.error("Ktoś już ma taki numer legitymacji");
-                    return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Uwaga! Ktoś wśród skreślonych już ma taki numer legitymacji\"");
+                if (returningToClub) {
+                    LOG.info("Będzie przyznany nowy numer legitymacji");
                 } else {
-                    LOG.error("Ktoś już ma taki numer legitymacji");
-                    return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Uwaga! Ktoś już ma taki numer legitymacji\"");
+                    if (memberEntityList.stream().filter(MemberEntity::getErased).anyMatch(e -> e.getLegitimationNumber().equals(member.getLegitimationNumber()))) {
+                        LOG.error("Ktoś już ma taki numer legitymacji");
+                        return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Uwaga! Ktoś wśród skreślonych już ma taki numer legitymacji");
+                    } else {
+                        LOG.error("Ktoś już ma taki numer legitymacji");
+                        return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Uwaga! Ktoś już ma taki numer legitymacji");
+                    }
                 }
             }
         }
         if (memberEntityList.stream().filter(f -> !f.getErased()).anyMatch(e -> e.getIDCard().trim().toUpperCase().equals(member.getIDCard()))) {
-            LOG.error("Ktoś już ma taki numer dowodu osobistego");
-            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Uwaga! Ktoś już ma taki numer dowodu osobistego\"");
+            if (returningToClub) {
+                LOG.info("Ktoś z usuniętych już ma taki numer dowodu osobistego");
+            } else {
+                LOG.error("Ktoś już ma taki numer dowodu osobistego");
+                return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Uwaga! Ktoś już ma taki numer dowodu osobistego");
+            }
         } else {
             String email = member.getEmail();
             if (member.getEmail() == null || member.getEmail().isEmpty()) {
@@ -272,7 +291,7 @@ public class MemberService {
             member.setLegitimationNumber(legitimationNumber);
             member.setPhoneNumber(phone);
             member.setAdult(adult);
-            member.setAddress(addressService.getAddress());
+            member.setAddress(address);
             member.setIDCard(member.getIDCard().trim().toUpperCase());
             member.setPesel(member.getPesel());
             member.setClub(clubRepository.findById(1).orElseThrow(EntityNotFoundException::new));
@@ -286,16 +305,16 @@ public class MemberService {
             member.setErasedEntity(null);
             member.setActive(true);
 
-            ResponseEntity<?> response = getStringResponseEntity(pinCode, Mapping.map(member), HttpStatus.CREATED, "addNewMember", Mapping.map(member).getUuid());
-
+            ResponseEntity<?> response = getStringResponseEntity(pinCode, Mapping.map(member), HttpStatus.CREATED, "addNewMember", "nowy Klubowicz");
             if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                 memberEntity = memberRepository.save(Mapping.map(member));
                 historyService.addContribution(memberEntity.getUuid(),
                         contributionService.addFirstContribution(memberEntity.getUuid(), LocalDate.now()));
+                response = ResponseEntity.status(201).body(memberEntity.getUuid());
             }
             return response;
         }
-
+        return ResponseEntity.badRequest().body("Coś poszło nie tak");
 
     }
 
@@ -399,7 +418,7 @@ public class MemberService {
         if (member.getLegitimationNumber() != null) {
             if (memberRepository.findByLegitimationNumber(member.getLegitimationNumber()).isPresent()) {
                 LOG.warn("Już ktoś ma taki numer legitymacji");
-                return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("\"Uwaga! Już ktoś ma taki numer legitymacji\"");
+                return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Uwaga! Już ktoś ma taki numer legitymacji");
             } else {
                 memberEntity.setLegitimationNumber(member.getLegitimationNumber());
                 LOG.info("Zaktualizowano pomyślnie Numer Legitymacji");
@@ -558,21 +577,30 @@ public class MemberService {
         return list;
     }
 
-    public List<String> getAllNames() {
-
-        List<String> list = new ArrayList<>();
-        memberRepository.findAll().stream()
+//    public List<String> getAllNames() {
+//
+//        List<String> list = new ArrayList<>();
+//        memberRepository.findAll().stream()
+//                .filter(f -> !f.getErased())
+//                .forEach(e -> {
+//                    if (!e.getActive()) {
+//                        list.add(e.getSecondName().concat(" " + e.getFirstName() + " BRAK SKŁADEK " + " leg. " + e.getLegitimationNumber()));
+//                    } else {
+//                        list.add(e.getSecondName().concat(" " + e.getFirstName() + " leg. " + e.getLegitimationNumber()));
+//                    }
+//                });
+//        list.sort(Comparator.comparing(String::new, Collator.getInstance(Locale.forLanguageTag("pl"))));
+//        LOG.info("Lista nazwisk z identyfikatorem");
+//        return list;
+//
+//    }
+    public List<MemberInfo> getAllNames() {
+//        List<MemberInfo> list = new ArrayList<>();
+        return memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
-                .forEach(e -> {
-                    if (!e.getActive()) {
-                        list.add(e.getSecondName().concat(" " + e.getFirstName() + " BRAK SKŁADEK " + " leg. " + e.getLegitimationNumber()));
-                    } else {
-                        list.add(e.getSecondName().concat(" " + e.getFirstName() + " leg. " + e.getLegitimationNumber()));
-                    }
-                });
-        list.sort(Comparator.comparing(String::new, Collator.getInstance(Locale.forLanguageTag("pl"))));
-        LOG.info("Lista nazwisk z identyfikatorem");
-        return list;
+                .map(Mapping::map1)
+                .sorted(Comparator.comparing(MemberInfo::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberInfo::getFirstName))
+                .collect(Collectors.toList());
 
     }
 
@@ -721,6 +749,7 @@ public class MemberService {
     public ResponseEntity<?> changePzss(String uuid) {
         if (memberRepository.existsById(uuid)) {
             MemberEntity memberEntity = memberRepository.getOne(uuid);
+            String s = memberEntity.getAdult() ? memberEntity.getPzss() ? memberEntity.getSecondName() : memberEntity.getFirstName() : memberEntity.getEmail();
             if (!memberEntity.getPzss()) {
                 memberEntity.setPzss(true);
                 memberRepository.save(memberEntity);
@@ -882,7 +911,13 @@ public class MemberService {
     }
 
     public Boolean getMemberIDCardPresent(String idCard) {
-        return memberRepository.findByIDCard(idCard).isPresent();
+        boolean present = memberRepository.findByIDCard(idCard).isPresent();
+        if (present) {
+            LOG.info("Znaleziono osobę w bazie");
+        } else {
+            LOG.info("Brak takiego numer w bazie");
+        }
+        return present;
     }
 
     public Boolean getMemberEmailPresent(String email) {
@@ -949,14 +984,11 @@ public class MemberService {
         return response;
     }
 
-    public ResponseEntity<?> getMemberUUIDByPhoneNumber(String phoneNumber) {
-        phoneNumber.replaceAll(" ", "");
-        if (!phoneNumber.startsWith("+48")) {
-            phoneNumber = "+48" + phoneNumber;
-        }
-        System.out.println(phoneNumber);
-        MemberEntity member = memberRepository.findByPhoneNumber(phoneNumber).orElse(null);
-
+    public ResponseEntity<?> getMemberByPESELNumber(String PESELNumber) {
+        PESELNumber.replaceAll(" ", "");
+        System.out.println(PESELNumber);
+        MemberEntity member = memberRepository.findByPesel(PESELNumber).orElse(null);
+        System.out.println(member);
         return member != null ? ResponseEntity.ok(Mapping.map(member)) : ResponseEntity.badRequest().body("coś poszło nie tak");
     }
 }

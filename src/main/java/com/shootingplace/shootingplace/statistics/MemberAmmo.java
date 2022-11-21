@@ -58,4 +58,15 @@ public class MemberAmmo {
     public void setLegitimationNumber(Integer legitimationNumber) {
         this.legitimationNumber = legitimationNumber;
     }
+
+    @Override
+    public String toString() {
+        return "MemberAmmo{" +
+                "uuid='" + uuid + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", secondName='" + secondName + '\'' +
+                ", legitimationNumber=" + legitimationNumber +
+                ", caliber=" + caliber +
+                '}';
+    }
 }

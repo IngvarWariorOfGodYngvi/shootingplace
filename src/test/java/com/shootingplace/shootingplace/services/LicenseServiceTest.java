@@ -242,7 +242,7 @@ public class LicenseServiceTest {
         when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
         ResponseEntity<?> responseEntity = licenseService.renewLicenseValid(uuid, license);
         //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.FORBIDDEN));
+        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
     }
 
     @Test

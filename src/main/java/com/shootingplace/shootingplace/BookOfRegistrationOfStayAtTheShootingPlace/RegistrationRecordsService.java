@@ -39,7 +39,7 @@ public class RegistrationRecordsService {
         System.out.println(otherID);
         String licenseNumber = clubRepo.getOne(1).getLicenseNumber();
         RegistrationRecordEntity r = new RegistrationRecordEntity();
-
+        String a = otherID>3 ? "false" : "true";
         if (legitimationNumber > 0) {
             MemberEntity member = memberRepo.findByLegitimationNumber(legitimationNumber).orElseThrow(EntityNotFoundException::new);
             boolean b = registrationRepo.findAll().stream().anyMatch(f -> f.getDate().equals(LocalDate.now()) && f.getPeselOrID().equals(member.getPesel()));
