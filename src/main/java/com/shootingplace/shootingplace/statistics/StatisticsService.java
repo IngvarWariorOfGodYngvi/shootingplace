@@ -13,6 +13,8 @@ import com.shootingplace.shootingplace.history.LicensePaymentHistoryDTO;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
+import com.shootingplace.shootingplace.tournament.TournamentEntity;
+import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -30,13 +32,15 @@ public class StatisticsService {
     private final AmmoEvidenceRepository ammoEvidenceRepository;
     private final AmmoUsedToEvidenceEntityRepository used;
     private final RegistrationRecordRepository rrrepo;
+    private final TournamentRepository tournamentRepository;
 
-    public StatisticsService(MemberRepository memberRepository, ContributionRepository contributionRepository, AmmoEvidenceRepository ammoEvidenceRepository, AmmoUsedToEvidenceEntityRepository used, RegistrationRecordRepository rrrepo) {
+    public StatisticsService(MemberRepository memberRepository, ContributionRepository contributionRepository, AmmoEvidenceRepository ammoEvidenceRepository, AmmoUsedToEvidenceEntityRepository used, RegistrationRecordRepository rrrepo, TournamentRepository tournamentRepository) {
         this.memberRepository = memberRepository;
         this.contributionRepository = contributionRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.used = used;
         this.rrrepo = rrrepo;
+        this.tournamentRepository = tournamentRepository;
     }
 
     public List<List<MemberDTO>> joinMonthSum(int year) {
@@ -229,7 +233,7 @@ public class StatisticsService {
 
         List<AmmoUsedToEvidenceEntity> collect = used.findAll()
                 .stream()
-                .filter(f->f.getMemberEntity()!=null)
+                .filter(f -> f.getMemberEntity() != null)
                 .filter(f -> f.getMemberEntity().getUuid().equals(uuid))
                 .collect(Collectors.toList());
         MemberAmmo memberAmmo = Mapping.map3(memberRepository.findById(uuid).orElseThrow(EntityNotFoundException::new));
@@ -263,7 +267,7 @@ public class StatisticsService {
         long vc = rrrepo.findAll().stream().filter(f -> f.getPeselOrID().equals(member.getPesel())).count();
         long mffv = member.getJoinDate().until(LocalDate.now(), ChronoUnit.MONTHS);
         MemberAmmo a = getMemberAmmoTakes(uuid);
-        Map<LocalDate,String> competitionHistory = new HashMap<>();
+        Map<LocalDate, String> competitionHistory = new HashMap<>();
 
         //            competitionHistory.put(e.getDate(),e.getName());
         Set<CompetitionHistoryEntity> ch = new HashSet<>(member.getHistory().getCompetitionHistory());
@@ -282,5 +286,35 @@ public class StatisticsService {
                 .competitionHistoryCounter(chc).build();
 
         return ResponseEntity.ok(ps);
+    }
+
+    public ResponseEntity<?> getHighStatisticsCompetitions() {
+        Map<String, Integer> map = new HashMap<>();
+        List<TournamentEntity> all = tournamentRepository.findAll();
+        final int[] i = {0};
+        all.forEach(t -> {
+            i[0] = 0;
+            t.getCompetitionsList().forEach(c -> i[0] += c.getScoreList().size());
+            map.put(t.getUuid(), i[0]);
+        });
+        int size = map.size();
+        for(int j=0;j<size;j++) {
+            Optional<Map.Entry<String, Integer>> min = map.entrySet().stream().min(Map.Entry.comparingByValue());
+            map.remove(min.get().getKey());
+            if(map.size()==10){
+                break;
+            }
+        }
+        List<Map.Entry<String,Integer>> list = new ArrayList<>(map.entrySet());
+
+        list.sort(Map.Entry.<String, Integer>comparingByValue().reversed());
+        Map<String,Integer> map1 = new LinkedHashMap<>();
+        for (Map.Entry<String,Integer> entry :list){
+            TournamentEntity te = tournamentRepository.findById(entry.getKey()).get();
+            map1.put(te.getName()+" " + te.getDate(), entry.getValue());
+        }
+
+
+        return ResponseEntity.ok(map1);
     }
 }

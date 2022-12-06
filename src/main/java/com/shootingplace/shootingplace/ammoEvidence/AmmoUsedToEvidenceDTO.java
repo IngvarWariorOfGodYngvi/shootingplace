@@ -20,5 +20,7 @@ public class AmmoUsedToEvidenceDTO {
 
     private LocalDate date;
 
+    private Integer legitimationNumber;
+
 
 }

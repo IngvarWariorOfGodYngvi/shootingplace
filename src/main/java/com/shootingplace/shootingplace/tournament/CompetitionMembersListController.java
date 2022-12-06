@@ -24,6 +24,11 @@ public class CompetitionMembersListController {
         return ResponseEntity.ok(competitionMembersListService.getCompetitionIDByName(name, tournamentUUID));
     }
 
+    @GetMapping("/getByID")
+    public ResponseEntity<?> getCompetitionListByID(@RequestParam String uuid) {
+        return ResponseEntity.ok(competitionMembersListService.getCompetitionListByID(uuid));
+    }
+
     @GetMapping("/getMemberStarts")
     public ResponseEntity<List<String>> getMemberStartsInTournament(@RequestParam String memberUUID, @RequestParam int otherID, @RequestParam String tournamentUUID) {
         return ResponseEntity.ok(competitionMembersListService.getMemberStartsInTournament(memberUUID, otherID, tournamentUUID));

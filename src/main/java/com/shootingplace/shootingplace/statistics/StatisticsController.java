@@ -69,4 +69,8 @@ public class StatisticsController {
     public ResponseEntity<?> getPersonalStatistic(@RequestParam String uuid){
         return statisticsService.getPersonalStatistics(uuid);
     }
+    @GetMapping("/highStarts")
+    public ResponseEntity<?> getHighStatisticsCompetitions(){
+        return statisticsService.getHighStatisticsCompetitions();
+    }
 }

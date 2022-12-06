@@ -30,6 +30,7 @@ public class AmmoEvidenceEntity {
 
     private boolean forceOpen;
 
+
     public String getUuid() {
         return uuid;
     }

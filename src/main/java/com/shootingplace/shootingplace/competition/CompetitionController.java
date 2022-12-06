@@ -23,6 +23,10 @@ public class CompetitionController {
     public ResponseEntity<List<CompetitionEntity>> getAllCompetitions() {
         return ResponseEntity.ok(competitionService.getAllCompetitions());
     }
+    @GetMapping("/competitionMemberListUUID")
+    public ResponseEntity<?> getCompetitionMemberList(@RequestParam String competitionMembersListUUID) {
+        return competitionService.getCompetitionMemberList(competitionMembersListUUID);
+    }
 
     @PostMapping("")
     public ResponseEntity<?> createCompetition(@RequestBody Competition competition) {

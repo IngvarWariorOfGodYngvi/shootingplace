@@ -11,4 +11,6 @@ public interface CompetitionMembersListRepository{
     Optional<CompetitionMembersListEntity> findById(String uuid);
 
     void delete(CompetitionMembersListEntity entity);
+
+    boolean existsById(String uuid);
 }

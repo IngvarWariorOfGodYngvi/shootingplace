@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.file;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceEntity;
@@ -19,12 +20,14 @@ import com.shootingplace.shootingplace.enums.CountingMethod;
 import com.shootingplace.shootingplace.enums.Discipline;
 import com.shootingplace.shootingplace.history.CompetitionHistoryEntity;
 import com.shootingplace.shootingplace.history.JudgingHistoryEntity;
-import com.shootingplace.shootingplace.tournament.*;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
-import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
+import com.shootingplace.shootingplace.tournament.ScoreEntity;
+import com.shootingplace.shootingplace.tournament.TournamentEntity;
+import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
@@ -42,10 +45,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.text.Collator;
 import java.text.DecimalFormat;
@@ -1691,7 +1691,7 @@ public class FilesService {
         document.addTitle(fileName);
         document.addCreationDate();
 
-        List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).filter(f -> f.getAdult().equals(condition)).sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))).collect(Collectors.toList());
+        List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).filter(f -> f.getAdult().equals(condition)).sorted(Comparator.comparing(MemberEntity::getSecondName, pl())).collect(Collectors.toList());
 
         String hour = String.valueOf(LocalTime.now().getHour());
         String minute = String.valueOf(LocalTime.now().getMinute());
@@ -1800,7 +1800,7 @@ public class FilesService {
         document.addTitle(fileName);
         document.addCreationDate();
 
-        List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))).collect(Collectors.toList());
+        List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).sorted(Comparator.comparing(MemberEntity::getSecondName, pl())).collect(Collectors.toList());
 
         String hour = String.valueOf(LocalTime.now().getHour());
         String minute = String.valueOf(LocalTime.now().getMinute());
@@ -2068,7 +2068,7 @@ public class FilesService {
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(f -> !f.getLicense().isValid())
                 .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
                 .collect(Collectors.toList());
         float[] pointColumnWidths = {7F, 44F, 17F, 17F};
 
@@ -2169,14 +2169,14 @@ public class FilesService {
                 .filter(MemberEntity::getAdult)
                 .filter(f -> !f.getActive())
                 .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContributionAdult))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
                 .collect(Collectors.toList());
 
         memberEntityListAdult.addAll(memberRepository.findAll().stream()
-                .filter(f-> !f.getErased())
-                .filter(f->!f.getAdult())
-                .filter(f->f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContributionNoAdult))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .filter(f -> !f.getErased())
+                .filter(f -> !f.getAdult())
+                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContributionNoAdult))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
                 .collect(Collectors.toList()));
         float[] pointColumnWidths = {4F, 42F, 14F, 14F, 14F, 14F};
 
@@ -2299,7 +2299,7 @@ public class FilesService {
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(f -> f.getLicense().isValid())
                 .filter(f -> !f.getActive())
-                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
                 .collect(Collectors.toList());
         float[] pointColumnWidths = {4F, 42F, 14F, 14F, 14F, 14F};
 
@@ -2637,7 +2637,7 @@ public class FilesService {
 
         List<GunEntity> collect1 = new ArrayList<>();
         List<GunEntity> finalCollect = collect1;
-        guns.forEach(e-> finalCollect.add(gunRepository.getOne(e)));
+        guns.forEach(e -> finalCollect.add(gunRepository.getOne(e)));
         collect1 = collect1.stream().sorted(Comparator.comparing(GunEntity::getCaliber).thenComparing(GunEntity::getModelName)).collect(Collectors.toList());
 
         for (int j = 0; j < collect1.size(); j++) {
@@ -2747,7 +2747,7 @@ public class FilesService {
 
         List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
                 .filter(MemberEntity::getErased)
-                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
                 .collect(Collectors.toList());
         float[] pointColumnWidths = {4F, 28F, 10F, 10F, 14F, 14F, 36F};
 
@@ -2927,17 +2927,7 @@ public class FilesService {
         }
 
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
-        // to musi zostać by spowolnić program bo inaczej nie robi tego co powinien
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
-        document.open();
-        document.addTitle(fileName);
-        document.addCreationDate();
-        document.addAuthor("KS DZIESIĄTKA");
-        document.addCreator("Igor Żebrowski");
+        setAttToDoc(fileName, document);
 
         String finalMonth = month.toLowerCase(Locale.ROOT);
         int pl = number(finalMonth);
@@ -3125,6 +3115,157 @@ public class FilesService {
         File file = new File(fileName);
         file.delete();
         return filesEntity;
+    }
+
+    public FilesEntity generateMembersListWithLicense() throws IOException, DocumentException {
+
+        String fileName = "Lista osób z licencjami.pdf";
+        Document document = new Document(PageSize.A4);
+        setAttToDoc(fileName, document);
+
+        List<MemberEntity> collect = memberRepository.findAll()
+                .stream()
+                .filter(f -> !f.getErased() && f.getLicense().getNumber() != null)
+                .collect(Collectors.toList());
+
+        Paragraph newLine = new Paragraph("\n", font(13, 0));
+
+        Paragraph titleA = new Paragraph("Lista osób z licencjami - OGÓLNA", font(13, 0));
+        Paragraph titleB = new Paragraph("Lista osób z licencjami - Młodzież", font(13, 0));
+        titleA.setAlignment(1);
+        titleB.setAlignment(1);
+
+        document.add(titleA);
+        document.add(newLine);
+        float[] pointColumnWidths = {4F, 28F, 10F, 14F, 14F, 14F};
+        PdfPTable titleTable = new PdfPTable(pointColumnWidths);
+
+        PdfPCell lp = new PdfPCell(new Paragraph("lp", font(12, 0)));
+        PdfPCell name = new PdfPCell(new Paragraph("Nazwisko Imię", font(12, 0)));
+        PdfPCell licenceNumber = new PdfPCell(new Paragraph("numer licencji", font(12, 0)));
+        PdfPCell licenceDate = new PdfPCell(new Paragraph("licencja ważna do", font(12, 0)));
+        PdfPCell active = new PdfPCell(new Paragraph("składki", font(12, 0)));
+        PdfPCell empty = new PdfPCell(new Paragraph("", font(12, 0)));
+
+        titleTable.setWidthPercentage(100);
+        titleTable.addCell(lp);
+        titleTable.addCell(name);
+        titleTable.addCell(licenceNumber);
+        titleTable.addCell(licenceDate);
+        titleTable.addCell(active);
+        titleTable.addCell(empty);
+
+        document.add(titleTable);
+        document.add(newLine);
+
+        List<MemberEntity> collect1 = collect.stream()
+                .filter(MemberEntity::getAdult)
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()).thenComparing(MemberEntity::getFirstName, pl()))
+                .collect(Collectors.toList());
+        for (int i = 0; i < collect1.size(); i++) {
+
+            MemberEntity memberEntity = collect1.get(i);
+
+            String memberEntityName = memberEntity.getSecondName().concat(" " + memberEntity.getFirstName());
+
+            PdfPTable memberTable = new PdfPTable(pointColumnWidths);
+
+            PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(12, 0)));
+            PdfPCell nameCell = new PdfPCell(new Paragraph(memberEntityName, font(12, 0)));
+            PdfPCell licenceNumberCell = new PdfPCell(new Paragraph(memberEntity.getLicense().getNumber(), font(12, 0)));
+            ;
+            PdfPCell licenceDateCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getLicense().getValidThru().getYear()), font(12, 0)));
+            PdfPCell activeCell = new PdfPCell(new Paragraph(memberEntity.getActive() ? "Aktywny" : "Brak składek", font(12, 0)));
+            PdfPCell emptyCell = new PdfPCell(new Paragraph("", font(12, 0)));
+
+            memberTable.setWidthPercentage(100);
+
+            memberTable.addCell(lpCell);
+            memberTable.addCell(nameCell);
+            memberTable.addCell(licenceNumberCell);
+            memberTable.addCell(licenceDateCell);
+            memberTable.addCell(activeCell);
+            memberTable.addCell(emptyCell);
+
+            document.add(memberTable);
+
+        }
+        document.newPage();
+        document.add(titleB);
+        document.add(newLine);
+        document.add(titleTable);
+        collect1 = collect.stream()
+                .filter(f->!f.getAdult())
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()).thenComparing(MemberEntity::getFirstName, pl()))
+                .collect(Collectors.toList());
+        for (int i = 0; i < collect1.size(); i++) {
+
+            MemberEntity memberEntity = collect1.get(i);
+
+            String memberEntityName = memberEntity.getSecondName().concat(" " + memberEntity.getFirstName());
+
+            PdfPTable memberTable = new PdfPTable(pointColumnWidths);
+
+            PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(12, 0)));
+            PdfPCell nameCell = new PdfPCell(new Paragraph(memberEntityName, font(12, 0)));
+            PdfPCell licenceNumberCell = new PdfPCell(new Paragraph(memberEntity.getLicense().getNumber(), font(12, 0)));
+            ;
+            PdfPCell licenceDateCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getLicense().getValidThru().getYear()), font(12, 0)));
+            PdfPCell activeCell = new PdfPCell(new Paragraph(memberEntity.getActive() ? "Aktywny" : "Brak składek", font(12, 0)));
+            PdfPCell emptyCell = new PdfPCell(new Paragraph("", font(12, 0)));
+
+            memberTable.setWidthPercentage(100);
+
+            memberTable.addCell(lpCell);
+            memberTable.addCell(nameCell);
+            memberTable.addCell(licenceNumberCell);
+            memberTable.addCell(licenceDateCell);
+            memberTable.addCell(activeCell);
+            memberTable.addCell(emptyCell);
+
+            document.add(memberTable);
+
+        }
+
+
+
+//        collect.stream().filter(MemberEntity::getAdult).forEach(e->{
+//
+//            String memberEntityName = e.getSecondName().concat(" " + e.getFirstName());
+//        });
+        document.close();
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+
+        File file = new File(fileName);
+        file.delete();
+        return filesEntity;
+    }
+
+    private Collator pl() {
+        return Collator.getInstance(Locale.forLanguageTag("pl"));
+    }
+
+    private void setAttToDoc(String fileName, Document document) throws DocumentException, FileNotFoundException {
+        document.setMargins(35F, 35F, 50F, 50F);
+        // to musi zostać by spowolnić program bo inaczej nie robi tego co powinien
+        System.out.println(document.bottomMargin());
+        PdfWriter writer = PdfWriter.getInstance(document,
+                new FileOutputStream(fileName));
+        writer.setPageEvent(new PageStamper());
+        document.open();
+        document.addTitle(fileName);
+        document.addCreationDate();
+        document.addAuthor("KS DZIESIĄTKA");
+        document.addCreator("Igor Żebrowski");
     }
 
     private int number(String finalMonth) {
@@ -3409,6 +3550,7 @@ public class FilesService {
         String europeanDatePattern = "dd.MM.yyyy";
         return DateTimeFormatter.ofPattern(europeanDatePattern);
     }
+
 
     static class PageStamper extends PdfPageEventHelper {
         @Override

@@ -328,7 +328,7 @@ public class LicenseService {
                                 .isNew(g.isNew())
                                 .build())));
         return list1.stream()
-                .filter(f -> !f.isPayInPZSSPortal()).sorted(Comparator.comparing(LicensePaymentHistoryDTO::getDate).thenComparing(LicensePaymentHistoryDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(LicensePaymentHistoryDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl")))).collect(Collectors.toList());
+                .filter(f -> !f.isPayInPZSSPortal()).sorted(Comparator.comparing(LicensePaymentHistoryDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(LicensePaymentHistoryDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl")))).collect(Collectors.toList());
     }
 
     public ResponseEntity<?> removeLicensePaymentRecord(String paymentUUID, String pinCode) {

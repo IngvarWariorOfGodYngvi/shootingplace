@@ -599,7 +599,7 @@ public class MemberService {
         return memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .map(Mapping::map1)
-                .sorted(Comparator.comparing(MemberInfo::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberInfo::getFirstName))
+                .sorted(Comparator.comparing(MemberInfo::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberInfo::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
 
     }

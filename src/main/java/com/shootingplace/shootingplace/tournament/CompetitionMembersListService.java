@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.tournament;
 
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
@@ -240,5 +241,9 @@ public class CompetitionMembersListService {
                     .findFirst().orElseThrow(EntityNotFoundException::new);
         }
         return score;
+    }
+
+    public CompetitionMembersList getCompetitionListByID(String uuid) {
+        return Mapping.map(competitionMembersListRepository.findById(uuid).orElseThrow(EntityNotFoundException::new));
     }
 }

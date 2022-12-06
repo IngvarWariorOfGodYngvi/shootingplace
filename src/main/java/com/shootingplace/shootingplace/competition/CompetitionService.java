@@ -210,4 +210,13 @@ public class CompetitionService {
                 });
         return ResponseEntity.ok("\"Zaktualizowano zawody\"");
     }
+
+    public ResponseEntity<?> getCompetitionMemberList(String competitionMembersListUUID) {
+        if(competitionMembersListRepository.existsById(competitionMembersListUUID)){
+        return ResponseEntity.ok(competitionMembersListRepository.findById(competitionMembersListUUID));
+
+        }else {
+            return ResponseEntity.badRequest().body("brak takiej konkurencji");
+        }
+    }
 }

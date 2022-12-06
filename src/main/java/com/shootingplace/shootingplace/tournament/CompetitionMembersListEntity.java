@@ -46,6 +46,9 @@ public class CompetitionMembersListEntity {
 
     private String caliberUUID;
 
+    @ManyToMany
+    private List<ScoreEntity> scoreList = new ArrayList<>();
+
     public String getCaliberUUID() {
         return caliberUUID;
     }
@@ -53,9 +56,6 @@ public class CompetitionMembersListEntity {
     public void setCaliberUUID(String caliberUUID) {
         this.caliberUUID = caliberUUID;
     }
-
-    @ManyToMany
-    private List<ScoreEntity> scoreList = new ArrayList<>();
 
     public String getUuid() {
         return uuid;

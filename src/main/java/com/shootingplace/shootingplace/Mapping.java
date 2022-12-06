@@ -572,6 +572,7 @@ public class Mapping {
                 .counter(a.getCounter())
                 .date(a.getDate())
                 .name(a.getName())
+                .legitimationNumber(a.getMemberEntity()!=null?a.getMemberEntity().getLegitimationNumber():null)
                 .build();
     }
 }
