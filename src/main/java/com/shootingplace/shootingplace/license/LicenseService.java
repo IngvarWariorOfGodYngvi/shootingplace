@@ -126,7 +126,8 @@ public class LicenseService {
             }
             LOG.info("zaktualizowano datę licencji");
         } else {
-            licenseEntity.setValidThru(LocalDate.of(LocalDate.now().getYear(), 12, 31));
+            Integer validForYear = memberEntity.getHistory().getLicensePaymentHistory().get(0).getValidForYear();
+            licenseEntity.setValidThru(LocalDate.of(validForYear, 12, 31));
             licenseEntity.setValid(true);
             LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
         }
@@ -275,8 +276,6 @@ public class LicenseService {
         List<String> responseList = new ArrayList<>();
         String s1 = "";
 
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, null, HttpStatus.OK, "prolongAllLicense", responseList);
-        if (response.getStatusCode().equals(HttpStatus.OK)) {
             for (String s : licenseList) {
                 MemberEntity memberEntity = memberRepository.findById(s).orElse(null);
                 LicenseEntity licenseEntity;
@@ -301,9 +300,7 @@ public class LicenseService {
                 }
             }
             return getStringResponseEntity(pinCode, null, HttpStatus.OK, "prolongAllLicense", responseList);
-        } else {
-            return response;
-        }
+
 //        return ResponseEntity.ok(responseList);
     }
 
@@ -351,7 +348,7 @@ public class LicenseService {
 
     public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, Object body) {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
-        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " " + methodName + " ", memberEntity.getUuid());
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity!=null ? memberEntity.getClass().getSimpleName() + " " + methodName + " ":methodName,memberEntity!=null ? memberEntity.getUuid(): "nie dotyczy");
         if (stringResponseEntity != null) {
             response = stringResponseEntity;
         }

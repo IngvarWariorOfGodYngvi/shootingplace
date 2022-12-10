@@ -3317,27 +3317,30 @@ public class FilesService {
 
     public List<FilesModel> getAllFilesList(Pageable page) {
 
-        List<FilesModel> list = new ArrayList<>();
         page = PageRequest.of(page.getPageNumber(), page.getPageSize(), Sort.by("date").and(Sort.by("time")).descending());
-        filesRepository.findAll(page).stream().filter(f -> f.getDate() != null).filter(f -> f.getTime() != null).forEach(e -> list.add(
-                FilesModel.builder()
-                        .uuid(e.getUuid())
-                        .date(e.getDate())
-                        .name(e.getName())
-                        .type(e.getType())
-                        .time(e.getTime())
-                        .size(e.getSize())
-                        .build()));
+        List<FilesModel> list = new ArrayList<>(filesRepository.findAllByDateIsNotNullAndTimeIsNotNull(page).map(Mapping::map).toList());
+//        List<FilesModel> list = filesRepository.findAllByDateIsNotNullAndTimeIsNotNull(page).stream().map(Mapping::map).collect(Collectors.toList());
+//                .forEach(e -> list.add(
+//                FilesModel.builder()
+//                        .uuid(e.getUuid())
+//                        .date(e.getDate())
+//                        .name(e.getName())
+//                        .type(e.getType())
+//                        .time(e.getTime())
+//                        .size(e.getSize())
+//                        .build()));
         list.sort(Comparator.comparing(FilesModel::getDate).thenComparing(FilesModel::getTime).reversed());
-        filesRepository.findAll(page).stream().filter(f -> f.getDate() == null).filter(f -> f.getTime() != null).forEach(e -> list.add(
-                FilesModel.builder()
-                        .uuid(e.getUuid())
-                        .date(e.getDate())
-                        .name(e.getName())
-                        .type(e.getType())
-                        .time(e.getTime())
-                        .size(e.getSize())
-                        .build()));
+        List<FilesModel> collect = filesRepository.findAllByDateIsNullAndTimeIsNull().stream().map(Mapping::map).collect(Collectors.toList());
+        list.addAll(collect);
+//                .stream().filter(f -> f.getDate() == null).filter(f -> f.getTime() != null).forEach(e -> list.add(
+//                FilesModel.builder()
+//                        .uuid(e.getUuid())
+//                        .date(e.getDate())
+//                        .name(e.getName())
+//                        .type(e.getType())
+//                        .time(e.getTime())
+//                        .size(e.getSize())
+//                        .build()));
         return list;
 
     }

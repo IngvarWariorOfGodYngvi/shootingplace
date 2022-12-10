@@ -4,6 +4,7 @@ import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,7 +48,7 @@ public class LicenseController {
     }
 
     @PutMapping("/forceUpdate")
-    public ResponseEntity<?> updateLicense(@RequestParam String memberUUID, @RequestParam String number, @RequestParam String date, @RequestParam String pinCode,@RequestParam boolean isPaid) {
+    public ResponseEntity<?> updateLicense(@RequestParam String memberUUID, @RequestParam String number, @RequestParam String date, @RequestParam String pinCode,@Nullable @RequestParam boolean isPaid) {
         if (changeHistoryService.comparePinCode(pinCode)) {
             LocalDate parseDate = null;
             if (date != null && !date.isEmpty() && !date.equals("null")) {

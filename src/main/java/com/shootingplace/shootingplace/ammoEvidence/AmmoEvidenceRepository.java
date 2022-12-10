@@ -1,5 +1,8 @@
 package com.shootingplace.shootingplace.ammoEvidence;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -15,4 +18,9 @@ public interface AmmoEvidenceRepository{
     AmmoEvidenceEntity save(AmmoEvidenceEntity entity);
 
     void delete(AmmoEvidenceEntity entity);
+
+    Page<AmmoEvidenceEntity> findAll(Pageable page);
+    Page<AmmoEvidenceEntity> findAllByOpenFalse(Pageable page);
+
+    List<AmmoEvidenceEntity> findAllByOpenTrue();
 }

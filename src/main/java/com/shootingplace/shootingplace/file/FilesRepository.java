@@ -20,5 +20,9 @@ public interface FilesRepository {
     Page<FilesEntity> findAll(Pageable page);
 
     Optional<FilesEntity> findByName(String fileName);
+
+    Page<FilesEntity> findAllByDateIsNotNullAndTimeIsNotNull(Pageable page);
+
+    List<FilesEntity> findAllByDateIsNullAndTimeIsNull();
 }
 

@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.ammoEvidence;
 import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordsService;
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -42,8 +43,8 @@ public class AmmoEvidenceController {
     // New ammo in evidence
 
     @GetMapping("/evidence")
-    public ResponseEntity<?> getAllEvidences(@RequestParam boolean state) {
-        return ResponseEntity.ok(ammoEvidenceService.getAllEvidences(state));
+    public ResponseEntity<?> getOpenEvidence() {
+        return ammoEvidenceService.getOpenEvidence();
     }
 
     @GetMapping("/oneEvidence")
@@ -52,8 +53,8 @@ public class AmmoEvidenceController {
     }
 
     @GetMapping("/closedEvidences")
-    public ResponseEntity<List<AmmoDTO>> getClosedEvidence() {
-        return ResponseEntity.ok().body(ammoEvidenceService.getClosedEvidences());
+    public ResponseEntity<List<AmmoDTO>> getClosedEvidence(Pageable page) {
+        return ResponseEntity.ok().body(ammoEvidenceService.getClosedEvidences(page));
     }
 
     @GetMapping("/checkAnyOpenEvidence")
@@ -61,10 +62,10 @@ public class AmmoEvidenceController {
         return ResponseEntity.ok().body(ammoEvidenceService.checkAnyOpenEvidence());
     }
 
-    @GetMapping("/getGunInAmmoEvidenceList")
-    public ResponseEntity<?> getGunInAmmoEvidenceList(@RequestParam String evidenceUUID) {
-        return ResponseEntity.ok().body(ammoEvidenceService.getGunInAmmoEvidenceList(evidenceUUID));
-    }
+//    @GetMapping("/getGunInAmmoEvidenceList")
+//    public ResponseEntity<?> getGunInAmmoEvidenceList(@RequestParam String evidenceUUID) {
+//        return ResponseEntity.ok().body(ammoEvidenceService.getGunInAmmoEvidenceList(evidenceUUID));
+//    }
 
     @Transactional
     @PutMapping("/addGunToList")

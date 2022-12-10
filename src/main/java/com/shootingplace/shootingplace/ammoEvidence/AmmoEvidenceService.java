@@ -1,24 +1,22 @@
 package com.shootingplace.shootingplace.ammoEvidence;
 
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.armory.ArmoryService;
-import com.shootingplace.shootingplace.armory.GunEntity;
 import com.shootingplace.shootingplace.armory.GunRepository;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
-import com.shootingplace.shootingplace.history.UsedHistoryEntity;
 import com.shootingplace.shootingplace.history.UsedHistoryRepository;
-import com.shootingplace.shootingplace.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class AmmoEvidenceService {
@@ -40,16 +38,8 @@ public class AmmoEvidenceService {
         this.gunRepository = gunRepository;
     }
 
-    public List<AmmoEvidenceDTO> getAllEvidences(boolean state) {
-        List<AmmoEvidenceEntity> collect = ammoEvidenceRepository.findAll()
-                .stream()
-                .filter(f -> f.isOpen() == state)
-                .sorted(Comparator.comparing(AmmoEvidenceEntity::getDate)
-                        .reversed())
-                .collect(Collectors.toList());
-        List<AmmoEvidenceDTO> dtoList = new ArrayList<>();
-        collect.forEach(e -> dtoList.add(Mapping.map(e)));
-        return dtoList;
+    public ResponseEntity<?> getOpenEvidence() {
+        return ammoEvidenceRepository.findAllByOpenTrue().size()!=0 ? ResponseEntity.ok(Mapping.map(ammoEvidenceRepository.findAllByOpenTrue().get(0))) : ResponseEntity.ok().body(null);
     }
 
     public AmmoEvidenceEntity getEvidence(String uuid) {
@@ -70,12 +60,9 @@ public class AmmoEvidenceService {
         return ResponseEntity.ok("Lista została zamknięta");
     }
 
-    public List<AmmoDTO> getClosedEvidences() {
-        List<AmmoEvidenceEntity> all = ammoEvidenceRepository.findAll().stream().filter(f -> !f.isOpen()).collect(Collectors.toList());
-        List<AmmoDTO> allDTO = new ArrayList<>();
-        all.forEach(e -> allDTO.add(Mapping.map1(e)));
-        allDTO.sort(Comparator.comparing(AmmoDTO::getDate).thenComparing(AmmoDTO::getNumber).reversed());
-        return allDTO;
+    public List<AmmoDTO> getClosedEvidences(Pageable page) {
+        page = PageRequest.of(page.getPageNumber(), page.getPageSize(), Sort.by("date").and(Sort.by("number")).descending());
+        return ammoEvidenceRepository.findAllByOpenFalse(page).map(Mapping::map1).toList();
     }
 
     public ResponseEntity<?> openEvidence(String evidenceUUID, String pinCode) {
@@ -86,10 +73,10 @@ public class AmmoEvidenceService {
             AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository
                     .findById(evidenceUUID)
                     .orElseThrow(EntityNotFoundException::new);
-            ammoEvidenceEntity.setOpen(true);
-            ammoEvidenceEntity.setForceOpen(true);
             ResponseEntity<?> response = getStringResponseEntity(pinCode, ammoEvidenceEntity, HttpStatus.OK, "openEvidence", "Ręcznie otworzono listę - Pamiętaj by ją zamknąć!");
             if (response.getStatusCode().equals(HttpStatus.OK)) {
+                ammoEvidenceEntity.setOpen(true);
+                ammoEvidenceEntity.setForceOpen(true);
                 ammoEvidenceRepository.save(ammoEvidenceEntity);
                 LOG.info("otworzono");
             }
@@ -121,13 +108,13 @@ public class AmmoEvidenceService {
         String s = armoryService.addUseToGun(barcode, evidenceUUID);
         return ResponseEntity.ok("\"" + s + "\"");
     }
-
-    public List<GunEntity> getGunInAmmoEvidenceList(String evidenceUUID) {
-        List<UsedHistoryEntity> collect = usedHistoryRepository.findAll().stream().filter(f -> f.getEvidenceUUID() != null).filter(f -> f.getEvidenceUUID().equals(evidenceUUID)).collect(Collectors.toList());
-        List<GunEntity> gunEntityList = new ArrayList<>();
-        collect.forEach(e -> gunEntityList.add(gunRepository.findById(e.getGunUUID()).orElseThrow(EntityNotFoundException::new)));
-        return gunEntityList;
-    }
+//
+//    public List<GunEntity> getGunInAmmoEvidenceList(String evidenceUUID) {
+//        List<UsedHistoryEntity> collect = usedHistoryRepository.findAll().stream().filter(f -> f.getEvidenceUUID() != null).filter(f -> f.getEvidenceUUID().equals(evidenceUUID)).collect(Collectors.toList());
+//        List<GunEntity> gunEntityList = new ArrayList<>();
+//        collect.forEach(e -> gunEntityList.add(gunRepository.findById(e.getGunUUID()).orElseThrow(EntityNotFoundException::new)));
+//        return gunEntityList;
+//    }
 
     ResponseEntity<?> getStringResponseEntity(String pinCode, AmmoEvidenceEntity ammoEvidenceEntity, HttpStatus status, String methodName, Object body) {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
