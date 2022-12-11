@@ -31,6 +31,7 @@ import org.springframework.http.ResponseEntity;
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -69,6 +70,7 @@ public class LicenseServiceTest {
     @Before
     public void init() {
         when(memberRepository.findAll()).thenReturn(membersList);
+        when(memberRepository.findAllByErasedFalse()).thenReturn(membersList.stream().filter(f->!f.getErased()).collect(Collectors.toList()));
 
         MockitoAnnotations.initMocks(licenseService);
 
@@ -199,7 +201,6 @@ public class LicenseServiceTest {
         String licenceNumber = String.valueOf(3);
         LocalDate date = LocalDate.of(2022, 12, 31);
         //when
-//        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
         ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, licenceNumber, date,true, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
@@ -282,10 +283,6 @@ public class LicenseServiceTest {
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
         assertThat(responseEntity.getBody(), Matchers.equalTo("Poprawiono płatność za licencję"));
 
-    }
-
-    private boolean existsById(String uuid) {
-        return membersList.stream().anyMatch(f -> f.getUuid().equals(uuid));
     }
 
     private MemberEntity findMemberByID(String uuid) {
@@ -423,8 +420,6 @@ public class LicenseServiceTest {
 
     private LicenseEntity createLicense() {
 
-        Random r = new Random();
-        int a = r.nextInt(10) + 1;
         if (i == 1) {
             return LicenseEntity.builder()
                     .uuid(String.valueOf(UUID.randomUUID()))
@@ -469,7 +464,6 @@ public class LicenseServiceTest {
 
     private ShootingPatentEntity createShootingPatent() {
         Random r = new Random();
-        int i1 = r.nextInt(10) + 1;
         if (i == 1) {
             ShootingPatentEntity build = ShootingPatentEntity.builder()
                     .uuid(String.valueOf(UUID.randomUUID()))
@@ -504,7 +498,6 @@ public class LicenseServiceTest {
         List<LicensePaymentHistoryEntity> licensePaymentHistoryEntityList = new ArrayList<>();
 
         String historyUUID = String.valueOf(UUID.randomUUID());
-        Random r = new Random();
         LicensePaymentHistoryEntity build = LicensePaymentHistoryEntity.builder()
                 .uuid(String.valueOf(UUID.randomUUID()))
                 .memberUUID("")

@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.member;
 
+import com.shootingplace.shootingplace.club.Club;
 import com.shootingplace.shootingplace.domain.Person;
 import com.shootingplace.shootingplace.enums.ErasedType;
 import com.shootingplace.shootingplace.license.License;
@@ -27,6 +28,16 @@ public class MemberDTO extends Person {
     private Boolean adult = true;
     private Boolean active = true;
     private Boolean erased = false;
+
+    public Club getClub() {
+        return club;
+    }
+
+    public void setClub(Club club) {
+        this.club = club;
+    }
+
+    private Club club;
 
     public String getUuid() {
         return uuid;

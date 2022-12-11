@@ -50,31 +50,28 @@ public class LicenseService {
     }
 
     public List<MemberDTO> getMembersNamesAndLicense() {
-        List<MemberDTO> list = new ArrayList<>();
-        memberRepository.findAll()
-                .stream().filter(f -> !f.getErased())
+        return memberRepository.findAllByErasedFalse().stream()
+                .filter(f->f.getClub().getId().equals(1))
                 .filter(MemberEntity::getPzss)
-                .forEach(e -> {
-                    if (e.getLicense().getNumber() != null && e.getLicense().isValid()) {
-                        list.add(Mapping.map2DTO(e));
-                    }
-                });
-        list.sort(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))));
-        return list;
+                .filter(f->f.getLicense().getNumber() != null && f.getLicense().isValid())
+                .map(Mapping::map2DTO)
+                .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()))
+                .collect(Collectors.toList());
+    }
+
+    private static Collator pl() {
+        return Collator.getInstance(Locale.forLanguageTag("pl"));
     }
 
     public List<MemberDTO> getMembersNamesAndLicenseNotValid() {
-        List<MemberDTO> list = new ArrayList<>();
-        memberRepository.findAll()
-                .stream().filter(f -> !f.getErased())
+        return memberRepository.findAllByErasedFalse()
+                .stream()
+                .filter(f->f.getClub().getId().equals(1))
                 .filter(MemberEntity::getPzss)
-                .forEach(e -> {
-                    if (e.getLicense().getNumber() != null && !e.getLicense().isValid()) {
-                        list.add(Mapping.map2DTO(e));
-                    }
-                });
-        list.sort(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))));
-        return list;
+                .filter(f->f.getLicense().getNumber() != null && !f.getLicense().isValid())
+                .map(Mapping::map2DTO)
+                .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()))
+                .collect(Collectors.toList());
     }
 
     public ResponseEntity<?> updateLicense(String memberUUID, License license) {
@@ -325,7 +322,7 @@ public class LicenseService {
                                 .isNew(g.isNew())
                                 .build())));
         return list1.stream()
-                .filter(f -> !f.isPayInPZSSPortal()).sorted(Comparator.comparing(LicensePaymentHistoryDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(LicensePaymentHistoryDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl")))).collect(Collectors.toList());
+                .filter(f -> !f.isPayInPZSSPortal()).sorted(Comparator.comparing(LicensePaymentHistoryDTO::getSecondName, pl()).thenComparing(LicensePaymentHistoryDTO::getFirstName, pl())).collect(Collectors.toList());
     }
 
     public ResponseEntity<?> removeLicensePaymentRecord(String paymentUUID, String pinCode) {

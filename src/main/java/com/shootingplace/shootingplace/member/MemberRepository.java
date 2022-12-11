@@ -31,4 +31,7 @@ public interface MemberRepository {
     MemberEntity getOne(String uuid);
 
     Page<MemberEntity> findAll(Pageable page);
+    List<MemberEntity> findAllByErasedFalse();
+
+    Page<MemberEntity> findAllByErasedFalse(Pageable pageable);
 }

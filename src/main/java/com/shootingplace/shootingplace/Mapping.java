@@ -120,6 +120,7 @@ public class Mapping {
                             .license(map(e.getLicense()))
                             .joinDate(e.getJoinDate())
                             .memberPermissions(map(e.getMemberPermissions()))
+                            .club(map(e.getClub()))
                             .build()).orElse(null);
         } else {
             return Optional.of(e).map(o ->
@@ -136,6 +137,7 @@ public class Mapping {
                             .license(map(e.getLicense()))
                             .joinDate(e.getJoinDate())
                             .memberPermissions(map(e.getMemberPermissions()))
+                            .club(map(e.getClub()))
                             .build()).orElse(null);
         }
 
@@ -493,6 +495,7 @@ public class Mapping {
 
     static Club map(ClubEntity c) {
         return Club.builder()
+                .id(c.getId())
                 .name(c.getName())
                 .build();
     }

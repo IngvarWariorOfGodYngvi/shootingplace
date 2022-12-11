@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.file;
 import com.itextpdf.text.DocumentException;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberService;
+import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,13 +24,24 @@ public class FilesController {
 
     private final FilesService filesService;
     private final XLSXFiles xlsxFiles;
+    private final DocxFiles docxFiles;
     private final MemberService memberService;
 
 
-    public FilesController(FilesService filesService, XLSXFiles xlsxFiles, MemberService memberService) {
+    public FilesController(FilesService filesService, XLSXFiles xlsxFiles, DocxFiles docxFiles, MemberService memberService) {
         this.filesService = filesService;
         this.xlsxFiles = xlsxFiles;
+        this.docxFiles = docxFiles;
         this.memberService = memberService;
+    }
+
+    @GetMapping("/simpleDocx")
+    public ResponseEntity<?> simple() throws IOException, Docx4JException {
+        FilesEntity filesEntity = docxFiles.simpleDocxFile();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
     }
 
     @PostMapping("/upload")
@@ -47,11 +59,11 @@ public class FilesController {
     }
 
     @PostMapping("/member/{uuid}")
-    public ResponseEntity<?> addImageToMember(@PathVariable String uuid, @RequestParam("file") MultipartFile file){
+    public ResponseEntity<?> addImageToMember(@PathVariable String uuid, @RequestParam("file") MultipartFile file) {
         String message;
         try {
             MemberEntity member = memberService.getMember(uuid);
-            String store = filesService.store(file,member);
+            String store = filesService.store(file, member);
 
             message = "Uploaded the file successfully: " + file.getName();
             return ResponseEntity.status(HttpStatus.OK).body(message);
@@ -60,6 +72,7 @@ public class FilesController {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(message);
         }
     }
+
     // składka członkowska
     @GetMapping("/downloadContribution/{memberUUID}")
     public ResponseEntity<byte[]> getContributionFile(@PathVariable String memberUUID, @RequestParam String contributionUUID) throws IOException, DocumentException {
@@ -69,6 +82,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // karta klubowa
     @GetMapping("/downloadPersonalCard/{memberUUID}")
     public ResponseEntity<byte[]> getPersonalCardFile(@PathVariable String memberUUID) throws IOException, DocumentException {
@@ -78,6 +92,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // csv
     @GetMapping("/downloadCSVFile/{memberUUID}")
     public ResponseEntity<byte[]> getMemberCSVFile(@PathVariable String memberUUID) throws IOException {
@@ -87,6 +102,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_TYPE, filesEntity.getName().replaceAll("ó", "o"))
                 .body(filesEntity.getData());
     }
+
     // lista amunicyjna
     @GetMapping("/downloadAmmunitionList/{ammoEvidenceUUID}")
     public ResponseEntity<byte[]> getAmmoListFile(@PathVariable String ammoEvidenceUUID) throws IOException, DocumentException {
@@ -96,6 +112,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // wniosek o przedłużenie licencji
     @GetMapping("/downloadApplication/{memberUUID}")
     public ResponseEntity<byte[]> getApplicationForExtensionOfTheCompetitorsLicense(@PathVariable String memberUUID) throws IOException, DocumentException {
@@ -105,24 +122,27 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // komunikat z zawodów pdf
     @GetMapping("/downloadAnnouncementFromCompetition/{tournamentUUID}")
     public ResponseEntity<byte[]> getAnnouncementFromCompetition(@PathVariable String tournamentUUID) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.createAnnouncementFromCompetition(tournamentUUID);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
+
     // komunikat z zawodów xls
     @GetMapping("/downloadAnnouncementFromCompetitionXLSX/{tournamentUUID}")
     public ResponseEntity<byte[]> getAnnouncementFromCompetitionXSLX(@PathVariable String tournamentUUID) throws IOException {
         FilesEntity filesEntity = xlsxFiles.createAnnouncementInXLSXType(tournamentUUID);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
+
     // lista klubowiczów
     @GetMapping("/downloadAllMembers")
     public ResponseEntity<byte[]> getAllMembersToTable(@RequestParam boolean condition) throws IOException, DocumentException {
@@ -132,6 +152,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // lista klubowiczów z licencją zawodniczą
     @GetMapping("/downloadAllMembersWithLicense")
     public ResponseEntity<byte[]> getAllMembersWithLicense() throws IOException, DocumentException {
@@ -141,6 +162,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // lista obecności na wybory
     @GetMapping("/downloadAllMembersToElection")
     public ResponseEntity<byte[]> getAllMembersToElection() throws IOException, DocumentException {
@@ -150,6 +172,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // lista do zgłoszenia na policję
     @GetMapping("/generateListOfMembersToReportToPolice")
     public ResponseEntity<byte[]> generateListOfMembersToReportToPolice() throws IOException, DocumentException {
@@ -159,6 +182,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // lista osób usuniętych
     @GetMapping("/downloadAllErasedMembers")
     public ResponseEntity<byte[]> getAllErasedMembers() throws IOException, DocumentException {
@@ -168,6 +192,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // lista osób z licencją i bez składek - bezsensowne; do skasowania
     @GetMapping("/downloadAllMembersWithValidLicenseNoContribution")
     public ResponseEntity<byte[]> getAllMembersWithLicenceValidAndContributionNotValid() throws IOException, DocumentException {
@@ -177,6 +202,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // lista osób do skreślenia
     @GetMapping("/downloadAllMembersToErased")
     public ResponseEntity<byte[]> getAllMembersToErased() throws IOException, DocumentException {
@@ -186,15 +212,17 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // zaświadczenie o przynależności do klubu
     @GetMapping("/downloadCertificateOfClubMembership/{memberUUID}")
-    public ResponseEntity<byte[]> CertificateOfClubMembership(@PathVariable String memberUUID, @RequestParam String reason,@RequestParam String city) throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.CertificateOfClubMembership(memberUUID, reason, city);
+    public ResponseEntity<byte[]> CertificateOfClubMembership(@PathVariable String memberUUID, @RequestParam String reason, @RequestParam String city, @RequestParam boolean enlargement) throws IOException, DocumentException {
+        FilesEntity filesEntity = filesService.CertificateOfClubMembership(memberUUID, reason, city,enlargement);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // spis broni
     @GetMapping("/downloadGunRegistry")
     public ResponseEntity<byte[]> getGunRegistry(@RequestParam List<String> guns) throws IOException, DocumentException {
@@ -204,6 +232,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // list przewozowy broni
     @GetMapping("/downloadGunTransportCertificate")
     public ResponseEntity<byte[]> getGunTransportCertificate(@RequestParam List<String> guns, @RequestParam String date, @RequestParam String date1) throws IOException, DocumentException {
@@ -215,6 +244,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     // metryczka
     @GetMapping("/downloadMetric/{tournamentUUID}")
     public ResponseEntity<byte[]> getMemberMetrics(@RequestParam String memberUUID, @RequestParam String otherID, @PathVariable String tournamentUUID, @RequestParam List<String> competitions, @RequestParam String startNumber) throws IOException, DocumentException {
@@ -230,27 +260,30 @@ public class FilesController {
         FilesEntity filesEntity = filesService.getStartsMetric(memberUUID, otherID, tournamentUUID, competitions, startNumber);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
+
     // raport sędziowania ogólny
     @GetMapping("/downloadJudgingReport")
     public ResponseEntity<byte[]> getJudgingReportInChosenTime(/*@RequestParam LocalDate from, @RequestParam LocalDate to*/) throws DocumentException, IOException {
         FilesEntity filesEntity = filesService.getJudgingReportInChosenTime(/*from,to*/);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
+
     // raport pracy
     @GetMapping("/downloadWorkReport")
-    public ResponseEntity<byte[]> getWorkTimeReport(@RequestParam String month, @RequestParam String workType,@Nullable @RequestParam String uuid, @RequestParam boolean detailed, @Nullable @RequestParam boolean incrementVersion) throws DocumentException, IOException {
-        FilesEntity filesEntity = filesService.getWorkTimeReport(month, workType,uuid, detailed,incrementVersion);
+    public ResponseEntity<byte[]> getWorkTimeReport(@RequestParam String month, @RequestParam String workType, @Nullable @RequestParam String uuid, @RequestParam boolean detailed, @Nullable @RequestParam boolean incrementVersion) throws DocumentException, IOException {
+        FilesEntity filesEntity = filesService.getWorkTimeReport(month, workType, uuid, detailed, incrementVersion);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
+
     // r=lista sędziów na zawodach
     @GetMapping("/downloadJudge/{tournamentUUID}")
     public ResponseEntity<byte[]> getJudge(@PathVariable String tournamentUUID) throws IOException, DocumentException {
@@ -259,7 +292,7 @@ public class FilesController {
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ","") + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
 

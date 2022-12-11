@@ -93,7 +93,7 @@ public class FilesService {
         this.workServ = workServ;
     }
 
-    FilesEntity createFileEntity(FilesModel filesModel) {
+    private FilesEntity createFileEntity(FilesModel filesModel) {
         filesModel.setDate(LocalDate.now());
         filesModel.setTime(LocalTime.now());
         FilesEntity filesEntity = Mapping.map(filesModel);
@@ -579,8 +579,9 @@ public class FilesService {
 
     }
 
+    // wniosek o przedłużenie licencji zawodniczej
     public FilesEntity createApplicationForExtensionOfTheCompetitorsLicense(String memberUUID) throws IOException, DocumentException {
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
         String fileName = "Wniosek_" + memberEntity.getFirstName() + "_" + memberEntity.getSecondName() + ".pdf";
 
@@ -879,6 +880,7 @@ public class FilesService {
 
     }
 
+    // komunikat z zawodów
     public FilesEntity createAnnouncementFromCompetition(String tournamentUUID) throws IOException, DocumentException {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         ClubEntity c = clubRepository.getOne(1);
@@ -1165,15 +1167,15 @@ public class FilesService {
         return filesEntity;
     }
 
-    public FilesEntity CertificateOfClubMembership(String memberUUID, String reason, String city) throws IOException, DocumentException {
+    // zaświadczenie z Klubu
+    public FilesEntity CertificateOfClubMembership(String memberUUID, String reason, String city, boolean enlargement) throws IOException, DocumentException {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         ClubEntity club = clubRepository.getOne(1);
-        String fileName = reason + " " + memberEntity.getFirstName().trim().concat(" " + memberEntity.getSecondName().trim()) + ".pdf";
+        String fileName = reason + " " + memberEntity.getMemberName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
-//        FileOutputStream fileOutputStream = new FileOutputStream(fileName);
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper());
@@ -1291,6 +1293,9 @@ public class FilesService {
             policeStreetNumber = "31/33";
         }
 
+        if (!club.getId().equals(memberEntity.getClub().getId())) {
+            reason = choice[0];
+        }
         if (reason.equals(choice[1])) {
             policeAddress = "\nKomendant Wojewódzki Policji " + policeCity + "\nWydział Postępowań Administracyjnych\n " + policeZipCode + " " + city + ", " + policeStreet + " " + policeStreetNumber;
         }
@@ -1332,8 +1337,8 @@ public class FilesService {
 
         Paragraph par4 = new Paragraph(club.getFullName() + " jest członkiem Polskiego Związku Strzelectwa Sportowego i posiada Licencję Klubową nr LK-" + club.getLicenseNumber() + ", jest również Członkiem Łódzkiego Związku Strzelectwa Sportowego, zarejestrowany pod numerem ewidencyjnym 6.", font(12, 0));
         par4.setFirstLineIndent(40);
-
-        Paragraph par5 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " " + word + " z prośbą o wydanie niniejszego zaświadczenia, skutkiem którego będzie złożenie wniosku o pozwolenie na broń sportową do celów sportowych. ", font(12, 0));
+        String s1 = enlargement ? "rozszerzenie pozwolenia" : "pozwolenie";
+        Paragraph par5 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " " + word + " z prośbą o wydanie niniejszego zaświadczenia, skutkiem którego będzie złożenie wniosku o " + s1 + " na broń sportową do celów sportowych.", font(12, 0));
         par5.setFirstLineIndent(40);
 
         Paragraph par6 = new Paragraph("Sporządzono w 2 egz.", font(12, 0));
@@ -1565,8 +1570,7 @@ public class FilesService {
                     document.add(table);
 
                 }
-                int loopLength = competitionEntity.getNumberOfShots() + 1,
-                        secondLoopLength = 0;
+                int loopLength = competitionEntity.getNumberOfShots() + 1;
                 for (int i = 0; i <= loopLength; i++) {
                     String s = " ";
                     Chunk c = new Chunk(s, font(28, 0));
@@ -1575,7 +1579,6 @@ public class FilesService {
                     table1.addCell(cell);
                     if (i == loopLength) {
                         for (int k = i; k > 0; k--) {
-                            secondLoopLength++;
                             if (k % 10 == 1) {
                                 break;
                             }
@@ -1801,14 +1804,6 @@ public class FilesService {
         document.addCreationDate();
 
         List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).sorted(Comparator.comparing(MemberEntity::getSecondName, pl())).collect(Collectors.toList());
-
-        String hour = String.valueOf(LocalTime.now().getHour());
-        String minute = String.valueOf(LocalTime.now().getMinute());
-        if (Integer.parseInt(minute) < 10) {
-            minute = "0" + minute;
-        }
-
-        String now = hour + ":" + minute;
 
         Paragraph title = new Paragraph("Lista obecności klubowiczów na dzień " + LocalDate.now().format(dateFormat()), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
@@ -2923,7 +2918,6 @@ public class FilesService {
         List<FilesEntity> collect = filesRepository.findAll().stream().filter(f -> f.getName().contains("raport_pracy_" + month)).collect(Collectors.toList());
         if (!collect.isEmpty()) {
             reportNumber = collect.stream().max(Comparator.comparing(FilesEntity::getVersion)).orElseThrow(EntityNotFoundException::new).getVersion();
-//            reportNumber = collect.stream().max(Comparator.comparing(FilesEntity::getVersion)).orElseThrow(EntityNotFoundException::new).getVersion();
         }
 
         Document document = new Document(PageSize.A4);
@@ -3123,9 +3117,11 @@ public class FilesService {
         Document document = new Document(PageSize.A4);
         setAttToDoc(fileName, document);
 
-        List<MemberEntity> collect = memberRepository.findAll()
+        List<MemberEntity> collect = memberRepository.findAllByErasedFalse()
                 .stream()
-                .filter(f -> !f.getErased() && f.getLicense().getNumber() != null)
+                .filter(f -> f.getClub().getId().equals(clubRepository.getOne(1).getId()))
+                .filter(f -> f.getLicense().getNumber() != null)
+                .filter(f -> f.getLicense().isValid())
                 .collect(Collectors.toList());
 
         Paragraph newLine = new Paragraph("\n", font(13, 0));
@@ -3173,7 +3169,6 @@ public class FilesService {
             PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(12, 0)));
             PdfPCell nameCell = new PdfPCell(new Paragraph(memberEntityName, font(12, 0)));
             PdfPCell licenceNumberCell = new PdfPCell(new Paragraph(memberEntity.getLicense().getNumber(), font(12, 0)));
-            ;
             PdfPCell licenceDateCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getLicense().getValidThru().getYear()), font(12, 0)));
             PdfPCell activeCell = new PdfPCell(new Paragraph(memberEntity.getActive() ? "Aktywny" : "Brak składek", font(12, 0)));
             PdfPCell emptyCell = new PdfPCell(new Paragraph("", font(12, 0)));
@@ -3195,7 +3190,7 @@ public class FilesService {
         document.add(newLine);
         document.add(titleTable);
         collect1 = collect.stream()
-                .filter(f->!f.getAdult())
+                .filter(f -> !f.getAdult())
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()).thenComparing(MemberEntity::getFirstName, pl()))
                 .collect(Collectors.toList());
         for (int i = 0; i < collect1.size(); i++) {
@@ -3209,7 +3204,6 @@ public class FilesService {
             PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(12, 0)));
             PdfPCell nameCell = new PdfPCell(new Paragraph(memberEntityName, font(12, 0)));
             PdfPCell licenceNumberCell = new PdfPCell(new Paragraph(memberEntity.getLicense().getNumber(), font(12, 0)));
-            ;
             PdfPCell licenceDateCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getLicense().getValidThru().getYear()), font(12, 0)));
             PdfPCell activeCell = new PdfPCell(new Paragraph(memberEntity.getActive() ? "Aktywny" : "Brak składek", font(12, 0)));
             PdfPCell emptyCell = new PdfPCell(new Paragraph("", font(12, 0)));
@@ -3226,13 +3220,6 @@ public class FilesService {
             document.add(memberTable);
 
         }
-
-
-
-//        collect.stream().filter(MemberEntity::getAdult).forEach(e->{
-//
-//            String memberEntityName = e.getSecondName().concat(" " + e.getFirstName());
-//        });
         document.close();
         byte[] data = convertToByteArray(fileName);
         FilesModel filesModel = FilesModel.builder()
@@ -3255,7 +3242,7 @@ public class FilesService {
     }
 
     private void setAttToDoc(String fileName, Document document) throws DocumentException, FileNotFoundException {
-        document.setMargins(35F, 35F, 50F, 50F);
+        document.setMargins(20F, 20F, 35F, 55F);
         // to musi zostać by spowolnić program bo inaczej nie robi tego co powinien
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
@@ -3349,7 +3336,7 @@ public class FilesService {
         return filesRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
     }
 
-    public String store(MultipartFile file) throws IOException {
+    public void store(MultipartFile file) throws IOException {
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
         FilesModel build = FilesModel.builder()
                 .name(fileName)
@@ -3359,7 +3346,6 @@ public class FilesService {
                 .build();
         FilesEntity fileEntity = createFileEntity(build);
 
-        return fileEntity.getUuid();
     }
 
     public String store(MultipartFile file, MemberEntity member) throws IOException {

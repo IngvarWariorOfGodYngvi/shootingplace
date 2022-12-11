@@ -23,7 +23,6 @@ public class MemberController {
     private final MemberService memberService;
     private final ChangeHistoryService changeHistoryService;
 
-
     public MemberController(MemberService memberService, ChangeHistoryService changeHistoryService) {
         this.memberService = memberService;
         this.changeHistoryService = changeHistoryService;
@@ -63,7 +62,6 @@ public class MemberController {
     @GetMapping("/getAllMemberDTO")
     public ResponseEntity<List<MemberDTO>> getAllMemberDTO() {
         return ResponseEntity.ok(memberService.getAllMemberDTO());
-
     }
 
     @GetMapping("/getAllMemberDTOWithArgs")
@@ -87,7 +85,6 @@ public class MemberController {
             erase1 = Boolean.valueOf(erase);
         }
         return ResponseEntity.ok(memberService.getAllMemberDTO(adult1, active1, erase1));
-
     }
 
     @GetMapping("/membersQuantity")
@@ -255,6 +252,10 @@ public class MemberController {
         } else {
             return ResponseEntity.status(403).body("Brak dostępu");
         }
+    }
+    @PatchMapping("/changeClub/{uuid}")
+    public ResponseEntity<?> changeClub(@PathVariable String uuid,@RequestParam String clubName){
+        return memberService.changeClub(uuid,clubName);
     }
 
 }

@@ -1,18 +1,18 @@
 package com.shootingplace.shootingplace.member;
 
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.address.Address;
-import com.shootingplace.shootingplace.address.AddressService;
+import com.shootingplace.shootingplace.club.ClubEntity;
+import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.contributions.ContributionService;
-import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
 import com.shootingplace.shootingplace.enums.ErasedType;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryRepository;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.license.LicenseService;
-import com.shootingplace.shootingplace.club.ClubRepository;
-import com.shootingplace.shootingplace.history.LicensePaymentHistoryRepository;
-import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentService;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;
 import org.apache.logging.log4j.LogManager;
@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final AddressService addressService;
     private final LicenseService licenseService;
     private final LicenseRepository licenseRepository;
     private final ShootingPatentService shootingPatentService;
@@ -54,7 +53,6 @@ public class MemberService {
 
 
     public MemberService(MemberRepository memberRepository,
-                         AddressService addressService,
                          LicenseService licenseService, LicenseRepository licenseRepository,
                          ShootingPatentService shootingPatentService,
                          ContributionService contributionService,
@@ -64,7 +62,6 @@ public class MemberService {
                          ClubRepository clubRepository,
                          ErasedRepository erasedRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, ChangeHistoryService changeHistoryService) {
         this.memberRepository = memberRepository;
-        this.addressService = addressService;
         this.licenseService = licenseService;
         this.licenseRepository = licenseRepository;
         this.shootingPatentService = shootingPatentService;
@@ -155,9 +152,8 @@ public class MemberService {
             }
         });
         //młodzież
-        List<MemberEntity> nonAdultMembers = memberRepository.findAll()
+        List<MemberEntity> nonAdultMembers = memberRepository.findAllByErasedFalse()
                 .stream()
-                .filter(f -> !f.getErased())
                 .filter(f -> !f.getAdult())
                 .collect(Collectors.toList());
         // nie ma żadnych składek
@@ -325,7 +321,7 @@ public class MemberService {
             LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
         ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "activateOrDeactivateMember", "Zmieniono status aktywny/nieaktywny");
         if (response.getStatusCode().equals(HttpStatus.OK)) {
@@ -342,7 +338,7 @@ public class MemberService {
             LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         if (memberEntity.getAdult()) {
             LOG.info("Klubowicz należy już do grupy powszechnej");
             return ResponseEntity.badRequest().body("Klubowicz należy już do grupy powszechnej");
@@ -366,7 +362,7 @@ public class MemberService {
             LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         if (!memberEntity.getErased()) {
             ErasedEntity build = ErasedEntity.builder()
                     .erasedType(erasedType)
@@ -486,9 +482,7 @@ public class MemberService {
 
     public MemberEntity getMember(String uuid) {
         if (memberRepository.existsById(uuid)) {
-            MemberEntity memberEntity = memberRepository.findById(uuid).orElse(null);
-            assert memberEntity != null;
-            return memberEntity;
+            return memberRepository.getOne(uuid);
         } else {
             return null;
         }
@@ -520,10 +514,9 @@ public class MemberService {
 
     public List<String> getMembersEmailsAdultActiveWithNoPatent() {
         List<String> list = new ArrayList<>();
-        List<MemberEntity> all = memberRepository.findAll();
+        List<MemberEntity> all = memberRepository.findAllByErasedFalse();
         all.sort(Comparator.comparing(MemberEntity::getSecondName).thenComparing(MemberEntity::getFirstName));
         all.stream()
-                .filter(f -> !f.getErased())
                 .filter(MemberEntity::getAdult)
                 .filter(MemberEntity::getActive)
                 .filter(f -> f.getShootingPatent() != null)
@@ -538,10 +531,9 @@ public class MemberService {
 
     public List<String> getMembersPhoneNumbersWithNoPatent() {
         List<String> list = new ArrayList<>();
-        List<MemberEntity> all = memberRepository.findAll();
+        List<MemberEntity> all = memberRepository.findAllByErasedFalse();
         all.sort(Comparator.comparing(MemberEntity::getSecondName).thenComparing(MemberEntity::getFirstName));
         all.stream()
-                .filter(f -> !f.getErased())
                 .filter(MemberEntity::getAdult)
                 .filter(MemberEntity::getActive)
                 .filter(f -> f.getShootingPatent().getPatentNumber() == null || f.getShootingPatent().getPatentNumber().isEmpty())
@@ -577,27 +569,8 @@ public class MemberService {
         return list;
     }
 
-//    public List<String> getAllNames() {
-//
-//        List<String> list = new ArrayList<>();
-//        memberRepository.findAll().stream()
-//                .filter(f -> !f.getErased())
-//                .forEach(e -> {
-//                    if (!e.getActive()) {
-//                        list.add(e.getSecondName().concat(" " + e.getFirstName() + " BRAK SKŁADEK " + " leg. " + e.getLegitimationNumber()));
-//                    } else {
-//                        list.add(e.getSecondName().concat(" " + e.getFirstName() + " leg. " + e.getLegitimationNumber()));
-//                    }
-//                });
-//        list.sort(Comparator.comparing(String::new, Collator.getInstance(Locale.forLanguageTag("pl"))));
-//        LOG.info("Lista nazwisk z identyfikatorem");
-//        return list;
-//
-//    }
     public List<MemberInfo> getAllNames() {
-//        List<MemberInfo> list = new ArrayList<>();
-        return memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
+        return memberRepository.findAllByErasedFalse().stream()
                 .map(Mapping::map1)
                 .sorted(Comparator.comparing(MemberInfo::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberInfo::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
@@ -607,67 +580,71 @@ public class MemberService {
     public List<Long> getMembersQuantity() {
         List<Long> list = new ArrayList<>();
 //      whole adult
-        long count = memberRepository.findAll().stream()
+        List<MemberEntity> all = memberRepository.findAll();
+        long count = all.stream()
                 .filter(f -> !f.getErased())
                 .filter(MemberEntity::getAdult)
                 .count();
 //      license valid
-        long count1 = memberRepository.findAll().stream()
+        long count1 = all.stream()
                 .filter(f -> !f.getErased())
+                .filter(f->f.getClub().getId().equals(1))
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(MemberEntity::getPzss)
                 .filter(f -> f.getLicense().isValid())
                 .count();
 
 //      license not valid
-        long count2 = memberRepository.findAll().stream()
+        long count2 = all.stream()
                 .filter(f -> !f.getErased())
+                .filter(f->f.getClub().getId().equals(1))
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(MemberEntity::getPzss)
                 .filter(f -> !f.getLicense().isValid())
                 .count();
 
 //      whole not adult
-        long count3 = memberRepository.findAll().stream()
+        long count3 = all.stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getAdult())
                 .count();
 //      not adult active
-        long count4 = memberRepository.findAll().stream()
+        long count4 = all.stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getAdult())
                 .filter(MemberEntity::getActive)
                 .count();
 //      not adult not active
-        long count5 = memberRepository.findAll().stream()
+        long count5 = all.stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getAdult())
                 .filter(f -> !f.getActive())
                 .count();
 
 //      adult erased
-        long count6 = memberRepository.findAll().stream()
+        long count6 = all.stream()
                 .filter(MemberEntity::getErased)
                 .filter(MemberEntity::getAdult)
                 .count();
 //      not adult erased
-        long count7 = memberRepository.findAll().stream()
+        long count7 = all.stream()
                 .filter(MemberEntity::getErased)
                 .filter(f -> !f.getAdult())
                 .count();
-        long count8 = licensePaymentHistoryRepository.findAll().stream()
+        List<LicensePaymentHistoryEntity> allLicensePayment = licensePaymentHistoryRepository.findAll();
+        long count8 = allLicensePayment.stream()
                 .filter(f -> !f.isPayInPZSSPortal())
                 .count();
-        long count9 = licensePaymentHistoryRepository.findAll().stream()
+        long count9 = allLicensePayment.stream()
                 .filter(f -> f.getDate().getYear() == LocalDate.now().getYear())
                 .filter(LicensePaymentHistoryEntity::isNew)
                 .count();
-        long count10 = memberRepository.findAll().stream()
+        long count10 = all.stream()
                 .filter(f -> !f.getErased())
                 .filter(MemberEntity::getAdult)
                 .filter(MemberEntity::getActive)
                 .count();
-        long count11 = memberRepository.findAll().stream()
+        long count11 = all.stream()
                 .filter(f -> !f.getErased())
                 .filter(MemberEntity::getAdult)
                 .filter(f -> !f.getActive())
@@ -690,14 +667,12 @@ public class MemberService {
     }
 
     public List<MemberDTO> getAllMemberDTO() {
-        List<MemberDTO> list = new ArrayList<>();
-        Pageable pageable = PageRequest.of(0, memberRepository.findAll().size(), Sort.by("secondName").descending());
-        memberRepository.findAll(pageable)
+        Pageable page = PageRequest.of(0, memberRepository.findAll().size(), Sort.by("secondName").descending());
+        return memberRepository.findAllByErasedFalse(page)
                 .stream()
-                .filter(f -> !f.getErased())
-                .forEach(e -> list.add(Mapping.map2DTO(e)));
-        list.sort(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))));
-        return list;
+                .map(Mapping::map2DTO)
+                .sorted(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .collect(Collectors.toList());
     }
 
     public List<MemberDTO> getAllMemberDTO(Boolean adult, Boolean active, Boolean erase) {
@@ -705,51 +680,52 @@ public class MemberService {
         List<MemberDTO> list = new ArrayList<>();
         if (!erase) {
             if (adult == null && active == null) {
-                memberRepository.findAll().stream()
-                        .filter(f -> !f.getErased())
-                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+                list = memberRepository.findAllByErasedFalse().stream()
+                        .map(Mapping::map2DTO)
+                        .collect(Collectors.toList());
             }
             if (adult != null && active == null) {
-                memberRepository.findAll().stream()
-                        .filter(f -> !f.getErased())
+                list = memberRepository.findAllByErasedFalse().stream()
                         .filter(f -> f.getAdult().equals(adult))
-                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+                        .map(Mapping::map2DTO)
+                        .collect(Collectors.toList());
             }
             if (adult == null && active != null) {
-                memberRepository.findAll().stream()
-                        .filter(f -> !f.getErased())
+                list = memberRepository.findAllByErasedFalse().stream()
                         .filter(f -> f.getActive().equals(active))
-                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+                        .map(Mapping::map2DTO)
+                        .collect(Collectors.toList());
             }
             if (adult != null && active != null) {
-                memberRepository.findAll().stream()
-                        .filter(f -> !f.getErased())
+                list = memberRepository.findAllByErasedFalse().stream()
                         .filter(f -> f.getAdult().equals(adult))
                         .filter(f -> f.getActive().equals(active))
-                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+                        .map(Mapping::map2DTO)
+                        .collect(Collectors.toList());
             }
         } else {
             if (adult == null) {
-                memberRepository.findAll().stream()
+                list = memberRepository.findAll().stream()
                         .filter(MemberEntity::getErased)
-                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+                        .map(Mapping::map2DTO)
+                        .collect(Collectors.toList());
             }
             if (adult != null) {
-                memberRepository.findAll().stream()
-                        .filter(f -> f.getAdult().equals(adult))
+                list = memberRepository.findAll().stream()
                         .filter(MemberEntity::getErased)
-                        .forEach(e -> list.add(Mapping.map2DTO(e)));
+                        .filter(f -> f.getAdult().equals(adult))
+                        .map(Mapping::map2DTO)
+                        .collect(Collectors.toList());
             }
         }
 
-        list.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
+        list.sort(Comparator.comparing(MemberDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))));
         return list;
     }
 
     public ResponseEntity<?> changePzss(String uuid) {
         if (memberRepository.existsById(uuid)) {
             MemberEntity memberEntity = memberRepository.getOne(uuid);
-            String s = memberEntity.getAdult() ? memberEntity.getPzss() ? memberEntity.getSecondName() : memberEntity.getFirstName() : memberEntity.getEmail();
             if (!memberEntity.getPzss()) {
                 memberEntity.setPzss(true);
                 memberRepository.save(memberEntity);
@@ -865,7 +841,7 @@ public class MemberService {
     }
 
     public MemberEntity getMemberByUUID(String uuid) {
-        return memberRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
+        return memberRepository.getOne(uuid);
     }
 
     public List<String> getMembersEmailsNoActive() {
@@ -937,39 +913,30 @@ public class MemberService {
 
     public List<Member> getMembersToReportToThePolice() {
         LocalDate notValidLicense = LocalDate.now().minusYears(1);
-        List<Member> members = new ArrayList<>();
-        List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
+        return memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(f -> !f.getLicense().isValid())
                 .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
-                .collect(Collectors.toList());
-        memberEntityList.forEach(e -> members.add(Mapping.map(e)));
-        return members;
+                .sorted(Comparator.comparing(MemberEntity::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .map(Mapping::map).collect(Collectors.toList());
     }
 
     public List<Member> getMembersToErase() {
         LocalDate notValidContribution = LocalDate.of(LocalDate.now().getYear(), 12, 31).minusYears(2);
-        List<Member> members = new ArrayList<>();
-        List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
+        return memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getActive())
                 .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
-                .collect(Collectors.toList());
-        memberEntityList.forEach(e -> members.add(Mapping.map(e)));
-        return members;
+                .sorted(Comparator.comparing(MemberEntity::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl")))).map(Mapping::map).collect(Collectors.toList());
     }
 
     public List<Member> getMembersErased() {
-        List<Member> members = new ArrayList<>();
-        List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
+        return memberRepository.findAll().stream()
                 .filter(MemberEntity::getErased)
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .map(Mapping::map)
                 .collect(Collectors.toList());
-        memberEntityList.forEach(e -> members.add(Mapping.map(e)));
-        return members;
     }
 
     public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, String body) {
@@ -986,9 +953,23 @@ public class MemberService {
 
     public ResponseEntity<?> getMemberByPESELNumber(String PESELNumber) {
         PESELNumber.replaceAll(" ", "");
-        System.out.println(PESELNumber);
         MemberEntity member = memberRepository.findByPesel(PESELNumber).orElse(null);
-        System.out.println(member);
         return member != null ? ResponseEntity.ok(Mapping.map(member)) : ResponseEntity.badRequest().body("coś poszło nie tak");
+    }
+
+    public ResponseEntity<?> changeClub(String uuid, String clubName) {
+        if (!memberRepository.existsById(uuid)){
+            return ResponseEntity.badRequest().body("Nie znaleziono klubowicza");
+        }
+        if (!clubRepository.existsByName(clubName)){
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubu");
+        }
+        MemberEntity member = memberRepository.getOne(uuid);
+
+        ClubEntity club = clubRepository.findByName(clubName);
+        System.out.println(club);
+        member.setClub(clubRepository.getOne(club.getId()));
+        memberRepository.save(member);
+        return ResponseEntity.ok("Zmieniono Klub macierzysty zawodnika " + member.getMemberName() + " na: " + club.getName());
     }
 }

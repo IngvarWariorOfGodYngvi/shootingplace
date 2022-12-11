@@ -23,7 +23,7 @@ public class OtherPersonEntity {
     private String phoneNumber;
     private String email;
     private boolean active;
-    @OneToOne
+    @ManyToOne
     private ClubEntity club;
     @OneToOne(orphanRemoval = true)
     private MemberPermissionsEntity permissionsEntity;

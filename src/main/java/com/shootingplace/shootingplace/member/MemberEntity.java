@@ -55,7 +55,7 @@ public class MemberEntity extends Person {
     private String pesel;
     @NotBlank
     private String IDCard;
-    @OneToOne(orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne( cascade = CascadeType.ALL)
     private ClubEntity club;
 
     @OneToOne(orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -283,6 +283,14 @@ public class MemberEntity extends Person {
 
     public void setPzss(Boolean pzss) {
         this.pzss = pzss;
+    }
+
+    /**
+     * Return secondName plus firstName of Member
+     */
+    public String getMemberName() {
+        return this.getSecondName().replaceAll(" ", "") +
+                this.getFirstName().replaceAll(" ", "");
     }
 
 }

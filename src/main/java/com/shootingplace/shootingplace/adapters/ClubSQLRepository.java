@@ -5,4 +5,5 @@ import com.shootingplace.shootingplace.club.ClubRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ClubSQLRepository extends ClubRepository, JpaRepository<ClubEntity,Integer> {
+
 }

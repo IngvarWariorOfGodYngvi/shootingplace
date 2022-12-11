@@ -1,6 +1,5 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressRepository;
 import com.shootingplace.shootingplace.address.AddressService;
@@ -89,6 +88,7 @@ public class MemberServiceTest {
     public void init() {
 //        when(memberRepository.findAll(Sort.by("secondaName"))).thenReturn(membersList);
         when(memberRepository.findAll()).thenReturn(membersList);
+        when(memberRepository.findAllByErasedFalse()).thenReturn(membersList.stream().filter(f->!f.getErased()).collect(Collectors.toList()));
     }
 
     @After
@@ -146,7 +146,7 @@ public class MemberServiceTest {
         //given
         String uuid = membersList.get(0).getUuid();
         //when
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+        when(memberRepository.getOne(uuid)).thenReturn(findByID(uuid));
         MemberEntity memberByUUID = memberService.getMemberByUUID(uuid);
         //then
         assertThat(memberByUUID, Matchers.equalTo(memberByUUID));
@@ -883,7 +883,7 @@ public class MemberServiceTest {
         String uuid = membersList.get(0).getUuid();
         //when
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+        when(memberRepository.getOne(uuid)).thenReturn(findByID(uuid));
         ResponseEntity<?> responseEntity = memberService.changeAdult(uuid, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
@@ -896,7 +896,7 @@ public class MemberServiceTest {
         String uuid = membersList.get(1).getUuid();
         //when
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+        when(memberRepository.getOne(uuid)).thenReturn(findByID(uuid));
         ResponseEntity<?> responseEntity = memberService.changeAdult(uuid, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
@@ -909,7 +909,7 @@ public class MemberServiceTest {
         String uuid = membersList.get(6).getUuid();
         //when
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+        when(memberRepository.getOne(uuid)).thenReturn(findByID(uuid));
         ResponseEntity<?> responseEntity = memberService.changeAdult(uuid, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
@@ -956,7 +956,7 @@ public class MemberServiceTest {
         String uuid = membersList.get(6).getUuid();
         //when
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+        when(memberRepository.getOne(uuid)).thenReturn(findByID(uuid));
         ResponseEntity<?> responseEntity = memberService.activateOrDeactivateMember(uuid, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
@@ -985,7 +985,7 @@ public class MemberServiceTest {
         String description = "description";
         //when
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+        when(memberRepository.getOne(uuid)).thenReturn(findByID(uuid));
         ResponseEntity<?> responseEntity = memberService.eraseMember(uuid, erasedType, date, description, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
@@ -1080,9 +1080,6 @@ public class MemberServiceTest {
                 .build();
     }
 
-    private List<Member> erasedList() {
-        return membersList.stream().filter(MemberEntity::getErased).map(Mapping::map).collect(Collectors.toList());
-    }
 
     private MemberEntity findByID(String uuid) {
         return membersList.stream().filter(f -> f.getUuid().equals(uuid)).findFirst().orElseThrow(EntityNotFoundException::new);
@@ -1100,9 +1097,6 @@ public class MemberServiceTest {
         return membersList.stream().filter(f -> f.getEmail().equals(email)).findFirst().orElseThrow(EntityNotFoundException::new);
     }
 
-    private List<MemberEntity> findAllByErasedIsTrue() {
-        return membersList.stream().filter(MemberEntity::getErased).collect(Collectors.toList());
-    }
 
     private boolean existsById(String uuid) {
         return membersList.stream().anyMatch(f -> f.getUuid().equals(uuid));
@@ -1116,9 +1110,6 @@ public class MemberServiceTest {
         return membersList.stream().filter(f -> f.getLegitimationNumber().equals(legitimationNumber)).findFirst().orElseThrow(EntityNotFoundException::new);
     }
 
-    private MemberEntity findByPhoneNumber(String phoneNumber) {
-        return membersList.stream().filter(f -> f.getPhoneNumber().equals(phoneNumber)).findFirst().orElseThrow(EntityNotFoundException::new);
-    }
 
     private MemberEntity save(MemberEntity memberEntity) {
         return MemberEntity.builder()

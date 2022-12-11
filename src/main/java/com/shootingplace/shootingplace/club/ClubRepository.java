@@ -12,5 +12,10 @@ public interface ClubRepository{
 
     ClubEntity save(ClubEntity entity);
 
-    ClubEntity getOne(int i);
+    ClubEntity getOne(int id);
+
+    boolean existsByName(String clubName);
+
+    ClubEntity findByName(String name);
+
 }
