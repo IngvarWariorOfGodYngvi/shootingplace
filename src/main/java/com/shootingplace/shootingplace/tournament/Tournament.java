@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.tournament;
 
-import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.member.MemberDTO;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

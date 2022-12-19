@@ -289,7 +289,7 @@ public class MemberEntity extends Person {
      * Return secondName plus firstName of Member
      */
     public String getMemberName() {
-        return this.getSecondName().replaceAll(" ", "") +
+        return this.getSecondName().replaceAll(" ", "") + ' ' +
                 this.getFirstName().replaceAll(" ", "");
     }
 

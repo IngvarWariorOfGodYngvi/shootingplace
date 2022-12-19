@@ -177,11 +177,10 @@ public class HistoryService {
         historyRepository.save(historyEntity);
 
     }
-
     public ResponseEntity<?> addLicenseHistoryPayment(String memberUUID) {
 
         if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         LicenseEntity licenseEntity = memberEntity.getLicense();

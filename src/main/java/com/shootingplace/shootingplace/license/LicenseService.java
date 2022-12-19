@@ -51,9 +51,9 @@ public class LicenseService {
 
     public List<MemberDTO> getMembersNamesAndLicense() {
         return memberRepository.findAllByErasedFalse().stream()
-                .filter(f->f.getClub().getId().equals(1))
+                .filter(f -> f.getClub().getId().equals(1))
                 .filter(MemberEntity::getPzss)
-                .filter(f->f.getLicense().getNumber() != null && f.getLicense().isValid())
+                .filter(f -> f.getLicense().getNumber() != null && f.getLicense().isValid())
                 .map(Mapping::map2DTO)
                 .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()))
                 .collect(Collectors.toList());
@@ -66,9 +66,9 @@ public class LicenseService {
     public List<MemberDTO> getMembersNamesAndLicenseNotValid() {
         return memberRepository.findAllByErasedFalse()
                 .stream()
-                .filter(f->f.getClub().getId().equals(1))
+                .filter(f -> f.getClub().getId().equals(1))
                 .filter(MemberEntity::getPzss)
-                .filter(f->f.getLicense().getNumber() != null && !f.getLicense().isValid())
+                .filter(f -> f.getLicense().getNumber() != null && !f.getLicense().isValid())
                 .map(Mapping::map2DTO)
                 .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()))
                 .collect(Collectors.toList());
@@ -81,7 +81,8 @@ public class LicenseService {
             LOG.info("Brak Patentu");
             return ResponseEntity.badRequest().body("Brak Patentu");
         }
-        if (license.getNumber() != null) {
+        if (licenseEntity.getNumber() != null) {
+            System.out.println(memberEntity.getMemberName());
             boolean match = memberRepository.findAll()
                     .stream()
                     .filter(f -> !f.getErased())
@@ -128,6 +129,7 @@ public class LicenseService {
             licenseEntity.setValid(true);
             LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
         }
+        licenseEntity.setNumber(license.getNumber());
         licenseEntity.setPaid(false);
         licenseRepository.save(licenseEntity);
         LOG.info("Zaktualizowano licencję");
@@ -273,30 +275,30 @@ public class LicenseService {
         List<String> responseList = new ArrayList<>();
         String s1 = "";
 
-            for (String s : licenseList) {
-                MemberEntity memberEntity = memberRepository.findById(s).orElse(null);
-                LicenseEntity licenseEntity;
+        for (String s : licenseList) {
+            MemberEntity memberEntity = memberRepository.findById(s).orElse(null);
+            LicenseEntity licenseEntity;
 
-                if (memberEntity == null) {
-                    LOG.info("Nie znaleziono osoby o podanym ID");
-                    responseList.add("Nie znaleziono osoby");
-                } else {
-                    if (memberEntity.getLicense() != null) {
-                        licenseEntity = memberEntity.getLicense();
-                        License license = Mapping.map(licenseEntity);
-                        ResponseEntity<?> responseEntity = renewLicenseValid(s, license);
-                        if (responseEntity.getStatusCodeValue() == 200) {
-                            responseList.add("Przedłużono Licencję " + memberEntity.getFirstName() + " " + memberEntity.getSecondName());
-                        }
-                    } else {
-                        LOG.info(memberEntity.getSecondName() + " Nie posiada Licencji");
-                        responseList.add(memberEntity.getSecondName() + " Nie posiada licencji");
+            if (memberEntity == null) {
+                LOG.info("Nie znaleziono osoby o podanym ID");
+                responseList.add("Nie znaleziono osoby");
+            } else {
+                if (memberEntity.getLicense() != null) {
+                    licenseEntity = memberEntity.getLicense();
+                    License license = Mapping.map(licenseEntity);
+                    ResponseEntity<?> responseEntity = renewLicenseValid(s, license);
+                    if (responseEntity.getStatusCodeValue() == 200) {
+                        responseList.add("Przedłużono Licencję " + memberEntity.getFirstName() + " " + memberEntity.getSecondName());
                     }
-                    s1 = s1.concat(s);
-
+                } else {
+                    LOG.info(memberEntity.getSecondName() + " Nie posiada Licencji");
+                    responseList.add(memberEntity.getSecondName() + " Nie posiada licencji");
                 }
+                s1 = s1.concat(s);
+
             }
-            return getStringResponseEntity(pinCode, null, HttpStatus.OK, "prolongAllLicense", responseList);
+        }
+        return getStringResponseEntity(pinCode, null, HttpStatus.OK, "prolongAllLicense", responseList);
 
 //        return ResponseEntity.ok(responseList);
     }
@@ -345,7 +347,7 @@ public class LicenseService {
 
     public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, Object body) {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
-        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity!=null ? memberEntity.getClass().getSimpleName() + " " + methodName + " ":methodName,memberEntity!=null ? memberEntity.getUuid(): "nie dotyczy");
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity != null ? memberEntity.getClass().getSimpleName() + " " + methodName + " " : methodName, memberEntity != null ? memberEntity.getUuid() : "nie dotyczy");
         if (stringResponseEntity != null) {
             response = stringResponseEntity;
         }

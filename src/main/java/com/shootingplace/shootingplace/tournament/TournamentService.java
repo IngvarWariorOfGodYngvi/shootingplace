@@ -22,9 +22,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -143,9 +141,16 @@ public class TournamentService {
                 });
 
         List<CompetitionMembersList> collect1 = tournamentEntity.getCompetitionsList()
-                .stream().map(Mapping::map)
+                .stream()
+                .map(Mapping::map1)
                 .sorted(Comparator.comparing(CompetitionMembersList::getOrdering))
                 .collect(Collectors.toList());
+//
+//        tournamentEntity.getCompetitionsList().sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
+//
+//        Map<String, Integer> map = new LinkedHashMap<>();
+//        tournamentEntity.getCompetitionsList().forEach(e -> map.put(e.getUuid(), e.getScoreList().size()));
+
 
         Tournament tournament = Tournament.builder()
                 .uuid(tournamentEntity.getUuid())
@@ -824,12 +829,12 @@ public class TournamentService {
         } else {
             TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
 
-            LOG.info("Zawody " + tournamentEntity.getName() + " zostały otwarte");
-            tournamentEntity.setOpen(true);
 
             ResponseEntity<?> response = getStringResponseEntity(pinCode, tournamentEntity, HttpStatus.OK, "openTournament", "Otwarto zawody z dnia" + tournamentEntity.getDate());
             if (response.getStatusCode().equals(HttpStatus.OK)) {
+                tournamentEntity.setOpen(true);
                 tournamentRepository.save(tournamentEntity);
+                LOG.info("Zawody " + tournamentEntity.getName() + " zostały otwarte");
             }
             return response;
 

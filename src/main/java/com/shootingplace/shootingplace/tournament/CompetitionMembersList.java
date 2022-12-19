@@ -38,6 +38,12 @@ public class CompetitionMembersList {
     @ManyToMany
     private List<Score> scoreList = new ArrayList<>();
 
+    public Integer getScoreListSize() {
+        return scoreListSize;
+    }
+
+    private Integer scoreListSize;
+
     public Integer getPracticeShots() {
         return practiceShots;
     }

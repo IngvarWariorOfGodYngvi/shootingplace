@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -39,7 +40,7 @@ public class AmmoEvidenceService {
     }
 
     public ResponseEntity<?> getOpenEvidence() {
-        return ammoEvidenceRepository.findAllByOpenTrue().size()!=0 ? ResponseEntity.ok(Mapping.map(ammoEvidenceRepository.findAllByOpenTrue().get(0))) : ResponseEntity.ok().body(null);
+        return ammoEvidenceRepository.findAllByOpenTrue().size()>0 ? ResponseEntity.ok(Mapping.map(ammoEvidenceRepository.findAllByOpenTrue().get(0))) : ResponseEntity.ok(new ArrayList<>());
     }
 
     public AmmoEvidenceEntity getEvidence(String uuid) {
