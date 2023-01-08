@@ -5,4 +5,5 @@ import com.shootingplace.shootingplace.file.FilesRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 interface FilesSQLRepository  extends FilesRepository, JpaRepository<FilesEntity, String> {
+
 }

@@ -18,6 +18,8 @@ public class FilesEntity {
     @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
     private String uuid;
 
+    private String belongToMemberUUID;
+
     private String name;
     private String type;
     @Lob
@@ -36,6 +38,14 @@ public class FilesEntity {
         this.type = type;
         this.data = data;
         this.version = version;
+    }
+
+    public String getBelongToMemberUUID() {
+        return belongToMemberUUID;
+    }
+
+    public void setBelongToMemberUUID(String belongToMemberUUID) {
+        this.belongToMemberUUID = belongToMemberUUID;
     }
 
     public int getVersion() {

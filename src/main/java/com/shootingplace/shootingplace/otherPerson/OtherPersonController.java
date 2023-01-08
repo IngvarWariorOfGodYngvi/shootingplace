@@ -81,10 +81,7 @@ public class OtherPersonController {
 
     @PostMapping("/")
     public ResponseEntity<?> deactivatePerson(@RequestParam int id) {
-        if (otherPersonService.deactivatePerson(id)) {
-            return ResponseEntity.ok().build();
-        } else
-            return ResponseEntity.notFound().build();
+        return otherPersonService.deactivatePerson(id);
     }
 
     @PutMapping("/")

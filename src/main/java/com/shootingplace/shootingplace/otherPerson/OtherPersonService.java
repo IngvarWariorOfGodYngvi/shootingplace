@@ -114,13 +114,16 @@ public class OtherPersonService {
         return list;
     }
 
-    public boolean deactivatePerson(int id) {
-        OtherPersonEntity otherPersonEntity = otherPersonRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+    public ResponseEntity<?> deactivatePerson(int id) {
+        if(!otherPersonRepository.existsById(id)){
+            return ResponseEntity.badRequest().body("Nie znaleziono osoby");
+        }
+        OtherPersonEntity otherPersonEntity = otherPersonRepository.getOne(id);
 
         otherPersonEntity.setActive(false);
         otherPersonRepository.save(otherPersonEntity);
         LOG.info("Dezaktywowano Nie-Klubowicza");
-        return true;
+        return ResponseEntity.ok("Dezaktywowano Osobę");
     }
 
     public boolean updatePerson(String id, OtherPerson otherPerson, String clubName) {

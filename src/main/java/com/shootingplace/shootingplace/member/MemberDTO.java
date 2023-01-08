@@ -138,4 +138,12 @@ public class MemberDTO extends Person {
     public void setMemberPermissions(MemberPermissions memberPermissions) {
         this.memberPermissions = memberPermissions;
     }
+
+    /**
+     * Return secondName plus firstName of Member
+     */
+    public String getMemberName() {
+        return this.getSecondName().replaceAll(" ", "") + ' ' +
+                this.getFirstName().replaceAll(" ", "");
+    }
 }

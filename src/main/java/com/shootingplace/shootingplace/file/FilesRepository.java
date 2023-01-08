@@ -24,5 +24,6 @@ public interface FilesRepository {
     Page<FilesEntity> findAllByDateIsNotNullAndTimeIsNotNull(Pageable page);
 
     List<FilesEntity> findAllByDateIsNullAndTimeIsNull();
+    List<FilesEntity> findAllByBelongToMemberUUIDEquals(String uuid);
 }
 

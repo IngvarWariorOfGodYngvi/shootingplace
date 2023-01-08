@@ -1,13 +1,16 @@
 package com.shootingplace.shootingplace.file;
 
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.club.ClubEntity;
+import com.shootingplace.shootingplace.club.ClubRepository;
+import com.shootingplace.shootingplace.enums.CountingMethod;
+import com.shootingplace.shootingplace.member.MemberDTO;
+import com.shootingplace.shootingplace.member.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
 import com.shootingplace.shootingplace.tournament.ScoreEntity;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
-import com.shootingplace.shootingplace.enums.CountingMethod;
-import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
-import com.shootingplace.shootingplace.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -22,28 +25,33 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.text.Collator;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
-public class XLSXFiles {
+public class XLSXFilesService {
 
 
     private final TournamentRepository tournamentRepository;
     private final ClubRepository clubRepository;
     private final FilesRepository filesRepository;
+    private final MemberRepository memberRepository;
 
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public XLSXFiles(TournamentRepository tournamentRepository, ClubRepository clubRepository, FilesRepository filesRepository) {
+    public XLSXFilesService(TournamentRepository tournamentRepository, ClubRepository clubRepository, FilesRepository filesRepository, MemberRepository memberRepository) {
         this.tournamentRepository = tournamentRepository;
         this.clubRepository = clubRepository;
         this.filesRepository = filesRepository;
+        this.memberRepository = memberRepository;
     }
 
 
@@ -364,11 +372,172 @@ public class XLSXFiles {
 
         FilesEntity filesEntity =
                 createFileEntity(filesModel);
-
         File file = new File(fileName);
-
         file.delete();
+        LOG.info("Pobrano plik " + fileName);
 
+        return filesEntity;
+    }
+
+    public FilesEntity getJoinDateSum(LocalDate firstDate, LocalDate secondDate) throws IOException {
+
+        String fileName = "lista klubowiczów zapisanych od "+firstDate.toString()+" do "+ secondDate.toString()+".xlsx";
+
+        List<MemberDTO> collect = memberRepository.findAll().stream()
+                .filter(f -> f.getJoinDate().isAfter(firstDate.minusDays(1)))
+                .filter(f -> f.getJoinDate().isBefore(secondDate.plusDays(1)))
+                .map(Mapping::map2DTO)
+                .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName))
+                .collect(Collectors.toList());
+
+        int rc = 0;
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+
+        XSSFSheet sheet = workbook.createSheet("lista");
+
+        XSSFFont fontNormalCenterAlignment = workbook.createFont();
+        fontNormalCenterAlignment.setFontHeightInPoints((short) 10);
+        fontNormalCenterAlignment.setFontName("Calibri");
+
+        XSSFCellStyle cellStyleNormalCenterAlignment = workbook.createCellStyle();
+        cellStyleNormalCenterAlignment.setAlignment(HorizontalAlignment.CENTER);
+        cellStyleNormalCenterAlignment.setFont(fontNormalCenterAlignment);
+
+        XSSFRow row = sheet.createRow(rc++);
+
+        sheet.setColumnWidth(0, 5000);
+        sheet.setColumnWidth(1, 1000);
+
+        XSSFCell cell = row.createCell(0);
+        cell.setCellStyle(cellStyleNormalCenterAlignment);
+        cell.setCellValue("Nazwisko i Imię");
+        XSSFCell cell1 = row.createCell(1);
+        cell1.setCellValue("Numer Legitymacji");
+        cell1.setCellStyle(cellStyleNormalCenterAlignment);
+
+
+        for (MemberDTO memberDTO : collect) {
+            int cc = 0;
+            sheet.setColumnWidth(0, 5000);
+            sheet.setColumnWidth(1, 5000);
+            XSSFRow row1 = sheet.createRow(rc++);
+            XSSFCell cell2 = row1.createCell(cc++);
+            XSSFCell cell3 = row1.createCell(cc);
+
+            cell2.setCellStyle(cellStyleNormalCenterAlignment);
+            cell3.setCellStyle(cellStyleNormalCenterAlignment);
+
+            cell2.setCellValue(memberDTO.getMemberName());
+            cell3.setCellValue(memberDTO.getLegitimationNumber());
+
+        }
+        try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
+            workbook.write(outputStream);
+        }
+        workbook.close();
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.TEXT_XML))
+                .size(data.length)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+        File file = new File(fileName);
+        file.delete();
+        LOG.info("Pobrano plik " + fileName);
+
+        return filesEntity;
+    }
+
+    public FilesEntity getAllMembersToTableXLSXFile(boolean condition) throws IOException {
+
+        String fileName = "Lista_klubowiczów_na_dzień " + LocalDate.now().format(dateFormat()) + ".xlsx";
+
+        List<MemberEntity> collect = memberRepository.findAllByErasedFalse()
+                .stream()
+                .filter(f -> f.getAdult().equals(condition))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
+                .collect(Collectors.toList());
+
+
+        int rc = 0;
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        XSSFSheet sheet = workbook.createSheet("Lista klubowiczów");
+
+        XSSFRow row = sheet.createRow(rc++);
+
+        sheet.setColumnWidth(0, 11 * 128); //lp
+        sheet.setColumnWidth(1, 30 * 256); //Imię i nazwisko
+        sheet.setColumnWidth(2, 25 * 256); //legitymacja
+        sheet.setColumnWidth(3, 18 * 128); //data zapisu
+        sheet.setColumnWidth(4, 10 * 128); //data opłacenia składki
+        sheet.setColumnWidth(5, 10 * 128); //Składka ważna do
+
+        XSSFCell cell = row.createCell(0);
+        XSSFCell cell1 = row.createCell(1);
+        XSSFCell cell2 = row.createCell(2);
+        XSSFCell cell3 = row.createCell(3);
+        XSSFCell cell4 = row.createCell(4);
+        XSSFCell cell5 = row.createCell(5);
+
+        cell.setCellValue("lp");
+        cell1.setCellValue("Nazwisko i Imię");
+        cell2.setCellValue("nr. legitymacji");
+        cell3.setCellValue("data zapisu");
+        cell4.setCellValue("data opłacenia składki");
+        cell5.setCellValue("składka ważna do");
+        sheet.createRow(rc++);
+
+        for (int i=0;i< collect.size();i++){
+            XSSFRow row1 = sheet.createRow(rc++);
+            cell = row1.createCell(0);
+            cell1 = row1.createCell(1);
+            cell2 = row1.createCell(2);
+            cell3 = row1.createCell(3);
+            cell4 = row1.createCell(4);
+            cell5 = row1.createCell(5);
+
+            cell.setCellValue(i+1);
+            cell1.setCellValue(collect.get(i).getMemberName());
+            cell2.setCellValue(collect.get(i).getLegitimationNumber());
+            cell3.setCellValue(collect.get(i).getJoinDate().toString());
+
+            if (collect.get(i).getHistory().getContributionList().size() > 0) {
+
+                cell4.setCellValue(collect.get(i).getHistory().getContributionList().get(0).getPaymentDay().toString());
+                cell5.setCellValue(collect.get(i).getHistory().getContributionList().get(0).getValidThru().toString());
+
+            } else {
+
+                cell4.setCellValue("BRAK SKŁADEK");
+                cell5.setCellValue("BRAK SKŁADEK");
+
+            }
+        }
+
+        try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
+            workbook.write(outputStream);
+        }
+        workbook.close();
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.TEXT_XML))
+                .size(data.length)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+        File file = new File(fileName);
+        file.delete();
         LOG.info("Pobrano plik " + fileName);
 
         return filesEntity;
@@ -460,6 +629,15 @@ public class XLSXFiles {
 
         }
         return arbiterClass;
+    }
+
+    private Collator pl() {
+        return Collator.getInstance(Locale.forLanguageTag("pl"));
+    }
+
+    private DateTimeFormatter dateFormat() {
+        String europeanDatePattern = "dd.MM.yyyy";
+        return DateTimeFormatter.ofPattern(europeanDatePattern);
     }
 
 }

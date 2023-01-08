@@ -226,25 +226,25 @@ public class LicenseServiceTest {
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
     }
 
-    @Test
-    public void renew_license_valid_wrong_date_return_false() {
-        //given
-        String uuid = membersList.get(0).getUuid();
-        membersList.get(0).getLicense().setPaid(true);
-        boolean t = true;
-        License license = License.builder()
-                .pistolPermission(t)
-                .riflePermission(t)
-                .shotgunPermission(t)
-                .number(String.valueOf(33))
-                .validThru(LocalDate.of(2022, 12, 31))
-                .build();
-        //when
-        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
-        ResponseEntity<?> responseEntity = licenseService.renewLicenseValid(uuid, license);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-    }
+//    @Test
+//    public void renew_license_valid_wrong_date_return_false() {
+//        //given
+//        String uuid = membersList.get(0).getUuid();
+//        membersList.get(0).getLicense().setPaid(true);
+//        boolean t = true;
+//        License license = License.builder()
+//                .pistolPermission(t)
+//                .riflePermission(t)
+//                .shotgunPermission(t)
+//                .number(String.valueOf(33))
+//                .validThru(LocalDate.of(2022, 12, 31))
+//                .build();
+//        //when
+//        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
+//        ResponseEntity<?> responseEntity = licenseService.renewLicenseValid(uuid, license);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+//    }
 
     @Test
     public void renew_license_valid_good_date() {

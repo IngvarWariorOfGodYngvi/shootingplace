@@ -61,8 +61,7 @@ public class StatisticsService {
 
     public List<LicensePaymentHistoryDTO> getLicenseSum(LocalDate firstDate, LocalDate secondDate) {
         List<LicensePaymentHistoryDTO> list1 = new ArrayList<>();
-        memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
+        memberRepository.findAll()
                 .forEach(member -> member.getHistory().getLicensePaymentHistory()
                         .stream()
                         .filter(lp -> lp.getDate().isAfter(firstDate.minusDays(1)))

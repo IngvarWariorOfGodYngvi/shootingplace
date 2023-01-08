@@ -208,7 +208,7 @@ public class CompetitionService {
                     e.setOrdering(competition.getOrdering());
                     competitionMembersListRepository.save(e);
                 });
-        return ResponseEntity.ok("\"Zaktualizowano zawody\"");
+        return ResponseEntity.ok("Zaktualizowano konkurencję");
     }
 
     public ResponseEntity<?> getCompetitionMemberList(String competitionMembersListUUID) {

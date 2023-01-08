@@ -14,6 +14,7 @@ import java.time.LocalTime;
 public class FilesModel {
 
     private String uuid;
+    private String belongToMemberUUID;
 
     private String name;
     private String type;
@@ -87,6 +88,14 @@ public class FilesModel {
 
     public void setTime(LocalTime time) {
         this.time = time;
+    }
+
+    public String getBelongToMemberUUID() {
+        return belongToMemberUUID;
+    }
+
+    public void setBelongToMemberUUID(String belongToMemberUUID) {
+        this.belongToMemberUUID = belongToMemberUUID;
     }
 
     public long getSize() {

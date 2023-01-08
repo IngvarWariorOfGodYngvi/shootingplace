@@ -415,6 +415,7 @@ public class Mapping {
     public static FilesEntity map(FilesModel f) {
         return Optional.ofNullable(f).map(e -> FilesEntity.builder()
                 .uuid(e.getUuid())
+                .belongToMemberUUID(e.getBelongToMemberUUID())
                 .name(e.getName())
                 .data(e.getData())
                 .type(e.getType())
@@ -428,8 +429,9 @@ public class Mapping {
     public static FilesModel map(FilesEntity f) {
         return Optional.ofNullable(f).map(e -> FilesModel.builder()
                 .uuid(e.getUuid())
+                .belongToMemberUUID(e.getBelongToMemberUUID())
                 .name(e.getName())
-                .data(e.getData())
+//                .data(e.getData())
                 .type(e.getType())
                 .date(e.getDate())
                 .time(e.getTime())

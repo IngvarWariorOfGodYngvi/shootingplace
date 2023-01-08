@@ -23,12 +23,12 @@ import java.util.List;
 public class FilesController {
 
     private final FilesService filesService;
-    private final XLSXFiles xlsxFiles;
+    private final XLSXFilesService xlsxFiles;
     private final DocxFiles docxFiles;
     private final MemberService memberService;
 
 
-    public FilesController(FilesService filesService, XLSXFiles xlsxFiles, DocxFiles docxFiles, MemberService memberService) {
+    public FilesController(FilesService filesService, XLSXFilesService xlsxFiles, DocxFiles docxFiles, MemberService memberService) {
         this.filesService = filesService;
         this.xlsxFiles = xlsxFiles;
         this.docxFiles = docxFiles;
@@ -147,6 +147,14 @@ public class FilesController {
     @GetMapping("/downloadAllMembers")
     public ResponseEntity<byte[]> getAllMembersToTable(@RequestParam boolean condition) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.generateMembersListWithCondition(condition);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
+    }
+    @GetMapping("/downloadAllMembersXLSXFile")
+    public ResponseEntity<byte[]> getAllMembersToTableXLSXFile(@RequestParam boolean condition) throws IOException, DocumentException {
+        FilesEntity filesEntity = xlsxFiles.getAllMembersToTableXLSXFile(condition);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
@@ -295,6 +303,18 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
+    @GetMapping("/membershipDeclarationLOK")
+    public ResponseEntity<byte[]> getMembershipDeclarationLOK(@RequestParam String uuid) throws DocumentException, IOException {
+        FilesEntity filesEntity = filesService.getMembershipDeclarationLOK(uuid);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
+                .body(filesEntity.getData());
+    }
+    @GetMapping("/getAllMemberFiles")
+    public ResponseEntity<?> getAllMemberFiles(@RequestParam String uuid) {
+        return ResponseEntity.ok(filesService.getAllMemberFiles(uuid));
+    }
 
     @GetMapping("/getAllFiles")
     public ResponseEntity<?> getAllFiles(Pageable page) {
@@ -314,6 +334,18 @@ public class FilesController {
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_TYPE, filesEntity.getType())
                 .header("filename", filesEntity.getName())
+                .body(filesEntity.getData());
+    }
+
+    @GetMapping("/joinDateSum")
+    public ResponseEntity<?> getJoinDateSum(@RequestParam String firstDate, @RequestParam String secondDate) throws IOException {
+        LocalDate parseFirstDate = LocalDate.parse(firstDate);
+        LocalDate parseSecondDate = LocalDate.parse(secondDate);
+        FilesEntity filesEntity = xlsxFiles.getJoinDateSum(parseFirstDate, parseSecondDate);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
 

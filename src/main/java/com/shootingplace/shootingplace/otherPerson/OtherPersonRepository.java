@@ -11,4 +11,6 @@ public interface OtherPersonRepository{
     OtherPersonEntity save(OtherPersonEntity entity);
 
     OtherPersonEntity getOne(Integer id);
+
+    boolean existsById(int id);
 }
