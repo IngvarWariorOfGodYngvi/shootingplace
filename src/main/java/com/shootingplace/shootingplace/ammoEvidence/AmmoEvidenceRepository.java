@@ -9,6 +9,10 @@ import java.util.Optional;
 public interface AmmoEvidenceRepository{
     List<AmmoEvidenceEntity> findAll();
 
+    List<AmmoEvidenceEntity> findAllByOpenTrueAndForceOpenFalse();
+
+    boolean existsByOpenTrueAndForceOpenFalse();
+
     boolean existsById(String uuid);
 
     AmmoEvidenceEntity getOne(String uuid);

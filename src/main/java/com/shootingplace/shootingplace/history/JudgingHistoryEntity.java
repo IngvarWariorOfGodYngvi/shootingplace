@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @AllArgsConstructor
@@ -25,6 +26,7 @@ public class JudgingHistoryEntity {
     private String tournamentUUID;
     private String judgingFunction;
     private LocalDate date;
+    private LocalTime time;
 
     public String getUuid() {
         return uuid;
@@ -60,5 +62,13 @@ public class JudgingHistoryEntity {
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public LocalTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalTime time) {
+        this.time = time;
     }
 }

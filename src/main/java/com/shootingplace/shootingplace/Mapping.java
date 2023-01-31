@@ -98,6 +98,7 @@ public class Mapping {
         return MemberInfo.builder()
                 .firstName(e.getFirstName())
                 .secondName(e.getSecondName())
+                .name(e.getSecondName().replaceAll(" ","") + " " + e.getFirstName().replaceAll(" ","") + " " + e.getLegitimationNumber())
                 .isActive(e.getActive())
                 .legitimationNumber(e.getLegitimationNumber())
                 .isAdult(e.getAdult()).build();

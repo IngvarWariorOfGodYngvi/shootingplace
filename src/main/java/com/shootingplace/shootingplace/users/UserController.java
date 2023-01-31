@@ -15,6 +15,10 @@ public class UserController {
         this.userService = userService;
     }
 
+    @GetMapping("/getAccess")
+    public ResponseEntity<?> getAccess(@RequestParam String pinCode){
+        return userService.getAccess(pinCode);
+    }
     @GetMapping("/superUserList")
     public ResponseEntity<?> getListOfSuperUser() {
         return ResponseEntity.ok(userService.getListOfSuperUser());
@@ -35,18 +39,22 @@ public class UserController {
     }
 
     @PostMapping("/createSuperUser")
-    public ResponseEntity<?> createSuperUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam String pinCode) {
-        return userService.createSuperUser(firstName, secondName, pinCode);
+    public ResponseEntity<?> createSuperUser(@RequestParam String firstName, @RequestParam String secondName,  @RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode,@RequestParam @Nullable String memberUUID) {
+        return userService.createSuperUser(firstName, secondName, subType, pinCode, superPinCode, memberUUID);
     }
 
     @PostMapping("/createUser")
-    public ResponseEntity<?> createUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode) {
-        return userService.createUser(firstName, secondName, subType, pinCode, superPinCode);
+    public ResponseEntity<?> createUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode,@RequestParam @Nullable String memberUUID) {
+        return userService.createUser(firstName, secondName, subType, pinCode, superPinCode, memberUUID);
     }
 
     @GetMapping("/checkPinCode")
-    public ResponseEntity<?> checkPinCode(@RequestParam String pinCode, @RequestParam String uuid) {
-        return userService.checkPinCode(pinCode, uuid);
+    public ResponseEntity<?> checkPinCode(@RequestParam String pinCode) {
+        return userService.checkPinCode(pinCode);
+    }
+    @PutMapping("/setSuperUser")
+    public ResponseEntity<?> setSuperUser(@RequestParam String uuid,@RequestParam String pinCode) {
+        return userService.setSuperUser(uuid,pinCode);
     }
 
 }

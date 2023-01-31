@@ -13,6 +13,7 @@ public class MemberInfo {
 
     String secondName;
     String firstName;
+    String name;
     Integer legitimationNumber;
     boolean isActive;
     boolean isAdult;

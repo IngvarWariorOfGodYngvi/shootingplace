@@ -44,7 +44,7 @@ public class HistoryServiceTest {
         ResponseEntity<?> responseEntity = historyService.toggleLicencePaymentInPZSS(uuid);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("\"Nie znaleziono płatności\""));
+        assertThat(responseEntity.getBody(), Matchers.equalTo("Nie znaleziono płatności"));
     }
 
 //    @Test

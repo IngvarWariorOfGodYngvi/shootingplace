@@ -10,4 +10,5 @@ public interface WorkingTimeEvidenceRepository{
     List<WorkingTimeEvidenceEntity> findAll();
 
     Optional<WorkingTimeEvidenceEntity> findById(String e);
+    boolean existsByIsCloseFalse();
 }

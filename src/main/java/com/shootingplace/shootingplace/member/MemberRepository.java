@@ -34,4 +34,6 @@ public interface MemberRepository {
     List<MemberEntity> findAllByErasedFalse();
 
     Page<MemberEntity> findAllByErasedFalse(Pageable pageable);
+
+    List<MemberEntity> findAllByErasedTrue();
 }

@@ -69,25 +69,26 @@ public class TournamentController {
         return armoryService.addUsedHistoryToGunInTournament(barcode, tournamentUUID);
     }
 
+    @Transactional
     @PostMapping("/removeArbiter/{tournamentUUID}")
-    public ResponseEntity<?> removeArbiterFromTournament(@PathVariable String tournamentUUID, @RequestParam int number, @RequestParam int id) {
+    public ResponseEntity<?> removeArbiterFromTournament(@PathVariable String tournamentUUID, @RequestParam String barcode, @RequestParam int id) {
 
-        if (number > 0) {
-            return tournamentService.removeArbiterFromTournament(tournamentUUID, number);
-
+        if (barcode != null && !barcode.equals("") && !barcode.equals("null")) {
+            return tournamentService.removeArbiterFromTournament(tournamentUUID, barcode);
         }
         if (id > 0) {
             return tournamentService.removeOtherArbiterFromTournament(tournamentUUID, id);
         } else {
-            return ResponseEntity.status(418).body("\"I'm a teapot\"");
+            return ResponseEntity.status(418).body("I'm a teapot");
         }
     }
 
+    @Transactional
     @PostMapping("/removeRTSArbiter/{tournamentUUID}")
-    public ResponseEntity<?> removeRTSArbiterFromTournament(@PathVariable String tournamentUUID, @RequestParam int number, @RequestParam int id) {
+    public ResponseEntity<?> removeRTSArbiterFromTournament(@PathVariable String tournamentUUID, @RequestParam String barcode, @RequestParam int id) {
 
-        if (number > 0) {
-            return tournamentService.removeRTSArbiterFromTournament(tournamentUUID, number);
+        if (barcode != null && !barcode.equals("") && !barcode.equals("null")) {
+            return tournamentService.removeRTSArbiterFromTournament(tournamentUUID, barcode);
         }
         if (id > 0) {
             return tournamentService.removeRTSOtherArbiterFromTournament(tournamentUUID, id);
@@ -124,10 +125,10 @@ public class TournamentController {
 
     @Transactional
     @PutMapping("/addMainArbiter/{tournamentUUID}")
-    public ResponseEntity<?> addMainArbiter(@PathVariable String tournamentUUID, @RequestParam int number, @RequestParam int id) {
+    public ResponseEntity<?> addMainArbiter(@PathVariable String tournamentUUID, @RequestParam String barcode, @RequestParam int id) {
 
-        if (number > 0) {
-            return tournamentService.addMainArbiter(tournamentUUID, number);
+        if (barcode != null && !barcode.equals("") && !barcode.equals("null")) {
+            return tournamentService.addMainArbiter(tournamentUUID, barcode);
         }
         if (id > 0) {
             return tournamentService.addOtherMainArbiter(tournamentUUID, id);
@@ -138,10 +139,10 @@ public class TournamentController {
 
     @Transactional
     @PutMapping("/addRTSArbiter/{tournamentUUID}")
-    public ResponseEntity<?> addRTSArbiter(@PathVariable String tournamentUUID, @RequestParam int number, @RequestParam int id) {
+    public ResponseEntity<?> addRTSArbiter(@PathVariable String tournamentUUID, @RequestParam String barcode, @RequestParam int id) {
 
-        if (number > 0) {
-            return tournamentService.addRTSArbiter(tournamentUUID, number);
+        if (barcode != null && !barcode.equals("") && !barcode.equals("null")) {
+            return tournamentService.addRTSArbiter(tournamentUUID, barcode);
         }
         if (id > 0) {
             return tournamentService.addOtherRTSArbiter(tournamentUUID, id);
@@ -153,10 +154,10 @@ public class TournamentController {
 
     @Transactional
     @PutMapping("/addOthersArbiters/{tournamentUUID}")
-    public ResponseEntity<?> addOthersArbiters(@PathVariable String tournamentUUID, @RequestParam int number, @RequestParam int id) {
+    public ResponseEntity<?> addOthersArbiters(@PathVariable String tournamentUUID, @RequestParam String barcode, @RequestParam int id) {
 
-        if (number > 0) {
-            return tournamentService.addOthersArbiters(tournamentUUID, number);
+        if (barcode != null && !barcode.equals("") && !barcode.equals("null")) {
+            return tournamentService.addOthersArbiters(tournamentUUID, barcode);
         }
         if (id > 0) {
             return tournamentService.addPersonOthersArbiters(tournamentUUID, id);
@@ -168,10 +169,10 @@ public class TournamentController {
 
     @Transactional
     @PutMapping("/addOthersRTSArbiters/{tournamentUUID}")
-    public ResponseEntity<?> addOthersRTSArbiters(@PathVariable String tournamentUUID, @RequestParam int number, @RequestParam int id) {
+    public ResponseEntity<?> addOthersRTSArbiters(@PathVariable String tournamentUUID, @RequestParam String barcode, @RequestParam int id) {
 
-        if (number > 0) {
-            return tournamentService.addOthersRTSArbiters(tournamentUUID, number);
+        if (barcode != null && !barcode.equals("") && !barcode.equals("null")) {
+            return tournamentService.addOthersRTSArbiters(tournamentUUID, barcode);
         }
         if (id > 0) {
             return tournamentService.addPersonOthersRTSArbiters(tournamentUUID, id);

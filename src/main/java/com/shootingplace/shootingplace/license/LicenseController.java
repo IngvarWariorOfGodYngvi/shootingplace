@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.license;
 
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
@@ -24,6 +25,14 @@ public class LicenseController {
         this.changeHistoryService = changeHistoryService;
         this.licenseService = licenseService;
         this.historyService = historyService;
+    }
+    @GetMapping("/getLicense")
+    public LicenseEntity getLicense(@RequestParam String licenseUUID){
+        return licenseService.getLicense(licenseUUID);
+    }
+    @GetMapping("/getLicensePaymentHistory")
+    public List<LicensePaymentHistoryEntity> getLicensePaymentHistory(@RequestParam String memberUUID){
+        return licenseService.getLicensePaymentHistory(memberUUID);
     }
 
     @GetMapping("/membersWithValidLicense")
@@ -75,8 +84,12 @@ public class LicenseController {
     }
 
     @PutMapping("/history/{memberUUID}")
-    public ResponseEntity<?> addLicensePaymentHistory(@PathVariable String memberUUID) {
-        return historyService.addLicenseHistoryPayment(memberUUID);
+    public ResponseEntity<?> addLicensePaymentHistory(@PathVariable String memberUUID, @RequestParam String pinCode) {
+        if (changeHistoryService.comparePinCode(pinCode)) {
+            return historyService.addLicenseHistoryPayment(memberUUID,pinCode);
+        } else {
+            return ResponseEntity.status(403).body("Brak uprawnień");
+        }
     }
 
     @PatchMapping("/paymentToggle")

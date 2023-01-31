@@ -3,10 +3,12 @@ package com.shootingplace.shootingplace.users;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.history.ChangeHistoryEntity;
 import com.shootingplace.shootingplace.domain.Person;
+import com.shootingplace.shootingplace.member.MemberEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.util.List;
@@ -21,6 +23,8 @@ public class UserEntity extends Person {
     @GeneratedValue(generator = "id")
     @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
     private String uuid;
+    @OneToOne
+    private MemberEntity member;
 
     private String firstName;
 
@@ -29,7 +33,7 @@ public class UserEntity extends Person {
     private int legitimationNumber;
 
     private String pinCode;
-@OneToMany
+    @OneToMany
     private List<BarCodeCardEntity> barCodeCardList;
 
     private boolean superUser;
@@ -40,6 +44,14 @@ public class UserEntity extends Person {
     private List<ChangeHistoryEntity> changeHistoryEntities;
 
     private String subType;
+@Nullable
+    public MemberEntity getMember() {
+        return member;
+    }
+
+    public void setMember(MemberEntity member) {
+        this.member = member;
+    }
 
     public String getSubType() {
         return subType;

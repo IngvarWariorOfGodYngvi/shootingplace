@@ -348,6 +348,17 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
+    @GetMapping("/erasedSum")
+    public ResponseEntity<?> getErasedSum(@RequestParam String firstDate, @RequestParam String secondDate) throws IOException {
+        LocalDate parseFirstDate = LocalDate.parse(firstDate);
+        LocalDate parseSecondDate = LocalDate.parse(secondDate);
+        FilesEntity filesEntity = xlsxFiles.getErasedSum(parseFirstDate, parseSecondDate);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
+                .body(filesEntity.getData());
+    }
 
     @DeleteMapping("/deleteFile")
     public ResponseEntity<?> deleteFile(@RequestParam String uuid) {

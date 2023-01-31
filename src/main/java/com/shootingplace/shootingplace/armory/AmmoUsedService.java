@@ -8,6 +8,7 @@ import com.shootingplace.shootingplace.member.PersonalEvidenceRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,8 @@ public class AmmoUsedService {
     private final ArmoryService armoryService;
     private final AmmoEvidenceRepository ammoEvidenceRepository;
 
+    private final WorkingTimeEvidenceRepository workingTimeEvidenceRepository;
+
     private final Logger LOG = LogManager.getLogger();
 
     public AmmoUsedService(PersonalEvidenceRepository personalEvidenceRepository,
@@ -38,7 +41,7 @@ public class AmmoUsedService {
                            AmmoInEvidenceService ammoInEvidenceService,
                            AmmoUsedRepository ammoUsedRepository,
                            CaliberRepository caliberRepository,
-                           MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, ArmoryService armoryService, AmmoEvidenceRepository ammoEvidenceRepository) {
+                           MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, ArmoryService armoryService, AmmoEvidenceRepository ammoEvidenceRepository, WorkingTimeEvidenceRepository workingTimeEvidenceRepository) {
         this.personalEvidenceRepository = personalEvidenceRepository;
         this.ammoUsedToEvidenceEntityRepository = ammoUsedToEvidenceEntityRepository;
         this.ammoInEvidenceService = ammoInEvidenceService;
@@ -48,12 +51,17 @@ public class AmmoUsedService {
         this.otherPersonRepository = otherPersonRepository;
         this.armoryService = armoryService;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
+        this.workingTimeEvidenceRepository = workingTimeEvidenceRepository;
     }
 
     @Transactional
     public ResponseEntity<String> addAmmoUsedEntity(String caliberUUID, Integer legitimationNumber, int otherID, Integer quantity) {
-        if (ammoEvidenceRepository.findAll().stream().anyMatch(f -> f.isOpen() && !f.isForceOpen())) {
-            AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository.findAll().stream().filter(f -> f.isOpen() && !f.isForceOpen()).findFirst().orElseThrow(EntityNotFoundException::new);
+        if(!workingTimeEvidenceRepository.existsByIsCloseFalse()){
+            return ResponseEntity.badRequest().body("Najpierw zarejestruj pobyt");
+        }
+
+        if (ammoEvidenceRepository.existsByOpenTrueAndForceOpenFalse()) {
+            AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository.findAllByOpenTrueAndForceOpenFalse().stream().findFirst().orElseThrow(EntityNotFoundException::new);
             if (ammoEvidenceEntity.getDate().isBefore(LocalDate.now())) {
                 ammoEvidenceEntity.setOpen(false);
                 ammoEvidenceEntity.setForceOpen(false);

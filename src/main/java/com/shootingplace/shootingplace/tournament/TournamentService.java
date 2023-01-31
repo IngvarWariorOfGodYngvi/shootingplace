@@ -1,5 +1,7 @@
 package com.shootingplace.shootingplace.tournament;
 
+import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
+import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.enums.ArbiterWorkClass;
@@ -13,6 +15,8 @@ import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.competition.CompetitionRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.users.UserEntity;
+import com.shootingplace.shootingplace.users.UserRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -36,10 +40,12 @@ public class TournamentService {
     private final HistoryService historyService;
     private final ChangeHistoryService changeHistoryService;
     private final UsedHistoryRepository usedHistoryRepository;
+    private final BarCodeCardRepository barCodeCardRepository;
+    private final UserRepository userRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public TournamentService(TournamentRepository tournamentRepository, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, CompetitionMembersListRepository competitionMembersListRepository, CompetitionRepository competitionRepository, HistoryService historyService, ChangeHistoryService changeHistoryService, UsedHistoryRepository usedHistoryRepository) {
+    public TournamentService(TournamentRepository tournamentRepository, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, CompetitionMembersListRepository competitionMembersListRepository, CompetitionRepository competitionRepository, HistoryService historyService, ChangeHistoryService changeHistoryService, UsedHistoryRepository usedHistoryRepository, BarCodeCardRepository barCodeCardRepository, UserRepository userRepository) {
         this.tournamentRepository = tournamentRepository;
         this.memberRepository = memberRepository;
         this.otherPersonRepository = otherPersonRepository;
@@ -48,6 +54,8 @@ public class TournamentService {
         this.historyService = historyService;
         this.changeHistoryService = changeHistoryService;
         this.usedHistoryRepository = usedHistoryRepository;
+        this.barCodeCardRepository = barCodeCardRepository;
+        this.userRepository = userRepository;
     }
 
     public ResponseEntity<String> createNewTournament(Tournament tournament) {
@@ -186,16 +194,11 @@ public class TournamentService {
         }
     }
 
-    public ResponseEntity<?> removeArbiterFromTournament(String tournamentUUID, int legitimationNumber) {
+    public ResponseEntity<?> removeArbiterFromTournament(String tournamentUUID, String barcode) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
 
-            MemberEntity memberEntity = memberRepository
-                    .findAll()
-                    .stream()
-                    .filter(f -> f.getLegitimationNumber()
-                            .equals(legitimationNumber))
-                    .findFirst().orElseThrow(EntityNotFoundException::new);
+            MemberEntity memberEntity = getMemberEntityFromBarCode(barcode);
 
             List<MemberEntity> list = tournamentEntity.getArbitersList();
 
@@ -236,7 +239,7 @@ public class TournamentService {
         return ResponseEntity.status(418).body("I'm a teapot");
     }
 
-    public ResponseEntity<String> addMainArbiter(String tournamentUUID, int legitimationNumber) {
+    public ResponseEntity<String> addMainArbiter(String tournamentUUID, String barcode) {
         if (!tournamentRepository.existsById(tournamentUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono zawodów z tym identyfikatorem");
         }
@@ -247,14 +250,7 @@ public class TournamentService {
                 tournamentEntity.setOtherMainArbiter(null);
             }
             String function = ArbiterWorkClass.MAIN_ARBITER.getName();
-
-            MemberEntity memberEntity = memberRepository
-                    .findAll()
-                    .stream()
-                    .filter(f -> f.getLegitimationNumber()
-                            .equals(legitimationNumber))
-                    .findFirst().orElseThrow(EntityNotFoundException::new);
-
+            MemberEntity memberEntity = getMemberEntityFromBarCode(barcode);
             if (tournamentEntity.getCommissionRTSArbiter() != null) {
                 if (tournamentEntity.getCommissionRTSArbiter().equals(memberEntity)) {
                     return ResponseEntity.badRequest().body("Sędzia już jest przypisany");
@@ -286,7 +282,10 @@ public class TournamentService {
                 }
             }
         }
-        return ResponseEntity.badRequest().body("Nie udało się przypisać sędziego");
+        return ResponseEntity.badRequest().
+
+                body("Nie udało się przypisać sędziego");
+
     }
 
     public ResponseEntity<String> addOtherMainArbiter(String tournamentUUID, int id) {
@@ -340,7 +339,7 @@ public class TournamentService {
         return ResponseEntity.badRequest().body("Nie udało się przypisać sędziego");
     }
 
-    public ResponseEntity<?> addRTSArbiter(String tournamentUUID, int legitimationNumber) {
+    public ResponseEntity<?> addRTSArbiter(String tournamentUUID, String barcode) {
         if (!tournamentRepository.existsById(tournamentUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono zawodów z tym identyfikatorem");
         }
@@ -351,13 +350,7 @@ public class TournamentService {
                 tournamentEntity.setOtherCommissionRTSArbiter(null);
             }
             String function = ArbiterWorkClass.RTS_ARBITER.getName();
-
-            MemberEntity memberEntity = memberRepository
-                    .findAll()
-                    .stream()
-                    .filter(f -> f.getLegitimationNumber()
-                            .equals(legitimationNumber))
-                    .findFirst().orElseThrow(EntityNotFoundException::new);
+            MemberEntity memberEntity = getMemberEntityFromBarCode(barcode);
 
             if (tournamentEntity.getMainArbiter() != null) {
                 if (tournamentEntity.getMainArbiter().equals(memberEntity)) {
@@ -436,20 +429,14 @@ public class TournamentService {
         return ResponseEntity.badRequest().body("Nie udało się przypisać sędziego");
     }
 
-    public ResponseEntity<?> addOthersArbiters(String tournamentUUID, int legitimationNumber) {
+    public ResponseEntity<?> addOthersArbiters(String tournamentUUID, String barcode) {
         if (!tournamentRepository.existsById(tournamentUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono zawodów z tym identyfikatorem");
         }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
             String function = ArbiterWorkClass.HELP.getName();
-
-            MemberEntity memberEntity = memberRepository
-                    .findAll()
-                    .stream()
-                    .filter(f -> f.getLegitimationNumber()
-                            .equals(legitimationNumber))
-                    .findFirst().orElseThrow(EntityNotFoundException::new);
+            MemberEntity memberEntity = getMemberEntityFromBarCode(barcode);
 
             if (tournamentEntity.getMainArbiter() != null) {
                 if (tournamentEntity.getMainArbiter().equals(memberEntity)) {
@@ -573,6 +560,26 @@ public class TournamentService {
         return "Nie udało się dodać konkurencji";
     }
 
+    private MemberEntity getMemberEntityFromBarCode(String barcode) {
+        BarCodeCardEntity barCode = barCodeCardRepository.findByBarCode(barcode);
+        MemberEntity memberEntity;
+        UserEntity user = userRepository.getOne(barCode.getBelongsTo());
+        if (barCode.getSubType().contains("Pracownik") || barCode.getSubType().contains("Zarząd")) {
+            if (user.getMember() != null) {
+                memberEntity = user.getMember();
+            } else {
+                memberEntity = memberRepository.getOne(barCode.getBelongsTo());
+            }
+        } else {
+            memberEntity = memberRepository.getOne(barCode.getBelongsTo());
+        }
+        LOG.info("zapisuję rekord do bazy");
+        user.getList().add(changeHistoryService.addRecord(user,"Sign in as arbiter",memberEntity.getUuid()));
+        userRepository.save(user);
+
+        return memberEntity;
+    }
+
     public List<TournamentDTO> getClosedTournaments() {
         List<TournamentEntity> all = tournamentRepository.findAll().stream().filter(f -> !f.isOpen()).collect(Collectors.toList());
         List<TournamentDTO> allDTO = new ArrayList<>();
@@ -635,20 +642,14 @@ public class TournamentService {
         return list;
     }
 
-    public ResponseEntity<?> addOthersRTSArbiters(String tournamentUUID, int legitimationNumber) {
+    public ResponseEntity<?> addOthersRTSArbiters(String tournamentUUID, String barcode) {
         if (!tournamentRepository.existsById(tournamentUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono zawodów z tym identyfikatorem");
         }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
             String function = ArbiterWorkClass.RTS_HELP.getName();
-
-            MemberEntity memberEntity = memberRepository
-                    .findAll()
-                    .stream()
-                    .filter(f -> f.getLegitimationNumber()
-                            .equals(legitimationNumber))
-                    .findFirst().orElseThrow(EntityNotFoundException::new);
+            MemberEntity memberEntity = getMemberEntityFromBarCode(barcode);
 
             if (tournamentEntity.getMainArbiter() != null) {
                 if (tournamentEntity.getMainArbiter().equals(memberEntity)) {
@@ -733,19 +734,13 @@ public class TournamentService {
         return ResponseEntity.badRequest().body("Nie udało się przypisać sędziego");
     }
 
-    public ResponseEntity<?> removeRTSArbiterFromTournament(String tournamentUUID, int legitimationNumber) {
+    public ResponseEntity<?> removeRTSArbiterFromTournament(String tournamentUUID, String barcode) {
         if (!tournamentRepository.existsById(tournamentUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono zawodów z tym identyfikatorem");
         }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
-
-            MemberEntity memberEntity = memberRepository
-                    .findAll()
-                    .stream()
-                    .filter(f -> f.getLegitimationNumber()
-                            .equals(legitimationNumber))
-                    .findFirst().orElseThrow(EntityNotFoundException::new);
+            MemberEntity memberEntity = getMemberEntityFromBarCode(barcode);
 
             List<MemberEntity> list = tournamentEntity.getArbitersRTSList();
 

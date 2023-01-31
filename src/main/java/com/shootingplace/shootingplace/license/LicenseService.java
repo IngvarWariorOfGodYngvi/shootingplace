@@ -338,7 +338,7 @@ public class LicenseService {
         history.getLicensePaymentHistory().remove(licensePaymentHistoryEntity);
 
         historyRepository.save(history);
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "removeLicensePaymentRecord", "udało się");
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "removeLicensePaymentRecord", "usunięto");
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             licensePaymentHistoryRepository.delete(licensePaymentHistoryEntity);
         }
@@ -352,5 +352,12 @@ public class LicenseService {
             response = stringResponseEntity;
         }
         return response;
+    }
+
+    public LicenseEntity getLicense(String LicenseUUID) {
+        return licenseRepository.getOne(LicenseUUID);
+    }
+    public List<LicensePaymentHistoryEntity> getLicensePaymentHistory(String MemberUUID) {
+        return memberRepository.getOne(MemberUUID).getHistory().getLicensePaymentHistory();
     }
 }

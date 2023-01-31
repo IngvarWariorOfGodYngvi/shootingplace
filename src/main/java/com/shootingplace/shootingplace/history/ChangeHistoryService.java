@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.history;
 
+import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
@@ -7,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -36,13 +38,13 @@ public class ChangeHistoryService {
     }
 
     public boolean comparePinCode(String pinCode) {
-
-        return userRepository.findAll().stream().anyMatch(f -> f.getPinCode().equals(pinCode));
+        String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
+        return userRepository.findAll().stream().anyMatch(f -> f.getPinCode().equals(pin));
     }
 
     public ResponseEntity<String> addRecordToChangeHistory(String pinCode, String classNamePlusMethod, String uuid) {
-
-        UserEntity userEntity = userRepository.findAll().stream().filter(f -> f.getPinCode().equals(pinCode)).findFirst().orElse(null);
+        String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
+        UserEntity userEntity = userRepository.findAll().stream().filter(f -> f.getPinCode().equals(pin)).findFirst().orElse(null);
         // user is found
         if (userEntity != null) {
             // user isn't in work

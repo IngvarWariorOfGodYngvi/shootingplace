@@ -14,11 +14,14 @@ import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -35,10 +38,11 @@ public class HistoryService {
     private final JudgingHistoryRepository judgingHistoryRepository;
     private final ContributionRepository contributionRepository;
     private final LicensePaymentHistoryRepository licensePaymentHistoryRepository;
+    private final ChangeHistoryService changeHistoryService;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public HistoryService(HistoryRepository historyRepository, MemberRepository memberRepository, LicenseRepository licenseRepository, CompetitionHistoryRepository competitionHistoryRepository, TournamentRepository tournamentRepository, JudgingHistoryRepository judgingHistoryRepository, ContributionRepository contributionRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository) {
+    public HistoryService(HistoryRepository historyRepository, MemberRepository memberRepository, LicenseRepository licenseRepository, CompetitionHistoryRepository competitionHistoryRepository, TournamentRepository tournamentRepository, JudgingHistoryRepository judgingHistoryRepository, ContributionRepository contributionRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, ChangeHistoryService changeHistoryService) {
         this.historyRepository = historyRepository;
         this.memberRepository = memberRepository;
         this.licenseRepository = licenseRepository;
@@ -47,6 +51,7 @@ public class HistoryService {
         this.judgingHistoryRepository = judgingHistoryRepository;
         this.contributionRepository = contributionRepository;
         this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
+        this.changeHistoryService = changeHistoryService;
     }
 
     //  Basic
@@ -177,7 +182,7 @@ public class HistoryService {
         historyRepository.save(historyEntity);
 
     }
-    public ResponseEntity<?> addLicenseHistoryPayment(String memberUUID) {
+    public ResponseEntity<?> addLicenseHistoryPayment(String memberUUID, String pinCode) {
 
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
@@ -221,25 +226,25 @@ public class HistoryService {
             historyRepository.save(historyEntity);
 
         } else {
-            return ResponseEntity.badRequest().body("\"Licencja na ten moment jest opłacona\"");
+            return ResponseEntity.badRequest().body("Licencja na ten moment jest opłacona");
         }
 
         licenseEntity.setPaid(true);
         licenseRepository.save(licenseEntity);
-        return ResponseEntity.ok("\"Dodano płatność za Licencję\"");
+        return getStringResponseEntity(pinCode,memberEntity,HttpStatus.OK,"addLicenseHistoryPayment","Dodano płatność za Licencję");
 
     }
 
     public ResponseEntity<?> toggleLicencePaymentInPZSS(String paymentUUID) {
 
         if (!licensePaymentHistoryRepository.existsById(paymentUUID)) {
-            return ResponseEntity.badRequest().body("\"Nie znaleziono płatności\"");
+            return ResponseEntity.badRequest().body("Nie znaleziono płatności");
         }
 
         LicensePaymentHistoryEntity licensePaymentHistoryEntity = licensePaymentHistoryRepository.findById(paymentUUID).orElseThrow(EntityNotFoundException::new);
         licensePaymentHistoryEntity.setPayInPZSSPortal(true);
         licensePaymentHistoryRepository.save(licensePaymentHistoryEntity);
-        return ResponseEntity.ok("\"Oznaczono jako opłacone w Portalu PZSS\"");
+        return ResponseEntity.ok("Oznaczono jako opłacone w Portalu PZSS");
     }
 
     //  Tournament
@@ -326,9 +331,9 @@ public class HistoryService {
             }
         }
 
-        historyEntity.setPistolCounter((int)countPistol + pistolC);
-        historyEntity.setRifleCounter((int)countRifle + rifleC);
-        historyEntity.setShotgunCounter((int)countShotgun + shotgunC);
+        historyEntity.setPistolCounter(Math.max((int) countPistol + pistolC, 0));
+        historyEntity.setRifleCounter(Math.max((int)countRifle + rifleC,0));
+        historyEntity.setShotgunCounter(Math.max((int)countShotgun + shotgunC,0));
 
         LOG.info("Dodano wpis w historii startów.");
         historyRepository.save(historyEntity);
@@ -494,6 +499,7 @@ public class HistoryService {
     private JudgingHistoryEntity createJudgingHistoryEntity(LocalDate date, String name, String tournamentUUID, String function) {
         return JudgingHistoryEntity.builder()
                 .date(date)
+                .time(LocalTime.now())
                 .name(name)
                 .judgingFunction(function)
                 .tournamentUUID(tournamentUUID)
@@ -598,6 +604,15 @@ public class HistoryService {
             }
             historyRepository.save(historyEntity);
         }
+    }
+
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, Object body) {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity != null ? memberEntity.getClass().getSimpleName() + " " + methodName + " " : methodName, memberEntity != null ? memberEntity.getUuid() : "nie dotyczy");
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
     }
 
 

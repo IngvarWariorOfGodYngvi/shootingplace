@@ -14,4 +14,8 @@ public interface UserRepository {
     boolean existsById(String uuid);
 
     UserEntity getOne(String uuid);
+
+    UserEntity findByPinCode(String pinCode);
+
+    boolean existsByPinCode(String pinCode);
 }

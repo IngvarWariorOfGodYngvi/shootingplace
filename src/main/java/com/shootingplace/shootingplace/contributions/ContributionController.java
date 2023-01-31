@@ -38,7 +38,7 @@ public class ContributionController {
         if (changeHistoryService.comparePinCode(pinCode)) {
             return contributionService.addContribution(memberUUID, LocalDate.now(), pinCode);
         } else {
-            return ResponseEntity.status(403).body("Brak upr awnień");
+            return ResponseEntity.status(403).body("Brak uprawnień");
         }
     }
 @Transactional

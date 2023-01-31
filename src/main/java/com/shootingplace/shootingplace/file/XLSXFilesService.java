@@ -407,7 +407,8 @@ public class XLSXFilesService {
         XSSFRow row = sheet.createRow(rc++);
 
         sheet.setColumnWidth(0, 5000);
-        sheet.setColumnWidth(1, 1000);
+        sheet.setColumnWidth(1, 5000);
+        sheet.setColumnWidth(2, 5000);
 
         XSSFCell cell = row.createCell(0);
         cell.setCellStyle(cellStyleNormalCenterAlignment);
@@ -415,21 +416,111 @@ public class XLSXFilesService {
         XSSFCell cell1 = row.createCell(1);
         cell1.setCellValue("Numer Legitymacji");
         cell1.setCellStyle(cellStyleNormalCenterAlignment);
+        XSSFCell cell2 = row.createCell(2);
+        cell2.setCellValue("Data Zapisu");
+        cell2.setCellStyle(cellStyleNormalCenterAlignment);
 
 
         for (MemberDTO memberDTO : collect) {
             int cc = 0;
             sheet.setColumnWidth(0, 5000);
             sheet.setColumnWidth(1, 5000);
+            sheet.setColumnWidth(2, 5000);
             XSSFRow row1 = sheet.createRow(rc++);
-            XSSFCell cell2 = row1.createCell(cc++);
-            XSSFCell cell3 = row1.createCell(cc);
+            XSSFCell cell3 = row1.createCell(cc++);
+            XSSFCell cell4 = row1.createCell(cc++);
+            XSSFCell cell5 = row1.createCell(cc);
 
-            cell2.setCellStyle(cellStyleNormalCenterAlignment);
             cell3.setCellStyle(cellStyleNormalCenterAlignment);
+            cell4.setCellStyle(cellStyleNormalCenterAlignment);
+            cell5.setCellStyle(cellStyleNormalCenterAlignment);
 
-            cell2.setCellValue(memberDTO.getMemberName());
-            cell3.setCellValue(memberDTO.getLegitimationNumber());
+            cell3.setCellValue(memberDTO.getMemberName());
+            cell4.setCellValue(memberDTO.getLegitimationNumber());
+            cell5.setCellValue(memberDTO.getJoinDate().toString());
+
+        }
+        try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
+            workbook.write(outputStream);
+        }
+        workbook.close();
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.TEXT_XML))
+                .size(data.length)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+        File file = new File(fileName);
+        file.delete();
+        LOG.info("Pobrano plik " + fileName);
+
+        return filesEntity;
+    }
+
+    public FilesEntity getErasedSum(LocalDate firstDate, LocalDate secondDate) throws IOException {
+        String fileName = "lista klubowiczów usuniętych od "+firstDate.toString()+" do "+ secondDate.toString()+".xlsx";
+
+        List<MemberDTO> collect = memberRepository.findAllByErasedTrue().stream()
+                .filter(f->f.getErasedEntity()!=null)
+                .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1)))
+                .filter(f -> f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
+                .map(Mapping::map2DTO)
+                .sorted(Comparator.comparing(MemberDTO::getSecondName,pl()).thenComparing(MemberDTO::getFirstName,pl()).reversed())
+                .collect(Collectors.toList());
+
+        int rc = 0;
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+
+        XSSFSheet sheet = workbook.createSheet("lista usuniętych");
+
+        XSSFFont fontNormalCenterAlignment = workbook.createFont();
+        fontNormalCenterAlignment.setFontHeightInPoints((short) 10);
+        fontNormalCenterAlignment.setFontName("Calibri");
+
+        XSSFCellStyle cellStyleNormalCenterAlignment = workbook.createCellStyle();
+        cellStyleNormalCenterAlignment.setAlignment(HorizontalAlignment.CENTER);
+        cellStyleNormalCenterAlignment.setFont(fontNormalCenterAlignment);
+
+        XSSFRow row = sheet.createRow(rc++);
+
+        sheet.setColumnWidth(0, 5000);
+        sheet.setColumnWidth(1, 5000);
+        sheet.setColumnWidth(2, 5000);
+
+        XSSFCell cell = row.createCell(0);
+        cell.setCellStyle(cellStyleNormalCenterAlignment);
+        cell.setCellValue("Nazwisko i Imię");
+        XSSFCell cell1 = row.createCell(1);
+        cell1.setCellValue("Numer Legitymacji");
+        cell1.setCellStyle(cellStyleNormalCenterAlignment);
+        XSSFCell cell2 = row.createCell(2);
+        cell2.setCellValue("Data Skreślenia");
+        cell2.setCellStyle(cellStyleNormalCenterAlignment);
+
+
+        for (MemberDTO memberDTO : collect) {
+            int cc = 0;
+            sheet.setColumnWidth(0, 5000);
+            sheet.setColumnWidth(1, 5000);
+            sheet.setColumnWidth(2, 5000);
+            XSSFRow row1 = sheet.createRow(rc++);
+            XSSFCell cell3 = row1.createCell(cc++);
+            XSSFCell cell4 = row1.createCell(cc++);
+            XSSFCell cell5 = row1.createCell(cc);
+
+            cell3.setCellStyle(cellStyleNormalCenterAlignment);
+            cell4.setCellStyle(cellStyleNormalCenterAlignment);
+            cell5.setCellStyle(cellStyleNormalCenterAlignment);
+
+            cell3.setCellValue(memberDTO.getMemberName());
+            cell4.setCellValue(memberDTO.getLegitimationNumber());
+            cell5.setCellValue(memberDTO.getErasedEntity().getDate().toString());
 
         }
         try (FileOutputStream outputStream = new FileOutputStream(fileName)) {

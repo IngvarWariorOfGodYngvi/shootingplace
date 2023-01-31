@@ -3770,7 +3770,7 @@ public class FilesService {
         document.add(newLine);
         document.add(newLine);
         state = getSex(member.getPesel()).equals("Pan") ? " został przyjęty" : " została przyjęta";
-        Paragraph p12 = new Paragraph("Potwierdzam, że " + getSex(member.getPesel()) + " ......................................" +member.getMemberName().toUpperCase()+ state + " do:", font(12, 0));
+        Paragraph p12 = new Paragraph("Potwierdzam, że " + getSex(member.getPesel()) + " " +member.getMemberName().toUpperCase()+ state + " do:", font(12, 0));
         Paragraph p13 = new Paragraph(clubRepository.getOne(1).getFullName(), font(12, 0));
         Paragraph p14 = new Paragraph("na podstawie uchwały nr: ...................................... z dnia .........................", font(12, 0));
         p12.setIndentationLeft(55);

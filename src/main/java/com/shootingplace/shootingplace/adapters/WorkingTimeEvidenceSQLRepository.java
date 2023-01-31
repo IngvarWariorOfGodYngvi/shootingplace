@@ -5,5 +5,4 @@ import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRe
 import org.springframework.data.jpa.repository.JpaRepository;
 
 interface WorkingTimeEvidenceSQLRepository extends WorkingTimeEvidenceRepository, JpaRepository<WorkingTimeEvidenceEntity, String> {
-
 }
