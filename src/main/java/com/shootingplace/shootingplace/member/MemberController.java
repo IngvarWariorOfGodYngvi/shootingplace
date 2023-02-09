@@ -175,7 +175,8 @@ public class MemberController {
     @Transactional
     @PostMapping("/")
     public ResponseEntity<?> addMember(@RequestBody @Valid MemberWithAddress memberWithAddress,@RequestParam boolean returningToClub, @RequestParam String pinCode) {
-        if (changeHistoryService.comparePinCode(pinCode)) {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
             ResponseEntity<?> result;
             Member member = memberWithAddress.getMember();
             Address address = memberWithAddress.getAddress();
@@ -190,7 +191,7 @@ public class MemberController {
             }
             return result;
         } else {
-            return ResponseEntity.status(403).body("Brak dostępu");
+            return code;
         }
     }
 
@@ -216,11 +217,11 @@ public class MemberController {
 
     @PatchMapping("/adult/{uuid}")
     public ResponseEntity<?> changeAdult(@PathVariable String uuid, @RequestParam String pinCode) {
-        if (changeHistoryService.comparePinCode(pinCode)) {
-
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
             return memberService.changeAdult(uuid, pinCode);
         } else {
-            return ResponseEntity.status(403).body("Brak dostępu");
+            return code;
         }
     }
 
@@ -231,16 +232,18 @@ public class MemberController {
 
     @PatchMapping("/{uuid}")
     public ResponseEntity<?> activateOrDeactivateMember(@PathVariable String uuid, @RequestParam String pinCode) {
-        if (changeHistoryService.comparePinCode(pinCode)) {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
             return memberService.activateOrDeactivateMember(uuid, pinCode);
         } else {
-            return ResponseEntity.status(403).body("Brak dostępu");
+            return code;
         }
     }
 
     @PatchMapping("/erase/{uuid}")
     public ResponseEntity<?> eraseMember(@PathVariable String uuid, @RequestParam String additionalDescription, @RequestParam String erasedDate, @RequestParam String erasedType, @RequestParam String pinCode) {
-        if (changeHistoryService.comparePinCode(pinCode)) {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
             if (additionalDescription.trim().isEmpty() || additionalDescription.trim().isBlank() || additionalDescription.trim().equals("null")) {
                 additionalDescription = null;
             }
@@ -250,7 +253,7 @@ public class MemberController {
             LocalDate parsedDate = LocalDate.parse(erasedDate);
             return memberService.eraseMember(uuid, erasedType, parsedDate, additionalDescription, pinCode);
         } else {
-            return ResponseEntity.status(403).body("Brak dostępu");
+            return code;
         }
     }
     @PatchMapping("/changeClub/{uuid}")

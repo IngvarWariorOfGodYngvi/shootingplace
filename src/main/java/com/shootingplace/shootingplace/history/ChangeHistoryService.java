@@ -37,9 +37,17 @@ public class ChangeHistoryService {
                 .build());
     }
 
-    public boolean comparePinCode(String pinCode) {
+    public ResponseEntity<?> comparePinCode(String pinCode) {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
-        return userRepository.findAll().stream().anyMatch(f -> f.getPinCode().equals(pin));
+        UserEntity userEntity = userRepository.findAll().stream().filter(f -> f.getPinCode().equals(pin)).findFirst().orElse(null);
+        boolean inWork;
+        if (userEntity != null) {
+            inWork = workServ.isInWork(userEntity);
+        } else {
+            inWork = false;
+        }
+        return inWork ? ResponseEntity.ok().build() : ResponseEntity.badRequest().body("Najpierw zarejestruj pobyt w Klubie");
+
     }
 
     public ResponseEntity<String> addRecordToChangeHistory(String pinCode, String classNamePlusMethod, String uuid) {

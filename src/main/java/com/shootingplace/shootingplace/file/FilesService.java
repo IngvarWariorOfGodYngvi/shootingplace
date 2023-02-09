@@ -249,7 +249,7 @@ public class FilesService {
     public FilesEntity personalCardFile(String memberUUID) throws IOException, DocumentException {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         ClubEntity club = clubRepository.getOne(1);
-        String fileName = "Karta_Członkowska_" + memberEntity.getFirstName().trim() + "_" + memberEntity.getSecondName() + ".pdf";
+        String fileName = "Karta Członkowska " + memberEntity.getFirstName().stripTrailing() + " " + memberEntity.getSecondName().stripTrailing() + ".pdf";
         LocalDate birthDate = birthDay(memberEntity.getPesel());
         Document document = new Document(PageSize.A4);
         document.setMargins(20F, 20F, 35F, 55F);
@@ -585,7 +585,7 @@ public class FilesService {
     public FilesEntity createApplicationForExtensionOfTheCompetitorsLicense(String memberUUID) throws IOException, DocumentException {
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
-        String fileName = "Wniosek_" + memberEntity.getFirstName() + "_" + memberEntity.getSecondName() + ".pdf";
+        String fileName = "Wniosek " + memberEntity.getMemberName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
         document.setMargins(35F, 35F, 50F, 50F);
@@ -1390,7 +1390,7 @@ public class FilesService {
 
     public FilesEntity getMemberCSVFile(String memberUUID) throws IOException {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        String fileName = memberEntity.getFirstName() + memberEntity.getSecondName().toUpperCase().trim() + ".csv";
+        String fileName = memberEntity.getFirstName().stripTrailing() + memberEntity.getSecondName().toUpperCase().stripTrailing() + ".csv";
         File file = new File(fileName);
 
         String[] tab = new String[5];
@@ -3250,7 +3250,7 @@ public class FilesService {
     public FilesEntity getMembershipDeclarationLOK(String uuid) throws DocumentException, IOException {
         MemberEntity member = memberRepository.getOne(uuid);
 
-        String fileName = "Deklaracja_Członkowska_LOK" + member.getMemberName() + ".pdf";
+        String fileName = "Deklaracja Członkowska LOK " + member.getMemberName() + ".pdf";
         String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/logo_LOK.png";
         Image img = Image.getInstance(source);
         int fs = 10;

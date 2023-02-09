@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.contributions;
 
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -23,11 +24,11 @@ public class ContributionController {
     @Transactional
     @PostMapping("/history/{memberUUID}")
     public ResponseEntity<?> addHistoryContributionRecord(@PathVariable String memberUUID, @RequestParam String date, @RequestParam String pinCode) {
-        if (changeHistoryService.comparePinCode(pinCode)) {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
             return contributionService.addContributionRecord(memberUUID, LocalDate.parse(date), pinCode);
         } else {
-            return ResponseEntity.status(403).body("Brak uprawnień");
-
+            return code;
         }
     }
 
@@ -35,16 +36,18 @@ public class ContributionController {
     @PatchMapping("/{memberUUID}")
     public ResponseEntity<?> addContribution(@PathVariable String memberUUID, @RequestParam String pinCode) {
 
-        if (changeHistoryService.comparePinCode(pinCode)) {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
             return contributionService.addContribution(memberUUID, LocalDate.now(), pinCode);
         } else {
-            return ResponseEntity.status(403).body("Brak uprawnień");
+            return code;
         }
     }
 @Transactional
     @PutMapping("/edit")
     public ResponseEntity<?> editContribution(@RequestParam String memberUUID, @RequestParam String contributionUUID, @RequestParam String paymentDay, @RequestParam String validThru, @RequestParam String pinCode) {
-        if (changeHistoryService.comparePinCode(pinCode)) {
+    ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+    if (code.getStatusCode().equals(HttpStatus.OK)) {
             LocalDate parsedPaymentDay = null;
             if (paymentDay != null && !paymentDay.isEmpty() && !paymentDay.equals("null")) {
                 parsedPaymentDay = LocalDate.parse(paymentDay);
@@ -56,16 +59,17 @@ public class ContributionController {
 
             return contributionService.updateContribution(memberUUID, contributionUUID, parsedPaymentDay, parsedValidThru, pinCode);
         } else {
-            return ResponseEntity.status(403).body("Brak uprawnień");
+            return code;
         }
     }
 @Transactional
     @PatchMapping("/remove/{memberUUID}")
     public ResponseEntity<?> removeContribution(@PathVariable String memberUUID, @RequestParam String contributionUUID, @RequestParam String pinCode) {
-        if (changeHistoryService.comparePinCode(pinCode)) {
+    ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+    if (code.getStatusCode().equals(HttpStatus.OK)) {
             return contributionService.removeContribution(memberUUID, contributionUUID, pinCode);
         } else {
-            return ResponseEntity.status(403).body("Brak uprawnień");
+            return code;
         }
     }
 }

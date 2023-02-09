@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.tournament;
 
 import com.shootingplace.shootingplace.armory.ArmoryService;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -106,10 +107,11 @@ public class TournamentController {
     @Transactional
     @PatchMapping("/open/{tournamentUUID}")
     public ResponseEntity<?> openTournament(@PathVariable String tournamentUUID, @RequestParam String pinCode) {
-        if (changeHistoryService.comparePinCode(pinCode)) {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
             return tournamentService.openTournament(tournamentUUID, pinCode);
         } else {
-            return ResponseEntity.status(418).body("I'm a Teapot");
+            return code;
         }
     }
 

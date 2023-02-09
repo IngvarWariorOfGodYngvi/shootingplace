@@ -456,7 +456,10 @@ public class WorkingTimeEvidenceService {
     }
 
     public boolean isInWork(UserEntity userEntity) {
-        return workRepo.findAll().stream().filter(f -> !f.isClose()).anyMatch(e -> e.getUser().equals(userEntity));
-
+        if (userEntity.getSubType().equals("Admin")) {
+            return true;
+        } else {
+            return workRepo.findAll().stream().filter(f -> !f.isClose()).anyMatch(e -> e.getUser().equals(userEntity));
+        }
     }
 }

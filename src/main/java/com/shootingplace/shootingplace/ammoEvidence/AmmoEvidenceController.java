@@ -4,6 +4,7 @@ import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlac
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -81,10 +82,11 @@ public class AmmoEvidenceController {
     @Transactional
     @PatchMapping("/ammoOpen")
     public ResponseEntity<?> openEvidence(@RequestParam String pinCode, @RequestParam String evidenceUUID) {
-        if (changeHistoryService.comparePinCode(pinCode)) {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
             return ammoEvidenceService.openEvidence(evidenceUUID, pinCode);
         } else {
-            return ResponseEntity.status(403).body("Brak dostępu");
+            return code;
         }
     }
 
