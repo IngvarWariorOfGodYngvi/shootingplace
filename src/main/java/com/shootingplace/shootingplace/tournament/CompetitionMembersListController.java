@@ -77,9 +77,9 @@ public class CompetitionMembersListController {
     @DeleteMapping("/delete")
     public ResponseEntity<?> removeMembersListFromTournament(@RequestParam String competitionUUID, @RequestParam String tournamentUUID) {
         if (competitionMembersListService.removeListFromTournament(tournamentUUID, competitionUUID)) {
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().body("usunięto");
         } else {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("Coś poszło nie tak");
         }
     }
 

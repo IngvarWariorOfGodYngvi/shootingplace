@@ -59,6 +59,10 @@ public class TournamentController {
     public ResponseEntity<?> getGunInTournament(@RequestParam String tournamentUUID) {
         return ResponseEntity.ok(armoryService.getGunInTournament(tournamentUUID));
     }
+    @GetMapping("/getJudgingList")
+    public ResponseEntity<?> getJudgingList(@RequestParam String firstDate, @RequestParam String secondDate) {
+        return tournamentService.getJudgingList(firstDate,secondDate);
+    }
 
     @PostMapping("/")
     public ResponseEntity<String> addNewTournament(@RequestBody Tournament tournament) {

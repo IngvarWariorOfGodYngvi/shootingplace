@@ -1,12 +1,13 @@
 package com.shootingplace.shootingplace.workingTimeEvidence;
 
+import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordsService;
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
 import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.file.FilesEntity;
 import com.shootingplace.shootingplace.file.FilesRepository;
-import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.slf4j.Logger;
@@ -15,9 +16,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Month;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -274,9 +277,8 @@ public class WorkingTimeEvidenceService {
         return LocalDateTime.of(time.toLocalDate(), temp);
     }
 
-    public List<UserWithWorkingTimeList> getAllWorkingTimeEvidenceInMonth(String month, String workType) {
+    public List<UserWithWorkingTimeList> getAllWorkingTimeEvidenceInMonth(int year, String month, String workType) {
 
-//        List<WorkingTimeEvidenceDTO> WTEDTO = new ArrayList<>();
         month = month == null || month.toLowerCase(Locale.ROOT).equals("null") ? LocalDate.now().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).toLowerCase(Locale.ROOT) : month.toLowerCase(Locale.ROOT);
         workType = workType == null || workType.equals("null") ? null : workType;
         List<UserWithWorkingTimeList> userWithWorkingTimeListList = new ArrayList<>();
@@ -288,6 +290,7 @@ public class WorkingTimeEvidenceService {
                     .stream()
                     .filter(WorkingTimeEvidenceEntity::isClose)
                     .filter(f -> f.getStart() != null && f.getStop() != null)
+                    .filter(f -> f.getStart().getYear() == year)
                     .filter(f -> f.getWorkType().contains(finalWorkType))
                     .filter(f -> f.getStart().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth.toLowerCase(Locale.ROOT)))
                     .collect(Collectors.toList());
@@ -296,6 +299,7 @@ public class WorkingTimeEvidenceService {
                     .stream()
                     .filter(WorkingTimeEvidenceEntity::isClose)
                     .filter(f -> f.getStart() != null && f.getStop() != null)
+                    .filter(f -> f.getStart().getYear() == year)
                     .filter(f -> f.getStart().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth.toLowerCase(Locale.ROOT)))
                     .collect(Collectors.toList());
         }
@@ -313,15 +317,11 @@ public class WorkingTimeEvidenceService {
                     .sorted(Comparator.comparing(WorkingTimeEvidenceDTO::getWorkType).thenComparing(WorkingTimeEvidenceDTO::getStart).reversed())
                     .collect(Collectors.toList());
 
-            for (int i = 0; i < pl2.size(); i++) {
+            for (WorkingTimeEvidenceDTO g : pl2) {
 
-//            pl2.forEach(g -> {
-                WorkingTimeEvidenceDTO g = pl2.get(i);
                 LocalDateTime start = getTime(g.getStart(), true);
                 LocalDateTime stop = getTime(g.getStop(), false);
                 String workTime = countTime(start, stop);
-                System.out.println(workTime);
-
 
                 int workTimeSumHours;
                 int workTimeSumMinutes;
@@ -338,8 +338,6 @@ public class WorkingTimeEvidenceService {
             workSumHours.getAndAdd(acquire1);
             format.set(String.format("%02d:%02d",
                     workSumHours.getAcquire(), acquire));
-            System.out.println(format);
-
 
             UserWithWorkingTimeList build = UserWithWorkingTimeList.builder()
                     .uuid(e.getUuid())
@@ -371,26 +369,23 @@ public class WorkingTimeEvidenceService {
         if (uuidList.isEmpty()) {
             return ResponseEntity.badRequest().body("Lista jest pusta - wybierz elementy do zmiany");
         }
+        String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity userEntity = userRepository.findAll()
                 .stream()
                 .filter(f -> f.getSubType().contains(UserSubType.MANAGEMENT_CEO.getName()))
-                .filter(f -> f.getPinCode().equals(pinCode))
+                .filter(f -> f.getPinCode().equals(pin))
                 .findFirst()
                 .orElse(null);
 
-        if (userEntity != null) {
-            if (userEntity.getPinCode().equals(pinCode)) {
-                List<WorkingTimeEvidenceEntity> list = new ArrayList<>();
-                uuidList.forEach(e -> list.add(workRepo.findById(e).orElseThrow(EntityNotFoundException::new)));
-                list.forEach(e -> e.setAccepted(true));
+        if (userEntity != null && userEntity.getSubType().contains(UserSubType.MANAGEMENT_CEO.getName())) {
+            List<WorkingTimeEvidenceEntity> list = new ArrayList<>();
+            uuidList.forEach(e -> list.add(workRepo.findById(e).orElseThrow(EntityNotFoundException::new)));
+            list.forEach(e -> e.setAccepted(true));
 
-                list.forEach(workRepo::save);
-                return ResponseEntity.ok("Zatwierdzono czas pracy");
-            } else {
-                return ResponseEntity.badRequest().body("Pin jest niezgodny - tylko Prezes");
-            }
+            list.forEach(workRepo::save);
+            return ResponseEntity.ok("Zatwierdzono czas pracy");
         }
-        return ResponseEntity.badRequest().body("Coś się nie udało");
+        return ResponseEntity.badRequest().body("Pin jest niezgodny - tylko Prezes");
     }
 
     public ResponseEntity<?> inputChangesToWorkTime(List<WorkingTimeEvidenceDTO> list, String pinCode) {
@@ -398,48 +393,45 @@ public class WorkingTimeEvidenceService {
         if (list.isEmpty()) {
             return ResponseEntity.badRequest().body("Lista jest pusta - wybierz elementy do zmiany");
         }
-        UserEntity userEntity = userRepository.findAll()
-                .stream()
-                .filter(f -> f.getSubType().contains(UserSubType.MANAGEMENT_CEO.getName()))
-                .filter(f -> f.getPinCode().equals(pinCode))
-                .findFirst()
-                .orElse(null);
-        if (userEntity != null) {
-            if (userEntity.getPinCode().equals(pinCode)) {
-                String month = list.get(0).getStart().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl"));
-                month = month.substring(0, 1).toUpperCase() + month.substring(1);
-                String finalMonth = month;
-                List<FilesEntity> collect = filesRepo.findAll().stream().filter(f -> f.getName().contains("raport_pracy_" + finalMonth)).sorted(Comparator.comparing(FilesEntity::getVersion).thenComparing(FilesEntity::getDate).thenComparing(FilesEntity::getTime).reversed()).collect(Collectors.toList());
-                if (!collect.isEmpty()) {
-                    System.out.println(collect.size());
-                    System.out.println("sprawdzam");
-                    FilesEntity file = collect.get(0);
-                    System.out.println(file.getVersion());
-                    file.setVersion(file.getVersion() + 1);
-                    filesRepo.save(file);
-                    System.out.println(file.getVersion());
+        String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
+        UserEntity userEntity = userRepository.findByPinCode(pin);
+
+        if (userEntity != null && userEntity.getSubType().contains(UserSubType.MANAGEMENT_CEO.getName())) {
+
+            String month = list.get(0).getStart().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).toLowerCase(Locale.ROOT);
+            String workType = workRepo.findById(list.get(0).getUuid()).get().getWorkType();
+            int yearValue = list.get(0).getStart().getYear();
+            String finalMonth = month.toLowerCase();
+            System.out.println(month.toLowerCase());
+            System.out.println(yearValue);
+            System.out.println(workType);
+            List<FilesEntity> collect = filesRepo.findAllByNameContains("%" + month.toLowerCase() + "%", "%" + yearValue + "%", "%" + workType + "%");
+            System.out.println(collect.size());
+            if (!collect.isEmpty()) {
+                collect.forEach(e -> {
+                    e.setName("raport_pracy_" + finalMonth + "_" + (e.getVersion()) + "_" + yearValue + "_" + workType + ".pdf");
+                    filesRepo.save(e);
+                });
+            }
+
+            list.forEach(e -> {
+                String s = countTime(e.getStart(), e.getStop());
+                int i = Integer.parseInt(s.substring(0, 2));
+
+                WorkingTimeEvidenceEntity entity = workRepo.findById(e.getUuid()).orElseThrow(EntityNotFoundException::new);
+                if (i > 8) {
+                    entity.setToClarify(true);
                 }
 
-                list.forEach(e -> {
-                    String s = countTime(e.getStart(), e.getStop());
-                    int i = Integer.parseInt(s.substring(0, 2));
-
-                    WorkingTimeEvidenceEntity entity = workRepo.findById(e.getUuid()).orElseThrow(EntityNotFoundException::new);
-                    if (i > 8) {
-                        entity.setToClarify(true);
-                    }
-
-                    entity.setStart(e.getStart());
-                    entity.setStop(e.getStop());
-                    entity.setWorkTime(countTime(getTime(e.getStart(), true), getTime(e.getStop(), false)));
-                    workRepo.save(entity);
-                });
-                return ResponseEntity.ok("Zatwierdzono zmiany w czasie pracy");
-            } else {
-                return ResponseEntity.badRequest().body("Pin jest niezgodny - tylko Prezes");
-            }
+                entity.setStart(e.getStart());
+                entity.setStop(e.getStop());
+                entity.setWorkTime(countTime(getTime(e.getStart(), true), getTime(e.getStop(), false)));
+                workRepo.save(entity);
+            });
+            log.info("Zatwierdzono zmiany w czasie pracy");
+            return ResponseEntity.ok("Zatwierdzono zmiany w czasie pracy");
         }
-        return ResponseEntity.badRequest().body("Coś się nie udało");
+        return ResponseEntity.badRequest().body("Pin jest niezgodny - tylko Prezes");
     }
 
     public ResponseEntity<?> getAllWorkingType() {
@@ -461,5 +453,69 @@ public class WorkingTimeEvidenceService {
         } else {
             return workRepo.findAll().stream().filter(f -> !f.isClose()).anyMatch(e -> e.getUser().equals(userEntity));
         }
+    }
+
+    public ResponseEntity<?> getAllWorkingYear() {
+        return ResponseEntity.ok(workRepo.findAll().stream().map(e -> e.getStart().getYear()).distinct().collect(Collectors.toList()));
+    }
+
+    public ResponseEntity<?> getAllWorkingMonthInYear(Integer year) {
+        List<Integer> collect = workRepo.findAll()
+                .stream()
+                .filter(f -> f.getStop() != null)
+                .filter(f -> f.getStop().getYear() == year)
+                .map(e -> e.getStop().getMonth().getValue())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(collect.stream().map(e -> Month.of(e).getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl"))).collect(Collectors.toList()));
+    }
+
+    public ResponseEntity<?> getAllWorkingTypeInMonthAndYear(String year, String month) {
+        return ResponseEntity.ok(workRepo.findAllByStopQuery(Integer.parseInt(year), number(month))
+                .stream().map(WorkingTimeEvidenceEntity::getWorkType).distinct().collect(Collectors.toList()));
+    }
+
+    private int number(String finalMonth) {
+        int pl = 0;
+        switch (finalMonth) {
+            case "styczeń":
+                pl = 1;
+                break;
+            case "luty":
+                pl = 2;
+                break;
+            case "marzec":
+                pl = 3;
+                break;
+            case "kwiecień":
+                pl = 4;
+                break;
+            case "maj":
+                pl = 5;
+                break;
+            case "czerwiec":
+                pl = 6;
+                break;
+            case "lipiec":
+                pl = 7;
+                break;
+            case "sierpień":
+                pl = 8;
+                break;
+            case "wrzesień":
+                pl = 9;
+                break;
+            case "październik":
+                pl = 10;
+                break;
+            case "listopad":
+                pl = 11;
+                break;
+            case "grudzień":
+                pl = 12;
+                break;
+        }
+        return pl;
     }
 }

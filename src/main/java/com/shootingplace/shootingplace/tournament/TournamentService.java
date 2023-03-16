@@ -3,12 +3,9 @@ package com.shootingplace.shootingplace.tournament;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
+import com.shootingplace.shootingplace.history.*;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.enums.ArbiterWorkClass;
-import com.shootingplace.shootingplace.history.ChangeHistoryService;
-import com.shootingplace.shootingplace.history.HistoryService;
-import com.shootingplace.shootingplace.history.UsedHistoryEntity;
-import com.shootingplace.shootingplace.history.UsedHistoryRepository;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
@@ -42,10 +39,11 @@ public class TournamentService {
     private final UsedHistoryRepository usedHistoryRepository;
     private final BarCodeCardRepository barCodeCardRepository;
     private final UserRepository userRepository;
+    private final JudgingHistoryRepository judgingHistoryRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public TournamentService(TournamentRepository tournamentRepository, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, CompetitionMembersListRepository competitionMembersListRepository, CompetitionRepository competitionRepository, HistoryService historyService, ChangeHistoryService changeHistoryService, UsedHistoryRepository usedHistoryRepository, BarCodeCardRepository barCodeCardRepository, UserRepository userRepository) {
+    public TournamentService(TournamentRepository tournamentRepository, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, CompetitionMembersListRepository competitionMembersListRepository, CompetitionRepository competitionRepository, HistoryService historyService, ChangeHistoryService changeHistoryService, UsedHistoryRepository usedHistoryRepository, BarCodeCardRepository barCodeCardRepository, UserRepository userRepository, JudgingHistoryRepository judgingHistoryRepository) {
         this.tournamentRepository = tournamentRepository;
         this.memberRepository = memberRepository;
         this.otherPersonRepository = otherPersonRepository;
@@ -56,6 +54,7 @@ public class TournamentService {
         this.usedHistoryRepository = usedHistoryRepository;
         this.barCodeCardRepository = barCodeCardRepository;
         this.userRepository = userRepository;
+        this.judgingHistoryRepository = judgingHistoryRepository;
     }
 
     public ResponseEntity<String> createNewTournament(Tournament tournament) {
@@ -574,7 +573,7 @@ public class TournamentService {
             memberEntity = memberRepository.getOne(barCode.getBelongsTo());
         }
         LOG.info("zapisuję rekord do bazy");
-        user.getList().add(changeHistoryService.addRecord(user,"Sign in as arbiter",memberEntity.getUuid()));
+        user.getList().add(changeHistoryService.addRecord(user, "Sign in as arbiter", memberEntity.getUuid()));
         userRepository.save(user);
 
         return memberEntity;
@@ -851,7 +850,36 @@ public class TournamentService {
         if (stringResponseEntity != null) {
             response = stringResponseEntity;
         }
+
+
         return response;
     }
 
+    public ResponseEntity<?> getJudgingList(String firstDate, String secondDate) {
+        LocalDate firstDate1 = LocalDate.parse(firstDate);
+        LocalDate secondDate1 = LocalDate.parse(secondDate);
+        List<JudgingHistoryEntity> judgingHistoryEntityList = judgingHistoryRepository.findAllByDateBetween(firstDate1, secondDate1);
+        List<MemberEntity> collect = memberRepository.findAll().stream().filter(f -> f.getMemberPermissions().getArbiterNumber() != null).collect(Collectors.toList());
+        List<JudgingHistoryDTO> list = new ArrayList<>();
+        for (MemberEntity memberEntity : collect) {
+            List<JudgingHistoryEntity> judgingHistory = memberEntity.getHistory().getJudgingHistory();
+            for (JudgingHistoryEntity judgingHistoryEntity : judgingHistory) {
+                for (JudgingHistoryEntity historyEntity : judgingHistoryEntityList) {
+                    if (judgingHistoryEntity.getUuid().equals(historyEntity.getUuid())) {
+                        list.add(JudgingHistoryDTO.builder()
+                                .firstName(memberEntity.getFirstName())
+                                .secondName(memberEntity.getSecondName())
+                                .tournamentUUID(judgingHistoryEntity.getTournamentUUID())
+                                .tournamentName(judgingHistoryEntity.getName())
+                                .uuid(judgingHistoryEntity.getUuid())
+                                .judgingFunction(judgingHistoryEntity.getJudgingFunction())
+                                .date(judgingHistoryEntity.getDate())
+                                .time(judgingHistoryEntity.getTime()).build());
+                    }
+                }
+            }
+        }
+        list.sort(Comparator.comparing(JudgingHistoryDTO::getDate).reversed());
+        return ResponseEntity.ok(list);
+    }
 }

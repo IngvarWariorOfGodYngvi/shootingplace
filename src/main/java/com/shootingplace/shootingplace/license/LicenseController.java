@@ -61,14 +61,13 @@ public class LicenseController {
 
     @Transactional
     @PutMapping("/forceUpdate")
-    public ResponseEntity<?> updateLicense(@RequestParam String memberUUID, @RequestParam String number, @RequestParam String date, @RequestParam String pinCode, @Nullable @RequestParam boolean isPaid) {
+    public ResponseEntity<?> updateLicense(@RequestParam String memberUUID, @RequestParam String number, @RequestParam String date, @RequestParam String pinCode, @Nullable @RequestParam String isPaid) {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
-            LocalDate parseDate = null;
-            if (date != null && !date.isEmpty() && !date.equals("null")) {
-                parseDate = LocalDate.parse(date);
-            }
-            return licenseService.updateLicense(memberUUID, number, parseDate, isPaid, pinCode);
+            String parseNumber = (number != null && !number.isEmpty() && !number.equals("null")) ? number : null;
+            LocalDate parseDate = (date != null && !date.isEmpty() && !date.equals("null")) ? LocalDate.parse(date) : null;
+            Boolean parseIsPaid = (isPaid != null && !isPaid.isEmpty() && !isPaid.equals("null")) ? Boolean.valueOf(isPaid) : null;
+            return parseNumber == null && parseDate == null && parseIsPaid == null ? ResponseEntity.badRequest().body("Należy podać co najmniej jedną zmienną") : licenseService.updateLicense(memberUUID, parseNumber, parseDate, parseIsPaid, pinCode);
         } else {
             return code;
         }

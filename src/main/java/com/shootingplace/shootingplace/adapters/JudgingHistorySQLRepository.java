@@ -5,4 +5,6 @@ import com.shootingplace.shootingplace.history.JudgingHistoryRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface JudgingHistorySQLRepository extends JudgingHistoryRepository, JpaRepository<JudgingHistoryEntity, String> {
+
+
 }

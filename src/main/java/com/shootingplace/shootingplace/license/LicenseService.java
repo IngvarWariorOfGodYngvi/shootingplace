@@ -136,10 +136,15 @@ public class LicenseService {
         return ResponseEntity.ok("Zaktualizowano licencję");
     }
 
-    public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date, boolean isPaid, String pinCode) {
+    public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date, Boolean isPaid, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
+        System.out.println(memberUUID);
+        System.out.println(number);
+        System.out.println(date);
+        System.out.println(isPaid);
+        System.out.println(pinCode);
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         LicenseEntity license = memberEntity.getLicense();
 
@@ -164,15 +169,12 @@ public class LicenseService {
             license.setValidThru(date);
             license.setValid(license.getValidThru().getYear() >= LocalDate.now().getYear());
         }
-        if (isPaid) {
-            if (!license.isPaid()) {
-                license.setPaid(true);
-            }
+        if (isPaid != null && !isPaid.equals("null")) {
+            license.setPaid(isPaid);
         }
         licenseRepository.save(license);
         return getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "updateLicense", "Poprawiono Licencję");
-//        changeHistoryService.addRecordToChangeHistory(pinCode, license.getClass().getSimpleName() + " updateLicense", memberEntity.getUuid());
-//        return ResponseEntity.ok("Poprawiono Licencję");
+
     }
 
     public ResponseEntity<?> renewLicenseValid(String memberUUID, License license) {
@@ -357,6 +359,7 @@ public class LicenseService {
     public LicenseEntity getLicense(String LicenseUUID) {
         return licenseRepository.getOne(LicenseUUID);
     }
+
     public List<LicensePaymentHistoryEntity> getLicensePaymentHistory(String MemberUUID) {
         return memberRepository.getOne(MemberUUID).getHistory().getLicensePaymentHistory();
     }

@@ -53,7 +53,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1191,7 +1190,7 @@ public class FilesService {
         PdfPTable mainTable = new PdfPTable(1);
 
         document.add(mainTable);
-        String[] choice = {"ZAŚWIADCZENIE ZWYKŁE", "ZAŚWIADCZENIE DO POLICJI"};
+        String[] choice = {"ZAŚWIADCZENIE ZWYKŁE", "BROŃ SPORTOWA DO CELÓW SPORTOWYCH", "BROŃ SPORTOWA DO CELÓW KOLEKCJONERSKICH", "BROŃ CIĘCIWOWA W POSTACI KUSZ"};
         // pobieranie z ustawień
         String policeAddress = "";
         String policeCity = "";
@@ -1298,8 +1297,7 @@ public class FilesService {
 
         if (!club.getId().equals(memberEntity.getClub().getId())) {
             reason = choice[0];
-        }
-        if (reason.equals(choice[1])) {
+        } else {
             policeAddress = "\nKomendant Wojewódzki Policji " + policeCity + "\nWydział Postępowań Administracyjnych\n " + policeZipCode + " " + city + ", " + policeStreet + " " + policeStreetNumber;
         }
 
@@ -1313,7 +1311,7 @@ public class FilesService {
         Paragraph title = new Paragraph("\n\nZaświadczenie\n\n", font(14, 1));
         title.setAlignment(1);
         String pesel = "";
-        if (reason.equals(choice[1])) {
+        if (!reason.equals(choice[0])) {
             pesel = " PESEL: " + memberEntity.getPesel();
         }
         String sex, word;
@@ -1341,7 +1339,18 @@ public class FilesService {
         Paragraph par4 = new Paragraph(club.getFullName() + " jest członkiem Polskiego Związku Strzelectwa Sportowego i posiada Licencję Klubową nr LK-" + club.getLicenseNumber() + ", jest również Członkiem Łódzkiego Związku Strzelectwa Sportowego, zarejestrowany pod numerem ewidencyjnym 6.", font(12, 0));
         par4.setFirstLineIndent(40);
         String s1 = enlargement ? "rozszerzenie pozwolenia" : "pozwolenie";
-        Paragraph par5 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " " + word + " z prośbą o wydanie niniejszego zaświadczenia, skutkiem którego będzie złożenie wniosku o " + s1 + " na broń sportową do celów sportowych.", font(12, 0));
+        switch (reason) {
+            case "BROŃ SPORTOWA DO CELÓW SPORTOWYCH":
+                reason = "na broń sportową do celów sportowych.";
+                break;
+            case "BROŃ SPORTOWA DO CELÓW KOLEKCJONERSKICH":
+                reason = "na broń kolekcjonerską do celów sportowych.";
+                break;
+            case "BROŃ CIĘCIWOWA W POSTACI KUSZ":
+                reason = "na broń cięciwową w postaci kusz.";
+                break;
+        }
+        Paragraph par5 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFirstName().concat(" " + memberEntity.getSecondName()) + " " + word + " z prośbą o wydanie niniejszego zaświadczenia, skutkiem którego będzie złożenie wniosku o " + s1 + " " + reason, font(12, 0));
         par5.setFirstLineIndent(40);
 
         Paragraph par6 = new Paragraph("Sporządzono w 2 egz.", font(12, 0));
@@ -1355,7 +1364,7 @@ public class FilesService {
         if (memberEntity.getLicense().getNumber() != null && memberEntity.getMemberPermissions().getArbiterNumber() != null) {
             document.add(par3);
         }
-        if (reason.equals(choice[1])) {
+        if (!reason.equals(choice[0])) {
             document.add(par4);
             document.add(par5);
         }
@@ -2921,52 +2930,49 @@ public class FilesService {
         return filesEntity;
     }
 
-    public FilesEntity getWorkTimeReport(String month, String workType, String uuid, boolean detailed, boolean incrementVersion) throws IOException, DocumentException {
+    public FilesEntity getWorkTimeReport(int year, String month, String workType, boolean detailed) throws IOException, DocumentException {
         int reportNumber = 1;
-        String fileName = "raport_pracy_" + month + "_" + reportNumber + ".pdf";
-        List<FilesEntity> collect = filesRepository.findAll().stream().filter(f -> f.getName().contains("raport_pracy_" + month)).collect(Collectors.toList());
+        List<FilesEntity> collect = filesRepository.findAllByNameContains("%" + month.toLowerCase() + "%", "%" + year + "%", "%" + workType + "%");
         if (!collect.isEmpty()) {
             reportNumber = collect.stream().max(Comparator.comparing(FilesEntity::getVersion)).orElseThrow(EntityNotFoundException::new).getVersion();
         }
 
+        String fileName = "raport_pracy_" + month.toLowerCase() + "_" + reportNumber + "_" + year + "_" + workType + ".pdf";
         Document document = new Document(PageSize.A4);
         setAttToDoc(fileName, document);
 
         String finalMonth = month.toLowerCase(Locale.ROOT);
         int pl = number(finalMonth);
-        List<WorkingTimeEvidenceEntity> evidenceEntities;
-        if (uuid != null) {
-            evidenceEntities = workRepo.findAll()
-                    .stream()
-                    .filter(f -> f.getUser().getUuid().equals(uuid))
-                    .filter(f -> f.getStop() != null)
-                    .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
-                    .filter(f -> f.getWorkType().equals(workType))
-                    .collect(Collectors.toList());
-        } else {
 
-            evidenceEntities = workRepo.findAll()
-                    .stream()
-                    .filter(f -> f.getStop() != null)
-                    .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
-                    .filter(f -> f.getWorkType().equals(workType))
-                    .collect(Collectors.toList());
+        List<WorkingTimeEvidenceEntity> evidenceEntities = workRepo.findAllByStopQuery(year, pl)
+                .stream()
+//                .filter(f -> f.getStop() != null)
+//                .filter(f -> f.getStop().getYear() == year)
+//                .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
+                .filter(f -> f.getWorkType().equals(workType))
+                .collect(Collectors.toList());
 
-        }
+        List<UserEntity> userEntityList = evidenceEntities
+                .stream()
+//                .filter(f -> f.getStop() != null)
+//                .filter(f -> f.getStop().getYear() == year)
+//                .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
+                .filter(f -> f.getWorkType().equals(workType))
+                .map(WorkingTimeEvidenceEntity::getUser)
+                .distinct()
+                .collect(Collectors.toList());
 
-        Set<UserEntity> users = new HashSet<>();
-        evidenceEntities.forEach(u -> users.add(u.getUser()));
 
         float[] pointColumnWidths = {4F, 12F, 12F, 14F, 24F, 48F};
         AtomicInteger pageNumb = new AtomicInteger();
-        int fontSize = 12;
+        int fontSize = 10;
+        Paragraph newLine = new Paragraph(" ", font(10, 1));
         int finalReportNumber = reportNumber;
-        Paragraph newLine = new Paragraph(" ", font(13, 1));
-        users.forEach(u ->
+        userEntityList.forEach(u ->
                 {
                     //tutaj tworzę dokument
                     try {
-                        Paragraph title = new Paragraph("Raport Pracy „DZIESIĄTKA” ŁÓDŹ - " + pl + "/" + evidenceEntities.get(0).getStop().getYear() + "/" + finalReportNumber, font(13, 1));
+                        Paragraph title = new Paragraph("Raport Pracy „DZIESIĄTKA” ŁÓDŹ - " + pl + "/" + year + "/" + finalReportNumber, font(13, 1));
                         Paragraph name = new Paragraph(u.getFirstName() + " " + u.getSecondName() + " szczegółowy", font(fontSize, 0));
                         if (!detailed) {
                             name = new Paragraph(u.getFirstName() + " " + u.getSecondName(), font(fontSize, 0));
@@ -3090,7 +3096,7 @@ public class FilesService {
                         document.add(sign);
                         document.add(newLine);
                         document.add(dots);
-                        if (pageNumb.get() < users.size()) {
+                        if (pageNumb.get() < userEntityList.size()) {
                             document.newPage();
                         }
                         document.resetPageCount();
@@ -3106,7 +3112,6 @@ public class FilesService {
         byte[] data = convertToByteArray(fileName);
         FilesModel filesModel = FilesModel.builder()
                 .name(fileName)
-                .belongToMemberUUID(uuid)
                 .data(data)
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
                 .size(data.length)
@@ -3259,7 +3264,7 @@ public class FilesService {
         setAttToDoc(fileName, document);
 
         Paragraph newLine = new Paragraph("\n", font(fs, 0));
-        Paragraph page = new Paragraph("1/3",font(fs,0));
+        Paragraph page = new Paragraph("1/3", font(fs, 0));
         page.setAlignment(0);
         document.add(page);
         document.addCreator("Igor Żebrowski");
@@ -3538,7 +3543,7 @@ public class FilesService {
         document.add(p3b);
         document.add(p3c);
         document.newPage();
-        page = new Paragraph("2/3",font(fs,0));
+        page = new Paragraph("2/3", font(fs, 0));
         page.setAlignment(0);
         document.add(page);
         document.add(zalacznik);
@@ -3649,7 +3654,7 @@ public class FilesService {
         table5.addCell(cell6);
         document.add(table5);
         document.newPage();
-        page = new Paragraph("3/3",font(fs,0));
+        page = new Paragraph("3/3", font(fs, 0));
         page.setAlignment(0);
         document.add(page);
         document.add(zalacznik);
@@ -3770,7 +3775,7 @@ public class FilesService {
         document.add(newLine);
         document.add(newLine);
         state = getSex(member.getPesel()).equals("Pan") ? " został przyjęty" : " została przyjęta";
-        Paragraph p12 = new Paragraph("Potwierdzam, że " + getSex(member.getPesel()) + " " +member.getMemberName().toUpperCase()+ state + " do:", font(12, 0));
+        Paragraph p12 = new Paragraph("Potwierdzam, że " + getSex(member.getPesel()) + " " + member.getMemberName().toUpperCase() + state + " do:", font(12, 0));
         Paragraph p13 = new Paragraph(clubRepository.getOne(1).getFullName(), font(12, 0));
         Paragraph p14 = new Paragraph("na podstawie uchwały nr: ...................................... z dnia .........................", font(12, 0));
         p12.setIndentationLeft(55);
@@ -4198,14 +4203,14 @@ public class FilesService {
                 final int currentPageNumber = writer.getCurrentPageNumber();
                 document.setMargins(20F, 20F, 35F, 55F);
 
-                    pageSize = document.getPageSize();
-                    directContent = writer.getDirectContent();
+                pageSize = document.getPageSize();
+                directContent = writer.getDirectContent();
 
-                    directContent.setColorFill(BaseColor.BLACK);
-                    directContent.setFontAndSize(BaseFont.createFont(), 10);
-                    PdfTextArray pdfTextArray = new PdfTextArray(String.valueOf(currentPageNumber));
-                    directContent.setTextMatrix(pageSize.getRight(40), pageSize.getBottom(25));
-                    directContent.showText(pdfTextArray);
+                directContent.setColorFill(BaseColor.BLACK);
+                directContent.setFontAndSize(BaseFont.createFont(), 10);
+                PdfTextArray pdfTextArray = new PdfTextArray(String.valueOf(currentPageNumber));
+                directContent.setTextMatrix(pageSize.getRight(40), pageSize.getBottom(25));
+                directContent.showText(pdfTextArray);
 
             } catch (DocumentException | IOException e) {
                 e.printStackTrace();

@@ -130,4 +130,16 @@ public class UserEntity extends Person {
     public void setActive(boolean active) {
         this.active = active;
     }
+
+    @Override
+    public String toString() {
+        return "UserEntity{" +
+                "firstName='" + firstName + '\'' +
+                ", secondName='" + secondName + '\'' +
+                ", legitimationNumber=" + legitimationNumber +
+                ", superUser=" + superUser +
+                ", active=" + active +
+                ", subType='" + subType + '\'' +
+                '}';
+    }
 }

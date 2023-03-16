@@ -3,26 +3,19 @@ package com.shootingplace.shootingplace.history;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-@Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class JudgingHistoryEntity {
+public class JudgingHistoryDTO {
 
-    @Id
-    @GeneratedValue(generator = "id")
-    @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
     private String uuid;
-    private String name;
-
+    private String firstName;
+    private String secondName;
+    private String tournamentName;
     private String tournamentUUID;
     private String judgingFunction;
     private LocalDate date;
@@ -32,12 +25,32 @@ public class JudgingHistoryEntity {
         return uuid;
     }
 
-    public String getName() {
-        return name;
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getSecondName() {
+        return secondName;
+    }
+
+    public void setSecondName(String secondName) {
+        this.secondName = secondName;
+    }
+
+    public String getTournamentName() {
+        return tournamentName;
+    }
+
+    public void setTournamentName(String tournamentName) {
+        this.tournamentName = tournamentName;
     }
 
     public String getTournamentUUID() {
@@ -70,16 +83,5 @@ public class JudgingHistoryEntity {
 
     public void setTime(LocalTime time) {
         this.time = time;
-    }
-
-    @Override
-    public String toString() {
-        return "JudgingHistoryEntity{" +
-                "name='" + name + '\'' +
-                ", tournamentUUID='" + tournamentUUID + '\'' +
-                ", judgingFunction='" + judgingFunction + '\'' +
-                ", date=" + date +
-                ", time=" + time +
-                '}';
     }
 }

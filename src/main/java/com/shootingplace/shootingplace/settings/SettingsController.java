@@ -33,9 +33,10 @@ public class SettingsController {
     public ResponseEntity<?> termsAndLicense() {
         LocalDate endLicense = LocalDate.of(2026, 8, 30);
         if (LocalDate.now().isBefore(endLicense)) {
-        return ResponseEntity.ok("Licencja na program jest ważna do: " + endLicense);
+            return ResponseEntity.ok("Licencja na program jest ważna do: " + endLicense);
         } else {
             return ResponseEntity.status(403).body("licencja skończyła się: " + endLicense);
         }
     }
+
 }

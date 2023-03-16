@@ -152,6 +152,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+
     @GetMapping("/downloadAllMembersXLSXFile")
     public ResponseEntity<byte[]> getAllMembersToTableXLSXFile(@RequestParam boolean condition) throws IOException, DocumentException {
         FilesEntity filesEntity = xlsxFiles.getAllMembersToTableXLSXFile(condition);
@@ -224,7 +225,7 @@ public class FilesController {
     // zaświadczenie o przynależności do klubu
     @GetMapping("/downloadCertificateOfClubMembership/{memberUUID}")
     public ResponseEntity<byte[]> CertificateOfClubMembership(@PathVariable String memberUUID, @RequestParam String reason, @RequestParam String city, @RequestParam boolean enlargement) throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.CertificateOfClubMembership(memberUUID, reason, city,enlargement);
+        FilesEntity filesEntity = filesService.CertificateOfClubMembership(memberUUID, reason, city, enlargement);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
@@ -284,8 +285,12 @@ public class FilesController {
 
     // raport pracy
     @GetMapping("/downloadWorkReport")
-    public ResponseEntity<byte[]> getWorkTimeReport(@RequestParam String month, @RequestParam String workType, @Nullable @RequestParam String uuid, @RequestParam boolean detailed, @Nullable @RequestParam boolean incrementVersion) throws DocumentException, IOException {
-        FilesEntity filesEntity = filesService.getWorkTimeReport(month, workType, uuid, detailed, incrementVersion);
+    public ResponseEntity<byte[]> getWorkTimeReport(@Nullable @RequestParam String year, @Nullable @RequestParam String month, @RequestParam String workType, @RequestParam boolean detailed) throws DocumentException, IOException {
+        if (year == null || year.equals("null") || month == null || month.equals("null")) {
+            ResponseEntity.badRequest().body("Musisz podać Rok i Miesiąc aby pobrać wyniki");
+        }
+        int year1 = Integer.parseInt(year);
+        FilesEntity filesEntity = filesService.getWorkTimeReport(year1, month, workType, detailed);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
@@ -303,6 +308,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
+
     @GetMapping("/membershipDeclarationLOK")
     public ResponseEntity<byte[]> getMembershipDeclarationLOK(@RequestParam String uuid) throws DocumentException, IOException {
         FilesEntity filesEntity = filesService.getMembershipDeclarationLOK(uuid);
@@ -311,6 +317,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
+
     @GetMapping("/getAllMemberFiles")
     public ResponseEntity<?> getAllMemberFiles(@RequestParam String uuid) {
         return ResponseEntity.ok(filesService.getAllMemberFiles(uuid));
@@ -332,8 +339,7 @@ public class FilesController {
         FilesEntity filesEntity = filesService.getFile(uuid);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_TYPE, filesEntity.getType())
-                .header("filename", filesEntity.getName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
 
@@ -348,6 +354,7 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
+
     @GetMapping("/erasedSum")
     public ResponseEntity<?> getErasedSum(@RequestParam String firstDate, @RequestParam String secondDate) throws IOException {
         LocalDate parseFirstDate = LocalDate.parse(firstDate);

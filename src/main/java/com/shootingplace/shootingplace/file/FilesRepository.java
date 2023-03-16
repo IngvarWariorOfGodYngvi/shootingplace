@@ -2,6 +2,8 @@ package com.shootingplace.shootingplace.file;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,11 +21,13 @@ public interface FilesRepository {
 
     Page<FilesEntity> findAll(Pageable page);
 
-    Optional<FilesEntity> findByName(String fileName);
-
     Page<FilesEntity> findAllByDateIsNotNullAndTimeIsNotNull(Pageable page);
 
     List<FilesEntity> findAllByDateIsNullAndTimeIsNull();
+
     List<FilesEntity> findAllByBelongToMemberUUIDEquals(String uuid);
+
+    @Query(nativeQuery = true, value = "SELECT * FROM shootingplace.files_entity where name like '%raport_pracy%' and name like (:monthName) and name like (:workType) and name like (:year)")
+    List<FilesEntity> findAllByNameContains(@Param("monthName") String month,@Param("year") String year, @Param("workType") String workType);
 }
 
