@@ -36,4 +36,6 @@ public interface MemberRepository {
     Page<MemberEntity> findAllByErasedFalse(Pageable pageable);
 
     List<MemberEntity> findAllByErasedTrue();
+
+    void delete(MemberEntity one);
 }

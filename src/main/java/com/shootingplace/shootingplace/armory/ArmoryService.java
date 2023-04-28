@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -56,7 +57,7 @@ public class ArmoryService {
 
     public List<Caliber> getSumFromAllAmmoList(LocalDate firstDate, LocalDate secondDate) {
         List<Caliber> list = new ArrayList<>();
-        List<CaliberEntity> calibersList = caliberService.getCalibersList();
+        List<CaliberEntity> calibersList = caliberService.getCalibersEntityList();
         calibersList.forEach(e ->
                 list.add(Mapping.map(e))
         );
@@ -126,6 +127,7 @@ public class ArmoryService {
         }
         CaliberUsedEntity caliberUsedEntity = CaliberUsedEntity.builder()
                 .date(LocalDate.now())
+                .time(LocalTime.now())
                 .belongTo(caliberUUID)
                 .ammoUsed(quantity)
                 .build();

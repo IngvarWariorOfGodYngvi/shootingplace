@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @AllArgsConstructor
@@ -24,6 +25,7 @@ public class CaliberUsedEntity {
     private String belongTo;
 
     private LocalDate date;
+    private LocalTime time;
     private Integer ammoUsed;
 
     public String getUuid() {
@@ -44,6 +46,14 @@ public class CaliberUsedEntity {
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public LocalTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalTime time) {
+        this.time = time;
     }
 
     public Integer getAmmoUsed() {

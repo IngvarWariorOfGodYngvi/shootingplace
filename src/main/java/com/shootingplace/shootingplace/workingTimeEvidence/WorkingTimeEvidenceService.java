@@ -127,7 +127,11 @@ public class WorkingTimeEvidenceService {
         LocalDateTime stop = LocalDateTime.now();
         entity.setAutomatedClosed(false);
         if (auto) {
-            stop = LocalDateTime.now().minusHours(2);
+            if (entity.getStart().getHour() > 20) {
+                stop = entity.getStart().plusMinutes(1);
+            } else {
+                stop = LocalDateTime.of(entity.getStart().getYear(), entity.getStart().getMonth(), entity.getStart().getDayOfMonth(), 20, 0);
+            }
             entity.setAutomatedClosed(true);
         }
         if (!barCode.isMaster()) {
@@ -203,7 +207,9 @@ public class WorkingTimeEvidenceService {
 
     public void closeAllActiveWorkTime(String workType) {
         log.info("zamykam to co jest otwarte");
-        workRepo.findAll()
+        List<WorkingTimeEvidenceEntity> allByCloseFalse = workRepo.findAllByIsCloseFalse();
+//        workRepo.findAll()
+        allByCloseFalse
                 .stream()
                 .filter(f -> !f.isClose())
                 .filter(f -> f.getWorkType().equals(workType))
@@ -399,14 +405,10 @@ public class WorkingTimeEvidenceService {
         if (userEntity != null && userEntity.getSubType().contains(UserSubType.MANAGEMENT_CEO.getName())) {
 
             String month = list.get(0).getStart().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).toLowerCase(Locale.ROOT);
-            String workType = workRepo.findById(list.get(0).getUuid()).get().getWorkType();
+            String workType = workRepo.getOne(list.get(0).getUuid()).getWorkType();
             int yearValue = list.get(0).getStart().getYear();
             String finalMonth = month.toLowerCase();
-            System.out.println(month.toLowerCase());
-            System.out.println(yearValue);
-            System.out.println(workType);
             List<FilesEntity> collect = filesRepo.findAllByNameContains("%" + month.toLowerCase() + "%", "%" + yearValue + "%", "%" + workType + "%");
-            System.out.println(collect.size());
             if (!collect.isEmpty()) {
                 collect.forEach(e -> {
                     e.setName("raport_pracy_" + finalMonth + "_" + (e.getVersion()) + "_" + yearValue + "_" + workType + ".pdf");

@@ -26,8 +26,6 @@ public class AmmoEvidenceService {
     private final AmmoEvidenceRepository ammoEvidenceRepository;
     private final ChangeHistoryService changeHistoryService;
     private final ArmoryService armoryService;
-    private final UsedHistoryRepository usedHistoryRepository;
-    private final GunRepository gunRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
@@ -35,16 +33,22 @@ public class AmmoEvidenceService {
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.changeHistoryService = changeHistoryService;
         this.armoryService = armoryService;
-        this.usedHistoryRepository = usedHistoryRepository;
-        this.gunRepository = gunRepository;
     }
 
     public ResponseEntity<?> getOpenEvidence() {
-        return ammoEvidenceRepository.findAllByOpenTrue().size()>0 ? ResponseEntity.ok(Mapping.map(ammoEvidenceRepository.findAllByOpenTrue().get(0))) : ResponseEntity.ok(new ArrayList<>());
+        return ammoEvidenceRepository.findAllByOpenTrue().size() > 0 ? ResponseEntity.ok(Mapping.map(ammoEvidenceRepository.findAllByOpenTrue().get(0))) : ResponseEntity.ok(new ArrayList<>());
     }
 
     public AmmoEvidenceEntity getEvidence(String uuid) {
         return ammoEvidenceRepository.getOne(uuid);
+    }
+
+    public void automationCloseEvidence() {
+        List<AmmoEvidenceEntity> allByOpenTrue = ammoEvidenceRepository.findAllByOpenTrue();
+        allByOpenTrue.forEach(e -> {
+            closeEvidence(e.getUuid());
+            LOG.info("Lista zamknięta automatycznie");
+        });
     }
 
     public ResponseEntity<?> closeEvidence(String evidenceUUID) {
@@ -57,7 +61,7 @@ public class AmmoEvidenceService {
         ammoEvidenceEntity.setOpen(false);
         ammoEvidenceEntity.setForceOpen(false);
         ammoEvidenceRepository.save(ammoEvidenceEntity);
-        LOG.info("zamknięto");
+        LOG.info("zamknięto listę " + ammoEvidenceEntity.getNumber() + " z dnia " + ammoEvidenceEntity.getDate());
         return ResponseEntity.ok("Lista została zamknięta");
     }
 

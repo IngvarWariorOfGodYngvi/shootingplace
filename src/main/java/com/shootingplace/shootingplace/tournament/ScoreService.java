@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,7 +45,6 @@ public class ScoreService {
                 .orElseThrow(EntityNotFoundException::new);
 
         TournamentEntity tournamentEntity = tournamentRepository.findById(competitionMembersListEntity.getAttachedToTournament()).orElseThrow(EntityNotFoundException::new);
-
 
         List<ScoreEntity> scoreEntityList = new ArrayList<>();
 
@@ -81,6 +81,19 @@ public class ScoreService {
             }
         }
 
+        Integer n = competitionMembersListEntity.getNumberOfShots();
+        double s = n / 10d;
+        s = Math.ceil(s);
+        System.out.println(s);
+        Float[] t = new Float[(int) s];
+        Arrays.fill(t, 0f);
+
+        String value = "";
+        for (Float f : t) {
+            value = value.concat(f + ";");
+        }
+
+
         scoreEntity = scoreRepository.save(ScoreEntity.builder()
                 .competitionMembersListEntityUUID(competitionMembersListEntityUUID)
                 .member(memberEntity)
@@ -94,6 +107,7 @@ public class ScoreService {
                 .procedures(procedures)
                 .ammunition(false)
                 .gun(false)
+                .series(value)
                 .name(name)
                 .metricNumber(number)
                 .build());
@@ -105,8 +119,7 @@ public class ScoreService {
 
     }
 
-    public ResponseEntity<?> setScore(String scoreUUID, float score, float innerTen, float outerTen, Float alfa, Float charlie, Float delta, int procedures) {
-
+    public ResponseEntity<?> setScore(String scoreUUID, float score, float innerTen, float outerTen, Float alfa, Float charlie, Float delta, int procedures, List<Float> series) {
         if (!scoreRepository.existsById(scoreUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono wyniku. Sprawdź identyfikator rekordu");
         }
@@ -216,16 +229,25 @@ public class ScoreService {
 
         } else {
             // Liczenie normalne
-            if (score == -1) {
-                score = scoreEntity.getScore();
-            }
+//            if (score == -1) {
+//                score = scoreEntity.getScore();
+//            }
             if (innerTen == -1) {
                 innerTen = scoreEntity.getInnerTen();
             }
             if (outerTen == -1) {
                 outerTen = scoreEntity.getOuterTen();
             }
-            scoreEntity.setScore(score);
+//            scoreEntity.setScore(score);
+            if (series.size()>0) {
+                List<Float> series1 = scoreEntity.getSeries();
+                for (int i = 0; i < scoreEntity.getSeries().size(); i++) {
+                    series1.set(i, series.get(i) == null ? series1.get(i) : series.get(i));
+                }
+                series = series1;
+                scoreEntity.setSeries(series);
+                scoreEntity.setScore((float) series.stream().mapToDouble(a -> a).sum());
+            }
             scoreEntity.setInnerTen(innerTen);
             scoreEntity.setOuterTen(outerTen);
             scoreRepository.save(scoreEntity);
@@ -251,7 +273,7 @@ public class ScoreService {
         }
         competitionMembersListRepository.save(competitionMembersListEntity);
         String name = getNameFromScore(scoreEntity);
-        return ResponseEntity.ok("\"Ustawiono wynik " + name + "\"");
+        return ResponseEntity.ok("Ustawiono wynik " + name);
     }
 
     public ResponseEntity<?> toggleAmmunitionInScore(String scoreUUID) {
@@ -342,17 +364,16 @@ public class ScoreService {
 
         scoreEntity.setScore(score);
         scoreRepository.save(scoreEntity);
-        List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream().filter(f -> !f.isDsq()).filter(f -> !f.isDnf()).filter(f -> !f.isPk()).sorted(Comparator.comparing(ScoreEntity::getScore).reversed()).collect(Collectors.toList());
+        List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream().filter(f -> !f.isDsq()).filter(f -> !f.isDnf()).filter(f -> !f.isPk()).sorted(Comparator.comparing(ScoreEntity::getScore)
+                .reversed()).collect(Collectors.toList());
 
-        scoreList.sort(Comparator.comparing(ScoreEntity::getScore)
-                .reversed());
         List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream().filter(f -> f.isDsq() || f.isDnf() || f.isPk()).collect(Collectors.toList());
         scoreList.addAll(collect);
         competitionMembersListEntity.setScoreList(scoreList);
         competitionMembersListRepository.save(competitionMembersListEntity);
         String name = getNameFromScore(scoreEntity);
         LOG.info("Ustawiono wynik na twardo " + name);
-        return ResponseEntity.ok("\"Ustawiono wynik " + name + "\"");
+        return ResponseEntity.ok("Ustawiono wynik " + name);
     }
 
     private void reorganizeCompetitionMembersList(ScoreEntity scoreEntity) {
@@ -394,7 +415,7 @@ public class ScoreService {
                             .thenComparing(ScoreEntity::getOuterTen).reversed())
                     .collect(Collectors.toList());
 
-            List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream().filter(f -> f.isDnf() || f.isDsq()|| f.isPk()).collect(Collectors.toList());
+            List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream().filter(f -> f.isDnf() || f.isDsq() || f.isPk()).collect(Collectors.toList());
             scoreList.addAll(collect);
 
         }
@@ -406,7 +427,7 @@ public class ScoreService {
     private String getNameFromScore(ScoreEntity scoreEntity) {
         String name;
         if (scoreEntity.getMember() != null) {
-            name = scoreEntity.getMember().getFirstName() + scoreEntity.getMember().getSecondName();
+            name = scoreEntity.getMember().getMemberName();
         } else {
             name = scoreEntity.getOtherPersonEntity().getFirstName() + scoreEntity.getOtherPersonEntity().getSecondName();
         }

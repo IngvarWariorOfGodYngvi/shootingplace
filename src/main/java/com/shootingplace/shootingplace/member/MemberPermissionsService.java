@@ -26,7 +26,7 @@ public class MemberPermissionsService {
     }
 
     public ResponseEntity<?> updateMemberPermissions(String memberUUID, MemberPermissions memberPermissions, String ordinal) {
-        if(!memberRepository.existsById(memberUUID)){
+        if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
@@ -39,7 +39,7 @@ public class MemberPermissionsService {
                 .filter(f -> f.getMemberPermissions().getArbiterNumber() != null)
                 .collect(Collectors.toList());
 //        Instruktor
-        String instructor= "";
+        String instructor = "";
         if (memberPermissions.getInstructorNumber() != null) {
             if (!memberPermissions.getInstructorNumber().isEmpty()) {
                 if (collect.stream().noneMatch(e -> e.getMemberPermissions().getInstructorNumber().equals(memberPermissions.getInstructorNumber()))) {
@@ -68,7 +68,7 @@ public class MemberPermissionsService {
             }
         }
 //        Sędzia
-        String arbiter= "";
+        String arbiter = "";
         if (memberPermissions.getArbiterNumber() != null) {
             if (!memberPermissions.getArbiterNumber().isEmpty()) {
                 if (collect.stream().noneMatch(e -> e.getMemberPermissions().getArbiterNumber().equals(memberPermissions.getArbiterNumber()))) {
@@ -106,7 +106,7 @@ public class MemberPermissionsService {
         }
         memberPermissionsRepository.save(memberPermissionsEntity);
 
-        return ResponseEntity.ok("\"Przyznano uprawnienia " + instructor + " " + leader + " " + arbiter +  "\"");
+        return ResponseEntity.ok("\"Przyznano uprawnienia " + instructor + " " + leader + " " + arbiter + "\"");
     }
 
 
@@ -115,7 +115,7 @@ public class MemberPermissionsService {
         MemberPermissionsEntity memberPermissions = memberEntity.getMemberPermissions();
         String arbiterClass = memberPermissions.getArbiterClass();
 
-        if(memberPermissions.getArbiterNumber()==null || memberPermissions.getArbiterNumber().isEmpty()){
+        if (memberPermissions.getArbiterNumber() == null || memberPermissions.getArbiterNumber().isEmpty()) {
             LOG.info("nie można zaktualizować");
             return ResponseEntity.badRequest().body("\"nie można zaktualizować\"");
         }
@@ -136,7 +136,7 @@ public class MemberPermissionsService {
         }
         memberPermissions.setArbiterClass(arbiterClass);
         memberPermissionsRepository.save(memberPermissions);
-        return ResponseEntity.ok("\"Podniesono klasę sędziego na " + arbiterClass +"\"");
+        return ResponseEntity.ok("\"Podniesono klasę sędziego na " + arbiterClass + "\"");
 
 
     }

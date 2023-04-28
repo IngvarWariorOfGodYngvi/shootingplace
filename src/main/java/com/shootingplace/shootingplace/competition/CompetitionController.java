@@ -1,8 +1,8 @@
 package com.shootingplace.shootingplace.competition;
 
 import com.shootingplace.shootingplace.tournament.ScoreService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,11 +33,7 @@ public class CompetitionController {
         if (competition.getName().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        if (competitionService.createNewCompetition(competition)) {
-            return ResponseEntity.status(201).build();
-        } else {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        return competitionService.createNewCompetition(competition);
     }
 
     @PutMapping("/update")
@@ -47,9 +43,8 @@ public class CompetitionController {
     }
 
     @PutMapping("/score/set")
-    public ResponseEntity<?> setScore(@RequestParam String scoreUUID, @RequestParam float score, @RequestParam float innerTen, @RequestParam float outerTen, @RequestParam int procedures, @RequestParam float alfa, @RequestParam float charlie, @RequestParam float delta) {
-
-        return scoreService.setScore(scoreUUID, score, innerTen, outerTen, alfa, charlie, delta, procedures);
+    public ResponseEntity<?> setScore(@RequestParam String scoreUUID, @RequestParam float score, @RequestParam float innerTen, @RequestParam float outerTen, @RequestParam int procedures, @RequestParam float alfa, @RequestParam float charlie, @RequestParam float delta,@Nullable @RequestParam List<Float> series) {
+        return scoreService.setScore(scoreUUID, score, innerTen, outerTen, alfa, charlie, delta, procedures,series);
     }
     @PutMapping("/score/forceSetScore")
     public ResponseEntity<?> forceSetScore(@RequestParam String scoreUUID, @RequestParam float score){

@@ -50,8 +50,9 @@ public class StatisticsController {
         LocalDate parseYear = LocalDate.parse(year);
         return ResponseEntity.ok(statisticsService.joinMonthSum(parseYear.getYear()));
     }
+
     @GetMapping("/maxLegNumber")
-    public ResponseEntity<?> getMaxLegNumber(){
+    public ResponseEntity<?> getMaxLegNumber() {
         return ResponseEntity.ok(statisticsService.getMaxLegNumber());
     }
 
@@ -59,18 +60,36 @@ public class StatisticsController {
     public ResponseEntity<?> getActualYearMemberCounts() {
         return ResponseEntity.ok(statisticsService.getActualYearMemberCounts());
     }
+
     @GetMapping("/memberAmmoTakesInTime")
-    public ResponseEntity<?> getMembersAmmoTakesInTime(@RequestParam String firstDate, @RequestParam String secondDate){
+    public ResponseEntity<?> getMembersAmmoTakesInTime(@RequestParam String firstDate, @RequestParam String secondDate) {
         LocalDate parseFirstDate = LocalDate.parse(firstDate);
         LocalDate parseSecondDate = LocalDate.parse(secondDate);
-        return ResponseEntity.ok(statisticsService.getMembersAmmoTakesInTime(parseFirstDate,parseSecondDate));
+        return ResponseEntity.ok(statisticsService.getMembersAmmoTakesInTime(parseFirstDate, parseSecondDate));
     }
+
     @GetMapping("/personal")
-    public ResponseEntity<?> getPersonalStatistic(@RequestParam String uuid){
+    public ResponseEntity<?> getPersonalStatistic(@RequestParam String uuid) {
         return statisticsService.getPersonalStatistics(uuid);
     }
+
     @GetMapping("/highStarts")
-    public ResponseEntity<?> getHighStatisticsCompetitions(){
+    public ResponseEntity<?> getHighStatisticsCompetitions() {
         return statisticsService.getHighStatisticsCompetitions();
+    }
+
+    @GetMapping("/highStartsCompetitors")
+    public ResponseEntity<?> getTop10Competitors() {
+        return statisticsService.getTop10Competitors();
+    }
+
+    @GetMapping("/highContributions")
+    public ResponseEntity<?> getTop10MembersWithTheMostMembershipContributions() {
+        return statisticsService.getTop10MembersWithTheMostMembershipContributions();
+    }
+
+    @GetMapping("/highCompetitionPoints")
+    public ResponseEntity<?> getTop10CompetitionPoints() {
+        return statisticsService.getTop10CompetitionPoints();
     }
 }

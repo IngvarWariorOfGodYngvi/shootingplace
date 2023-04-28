@@ -98,7 +98,7 @@ public class Mapping {
         return MemberInfo.builder()
                 .firstName(e.getFirstName())
                 .secondName(e.getSecondName())
-                .name(e.getSecondName().replaceAll(" ","") + " " + e.getFirstName().replaceAll(" ","") + " " + e.getLegitimationNumber())
+                .name(e.getSecondName().replaceAll(" ", "") + " " + e.getFirstName().replaceAll(" ", "") + " " + e.getLegitimationNumber())
                 .isActive(e.getActive())
                 .legitimationNumber(e.getLegitimationNumber())
                 .isAdult(e.getAdult()).build();
@@ -345,6 +345,7 @@ public class Mapping {
                 .practiceShots(c.getPracticeShots())
                 .build();
     }
+
     public static CompetitionMembersList map1(CompetitionMembersListEntity c) {
         return CompetitionMembersList.builder()
                 .uuid(c.getUuid())
@@ -365,51 +366,29 @@ public class Mapping {
     }
 
     public static Score map(ScoreEntity s) {
-        if (s.getMember() != null) {
-            return Score.builder()
-                    .name(s.getName())
-                    .member(map2DTO(s.getMember()))
-                    .ammunition(s.isAmmunition())
-                    .gun(s.isGun())
-                    .metricNumber(s.getMetricNumber())
-                    .innerTen(s.getInnerTen())
-                    .outerTen(s.getOuterTen())
-                    .alfa(s.getAlfa())
-                    .charlie(s.getCharlie())
-                    .delta(s.getDelta())
-                    .procedures(s.getProcedures())
-                    .hf(s.getHf())
-                    .dnf(s.isDnf())
-                    .dsq(s.isDsq())
-                    .pk(s.isPk())
-                    .otherPersonEntity(s.getOtherPersonEntity())
-                    .score(s.getScore())
-                    .competitionMembersListEntityUUID(s.getCompetitionMembersListEntityUUID())
-                    .uuid(s.getUuid())
-                    .build();
-        } else {
-            return Score.builder()
-                    .name(s.getName())
-                    .member(null)
-                    .ammunition(s.isAmmunition())
-                    .gun(s.isGun())
-                    .metricNumber(s.getMetricNumber())
-                    .innerTen(s.getInnerTen())
-                    .outerTen(s.getOuterTen())
-                    .alfa(s.getAlfa())
-                    .charlie(s.getCharlie())
-                    .delta(s.getDelta())
-                    .dnf(s.isDnf())
-                    .dsq(s.isDsq())
-                    .pk(s.isPk())
-                    .hf(s.getHf())
-                    .procedures(s.getProcedures())
-                    .otherPersonEntity(s.getOtherPersonEntity())
-                    .score(s.getScore())
-                    .competitionMembersListEntityUUID(s.getCompetitionMembersListEntityUUID())
-                    .uuid(s.getUuid())
-                    .build();
-        }
+        return Score.builder()
+                .name(s.getName())
+                .member(s.getMember() == null ? null : map2DTO(s.getMember()))
+                .ammunition(s.isAmmunition())
+                .gun(s.isGun())
+                .metricNumber(s.getMetricNumber())
+                .innerTen(s.getInnerTen())
+                .outerTen(s.getOuterTen())
+                .alfa(s.getAlfa())
+                .charlie(s.getCharlie())
+                .delta(s.getDelta())
+                .dnf(s.isDnf())
+                .dsq(s.isDsq())
+                .pk(s.isPk())
+                .hf(s.getHf())
+                .series(s.getSeries()==null?null:s.getSeries())
+                .procedures(s.getProcedures())
+                .otherPersonEntity(s.getOtherPersonEntity())
+                .score(s.getScore())
+                .competitionMembersListEntityUUID(s.getCompetitionMembersListEntityUUID())
+                .uuid(s.getUuid())
+                .build();
+
     }
 
 
@@ -444,6 +423,7 @@ public class Mapping {
     public static Caliber map(CaliberEntity c) {
         return Optional.ofNullable(c).map(e -> Caliber.builder()
                 .name(e.getName())
+                .uuid(e.getUuid())
                 .quantity(e.getQuantity())
                 .build()).orElse(null);
     }
@@ -597,7 +577,7 @@ public class Mapping {
                 .counter(a.getCounter())
                 .date(a.getDate())
                 .name(a.getName())
-                .legitimationNumber(a.getMemberEntity()!=null?a.getMemberEntity().getLegitimationNumber():null)
+                .legitimationNumber(a.getMemberEntity() != null ? a.getMemberEntity().getLegitimationNumber() : null)
                 .build();
     }
 }

@@ -8,10 +8,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class Caliber {
-
+    private String uuid;
     private String name;
 
     private Integer quantity;
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 
     public String getName() {
         return name;

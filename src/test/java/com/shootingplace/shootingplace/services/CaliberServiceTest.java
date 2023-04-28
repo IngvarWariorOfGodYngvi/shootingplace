@@ -1,8 +1,9 @@
 package com.shootingplace.shootingplace.services;
 
+import com.shootingplace.shootingplace.armory.Caliber;
 import com.shootingplace.shootingplace.armory.CaliberEntity;
-import com.shootingplace.shootingplace.armory.CaliberService;
 import com.shootingplace.shootingplace.armory.CaliberRepository;
+import com.shootingplace.shootingplace.armory.CaliberService;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -47,7 +48,7 @@ public class CaliberServiceTest {
     public void get_calibers_List_filled_list() {
         //given
         //when
-        List<CaliberEntity> calibersList = caliberService.getCalibersList();
+        List<Caliber> calibersList = caliberService.getCalibersList();
         //then
         assertThat(calibersList.get(0).getName(), Matchers.equalTo("5,6mm"));
         assertThat(calibersList.get(2).getName(), Matchers.equalTo("12/76"));
@@ -68,7 +69,7 @@ public class CaliberServiceTest {
         //when
         when(caliberRepository.findAll()).thenReturn(list);
 //        when(caliberRepository.save(any(CaliberEntity.class))).thenReturn(save(build));
-        List<CaliberEntity> calibersList = caliberService.getCalibersList();
+        List<Caliber> calibersList = caliberService.getCalibersList();
         //then
         assertThat(calibersList.get(0).getName(), Matchers.equalTo("5,6mm"));
         assertThat(calibersList.get(1).getName(), Matchers.equalTo("9x19mm"));

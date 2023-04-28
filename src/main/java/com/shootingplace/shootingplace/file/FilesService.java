@@ -931,7 +931,14 @@ public class FilesService {
                 Paragraph competition = new Paragraph(competitionMembersListEntity.getName(), font(14, 1));
                 competition.add("\n");
                 document.add(competition);
-                float[] pointColumnWidths = {25F, 150F, 125F, 50F, 25F, 25F};
+                float[] pointColumnWidths = null;
+                if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())&& competitionMembersListEntity.getScoreList().get(0).getSeries().size()>1) {
+                    pointColumnWidths = new float[]{25F, 150F, 125F, 25F, 25F, 50F};
+
+                }
+                else {
+                    pointColumnWidths = new float[]{25F, 150F, 125F, 25F, 25F, 50F};
+                }
                 PdfPTable tableLabel = new PdfPTable(pointColumnWidths);
                 String p1 = "10 x", p2 = "10 /";
                 if (competitionMembersListEntity.getCountingMethod() != null) {
@@ -946,9 +953,9 @@ public class FilesService {
                 PdfPCell cellLabel = new PdfPCell(new Paragraph("M-ce", font(10, 1)));
                 PdfPCell cellLabel1 = new PdfPCell(new Paragraph("Imię i Nazwisko", font(10, 1)));
                 PdfPCell cellLabel2 = new PdfPCell(new Paragraph("Klub", font(10, 1)));
-                PdfPCell cellLabel3 = new PdfPCell(new Paragraph("Wynik", font(10, 1)));
-                PdfPCell cellLabel4 = new PdfPCell(new Paragraph(p1, font(10, 1)));
-                PdfPCell cellLabel5 = new PdfPCell(new Paragraph(p2, font(10, 1)));
+                PdfPCell cellLabel3 = new PdfPCell(new Paragraph(p1, font(10, 1)));
+                PdfPCell cellLabel4 = new PdfPCell(new Paragraph(p2, font(10, 1)));
+                PdfPCell cellLabel5 = new PdfPCell(new Paragraph("Wynik", font(10, 1)));
 
                 document.add(newLine);
 
@@ -994,7 +1001,7 @@ public class FilesService {
 
                     }
                     float score = scoreList.get(j).getScore();
-                    String scoreOuterTen = String.valueOf(scoreList.get(j).getOuterTen() - scoreList.get(j).getInnerTen());
+                    String scoreOuterTen = String.valueOf(scoreList.get(j).getOuterTen());
                     String scoreInnerTen = String.valueOf(scoreList.get(j).getInnerTen());
                     if (scoreOuterTen.startsWith("0")) {
                         scoreOuterTen = "";
@@ -1011,7 +1018,7 @@ public class FilesService {
                     }
                     DecimalFormat myFormatter = new DecimalFormat("###.####");
                     String result = myFormatter.format(score);
-                    if (score == 100) {
+                    if (score == 100 && competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
                         result = "100,0000";
                     }
                     if (scoreList.get(j).isDnf()) {
@@ -1040,9 +1047,9 @@ public class FilesService {
                     PdfPCell playerCellLabel = new PdfPCell(new Paragraph(String.valueOf(j + 1), font(11, 0)));
                     PdfPCell playerCellLabel1 = new PdfPCell(new Paragraph(secondName + " " + firstName, font(11, 0)));
                     PdfPCell playerCellLabel2 = new PdfPCell(new Paragraph(club, font(11, 0)));
-                    PdfPCell playerCellLabel3 = new PdfPCell(new Paragraph(result, font(11, 1)));
-                    PdfPCell playerCellLabel4 = new PdfPCell(new Paragraph(o1, font(9, 2)));
-                    PdfPCell playerCellLabel5 = new PdfPCell(new Paragraph(o2, font(9, 2)));
+                    PdfPCell playerCellLabel3 = new PdfPCell(new Paragraph(o1, font(9, 2)));
+                    PdfPCell playerCellLabel4 = new PdfPCell(new Paragraph(o2, font(9, 1)));
+                    PdfPCell playerCellLabel5 = new PdfPCell(new Paragraph(result, font(11, 1)));
 
 
                     playerCellLabel.setBorder(0);
@@ -1298,7 +1305,15 @@ public class FilesService {
         if (!club.getId().equals(memberEntity.getClub().getId())) {
             reason = choice[0];
         } else {
-            policeAddress = "\nKomendant Wojewódzki Policji " + policeCity + "\nWydział Postępowań Administracyjnych\n " + policeZipCode + " " + city + ", " + policeStreet + " " + policeStreetNumber;
+            if (reason.equals(choice[3])) {
+                policeCity = "w Łodzi";
+                policeZipCode = "90-114";
+                policeStreet = "ul. Henryka Sienkiewicza";
+                policeStreetNumber = "28/30";
+                policeAddress = "\nKomendant Miejski Policji " + policeCity + "\n " + policeZipCode + " " + city + ", " + policeStreet + " " + policeStreetNumber;
+            } else {
+                policeAddress = "\nKomendant Wojewódzki Policji " + policeCity + "\nWydział Postępowań Administracyjnych\n " + policeZipCode + " " + city + ", " + policeStreet + " " + policeStreetNumber;
+            }
         }
 
         Paragraph date = new Paragraph("Łódź, " + LocalDate.now().format(dateFormat()), font(12, 0));
@@ -1344,7 +1359,7 @@ public class FilesService {
                 reason = "na broń sportową do celów sportowych.";
                 break;
             case "BROŃ SPORTOWA DO CELÓW KOLEKCJONERSKICH":
-                reason = "na broń kolekcjonerską do celów sportowych.";
+                reason = "na broń sportową do celów kolekcjonerskich.";
                 break;
             case "BROŃ CIĘCIWOWA W POSTACI KUSZ":
                 reason = "na broń cięciwową w postaci kusz.";
@@ -1448,7 +1463,7 @@ public class FilesService {
         return filesEntity;
     }
 
-    public FilesEntity getStartsMetric(String memberUUID, String otherID, String tournamentUUID, List<String> competitions, String startNumber) throws IOException, DocumentException {
+    public FilesEntity getStartsMetric(String memberUUID, String otherID, String tournamentUUID, List<String> competitions, String startNumber, Boolean a5rotate) throws IOException, DocumentException {
         String name;
         String club;
 
@@ -1466,9 +1481,13 @@ public class FilesService {
         ClubEntity clubEntity = clubRepository.findById(1).orElseThrow(EntityNotFoundException::new);
 
         String fileName = "metryki_" + name + ".pdf";
-
-        Document document = new Document(PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
+        Document document;
+        if (a5rotate) {
+            document = new Document(PageSize.A5.rotate());
+        } else {
+            document = new Document(PageSize.A4);
+        }
+        document.setMargins(35F, 35F, 30F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -1504,10 +1523,10 @@ public class FilesService {
             } else {
                 numberOfShots = competitionEntity.getNumberOfShots();
             }
-
-            Paragraph par1 = new Paragraph(tournamentEntity.getName().toUpperCase() + " " + clubEntity.getName(), font(12, 1));
+            //  nazwa zawodów i tytuł
+            Paragraph par1 = new Paragraph(tournamentEntity.getName().toUpperCase() + "    " + clubEntity.getName(), font(11, 1));
             par1.setAlignment(1);
-            Paragraph par2 = new Paragraph(name.toUpperCase(), font(13, 1));
+            Paragraph par2 = new Paragraph(name.toUpperCase(), font(12, 1));
             par2.setAlignment(1);
             String a = "";
             String b = "";
@@ -1520,29 +1539,34 @@ public class FilesService {
             }
             Chunk clubChunk = new Chunk(" " + club, font(10, 0));
             par2.add(clubChunk);
-            Chunk chunk = new Chunk("                            " + a + " " + b + "  Nr. " + startNumber, font(18, 1));
+            // nazwisko klub i numer startowy
+            Chunk chunk = new Chunk("                            " + a + " " + b + "  Nr. " + startNumber, font(13, 1));
             par2.add(chunk);
-
-            Paragraph par3 = new Paragraph(comp.get(j), font(12, 1));
+            // nazwa konkurencji
+            Paragraph par3 = new Paragraph(comp.get(j), font(11, 1));
             par3.setAlignment(1);
 
-            Paragraph par4 = new Paragraph("Podpis sędziego .............................", font(12, 0));
-            Chunk chunk1 = new Chunk("                                   Podpis zawodnika .............................       ", font(12, 0));
-            Chunk chunk2 = new Chunk(" Nr. " + startNumber, font(18, 1));
+            Paragraph par4 = new Paragraph("Podpis sędziego .............................", font(11, 0));
+            Chunk chunk1 = new Chunk("                                   Podpis zawodnika .............................       ", font(11, 0));
+            Chunk chunk2 = new Chunk(" Nr. " + startNumber, font(13, 1));
 
             par4.add(chunk1);
             par4.add(chunk2);
-
-            float[] pointColumnWidths = new float[numberOfShots + 1];
+            int numberOfColumns = numberOfShots + 5;
+            float[] pointColumnWidths = new float[numberOfColumns];
             if (competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
                 pointColumnWidths = new float[6];
             }
-            if (!competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-                for (int i = 0; i <= numberOfShots; i++) {
-                    if (i < pointColumnWidths.length - 1) {
-                        pointColumnWidths[i] = 25F;
+            if (competitionEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
+                for (int i = 0; i < numberOfColumns; i++) {
+
+//                    if (i < numberOfColumns - 1) {
+//                        pointColumnWidths[i] = 200F;
+//                    }
+                    if (i < numberOfColumns - 2) {
+                        pointColumnWidths[i] = 20F;
                     } else {
-                        pointColumnWidths[i] = 80F;
+                        pointColumnWidths[i] = 30F;
                     }
                 }
             } else {
@@ -1556,60 +1580,87 @@ public class FilesService {
             table1.setWidthPercentage(100F);
             table2.setWidthPercentage(100F);
 
-            document.add(par1);
-            document.add(par2);
-            document.add(par3);
-            document.add(newLine);
-            if (!competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-                for (int i = 0; i <= numberOfShots; i++) {
-                    Paragraph p;
-                    if (i < numberOfShots) {
-                        p = new Paragraph(String.valueOf(i + 1), font(14, 0));
-                    } else {
-                        if (competitionEntity.getCountingMethod() != null && competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-                            p = new Paragraph("CZAS / PROCEDURY", font(14, 1));
-                        } else {
-                            p = new Paragraph("SUMA", font(14, 1));
-                        }
+            document.add(par1); //  nazwa zawodów i tytuł
+            document.add(par2); // nazwisko klub i numer startowy
+            document.add(par3); // nazwa konkurencji
+            document.add(newLine); // nowa linia
+            if (competitionEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
+                for (int i = 0; i < numberOfColumns; i++) {
+                    Paragraph p = new Paragraph(String.valueOf(i), font(12, 0));
+                    if (i == 0) {
+                        p = new Paragraph("seria", font(12, 0));
+                    }
+                    if (i == numberOfColumns - 4) {
+                        p = new Paragraph("zew", font(12, 0));
+                    }
+                    if (i == numberOfColumns - 3) {
+                        p = new Paragraph("wew", font(12, 0));
+                    }
+                    if (i == numberOfColumns - 2) {
+                        p = new Paragraph("SUMA", font(12, 0));
+                    }
+                    if (i == numberOfColumns - 1) {
+                        p = new Paragraph("UWAGI", font(12, 0));
                     }
                     PdfPCell cell = new PdfPCell(p);
                     cell.setHorizontalAlignment(1);
                     table.addCell(cell);
-                    if (i >= 10) {
+                    if (i == numberOfColumns - 1) {
                         document.add(table);
                         break;
                     }
                 }
                 if (numberOfShots < 10) {
+                    System.out.println("aaaaaaaaaaaaa");
                     document.add(table);
 
                 }
-                int loopLength = competitionEntity.getNumberOfShots() + 1;
-                for (int i = 0; i <= loopLength; i++) {
-                    String s = " ";
-                    Chunk c = new Chunk(s, font(28, 0));
-                    Paragraph p = new Paragraph(c);
-                    PdfPCell cell = new PdfPCell(p);
-                    table1.addCell(cell);
-                    if (i == loopLength) {
-                        for (int k = i; k > 0; k--) {
-                            if (k % 10 == 1) {
-                                break;
+                int serial = 0;
+                int numberOfRows = (competitionEntity.getNumberOfShots() / 10) + 1;
+                for (int i = 0; i < numberOfRows; i++) {
+                    for (int k = 0; k < numberOfColumns; k++) {
+                        String s = " ";
+                        if (i < numberOfRows - 1) {
+                            if (k % numberOfColumns == 0) {
+                                s = arabicToRomanNumberConverter(++serial);
                             }
+                            Chunk c;
+                            if (k % numberOfColumns == 0) {
+                                c = new Chunk(s, font(10, 0));
+                            } else {
+                                c = new Chunk(s, font(20, 0));
+                            }
+                            Paragraph p = new Paragraph(c);
+                            PdfPCell cell = new PdfPCell(p);
+                            p.setAlignment(1);
+                            cell.setHorizontalAlignment(1);
+                            cell.setVerticalAlignment(1);
+                            table1.addCell(cell);
+                        } else {
+                            Paragraph p = new Paragraph(s, font(20, 0));
+                            PdfPCell cell = new PdfPCell(p);
+                            if (k < numberOfColumns - 2) {
+                                cell.setBorder(0);
+                            }
+                            if (k == numberOfColumns - 1) {
+                                cell.setBorder(0);
+                            }
+                            table1.addCell(cell);
                         }
                     }
                 }
                 document.add(table1);
                 if (compShots > 10) {
                     for (int i = 0; i <= 10; i++) {
-                        String s = " ";
-                        Chunk c = new Chunk(s, font(28, 0));
+                        String s = "t2";
+
+                        Chunk c = new Chunk(s, font(26, 0));
                         Paragraph p = new Paragraph(c);
                         PdfPCell cell = new PdfPCell(p);
 
                         table2.addCell(cell);
                     }
-                    document.add(table2);
+//                    document.add(table2);
 
                 }
             } else {
@@ -1637,7 +1688,7 @@ public class FilesService {
                     cell.setHorizontalAlignment(1);
                     table.addCell(cell);
                 }
-                document.add(table);
+                document.add(table); // tytuł tabeli
                 for (int i = 0; i < pointColumnWidths.length; i++) {
                     Paragraph p = new Paragraph();
                     if (i == 0) {
@@ -1662,7 +1713,7 @@ public class FilesService {
                     cell.setHorizontalAlignment(1);
                     table1.addCell(cell);
                 }
-                document.add(table1);
+                document.add(table1); // ciało tabeli
             }
             Paragraph par5 = new Paragraph("_______________________________________________________________________________________", font(12, 0));
 
@@ -1671,6 +1722,11 @@ public class FilesService {
             if (j < 7) {
                 document.add(par5);
                 document.add(newLine);
+            }
+            if (comp.size() > 1 && a5rotate) {
+                if (j < comp.size() - 1) {
+                    document.newPage();
+                }
             }
         }
 
@@ -1692,6 +1748,50 @@ public class FilesService {
 
         file.delete();
         return filesEntity;
+
+    }
+
+    private String arabicToRomanNumberConverter(int arabicNumber) {
+        String romanNumber;
+        switch (arabicNumber) {
+            case 0:
+                romanNumber = "";
+                break;
+            case 1:
+                romanNumber = "I";
+                break;
+            case 2:
+                romanNumber = "II";
+                break;
+            case 3:
+                romanNumber = "III";
+                break;
+            case 4:
+                romanNumber = "IV";
+                break;
+            case 5:
+                romanNumber = "V";
+                break;
+            case 6:
+                romanNumber = "VI";
+                break;
+            case 7:
+                romanNumber = "VII";
+                break;
+            case 8:
+                romanNumber = "VIII";
+                break;
+            case 9:
+                romanNumber = "IX";
+                break;
+            case 10:
+                romanNumber = "X";
+                break;
+            default:
+                romanNumber = "error";
+                break;
+        }
+        return romanNumber;
     }
 
     public FilesEntity generateMembersListWithCondition(boolean condition) throws IOException, DocumentException {
@@ -4201,7 +4301,7 @@ public class FilesService {
                 directContent.addImage(image);
 
                 final int currentPageNumber = writer.getCurrentPageNumber();
-                document.setMargins(20F, 20F, 35F, 55F);
+                document.setMargins(35F, 35F, 30F, 50F);
 
                 pageSize = document.getPageSize();
                 directContent = writer.getDirectContent();

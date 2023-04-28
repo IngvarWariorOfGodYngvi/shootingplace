@@ -35,15 +35,15 @@ public class RegistrationRecordsService {
     }
 
     public ResponseEntity<?> createRecordInBook(Integer legitimationNumber, int otherID) {
-        System.out.println(legitimationNumber);
-        System.out.println(otherID);
         String licenseNumber = clubRepo.getOne(1).getLicenseNumber();
         RegistrationRecordEntity r = new RegistrationRecordEntity();
-        String a = otherID>3 ? "false" : "true";
         if (legitimationNumber > 0) {
             MemberEntity member = memberRepo.findByLegitimationNumber(legitimationNumber).orElseThrow(EntityNotFoundException::new);
-            boolean b = registrationRepo.findAll().stream().anyMatch(f -> f.getDate().equals(LocalDate.now()) && f.getPeselOrID().equals(member.getPesel()));
+            boolean b = registrationRepo.findAll().stream().anyMatch(f ->
+                    LocalDate.of(f.getDate().getYear(), f.getDate().getMonth(), f.getDate().getDayOfMonth()).equals(LocalDate.now()) && f.getPeselOrID().equals(member.getPesel())
+            );
             if (b) {
+                LOG.info("Osoba znajduje się już na liście");
                 return ResponseEntity.badRequest().body("Osoba znajduje się już na liście");
             } else {
                 r.setFirstName(member.getFirstName());
@@ -61,11 +61,14 @@ public class RegistrationRecordsService {
                 r.setImageUUID(null);
                 r.setPeselOrID(member.getPesel());
                 int dayIndex = 0;
-                RegistrationRecordEntity registrationRecordEntity = registrationRepo.findAll().stream().filter(f->f.getDate().equals(LocalDate.now())).max(Comparator.comparing(RegistrationRecordEntity::getDayIndex)).orElse(null);
+                RegistrationRecordEntity registrationRecordEntity = registrationRepo.findAll().stream().filter(f -> f.getDate().equals(LocalDateTime.now())).max(Comparator.comparing(RegistrationRecordEntity::getDayIndex)).orElse(null);
                 if (registrationRecordEntity != null) {
                     dayIndex = registrationRecordEntity.getDayIndex();
-                }                r.setDayIndex(dayIndex + 1);
+                }
+                r.setDayIndex(dayIndex + 1);
+                LOG.info("Zapisano do książki");
                 registrationRepo.save(r);
+                return ResponseEntity.ok("Zapisano do książki");
             }
         } else {
             OtherPersonEntity o = othersRepo.findById(otherID).orElse(null);
@@ -85,6 +88,7 @@ public class RegistrationRecordsService {
                 r.setDataProcessingAgreement(true);
                 r.setAddress(licenseNumber);
                 registrationRepo.save(r);
+                LOG.info("Zapisano do książki");
                 return ResponseEntity.ok("Zapisano do książki");
             }
         }
@@ -93,7 +97,7 @@ public class RegistrationRecordsService {
 
     private int getDayIndex() {
         int dayIndex = 0;
-        RegistrationRecordEntity registrationRecordEntity = registrationRepo.findAll().stream().filter(f->f.getDate().toLocalDate().equals(LocalDateTime.now().toLocalDate())).max(Comparator.comparing(RegistrationRecordEntity::getDayIndex)).orElse(null);
+        RegistrationRecordEntity registrationRecordEntity = registrationRepo.findAll().stream().filter(f -> f.getDate().toLocalDate().equals(LocalDateTime.now().toLocalDate())).max(Comparator.comparing(RegistrationRecordEntity::getDayIndex)).orElse(null);
         if (registrationRecordEntity != null) {
             dayIndex = registrationRecordEntity.getDayIndex();
         }

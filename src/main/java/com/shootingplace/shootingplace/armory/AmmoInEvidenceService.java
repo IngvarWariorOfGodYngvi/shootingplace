@@ -29,16 +29,18 @@ public class AmmoInEvidenceService {
     }
 
     boolean addAmmoUsedEntityToAmmoInEvidenceEntity(AmmoUsedToEvidenceEntity ammoUsedToEvidenceEntity) {
-
-        boolean isEmpty = ammoEvidenceRepository.findAll().stream().noneMatch(AmmoEvidenceEntity::isOpen);
-//      Nie znaleziono żadnej listy
+        boolean isEmpty = !ammoEvidenceRepository.existsByOpenTrue();
+        System.out.println(isEmpty);
+        boolean isEmpty1 = ammoEvidenceRepository.findAll().stream().noneMatch(AmmoEvidenceEntity::isOpen);
+        System.out.println(isEmpty1);
+        //      Nie znaleziono żadnej listy
         if (isEmpty) {
             if (ammoUsedToEvidenceEntity.getCounter() < 0) {
                 LOG.info("nie można dodać ujemnej wartości");
             } else {
 //                nadawanie numeru listy
                 int number;
-                boolean all = ammoEvidenceRepository.findAll().isEmpty();
+                boolean all = ammoEvidenceRepository.countNumbers() < 1;
 //                nadawanie numeru od zera
                 if (all) {
                     number = 1;
@@ -50,7 +52,7 @@ public class AmmoInEvidenceService {
                             .max(Comparator.comparing(a -> Integer.parseInt(a.getNumber().split("-")[0])))
                             .orElse(null);
 
-                    if (ammoEvidenceEntity==null) {
+                    if (ammoEvidenceEntity == null) {
                         number = 1;
                     } else {
                         String[] split = ammoEvidenceEntity.getNumber().split("-");
@@ -65,7 +67,6 @@ public class AmmoInEvidenceService {
                         .number(evidenceNumber)
                         .build();
                 ammoEvidenceRepository.save(buildEvidence);
-                System.out.println(evidenceNumber);
                 AmmoInEvidenceEntity build = AmmoInEvidenceEntity.builder()
                         .caliberName(ammoUsedToEvidenceEntity.getCaliberName())
                         .caliberUUID(ammoUsedToEvidenceEntity.getCaliberUUID())
@@ -110,7 +111,7 @@ public class AmmoInEvidenceService {
                 List<AmmoUsedToEvidenceEntity> ammoUsedToEvidenceEntityList = ammoInEvidenceEntity.getAmmoUsedToEvidenceEntityList();
                 if (ammoUsedToEvidenceEntityList.stream().noneMatch(f -> f.getName().equals(ammoUsedToEvidenceEntity.getName()))) {
                     if (ammoUsedToEvidenceEntity.getCounter() <= 0) {
-                        LOG.info("nie można dodać ujemnej wartości");
+                        LOG.info("1nie można dodać ujemnej wartości");
                         return false;
                     } else {
                         ammoUsedToEvidenceEntityList.add(ammoUsedToEvidenceEntity);
@@ -168,6 +169,7 @@ public class AmmoInEvidenceService {
 
         }
 //          Usuwanie listy jeśli ilość sztuk wynosi 0
+        System.out.println(!ammoEvidenceRepository.existsByOpenTrue());
         AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository
                 .findAll()
                 .stream().filter(AmmoEvidenceEntity::isOpen)

@@ -55,7 +55,7 @@ public class MemberEntity extends Person {
     private String pesel;
     @NotBlank
     private String IDCard;
-    @ManyToOne( cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private ClubEntity club;
 
     @OneToOne(orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.LAZY)

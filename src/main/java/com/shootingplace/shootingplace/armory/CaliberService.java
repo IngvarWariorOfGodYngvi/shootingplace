@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.armory;
 
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,7 +22,7 @@ public class CaliberService {
         this.changeHistoryService = changeHistoryService;
     }
 
-    public List<CaliberEntity> getCalibersList() {
+    public List<CaliberEntity> getCalibersEntityList() {
         List<CaliberEntity> caliberEntityList;
         if (caliberRepository.findAll().isEmpty()) {
             caliberEntityList = createAllCalibersEntities();
@@ -32,6 +33,17 @@ public class CaliberService {
         return getCaliberSortedEntityList(caliberEntityList);
 
     }
+    public List<Caliber> getCalibersList() {
+        List<Caliber> caliberList;
+        if (caliberRepository.findAll().isEmpty()) {
+            caliberList = createAllCalibersEntities().stream().map(Mapping::map).collect(Collectors.toList());
+        } else {
+            caliberList = caliberRepository.findAll().stream().map(Mapping::map).collect(Collectors.toList());
+        }
+
+        return getCaliberSortedList(caliberList);
+
+    }
 
     private List<CaliberEntity> getCaliberSortedEntityList(List<CaliberEntity> caliberEntityList) {
         String[] sort = {"5,6mm", "9x19mm", "12/76", ".357", ".38", "7,62x39mm"};
@@ -39,7 +51,6 @@ public class CaliberService {
                         && !f.getName().equals(sort[1])
                         && !f.getName().equals(sort[2])
                         && !f.getName().equals(sort[3])
-
                         && !f.getName().equals(sort[4])
                         && !f.getName().equals(sort[5]))
                 .collect(Collectors.toList());
@@ -59,6 +70,32 @@ public class CaliberService {
         caliberEntityList2.add(caliberEntity5);
         caliberEntityList2.addAll(collect);
         return caliberEntityList2;
+    }
+    private List<Caliber> getCaliberSortedList(List<Caliber> caliberList) {
+        String[] sort = {"5,6mm", "9x19mm", "12/76", ".357", ".38", "7,62x39mm"};
+        List<Caliber> collect = caliberList.stream().filter(f -> !f.getName().equals(sort[0])
+                        && !f.getName().equals(sort[1])
+                        && !f.getName().equals(sort[2])
+                        && !f.getName().equals(sort[3])
+                        && !f.getName().equals(sort[4])
+                        && !f.getName().equals(sort[5]))
+                .collect(Collectors.toList());
+
+        Caliber caliber = caliberList.stream().filter(f -> f.getName().equals(sort[0])).findFirst().orElse(null);
+        Caliber caliber1 = caliberList.stream().filter(f -> f.getName().equals(sort[1])).findFirst().orElse(null);
+        Caliber caliber2 = caliberList.stream().filter(f -> f.getName().equals(sort[2])).findFirst().orElse(null);
+        Caliber caliber3 = caliberList.stream().filter(f -> f.getName().equals(sort[3])).findFirst().orElse(null);
+        Caliber caliber4 = caliberList.stream().filter(f -> f.getName().equals(sort[4])).findFirst().orElse(null);
+        Caliber caliber5 = caliberList.stream().filter(f -> f.getName().equals(sort[5])).findFirst().orElse(null);
+        List<Caliber> caliberList2 = new ArrayList<>();
+        caliberList2.add(caliber);
+        caliberList2.add(caliber1);
+        caliberList2.add(caliber2);
+        caliberList2.add(caliber3);
+        caliberList2.add(caliber4);
+        caliberList2.add(caliber5);
+        caliberList2.addAll(collect);
+        return caliberList2;
     }
 
     public List<String> getCalibersNamesList() {

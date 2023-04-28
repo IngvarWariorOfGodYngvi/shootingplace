@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.armory;
 
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.*;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
@@ -7,7 +8,6 @@ import com.shootingplace.shootingplace.member.PersonalEvidenceEntity;
 import com.shootingplace.shootingplace.member.PersonalEvidenceRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
-import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,8 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class AmmoUsedService {
@@ -31,6 +31,7 @@ public class AmmoUsedService {
     private final OtherPersonRepository otherPersonRepository;
     private final ArmoryService armoryService;
     private final AmmoEvidenceRepository ammoEvidenceRepository;
+    private final AmmoInEvidenceRepository ammoInEvidenceRepository;
 
     private final WorkingTimeEvidenceRepository workingTimeEvidenceRepository;
 
@@ -41,7 +42,7 @@ public class AmmoUsedService {
                            AmmoInEvidenceService ammoInEvidenceService,
                            AmmoUsedRepository ammoUsedRepository,
                            CaliberRepository caliberRepository,
-                           MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, ArmoryService armoryService, AmmoEvidenceRepository ammoEvidenceRepository, WorkingTimeEvidenceRepository workingTimeEvidenceRepository) {
+                           MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, ArmoryService armoryService, AmmoEvidenceRepository ammoEvidenceRepository, AmmoInEvidenceRepository ammoInEvidenceRepository, WorkingTimeEvidenceRepository workingTimeEvidenceRepository) {
         this.personalEvidenceRepository = personalEvidenceRepository;
         this.ammoUsedToEvidenceEntityRepository = ammoUsedToEvidenceEntityRepository;
         this.ammoInEvidenceService = ammoInEvidenceService;
@@ -51,12 +52,13 @@ public class AmmoUsedService {
         this.otherPersonRepository = otherPersonRepository;
         this.armoryService = armoryService;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
+        this.ammoInEvidenceRepository = ammoInEvidenceRepository;
         this.workingTimeEvidenceRepository = workingTimeEvidenceRepository;
     }
 
     @Transactional
     public ResponseEntity<String> addAmmoUsedEntity(String caliberUUID, Integer legitimationNumber, int otherID, Integer quantity) {
-        if(!workingTimeEvidenceRepository.existsByIsCloseFalse()){
+        if (!workingTimeEvidenceRepository.existsByIsCloseFalse()) {
             return ResponseEntity.badRequest().body("Najpierw zarejestruj pobyt");
         }
 
@@ -81,15 +83,15 @@ public class AmmoUsedService {
 
                 String name;
                 if (legitimationNumber > 0) {
-                    LOG.info("member");
-                    MemberEntity memberEntity = memberRepository.findAll().stream().filter(f -> f.getLegitimationNumber().equals(legitimationNumber)).findFirst().orElseThrow(EntityNotFoundException::new);
-                    name = memberEntity.getSecondName() + " " + memberEntity.getFirstName();
+                    MemberEntity memberEntity = memberRepository.findByLegitimationNumber(legitimationNumber).orElseThrow(EntityNotFoundException::new);
+                    LOG.info("member " + memberEntity.getMemberName());
+                    name = memberEntity.getMemberName();
                     AmmoUsedPersonal ammoUsedPersonal = AmmoUsedPersonal.builder()
                             .caliberName(caliberName)
                             .counter(quantity)
                             .memberUUID(memberEntity.getUuid())
                             .caliberUUID(caliberUUID)
-                            .memberName(memberEntity.getFirstName() + " " + memberEntity.getSecondName())
+                            .memberName(name)
                             .date(LocalDate.now())
                             .build();
 
@@ -105,13 +107,11 @@ public class AmmoUsedService {
                             .build();
                     validateAmmo(ammoUsedPersonal);
                     if (starEvidence(ammoUsedEvidence)) {
-                        return ResponseEntity.ok("Dodano do listy " + name + " " + caliberName + "");
+                        return ResponseEntity.ok("Dodano do listy " + name + " " + caliberName + " " + quantity);
                     }
 
-                }
-                else {
+                } else {
                     LOG.info("not member");
-                    System.out.println(quantity);
                     OtherPersonEntity otherPersonEntity = otherPersonRepository
                             .findById(otherID)
                             .orElseThrow(EntityNotFoundException::new);
@@ -138,14 +138,14 @@ public class AmmoUsedService {
 
             String name;
             if (legitimationNumber > 0) {
-                MemberEntity memberEntity = memberRepository.findAll().stream().filter(f -> f.getLegitimationNumber().equals(legitimationNumber)).findFirst().orElseThrow(EntityNotFoundException::new);
-                name = memberEntity.getSecondName() + " " + memberEntity.getFirstName();
+                MemberEntity memberEntity = memberRepository.findByLegitimationNumber(legitimationNumber).orElseThrow(EntityNotFoundException::new);
+                name = memberEntity.getMemberName();
                 AmmoUsedPersonal ammoUsedPersonal = AmmoUsedPersonal.builder()
                         .caliberName(caliberName)
                         .counter(quantity)
                         .memberUUID(memberEntity.getUuid())
                         .caliberUUID(caliberUUID)
-                        .memberName(memberEntity.getFirstName() + " " + memberEntity.getSecondName())
+                        .memberName(name)
                         .date(LocalDate.now())
                         .build();
 
@@ -163,8 +163,7 @@ public class AmmoUsedService {
                 if (starEvidence(ammoUsedEvidence)) {
                     return ResponseEntity.ok("Zwrócono do magazynu " + name + " " + caliberName + "");
                 }
-            }
-            else {
+            } else {
                 OtherPersonEntity otherPersonEntity = otherPersonRepository
                         .findById(otherID)
                         .orElseThrow(EntityNotFoundException::new);
@@ -234,9 +233,7 @@ public class AmmoUsedService {
 
     private boolean starEvidence(AmmoUsedEvidence ammoUsedEvidence) {
 
-//        AmmoUsedToEvidenceEntity ammoUsedToEvidenceEntity = createAmmoUsedToEvidenceEntity(ammoUsedEvidence);
 
-//        ammoUsedToEvidenceEntityRepository.save(createAmmoUsedToEvidenceEntity(ammoUsedEvidence));
         return ammoInEvidenceService.addAmmoUsedEntityToAmmoInEvidenceEntity(ammoUsedToEvidenceEntityRepository.save(createAmmoUsedToEvidenceEntity(ammoUsedEvidence)));
 
     }
@@ -249,6 +246,33 @@ public class AmmoUsedService {
 
     private AmmoUsedToEvidenceEntity createAmmoUsedToEvidenceEntity(AmmoUsedEvidence ammoUsedEvidence) {
         return ammoUsedToEvidenceEntityRepository.save(Mapping.map(ammoUsedEvidence));
+    }
+
+    public void recountAmmo() {
+        List<AmmoUsedToEvidenceEntity> all2 = ammoUsedToEvidenceEntityRepository.findAll();
+        List<AmmoInEvidenceEntity> ail = ammoInEvidenceRepository.findAll();
+        ail.forEach(e -> e.getAmmoUsedToEvidenceEntityList().forEach(all2::remove));
+        List<AmmoUsedToEvidenceEntity> all3 = ammoUsedToEvidenceEntityRepository.findAll();
+        all3.removeAll(all2);
+        Set<String> set1 = new HashSet<>();
+        all3.forEach(e -> {
+            if (e.getMemberEntity() != null) {
+                set1.add(e.getMemberEntity().getUuid());
+            }
+        });
+        set1.forEach(e -> {
+            MemberEntity id = memberRepository.findById(e).orElseThrow();
+            List<AmmoUsedToEvidenceEntity> collect = all3.stream().filter(f -> f.getMemberEntity() != null).filter(f -> f.getMemberEntity().getUuid().equals(e)).collect(Collectors.toList());
+            Map<String, Integer> map =
+                    collect
+                            .stream()
+                            .collect(Collectors.groupingBy(AmmoUsedToEvidenceEntity::getCaliberName, Collectors.summingInt(AmmoUsedToEvidenceEntity::getCounter)));
+            id.getPersonalEvidence().getAmmoList().forEach(f -> {
+                f.setCounter(map.get(f.getCaliberName()));
+                ammoUsedRepository.save(f);
+            });
+        });
+        all2.forEach(ammoUsedToEvidenceEntityRepository::delete);
     }
 
 }

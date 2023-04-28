@@ -15,18 +15,23 @@ public class ArmoryController {
 
     private final ArmoryService armoryService;
     private final CaliberService caliberService;
-    private final ChangeHistoryService changeHistoryService;
+    private final AmmoUsedService ammoUsedService;
 
 
-    public ArmoryController(ArmoryService armoryService, CaliberService caliberService, ChangeHistoryService changeHistoryService) {
+    public ArmoryController(ArmoryService armoryService, CaliberService caliberService, ChangeHistoryService changeHistoryService, AmmoUsedService ammoUsedService) {
         this.armoryService = armoryService;
         this.caliberService = caliberService;
-        this.changeHistoryService = changeHistoryService;
+        this.ammoUsedService = ammoUsedService;
+    }
+
+    @GetMapping("/recount")
+    public void recount(){
+        ammoUsedService.recountAmmo();
     }
 
 
     @GetMapping("/calibers")
-    public ResponseEntity<List<CaliberEntity>> getCalibersList() {
+    public ResponseEntity<?> getCalibersList() {
         return ResponseEntity.ok(caliberService.getCalibersList());
     }
 

@@ -81,8 +81,8 @@ public class UserService {
         String superPin = Hashing.sha256().hashString(superPinCode, StandardCharsets.UTF_8).toString();
         UserEntity admin = userRepository.findAll().stream().filter(f -> f.getFirstName().equals("Admin")).findFirst().orElseThrow(EntityNotFoundException::new);
         if (admin.getPinCode().equals(superPin)) {
-            if(userRepository.findAll().stream().filter(f->!f.getFirstName().equals("Admin")).anyMatch(UserEntity::isSuperUser)){
-                userRepository.findAll().stream().filter(f->!f.getFirstName().equals("Admin")).forEach(e->{
+            if (userRepository.findAll().stream().filter(f -> !f.getFirstName().equals("Admin")).anyMatch(UserEntity::isSuperUser)) {
+                userRepository.findAll().stream().filter(f -> !f.getFirstName().equals("Admin")).forEach(e -> {
                     e.setSuperUser(false);
                     userRepository.save(e);
                 });
@@ -119,17 +119,17 @@ public class UserService {
             int p2 = Integer.parseInt(String.valueOf(pinNumbers[1]));
             int p3 = Integer.parseInt(String.valueOf(pinNumbers[2]));
             int p4 = Integer.parseInt(String.valueOf(pinNumbers[3]));
-            if(p4==0){
-                p4=10;
+            if (p4 == 0) {
+                p4 = 10;
             }
-            if(p2==p1+1&&p3==p2+1&&p4==p3+1) {
+            if (p2 == p1 + 1 && p3 == p2 + 1 && p4 == p3 + 1) {
                 LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                 return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
             }
-            if(p1==0){
-                p1=10;
+            if (p1 == 0) {
+                p1 = 10;
             }
-            if(p1-1==p2&&p2-1==p3&&p3-1==p4){
+            if (p1 - 1 == p2 && p2 - 1 == p3 && p3 - 1 == p4) {
                 LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                 return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
             }
@@ -152,8 +152,8 @@ public class UserService {
                     .subType(subType)
                     .pinCode(pin)
                     .active(true)
-                    .legitimationNumber(memberRepository.existsById(memberUUID)?memberRepository.getOne(memberUUID).getLegitimationNumber():0)
-                    .member(memberRepository.existsById(memberUUID)?memberRepository.getOne(memberUUID):null)
+                    .legitimationNumber(memberRepository.existsById(memberUUID) ? memberRepository.getOne(memberUUID).getLegitimationNumber() : 0)
+                    .member(memberRepository.existsById(memberUUID) ? memberRepository.getOne(memberUUID) : null)
                     .build();
             userRepository.save(userEntity);
             return ResponseEntity.status(201).body("Utworzono użytkownika " + userEntity.getFirstName() + ".");
@@ -187,11 +187,11 @@ public class UserService {
                 return ResponseEntity.status(406).body("Taki użytkownik już istnieje.");
             }
             boolean b = userRepository.existsByPinCode(pin);
-            if(b){
+            if (b) {
                 return ResponseEntity.badRequest().body("Wymyśl inny Kod PIN");
             }
             System.out.println(memberUUID);
-            if (memberUUID!=null&&!memberUUID.equals("")&&!memberRepository.existsById(memberUUID)) {
+            if (memberUUID != null && !memberUUID.equals("") && !memberRepository.existsById(memberUUID)) {
                 return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza o podanym identyfikatorze - nie można utworzyć użytkownika");
             }
 
@@ -204,17 +204,17 @@ public class UserService {
             int p2 = Integer.parseInt(String.valueOf(pinNumbers[1]));
             int p3 = Integer.parseInt(String.valueOf(pinNumbers[2]));
             int p4 = Integer.parseInt(String.valueOf(pinNumbers[3]));
-            if(p4==0){
-                p4=10;
+            if (p4 == 0) {
+                p4 = 10;
             }
-            if(p2==p1+1&&p3==p2+1&&p4==p3+1) {
+            if (p2 == p1 + 1 && p3 == p2 + 1 && p4 == p3 + 1) {
                 LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                 return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
             }
-            if(p1==0){
-                p1=10;
+            if (p1 == 0) {
+                p1 = 10;
             }
-            if(p1-1==p2&&p2-1==p3&&p3-1==p4){
+            if (p1 - 1 == p2 && p2 - 1 == p3 && p3 - 1 == p4) {
                 LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                 return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
             }
@@ -233,8 +233,8 @@ public class UserService {
                     .subType(subType)
                     .pinCode(pin)
                     .active(true)
-                    .legitimationNumber(memberRepository.existsById(memberUUID)?memberRepository.getOne(memberUUID).getLegitimationNumber():0)
-                    .member(memberRepository.existsById(memberUUID)?memberRepository.getOne(memberUUID):null)
+                    .legitimationNumber(memberRepository.existsById(memberUUID) ? memberRepository.getOne(memberUUID).getLegitimationNumber() : 0)
+                    .member(memberRepository.existsById(memberUUID) ? memberRepository.getOne(memberUUID) : null)
                     .build();
             userRepository.save(userEntity);
             changeHistoryService.addRecordToChangeHistory(superPinCode, userEntity.getClass().getSimpleName() + " " + "createUser", userEntity.getUuid());
@@ -258,7 +258,7 @@ public class UserService {
                 response = ResponseEntity.ok(true);
             }
         }
-       return response;
+        return response;
     }
 
     public ResponseEntity<?> getUserActions(String uuid) {
@@ -294,9 +294,9 @@ public class UserService {
                     .filter(f -> !f.isClose())
                     .findFirst()
                     .orElse(null);
-            if ((workingTimeEvidenceEntity != null && user.getSubType().contains("Zarząd"))||user.getSubType().contains("Admin")) {
+            if ((workingTimeEvidenceEntity != null && user.getSubType().contains("Zarząd")) || user.getSubType().contains("Admin")) {
                 response = ResponseEntity.ok().build();
-                changeHistoryService.addRecordToChangeHistory(pin, "uzyskaj dostęp",user.getMember()!=null?user.getMember().getUuid():null);
+                changeHistoryService.addRecordToChangeHistory(pin, "uzyskaj dostęp", user.getMember() != null ? user.getMember().getUuid() : null);
             } else {
                 response = ResponseEntity.status(HttpStatus.FORBIDDEN).body("Brak dostępu ");
             }
@@ -313,8 +313,8 @@ public class UserService {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity admin = userRepository.findByPinCode(pin);
 
-        if(admin.getFirstName().equals("Admin")) {
-            userRepository.findAll().stream().filter(f->!f.getFirstName().equals("Admin")).forEach(u->{
+        if (admin.getFirstName().equals("Admin")) {
+            userRepository.findAll().stream().filter(f -> !f.getFirstName().equals("Admin")).forEach(u -> {
                 u.setSuperUser(false);
                 userRepository.save(u);
             });
@@ -324,5 +324,12 @@ public class UserService {
             return ResponseEntity.ok("ustawiono " + user.getFirstName() + " status super użytkownika");
         }
         return ResponseEntity.badRequest().body("Brak uprawnień");
+    }
+
+    public ResponseEntity<?> checkArbiterByCode(String code) {
+        String pin = Hashing.sha256().hashString(code, StandardCharsets.UTF_8).toString();
+        UserEntity user = userRepository.existsByPinCode(pin) ? userRepository.findByPinCode(pin) : null;
+
+        return user != null ? user.getMember() != null ? user.getMember().getMemberPermissions().getArbiterNumber() != null ? ResponseEntity.ok(user.getMember().getMemberPermissions().getArbiterNumber()) : ResponseEntity.badRequest().body("") : ResponseEntity.badRequest().body("") : ResponseEntity.badRequest().body("");
     }
 }

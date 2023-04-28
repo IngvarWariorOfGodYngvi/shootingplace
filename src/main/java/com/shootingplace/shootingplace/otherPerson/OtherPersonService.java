@@ -1,11 +1,11 @@
 package com.shootingplace.shootingplace.otherPerson;
 
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.member.MemberPermissions;
 import com.shootingplace.shootingplace.member.MemberPermissionsEntity;
 import com.shootingplace.shootingplace.member.MemberPermissionsRepository;
-import com.shootingplace.shootingplace.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
@@ -79,8 +79,8 @@ public class OtherPersonService {
                 .club(clubEntity)
                 .build();
         otherPersonRepository.save(otherPersonEntity);
-        LOG.info("Utworzono nową osobę " + otherPersonEntity.getFirstName() + " " + otherPersonEntity.getSecondName());
-        return ResponseEntity.status(201).body("\"Utworzono nową osobę " + otherPersonEntity.getFirstName() + " " + otherPersonEntity.getSecondName() + "\"");
+        LOG.info("Zapisano nową osobę " + otherPersonEntity.getFirstName() + " " + otherPersonEntity.getSecondName());
+        return ResponseEntity.status(201).body("Zapisano nową osobę " + otherPersonEntity.getFirstName() + " " + otherPersonEntity.getSecondName());
 
     }
 
@@ -126,7 +126,7 @@ public class OtherPersonService {
         return ResponseEntity.ok("Dezaktywowano Osobę");
     }
 
-    public boolean updatePerson(String id, OtherPerson otherPerson, String clubName) {
+    public ResponseEntity<?> updatePerson(String id, OtherPerson otherPerson, String clubName) {
         OtherPersonEntity one = otherPersonRepository.getOne(Integer.valueOf(id));
         if (otherPerson.getEmail() != null && !otherPerson.getEmail().isEmpty()) {
             LOG.info("Zmieniono email");
@@ -161,6 +161,6 @@ public class OtherPersonService {
             one.setClub(clubEntity);
         }
         otherPersonRepository.save(one);
-        return true;
+        return ResponseEntity.ok("Zaktualizowano");
     }
 }

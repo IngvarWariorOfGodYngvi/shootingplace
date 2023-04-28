@@ -35,4 +35,11 @@ public class PersonalEvidenceEntity {
     public void setAmmoList(List<AmmoUsedEntity> ammoList) {
         this.ammoList = ammoList;
     }
+
+    @Override
+    public String toString() {
+        return "PersonalEvidenceEntity{" +
+                "ammoList=" + ammoList +
+                '}';
+    }
 }

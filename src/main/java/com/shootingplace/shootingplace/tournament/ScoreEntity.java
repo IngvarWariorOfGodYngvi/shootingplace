@@ -7,10 +7,9 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
@@ -24,6 +23,7 @@ public class ScoreEntity {
     private String uuid;
 
     private float score;
+    private String series;
 
     private float alfa;
     private float charlie;
@@ -53,6 +53,24 @@ public class ScoreEntity {
 
     public String getUuid() {
         return uuid;
+    }
+
+    public List<Float> getSeries() {
+        List<Float> vals = new ArrayList<>();
+        if (series != null) {
+            for (String s : series.split(";")) {
+                vals.add(Float.valueOf(s));
+            }
+        }
+        return vals;
+    }
+
+    public void setSeries(List<Float> series) {
+        String value = "";
+        for (Float f : series) {
+            value = value.concat(f + ";");
+        }
+        this.series = value;
     }
 
     public boolean isDnf() {

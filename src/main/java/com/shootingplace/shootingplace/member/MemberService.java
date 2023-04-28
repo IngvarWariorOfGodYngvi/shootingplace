@@ -572,7 +572,7 @@ public class MemberService {
     public List<MemberInfo> getAllNames() {
         return memberRepository.findAllByErasedFalse().stream()
                 .map(Mapping::map1)
-                .sorted(Comparator.comparing(MemberInfo::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberInfo::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .sorted(Comparator.comparing(MemberInfo::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberInfo::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
 
     }
@@ -588,7 +588,7 @@ public class MemberService {
 //      license valid
         long count1 = all.stream()
                 .filter(f -> !f.getErased())
-                .filter(f->f.getClub().getId().equals(1))
+                .filter(f -> f.getClub().getId().equals(1))
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(MemberEntity::getPzss)
                 .filter(f -> f.getLicense().isValid())
@@ -597,7 +597,7 @@ public class MemberService {
 //      license not valid
         long count2 = all.stream()
                 .filter(f -> !f.getErased())
-                .filter(f->f.getClub().getId().equals(1))
+                .filter(f -> f.getClub().getId().equals(1))
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(MemberEntity::getPzss)
                 .filter(f -> !f.getLicense().isValid())
@@ -719,7 +719,7 @@ public class MemberService {
             }
         }
 
-        list.sort(Comparator.comparing(MemberDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))));
+        list.sort(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))));
         return list;
     }
 
@@ -918,7 +918,7 @@ public class MemberService {
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(f -> !f.getLicense().isValid())
                 .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .map(Mapping::map).collect(Collectors.toList());
     }
 
@@ -928,13 +928,13 @@ public class MemberService {
                 .filter(f -> !f.getErased())
                 .filter(f -> !f.getActive())
                 .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl")))).map(Mapping::map).collect(Collectors.toList());
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))).map(Mapping::map).collect(Collectors.toList());
     }
 
     public List<Member> getMembersErased() {
         return memberRepository.findAll().stream()
                 .filter(MemberEntity::getErased)
-                .sorted(Comparator.comparing(MemberEntity::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .map(Mapping::map)
                 .collect(Collectors.toList());
     }
@@ -958,10 +958,10 @@ public class MemberService {
     }
 
     public ResponseEntity<?> changeClub(String uuid, String clubName) {
-        if (!memberRepository.existsById(uuid)){
+        if (!memberRepository.existsById(uuid)) {
             return ResponseEntity.badRequest().body("Nie znaleziono klubowicza");
         }
-        if (!clubRepository.existsByName(clubName)){
+        if (!clubRepository.existsByName(clubName)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubu");
         }
         MemberEntity member = memberRepository.getOne(uuid);
@@ -971,5 +971,39 @@ public class MemberService {
         member.setClub(clubRepository.getOne(club.getId()));
         memberRepository.save(member);
         return ResponseEntity.ok("Zmieniono Klub macierzysty zawodnika " + member.getMemberName() + " na: " + club.getName());
+    }
+
+    public ResponseEntity<?> deleteMember(String uuid) {
+        try {
+            if (memberRepository.existsById(uuid)) {
+                MemberEntity one = memberRepository.getOne(uuid);
+                one.setAddress(null);
+                one.setClub(null);
+                one.setErasedEntity(null);
+                one.setWeaponPermission(null);
+                one.setBarCodeCardList(null);
+                one.setHistory(null);
+                one.setLicense(null);
+                one.setMemberPermissions(null);
+                one.setPersonalEvidence(null);
+                one.setShootingPatent(null);
+                memberRepository.save(one);
+                memberRepository.delete(one);
+                return ResponseEntity.ok("usunięto osobę z bazy");
+            } else {
+                return ResponseEntity.badRequest().body("nie można wykonać polecenia");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error " + e);
+        }
+    }
+
+    public ResponseEntity<?> getSingleMemberEmail(Integer number) {
+        MemberEntity memberEntity = memberRepository.findByLegitimationNumber(number).orElse(null);
+        if (memberEntity != null)
+            if (!memberEntity.getErased()) return ResponseEntity.ok(memberEntity.getEmail());
+            else return ResponseEntity.badRequest().body("Brak takiego Klubowicza");
+        else return ResponseEntity.badRequest().body("Brak takiego Klubowicza");
+
     }
 }

@@ -122,7 +122,7 @@ public class CompetitionMembersListService {
         return tournamentEntity.getCompetitionsList().stream().filter(f -> f.getName().equals(competitionName)).findFirst().orElseThrow(EntityNotFoundException::new).getUuid();
     }
 
-    public boolean removeListFromTournament(String tournamentUUID, String competitionUUID) {
+    public ResponseEntity<?> removeListFromTournament(String tournamentUUID, String competitionUUID) {
         CompetitionMembersListEntity competitionMembersListEntity = competitionMembersListRepository.findById(competitionUUID).orElseThrow(EntityNotFoundException::new);
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
 
@@ -130,9 +130,9 @@ public class CompetitionMembersListService {
             tournamentEntity.getCompetitionsList().remove(competitionMembersListEntity);
             tournamentRepository.save(tournamentEntity);
             competitionMembersListRepository.delete(competitionMembersListEntity);
-            return true;
+            return ResponseEntity.ok("Usunięto konkurencję");
         } else {
-            return false;
+            return ResponseEntity.badRequest().body("Coś poszło nie tak");
         }
 
     }
@@ -163,7 +163,7 @@ public class CompetitionMembersListService {
 
     }
 
-    public ResponseEntity<String> getMetricNumber(String legNumber, int otherID, String tournamentUUID) {
+    public ResponseEntity<?> getMetricNumber(String legNumber, int otherID, String tournamentUUID) {
 
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         List<Integer> metricNumber = new ArrayList<>();
@@ -185,9 +185,9 @@ public class CompetitionMembersListService {
                             }));
         }
         if(metricNumber.isEmpty()){
-            return ResponseEntity.badRequest().body("\"Taka osoba nie znajduje się na żadnej liście\"");
+            return ResponseEntity.badRequest().body("Taka osoba nie znajduje się na żadnej liście");
         }
-        return ResponseEntity.ok("\"" + metricNumber.get(0) + "\"");
+        return ResponseEntity.ok(metricNumber.get(0));
 
     }
 

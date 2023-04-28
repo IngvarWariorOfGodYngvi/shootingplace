@@ -30,6 +30,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -120,12 +121,12 @@ public class XLSXFilesService {
         XSSFCell cell1 = row1.createCell(0);
         cell1.setCellStyle(cellStyleDate);
 
-        sheet.setColumnWidth(0, 11 * 128); //M-ce
-        sheet.setColumnWidth(1, 30 * 256); //Imię i nazwisko
-        sheet.setColumnWidth(3, 25 * 256); //Klub
-        sheet.setColumnWidth(4, 18 * 128); //Wynik
-        sheet.setColumnWidth(5, 10 * 128); //10x
-        sheet.setColumnWidth(6, 10 * 128); //10/
+        sheet.setColumnWidth(0, 11 * 128);
+        sheet.setColumnWidth(1, 30 * 256);
+        sheet.setColumnWidth(3, 25 * 256);
+        for (int i = 4; i < 13; i++) {
+            sheet.setColumnWidth(i, 18 * 128);
+        }
         cell.setCellValue(tournamentEntity.getName().toUpperCase() + c.getName());
         cell1.setCellValue("Łódź, " + dateFormat(tournamentEntity.getDate()));
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
@@ -148,20 +149,33 @@ public class XLSXFilesService {
                 cell2.setCellValue(competitionMembersListEntity.getName());
                 sheet.addMergedRegion(new CellRangeAddress(rc, rc++, 0, 6));
                 XSSFRow row3 = sheet.createRow(rc);
-                XSSFCell cell31 = row3.createCell(cc++);
-                XSSFCell cell32 = row3.createCell(cc++);
-                XSSFCell cell33 = row3.createCell(cc++);
-                XSSFCell cell34 = row3.createCell(cc++);
-                XSSFCell cell35 = row3.createCell(cc++);
-                XSSFCell cell36 = row3.createCell(cc++);
-                XSSFCell cell37 = row3.createCell(cc);
+                XSSFCell cell31 = row3.createCell(cc++); // m-ce
+                XSSFCell cell32 = row3.createCell(cc++); // nazwisko i imię
+                XSSFCell cell33 = row3.createCell(cc++); // nazwisko i imię
+                XSSFCell cell34 = row3.createCell(cc++); // klub
+                List<XSSFCell> series = new ArrayList<>();
+                if (competitionMembersListEntity.getScoreList().get(0).getSeries().size() > 1) {
+                    for (int k = 0; k < competitionMembersListEntity.getScoreList().get(0).getSeries().size(); k++) {
+                        series.add(row3.createCell(cc++));
+                    }
+                }
+                XSSFCell cell36 = row3.createCell(cc++); // 10X
+                XSSFCell cell37 = row3.createCell(cc++); // 10/
+                XSSFCell cell35 = row3.createCell(cc); // wynik
 
                 cell31.setCellValue("M-ce");
                 cell32.setCellValue("Nazwisko i Imię");
                 cell33.setCellValue("");
                 cell34.setCellValue("Klub");
-                cell35.setCellValue("Wynik");
-
+                if (competitionMembersListEntity.getScoreList().get(0).getSeries().size() > 1) {
+                    for (int k = 0; k < series.size(); k++) {
+                        series.get(k).setCellValue("Seria " + arabicToRomanNumberConverter(k + 1));
+                        series.get(k).setCellStyle(cellStyleCompetitionSubTitle);
+                    }
+                }
+//                if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
+                    cell35.setCellValue("Wynik");
+//                }
                 cell31.setCellStyle(cellStyleCompetitionSubTitle);
                 cell32.setCellStyle(cellStyleCompetitionSubTitle);
                 cell33.setCellStyle(cellStyleCompetitionSubTitle);
@@ -177,8 +191,13 @@ public class XLSXFilesService {
                         cell36.setCellValue("");
                         cell37.setCellValue("");
                     } else {
-                        cell36.setCellValue("10 x");
-                        cell37.setCellValue("10 /");
+                        if (competitionMembersListEntity.getName().toLowerCase(Locale.ROOT).contains("karabin") && competitionMembersListEntity.getName().toLowerCase(Locale.ROOT).contains("pneumatyczny")) {
+                            cell36.setCellValue("");
+                            cell37.setCellValue("10 /");
+                        } else {
+                            cell36.setCellValue("10 x");
+                            cell37.setCellValue("10 /");
+                        }
                     }
                 }
 
@@ -199,7 +218,7 @@ public class XLSXFilesService {
 
                     }
                     float score = scoreList.get(j).getScore();
-                    String scoreOuterTen = String.valueOf(scoreList.get(j).getOuterTen() - scoreList.get(j).getInnerTen());
+                    String scoreOuterTen = String.valueOf(scoreList.get(j).getOuterTen());
                     String scoreInnerTen = String.valueOf(scoreList.get(j).getInnerTen());
                     if (scoreOuterTen.startsWith("0")) {
                         scoreOuterTen = "";
@@ -216,7 +235,7 @@ public class XLSXFilesService {
                     }
                     DecimalFormat myFormatter = new DecimalFormat("###.####");
                     String result = myFormatter.format(score);
-                    if (score == 100) {
+                    if (score == 100 && competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
                         result = "100,0000";
                     }
                     if (scoreList.get(j).isDnf()) {
@@ -247,22 +266,36 @@ public class XLSXFilesService {
                     XSSFCell cell42 = row4.createCell(cc++); //Imię i nazwisko
                     XSSFCell cell43 = row4.createCell(cc++); //Imię i nazwisko
                     XSSFCell cell44 = row4.createCell(cc++); //Klub
-                    XSSFCell cell45 = row4.createCell(cc++); //Wynik
+                    List<XSSFCell> series1 = new ArrayList<>();
+                    if (scoreList.get(j).getSeries().size() > 1) {
+                        for (int k = 0; k < competitionMembersListEntity.getScoreList().get(0).getSeries().size(); k++) {
+                            series1.add(row4.createCell(cc++));
+                        }
+                    }
                     XSSFCell cell46 = row4.createCell(cc++); //10x
-                    XSSFCell cell47 = row4.createCell(cc); //10/
+                    XSSFCell cell47 = row4.createCell(cc++); //10/
+
+                    XSSFCell cell45 = row4.createCell(cc); //Wynik
 
                     cell41.setCellValue(String.valueOf(j + 1));
                     cell42.setCellValue(secondName + " " + firstName);
                     cell43.setCellValue("");
                     cell44.setCellValue(club);
+                    if (scoreList.get(j).getSeries().size() > 1) {
+                        for (int k = 0; k < series1.size(); k++) {
+                            series1.get(k).setCellValue(scoreList.get(j).getSeries().get(k));
+                            series1.get(k).setCellStyle(cellStyleNormalCenterAlignment);
+                        }
+                    }
                     cell45.setCellValue(result);
-                    cell46.setCellValue(o1);
-                    cell47.setCellValue(o2);
-
+//                    if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
+                        cell46.setCellValue(o1);
+                        cell47.setCellValue(o2);
+                        cell46.setCellStyle(cellStyleNormalCenterAlignment);
+                        cell47.setCellStyle(cellStyleNormalCenterAlignment);
+//                    }
                     cell41.setCellStyle(cellStyleNormalCenterAlignment);
                     cell45.setCellStyle(cellStyleCompetitionSubTitle);
-                    cell46.setCellStyle(cellStyleNormalCenterAlignment);
-                    cell47.setCellStyle(cellStyleNormalCenterAlignment);
 
                     sheet.addMergedRegion(new CellRangeAddress(rc, rc, 1, 2));
                     if (j < scoreList.size() - 1) {
@@ -381,7 +414,7 @@ public class XLSXFilesService {
 
     public FilesEntity getJoinDateSum(LocalDate firstDate, LocalDate secondDate) throws IOException {
 
-        String fileName = "lista klubowiczów zapisanych od "+firstDate.toString()+" do "+ secondDate.toString()+".xlsx";
+        String fileName = "lista klubowiczów zapisanych od " + firstDate.toString() + " do " + secondDate.toString() + ".xlsx";
 
         List<MemberDTO> collect = memberRepository.findAll().stream()
                 .filter(f -> f.getJoinDate().isAfter(firstDate.minusDays(1)))
@@ -463,14 +496,14 @@ public class XLSXFilesService {
     }
 
     public FilesEntity getErasedSum(LocalDate firstDate, LocalDate secondDate) throws IOException {
-        String fileName = "lista klubowiczów usuniętych od "+firstDate.toString()+" do "+ secondDate.toString()+".xlsx";
+        String fileName = "lista klubowiczów usuniętych od " + firstDate.toString() + " do " + secondDate.toString() + ".xlsx";
 
         List<MemberDTO> collect = memberRepository.findAllByErasedTrue().stream()
-                .filter(f->f.getErasedEntity()!=null)
+                .filter(f -> f.getErasedEntity() != null)
                 .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1)))
                 .filter(f -> f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
                 .map(Mapping::map2DTO)
-                .sorted(Comparator.comparing(MemberDTO::getSecondName,pl()).thenComparing(MemberDTO::getFirstName,pl()).reversed())
+                .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()).reversed())
                 .collect(Collectors.toList());
 
         int rc = 0;
@@ -585,7 +618,7 @@ public class XLSXFilesService {
         cell5.setCellValue("składka ważna do");
         sheet.createRow(rc++);
 
-        for (int i=0;i< collect.size();i++){
+        for (int i = 0; i < collect.size(); i++) {
             XSSFRow row1 = sheet.createRow(rc++);
             cell = row1.createCell(0);
             cell1 = row1.createCell(1);
@@ -594,7 +627,7 @@ public class XLSXFilesService {
             cell4 = row1.createCell(4);
             cell5 = row1.createCell(5);
 
-            cell.setCellValue(i+1);
+            cell.setCellValue(i + 1);
             cell1.setCellValue(collect.get(i).getMemberName());
             cell2.setCellValue(collect.get(i).getLegitimationNumber());
             cell3.setCellValue(collect.get(i).getJoinDate().toString());
@@ -729,6 +762,49 @@ public class XLSXFilesService {
     private DateTimeFormatter dateFormat() {
         String europeanDatePattern = "dd.MM.yyyy";
         return DateTimeFormatter.ofPattern(europeanDatePattern);
+    }
+
+    private String arabicToRomanNumberConverter(int arabicNumber) {
+        String romanNumber;
+        switch (arabicNumber) {
+            case 0:
+                romanNumber = "";
+                break;
+            case 1:
+                romanNumber = "I";
+                break;
+            case 2:
+                romanNumber = "II";
+                break;
+            case 3:
+                romanNumber = "III";
+                break;
+            case 4:
+                romanNumber = "IV";
+                break;
+            case 5:
+                romanNumber = "V";
+                break;
+            case 6:
+                romanNumber = "VI";
+                break;
+            case 7:
+                romanNumber = "VII";
+                break;
+            case 8:
+                romanNumber = "VIII";
+                break;
+            case 9:
+                romanNumber = "IX";
+                break;
+            case 10:
+                romanNumber = "X";
+                break;
+            default:
+                romanNumber = "error";
+                break;
+        }
+        return romanNumber;
     }
 
 }

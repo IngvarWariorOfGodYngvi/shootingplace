@@ -94,4 +94,18 @@ public class AmmoUsedEntity {
     public void setUserName(String userName) {
         this.userName = userName;
     }
+
+    @Override
+    public String toString() {
+        return "AmmoUsedEntity{" +
+                "uuid='" + uuid + '\'' +
+                ", caliberName='" + caliberName + '\'' +
+                ", caliberUUID='" + caliberUUID + '\'' +
+                ", memberUUID='" + memberUUID + '\'' +
+                ", otherPersonEntityID=" + otherPersonEntityID +
+                ", userName='" + userName + '\'' +
+                ", counter=" + counter +
+                ", date=" + date +
+                '}';
+    }
 }

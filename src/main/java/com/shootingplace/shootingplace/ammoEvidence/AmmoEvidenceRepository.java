@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.ammoEvidence;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,4 +28,8 @@ public interface AmmoEvidenceRepository{
     Page<AmmoEvidenceEntity> findAllByOpenFalse(Pageable page);
 
     List<AmmoEvidenceEntity> findAllByOpenTrue();
+
+    boolean existsByOpenTrue();
+    @Query(nativeQuery = true, value = "Select count('number') FROM shootingplace.ammo_evidence_entity")
+    long countNumbers();
 }

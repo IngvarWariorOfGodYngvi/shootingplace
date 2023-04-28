@@ -116,7 +116,10 @@ public class MemberController {
     public ResponseEntity<?> getMembersPhoneNumbersNoActive() {
         return ResponseEntity.ok(memberService.getMembersPhoneNumbersNoActive());
     }
-
+    @GetMapping("/getMemberEmail")
+    public ResponseEntity<?> getSingleMemberEmail(@RequestParam Integer number) {
+        return memberService.getSingleMemberEmail(number);
+    }
     @GetMapping("/membersEmailsNoPatent")
     public ResponseEntity<?> getMembersEmailsWithNoPatent() {
         return ResponseEntity.ok(memberService.getMembersEmailsAdultActiveWithNoPatent());
@@ -259,6 +262,11 @@ public class MemberController {
     @PatchMapping("/changeClub/{uuid}")
     public ResponseEntity<?> changeClub(@PathVariable String uuid,@RequestParam String clubName){
         return memberService.changeClub(uuid,clubName);
+    }
+    @Transactional
+    @DeleteMapping("/delete/{uuid}")
+    public ResponseEntity<?> deleteMember(@PathVariable String uuid) {
+        return memberService.deleteMember(uuid);
     }
 
 }

@@ -113,7 +113,7 @@ public class CompetitionService {
         LOG.info("Stworzono encje konkurencji");
     }
 
-    public boolean createNewCompetition(Competition competition) {
+    public ResponseEntity<?> createNewCompetition(Competition competition) {
         List<String> list = new ArrayList<>();
         int size = competitionRepository.findAll().size() + 1;
         competitionRepository.findAll().forEach(e -> list.add(e.getName()));
@@ -122,11 +122,11 @@ public class CompetitionService {
         }
         if (list.contains(competition.getName())) {
             LOG.info("Taka konkurencja już istnieje");
-            return false;
+            return ResponseEntity.badRequest().body("Taka konkurencja już istnieje");
         }
         if (!competition.getDiscipline().equals("")) {
             if (competition.getDiscipline().equals(Discipline.PISTOL.getName()) || competition.getDiscipline().equals(Discipline.RIFLE.getName()) || competition.getDiscipline().equals(Discipline.SHOTGUN.getName())) {
-                System.out.println(competition.toString());
+                System.out.println(competition);
                 CompetitionEntity competitionEntity = CompetitionEntity.builder()
                         .name(competition.getName())
                         .numberOfShots(competition.getNumberOfShots())
@@ -146,11 +146,11 @@ public class CompetitionService {
                     competitionEntity.setCountingMethod(CountingMethod.COMSTOCK.getName());
                 }
                 competitionRepository.save(competitionEntity);
-                LOG.info("Utworzono nową konkurencję \"" + competition.getName() + "\"");
-                return true;
+                LOG.info("Utworzono nową konkurencję " + competition.getName());
+                return ResponseEntity.status(201).body("Utworzono nową konkurencję " + competition.getName());
             } else {
                 LOG.info("Po prostu się nie udało");
-                return false;
+                return ResponseEntity.badRequest().body("Po prostu się nie udało");
             }
         } else {
             CompetitionEntity competitionEntity = CompetitionEntity.builder()
@@ -173,8 +173,9 @@ public class CompetitionService {
                 competitionEntity.setCountingMethod(CountingMethod.COMSTOCK.getName());
             }
             competitionRepository.save(competitionEntity);
-            LOG.info("Utworzono nową konkurencję \"" + competition.getName() + "\"");
-            return true;
+            LOG.info("Utworzono nową konkurencję " + competition.getName());
+            return ResponseEntity.status(201).body("Utworzono nową konkurencję " + competition.getName());
+
         }
     }
 

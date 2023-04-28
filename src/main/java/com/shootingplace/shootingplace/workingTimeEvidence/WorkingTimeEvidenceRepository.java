@@ -11,6 +11,7 @@ public interface WorkingTimeEvidenceRepository {
     WorkingTimeEvidenceEntity save(WorkingTimeEvidenceEntity entity);
 
     List<WorkingTimeEvidenceEntity> findAll();
+    List<WorkingTimeEvidenceEntity> findAllByIsCloseFalse();
 
     @Query(nativeQuery = true, value = "SELECT * FROM shootingplace.working_time_evidence_entity where year(stop) = :year and month(stop) = :month")
     List<WorkingTimeEvidenceEntity> findAllByStopQuery(@Param("year") int year, @Param("month") int month);
@@ -18,4 +19,6 @@ public interface WorkingTimeEvidenceRepository {
     Optional<WorkingTimeEvidenceEntity> findById(String e);
 
     boolean existsByIsCloseFalse();
+
+    WorkingTimeEvidenceEntity getOne(String uuid);
 }

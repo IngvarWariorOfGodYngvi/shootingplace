@@ -9,12 +9,12 @@ import com.shootingplace.shootingplace.ammoEvidence.AmmoUsedToEvidenceEntityRepo
 import com.shootingplace.shootingplace.armory.Caliber;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.history.CompetitionHistoryEntity;
+import com.shootingplace.shootingplace.history.HistoryRepository;
 import com.shootingplace.shootingplace.history.LicensePaymentHistoryDTO;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.tournament.TournamentEntity;
-import com.shootingplace.shootingplace.tournament.TournamentRepository;
+import com.shootingplace.shootingplace.tournament.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +22,7 @@ import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,14 +34,18 @@ public class StatisticsService {
     private final AmmoUsedToEvidenceEntityRepository used;
     private final RegistrationRecordRepository rrrepo;
     private final TournamentRepository tournamentRepository;
+    private final ScoreRepository scoreRepository;
+    private final CompetitionMembersListRepository competitionMembersListRepository;
 
-    public StatisticsService(MemberRepository memberRepository, ContributionRepository contributionRepository, AmmoEvidenceRepository ammoEvidenceRepository, AmmoUsedToEvidenceEntityRepository used, RegistrationRecordRepository rrrepo, TournamentRepository tournamentRepository) {
+    public StatisticsService(MemberRepository memberRepository, ContributionRepository contributionRepository, AmmoEvidenceRepository ammoEvidenceRepository, AmmoUsedToEvidenceEntityRepository used, RegistrationRecordRepository rrrepo, TournamentRepository tournamentRepository, HistoryRepository historyRepository, ScoreRepository scoreRepository, CompetitionMembersListRepository competitionMembersListRepository) {
         this.memberRepository = memberRepository;
         this.contributionRepository = contributionRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.used = used;
         this.rrrepo = rrrepo;
         this.tournamentRepository = tournamentRepository;
+        this.scoreRepository = scoreRepository;
+        this.competitionMembersListRepository = competitionMembersListRepository;
     }
 
     public List<List<MemberDTO>> joinMonthSum(int year) {
@@ -266,16 +271,8 @@ public class StatisticsService {
         long vc = rrrepo.findAll().stream().filter(f -> f.getPeselOrID().equals(member.getPesel())).count();
         long mffv = member.getJoinDate().until(LocalDate.now(), ChronoUnit.MONTHS);
         MemberAmmo a = getMemberAmmoTakes(uuid);
-        Map<LocalDate, String> competitionHistory = new HashMap<>();
-
-        //            competitionHistory.put(e.getDate(),e.getName());
         Set<CompetitionHistoryEntity> ch = new HashSet<>(member.getHistory().getCompetitionHistory());
         int chc = ch.size();
-        //        Set<Map.Entry<LocalDate,String>> entrySet = competitionHistory.entrySet();
-//        for(Map.Entry<LocalDate,String> entry: entrySet) {
-//            entry.getValue()
-//            System.out.println(entry.getKey() + " : " + entry.getValue());
-//        }
 
         PersonalStatistics ps = PersonalStatistics.builder()
                 .contributionCounter(cc)
@@ -297,23 +294,129 @@ public class StatisticsService {
             map.put(t.getUuid(), i[0]);
         });
         int size = map.size();
-        for(int j=0;j<size;j++) {
+        for (int j = 0; j < size; j++) {
             Optional<Map.Entry<String, Integer>> min = map.entrySet().stream().min(Map.Entry.comparingByValue());
             map.remove(min.get().getKey());
-            if(map.size()==10){
+            if (map.size() == 10) {
                 break;
             }
         }
-        List<Map.Entry<String,Integer>> list = new ArrayList<>(map.entrySet());
+        List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
 
         list.sort(Map.Entry.<String, Integer>comparingByValue().reversed());
-        Map<String,Integer> map1 = new LinkedHashMap<>();
-        for (Map.Entry<String,Integer> entry :list){
+        Map<String, Integer> map1 = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : list) {
             TournamentEntity te = tournamentRepository.findById(entry.getKey()).get();
-            map1.put(te.getName()+" " + te.getDate(), entry.getValue());
+            map1.put(te.getName() + " " + te.getDate(), entry.getValue());
         }
 
 
         return ResponseEntity.ok(map1);
+    }
+
+    public ResponseEntity<?> getTop10Competitors() {
+//  top 10 zawodników
+        List<MemberEntity> all = memberRepository.findAll()
+                .stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> f.getHistory() != null)
+                .filter(f -> f.getHistory().getCompetitionHistory().size() > 0)
+                .collect(Collectors.toList());
+        List<MemberEntity> list1 = new ArrayList<>();
+
+        for (int i = 0; i < all.size(); i++) {
+            all.removeAll(list1);
+
+            MemberEntity memberEntity = all
+                    .stream()
+                    .max(Comparator.comparingInt(m -> (int) m.getHistory().getCompetitionHistory()
+                            .stream().filter(f -> f.getDate().getYear() == LocalDate.now().getYear()).count())).orElseThrow();
+            list1.add(memberEntity);
+            if (list1.size() == 10) {
+                break;
+            }
+        }
+
+        Map<String, Integer> map = new LinkedHashMap<>();
+        list1.forEach(e -> map.put(e.getMemberName(), (int) e.getHistory().getCompetitionHistory().stream().filter(f -> f.getDate().getYear() == LocalDate.now().getYear()).count()));
+        List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
+        list.sort(Map.Entry.<String, Integer>comparingByValue().reversed());
+
+        Map<String, Integer> result = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : list) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+        return ResponseEntity.ok(result);
+
+    }
+
+    public ResponseEntity<?> getTop10MembersWithTheMostMembershipContributions() {
+
+        List<MemberEntity> all = memberRepository.findAll()
+                .stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> f.getHistory() != null)
+                .filter(f -> f.getHistory().getContributionList().size() > 0)
+                .collect(Collectors.toList());
+        List<MemberEntity> list1 = new ArrayList<>();
+
+        for (int i = 0; i < all.size(); i++) {
+            all.removeAll(list1);
+
+            MemberEntity memberEntity = all
+                    .stream()
+                    .max(Comparator.comparingInt(m -> (int) m.getHistory().getContributionList()
+                            .stream().filter(f -> f.getPaymentDay().getYear() == LocalDate.now().getYear()).count())).orElseThrow();
+            list1.add(memberEntity);
+            if (list1.size() == 10) {
+                break;
+            }
+        }
+        Map<String, Integer> map = new LinkedHashMap<>();
+        list1.forEach(e -> map.put(e.getMemberName(), (int) e.getHistory().getContributionList().stream().filter(f -> f.getPaymentDay().getYear() == LocalDate.now().getYear()).count()));
+        List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
+        list.sort(Map.Entry.<String, Integer>comparingByValue().reversed());
+
+        Map<String, Integer> result = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : list) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    public ResponseEntity<?> getTop10CompetitionPoints() {
+        List<MemberEntity> all = memberRepository.findAll()
+                .stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> f.getHistory() != null)
+                .filter(f -> f.getHistory().getCompetitionHistory().size() > 0)
+                .collect(Collectors.toList());
+        Map<String, Float> map1 = new HashMap<>();
+        all.forEach(e -> {
+                    AtomicReference<Float> score = new AtomicReference<>((float) 0);
+                    e.getHistory().getCompetitionHistory()
+                            .stream()
+                            .filter(f -> f.getDate().getYear() == LocalDate.now().getYear())
+                            .forEach(g -> {
+                                CompetitionMembersListEntity competitionMembersListEntity = competitionMembersListRepository.findById(g.getAttachedToList()).orElseThrow();
+
+                                score.updateAndGet(v -> v + competitionMembersListEntity.getScoreList().stream().filter(f -> f.getMember() != null).filter(f -> f.getMember().getUuid().equals(e.getUuid())).findFirst().get().getScore());
+                                map1.put(e.getMemberName(), Float.valueOf(score.toString()));
+                            });
+                }
+        );
+
+        List<Map.Entry<String, Float>> list = new ArrayList<>(map1.entrySet());
+        list.sort(Map.Entry.<String, Float>comparingByValue().reversed());
+
+        Map<String, Float> result = new LinkedHashMap<>();
+        for (Map.Entry<String, Float> entry : list) {
+            result.put(entry.getKey(), entry.getValue());
+            if (result.size() == 10) {
+                break;
+            }
+        }
+
+        return ResponseEntity.ok(result);
     }
 }

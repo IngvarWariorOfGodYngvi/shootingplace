@@ -35,7 +35,7 @@ public class CompetitionMembersListController {
     }
 
     @GetMapping("/getMetricNumber")
-    public ResponseEntity<String> getMetricNumber(@RequestParam String legNumber, @RequestParam int otherID, @RequestParam String tournamentUUID) {
+    public ResponseEntity<?> getMetricNumber(@RequestParam String legNumber, @RequestParam int otherID, @RequestParam String tournamentUUID) {
         return competitionMembersListService.getMetricNumber(legNumber, otherID, tournamentUUID);
     }
 
@@ -76,11 +76,7 @@ public class CompetitionMembersListController {
 
     @DeleteMapping("/delete")
     public ResponseEntity<?> removeMembersListFromTournament(@RequestParam String competitionUUID, @RequestParam String tournamentUUID) {
-        if (competitionMembersListService.removeListFromTournament(tournamentUUID, competitionUUID)) {
-            return ResponseEntity.ok().body("usunięto");
-        } else {
-            return ResponseEntity.badRequest().body("Coś poszło nie tak");
-        }
+        return competitionMembersListService.removeListFromTournament(tournamentUUID, competitionUUID);
     }
 
 

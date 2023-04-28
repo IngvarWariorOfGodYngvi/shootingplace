@@ -1,21 +1,24 @@
 package com.shootingplace.shootingplace.tournament;
 
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
-import com.shootingplace.shootingplace.history.*;
-import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
+import com.shootingplace.shootingplace.competition.CompetitionRepository;
 import com.shootingplace.shootingplace.enums.ArbiterWorkClass;
+import com.shootingplace.shootingplace.history.*;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.competition.CompetitionRepository;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
-import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +26,9 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -79,10 +84,10 @@ public class TournamentService {
         tournamentRepository.save(tournamentEntity);
         LOG.info("Stworzono nowe zawody " + tournamentEntity.getName());
 
-        return ResponseEntity.status(201).body("" + tournamentEntity.getUuid() + "");
+        return ResponseEntity.status(201).body("Otworzono nowe zawody: " + tournamentEntity.getName());
     }
 
-    public boolean updateTournament(String tournamentUUID, Tournament tournament) {
+    public ResponseEntity<?> updateTournament(String tournamentUUID, Tournament tournament) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID)
                 .orElseThrow(EntityNotFoundException::new);
         if (tournamentEntity.isOpen()) {
@@ -106,11 +111,11 @@ public class TournamentService {
             tournamentRepository.save(tournamentEntity);
             historyService.updateTournamentEntityInCompetitionHistory(tournamentUUID);
             historyService.updateTournamentInJudgingHistory(tournamentUUID);
-            return true;
+            return ResponseEntity.ok("Zaktualizowano Zawody");
         }
 
         LOG.warn("Zawody są już zamknięte i nie można już nic zrobić");
-        return true;
+        return ResponseEntity.badRequest().body("Zawody są już zamknięte i nie można już nic zrobić");
     }
 
 
@@ -152,12 +157,6 @@ public class TournamentService {
                 .map(Mapping::map1)
                 .sorted(Comparator.comparing(CompetitionMembersList::getOrdering))
                 .collect(Collectors.toList());
-//
-//        tournamentEntity.getCompetitionsList().sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
-//
-//        Map<String, Integer> map = new LinkedHashMap<>();
-//        tournamentEntity.getCompetitionsList().forEach(e -> map.put(e.getUuid(), e.getScoreList().size()));
-
 
         Tournament tournament = Tournament.builder()
                 .uuid(tournamentEntity.getUuid())
@@ -563,7 +562,7 @@ public class TournamentService {
         BarCodeCardEntity barCode = barCodeCardRepository.findByBarCode(barcode);
         MemberEntity memberEntity;
         UserEntity user = userRepository.getOne(barCode.getBelongsTo());
-        if (barCode.getSubType().contains("Pracownik") || barCode.getSubType().contains("Zarząd")) {
+        if (barCode.getSubType().contains("Pracownik") || barCode.getSubType().contains("Zarząd") || barCode.getSubType().contains("Komisja")) {
             if (user.getMember() != null) {
                 memberEntity = user.getMember();
             } else {
@@ -579,8 +578,10 @@ public class TournamentService {
         return memberEntity;
     }
 
-    public List<TournamentDTO> getClosedTournaments() {
-        List<TournamentEntity> all = tournamentRepository.findAll().stream().filter(f -> !f.isOpen()).collect(Collectors.toList());
+    public List<TournamentDTO> getClosedTournaments(Pageable page) {
+        page = PageRequest.of(page.getPageNumber(), page.getPageSize(), Sort.by("date").descending());
+        List<TournamentEntity> all = tournamentRepository.findAllByOpenIsFalse(page).stream().filter(f -> !f.isOpen()).collect(Collectors.toList());
+//        List<TournamentEntity> all = tournamentRepository.findAll().stream().filter(f -> !f.isOpen()).collect(Collectors.toList());
         List<TournamentDTO> allDTO = new ArrayList<>();
         all.forEach(e -> allDTO.add(Mapping.map1(e)));
         allDTO.sort(Comparator.comparing(TournamentDTO::getDate).reversed());

@@ -1,12 +1,13 @@
 package com.shootingplace.shootingplace.tournament;
 
-import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.member.MemberDTO;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.OneToOne;
+import java.util.List;
 
 @Builder
 @NoArgsConstructor
@@ -25,6 +26,7 @@ public class Score {
     private float alfa;
     private float charlie;
     private float delta;
+    private List<Float> series;
 
     private String name;
 
@@ -44,6 +46,13 @@ public class Score {
     @OneToOne(orphanRemoval = true)
     private OtherPersonEntity otherPersonEntity;
 
+    public List<Float> getSeries() {
+        return series;
+    }
+
+    public void setSeries(List<Float> series) {
+        this.series = series;
+    }
 
     public boolean isDnf() {
         return dnf;

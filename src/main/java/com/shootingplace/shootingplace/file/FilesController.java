@@ -256,7 +256,7 @@ public class FilesController {
 
     // metryczka
     @GetMapping("/downloadMetric/{tournamentUUID}")
-    public ResponseEntity<byte[]> getMemberMetrics(@RequestParam String memberUUID, @RequestParam String otherID, @PathVariable String tournamentUUID, @RequestParam List<String> competitions, @RequestParam String startNumber) throws IOException, DocumentException {
+    public ResponseEntity<byte[]> getMemberMetrics(@RequestParam String memberUUID, @RequestParam String otherID, @PathVariable String tournamentUUID, @RequestParam List<String> competitions, @RequestParam String startNumber, @RequestParam Boolean a5rotate) throws IOException, DocumentException {
         if (otherID.equals("0")) {
             otherID = null;
         } else {
@@ -266,7 +266,7 @@ public class FilesController {
             return ResponseEntity.badRequest().build();
         }
 
-        FilesEntity filesEntity = filesService.getStartsMetric(memberUUID, otherID, tournamentUUID, competitions, startNumber);
+        FilesEntity filesEntity = filesService.getStartsMetric(memberUUID, otherID, tournamentUUID, competitions, startNumber, a5rotate);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")

@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.tournament;
 
 import com.shootingplace.shootingplace.armory.ArmoryService;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,8 +37,8 @@ public class TournamentController {
     }
 
     @GetMapping("/closedList")
-    public ResponseEntity<?> getListOfClosedTournaments() {
-        return ResponseEntity.ok().body(tournamentService.getClosedTournaments());
+    public ResponseEntity<?> getListOfClosedTournaments(Pageable page) {
+        return ResponseEntity.ok().body(tournamentService.getClosedTournaments(page));
     }
 
     @GetMapping("/competitions")
@@ -122,11 +123,7 @@ public class TournamentController {
     @Transactional
     @PutMapping("/{tournamentUUID}")
     public ResponseEntity<?> updateTournament(@PathVariable String tournamentUUID, @RequestBody Tournament tournament) {
-        if (tournamentService.updateTournament(tournamentUUID, tournament)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return tournamentService.updateTournament(tournamentUUID, tournament);
     }
 
     @Transactional

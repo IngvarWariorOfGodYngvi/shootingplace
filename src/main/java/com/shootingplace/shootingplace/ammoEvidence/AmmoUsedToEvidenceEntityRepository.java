@@ -6,4 +6,6 @@ public interface AmmoUsedToEvidenceEntityRepository{
     AmmoUsedToEvidenceEntity save(AmmoUsedToEvidenceEntity entity);
 
     List<AmmoUsedToEvidenceEntity> findAll();
+
+    void delete(AmmoUsedToEvidenceEntity entity);
 }
