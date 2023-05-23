@@ -381,7 +381,7 @@ public class Mapping {
                 .dsq(s.isDsq())
                 .pk(s.isPk())
                 .hf(s.getHf())
-                .series(s.getSeries()==null?null:s.getSeries())
+                .series(s.getSeries() != null ? s.getSeries(): null)
                 .procedures(s.getProcedures())
                 .otherPersonEntity(s.getOtherPersonEntity())
                 .score(s.getScore())
@@ -512,6 +512,8 @@ public class Mapping {
                 .gunCertificateSerialNumber(c.getGunCertificateSerialNumber())
                 .gunType(c.getGunType())
                 .modelName(c.getModelName())
+                .available(c.isAvailable())
+                .imgUUID(c.getImgUUID())
                 .numberOfMagazines(c.getNumberOfMagazines())
                 .productionYear(c.getProductionYear())
                 .recordInEvidenceBook(c.getRecordInEvidenceBook())
@@ -578,6 +580,7 @@ public class Mapping {
                 .date(a.getDate())
                 .name(a.getName())
                 .legitimationNumber(a.getMemberEntity() != null ? a.getMemberEntity().getLegitimationNumber() : null)
+                .IDNumber(a.getOtherPersonEntity() != null ? a.getOtherPersonEntity().getId() : null)
                 .build();
     }
 }

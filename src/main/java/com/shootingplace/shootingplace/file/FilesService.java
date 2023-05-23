@@ -6,24 +6,24 @@ import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceEntity;
-import com.shootingplace.shootingplace.armory.GunEntity;
-import com.shootingplace.shootingplace.armory.GunRepository;
-import com.shootingplace.shootingplace.armory.GunStoreEntity;
-import com.shootingplace.shootingplace.armory.GunStoreRepository;
+import com.shootingplace.shootingplace.armory.*;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
 import com.shootingplace.shootingplace.competition.CompetitionRepository;
+import com.shootingplace.shootingplace.configurations.ProfilesEnum;
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.enums.CountingMethod;
 import com.shootingplace.shootingplace.enums.Discipline;
 import com.shootingplace.shootingplace.history.CompetitionHistoryEntity;
 import com.shootingplace.shootingplace.history.JudgingHistoryEntity;
+import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
 import com.shootingplace.shootingplace.tournament.ScoreEntity;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
@@ -35,6 +35,8 @@ import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceSe
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.core.env.Environment;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -74,10 +76,12 @@ public class FilesService {
     private final GunStoreRepository gunStoreRepository;
     private final WorkingTimeEvidenceRepository workRepo;
     private final WorkingTimeEvidenceService workServ;
+    private final Environment environment;
+    private final ArmoryService armoryService;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ) {
+    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ, Environment environment, ArmoryService armoryService) {
         this.memberRepository = memberRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.filesRepository = filesRepository;
@@ -90,6 +94,8 @@ public class FilesService {
         this.gunStoreRepository = gunStoreRepository;
         this.workRepo = workRepo;
         this.workServ = workServ;
+        this.environment = environment;
+        this.armoryService = armoryService;
     }
 
     private FilesEntity createFileEntity(FilesModel filesModel) {
@@ -101,18 +107,18 @@ public class FilesService {
 
     }
 
-    public FilesEntity contributionConfirm(String memberUUID, String contributionUUID) throws DocumentException, IOException {
+    public FilesEntity contributionConfirm(String memberUUID, String contributionUUID, Boolean a5rotate) throws DocumentException, IOException {
         ClubEntity club = clubRepository.getOne(1);
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         ContributionEntity contributionEntity;
         if (contributionUUID == null || contributionUUID.isEmpty() || contributionUUID.equals("null")) {
             contributionEntity = memberEntity.getHistory().getContributionList().get(0);
         } else {
-            contributionEntity = contributionRepository.findById(contributionUUID).orElseThrow(EntityNotFoundException::new);
+            contributionEntity = contributionRepository.getOne(contributionUUID);
         }
         LocalDate contribution = contributionEntity.getPaymentDay();
         LocalDate validThru = contributionEntity.getValidThru();
-        String fileName = "Składka_" + memberEntity.getFirstName() + "_" + memberEntity.getSecondName() + "_" + LocalDate.now().format(dateFormat()) + ".pdf";
+        String fileName = "Składka_" + memberEntity.getMemberName() + "_" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         String clubFullName = club.getFullName().toUpperCase();
 
@@ -126,24 +132,31 @@ public class FilesService {
         LocalDate nextContribution = null;
 
         // tutaj musi być odpowiednie przeliczanie według ważności składek z ustawień
-
-        if (memberEntity.getAdult()) {
-            nextContribution = validThru.plusMonths(3);
-        } else {
-            if (validThru.equals(LocalDate.of(validThru.getYear(), 2, 28))) {
-                nextContribution = validThru.plusMonths(1);
-                nextContribution = nextContribution.plusDays(3);
-            }
-            if (validThru.equals(LocalDate.of(validThru.getYear(), 8, 31))) {
-                nextContribution = validThru.plusMonths(2);
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+            if (memberEntity.getAdult()) {
+                nextContribution = validThru.plusMonths(3);
+            } else {
+                if (validThru.equals(LocalDate.of(validThru.getYear(), 2, 28))) {
+                    nextContribution = validThru.plusMonths(1);
+                    nextContribution = nextContribution.plusDays(3);
+                }
+                if (validThru.equals(LocalDate.of(validThru.getYear(), 8, 31))) {
+                    nextContribution = validThru.plusMonths(2);
+                }
             }
         }
-        Document document = new Document(PageSize.A4);
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
+            nextContribution = validThru.plusYears(1);
+        }
+        a5rotate = a5rotate != null && a5rotate;
+        Document document = new Document(a5rotate ? PageSize.A5.rotate() : PageSize.A4);
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+        if (environment.getActiveProfiles().equals(ProfilesEnum.DZIESIATKA.getName())) {
+            writer.setPageEvent(new PageStamper(environment));
+        }
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -169,29 +182,29 @@ public class FilesService {
         }
 
         Paragraph p = new Paragraph(clubFullName + "\n", font(14, 1));
-        Paragraph p1 = new Paragraph("Potwierdzenie opłacenia składki członkowskiej", font(14, 2));
-        Paragraph h1 = new Paragraph("Grupa ", font(14, 0));
+        Paragraph p1 = new Paragraph("Potwierdzenie opłacenia składki członkowskiej", font(11, 2));
+        Paragraph h1 = new Paragraph("Grupa ", font(11, 0));
         Phrase h2 = new Phrase(group, font(14, 1));
-        Paragraph p2 = new Paragraph("\n\nNazwisko i Imię : ", font(11, 0));
+        Paragraph p2 = new Paragraph("\nNazwisko i Imię : ", font(11, 0));
+        Paragraph p211 = new Paragraph("\nNumer Legitymacji : ", font(11, 0));
         Phrase p3 = new Phrase(memberEntity.getSecondName() + " " + memberEntity.getFirstName(), font(18, 1));
-        Phrase p4 = new Phrase("Numer Legitymacji : ", font(11, 0));
-        Phrase p5 = new Phrase(String.valueOf(memberEntity.getLegitimationNumber()), font(18, 1));
-        Paragraph p6 = new Paragraph("\n\n\nData opłacenia składki : ", font(11, 0));
+        Phrase p5 = new Phrase(String.valueOf(memberEntity.getLegitimationNumber()), font(14, 1));
+        Paragraph p6 = new Paragraph("\nData opłacenia składki : ", font(11, 0));
         Phrase p7 = new Phrase(String.valueOf(contribution), font(11, 1));
-        Paragraph p8 = new Paragraph("\n\nSkładka ważna do : ", font(11, 0));
+        Paragraph p8 = new Paragraph("\nSkładka ważna do : ", font(11, 0));
         Phrase p9 = new Phrase(String.valueOf(validThru), font(11, 1));
-        Paragraph p10 = new Paragraph("\n\n\n" + getSex(memberEntity.getPesel()) + " ", font(11, 0));
-        Phrase p11 = new Phrase(memberEntity.getSecondName() + " " + memberEntity.getFirstName() + " dnia : " + contribution + " " + status + " półroczną składkę członkowską w wysokości " + contributionLevel + " PLN.", font(11, 0));
-        Paragraph p12 = new Paragraph("\n\n\n\n\nTermin opłacenia kolejnej składki : ", font(11, 0));
+        Paragraph p10 = new Paragraph("\n" + getSex(memberEntity.getPesel()) + memberEntity.getMemberName() + " dnia : " + contribution + " " + status + " półroczną składkę członkowską w wysokości " + contributionLevel + " PLN.", font(11, 0));
+
+        Paragraph p12 = new Paragraph("\nTermin opłacenia kolejnej składki : ", font(11, 0));
         Paragraph p13 = new Paragraph("\n" + (nextContribution), font(11, 1));
         Paragraph p14 = new Paragraph("", font(11, 0));
 
-        Phrase p15 = new Phrase("\n\n" + contributionText, font(11, 2));
+        Phrase p15 = new Phrase("\n" + contributionText, font(11, 2));
 
-        Paragraph p16 = new Paragraph("\n\n\n\n\n\n\n\n\n", font(11, 0));
+        Paragraph p16 = new Paragraph("\n\n", font(11, 0));
         Paragraph p19 = new Paragraph("pieczęć klubu", font(11, 0));
         Phrase p20 = new Phrase("                                                                 ");
-        Phrase p21 = new Phrase("pieczęć i podpis osoby przyjmującej składkę");
+        Phrase p21 = new Phrase("podpis osoby przyjmującej składkę");
 
         p.setAlignment(1);
         p1.setAlignment(1);
@@ -199,12 +212,13 @@ public class FilesService {
         h1.setAlignment(1);
         p2.add(p3);
         p2.add("                                    ");
-        p4.add(p5);
-        p2.add(p4);
+//        p4.add(p5);
+        p211.add(p5);
         p6.add(p7);
         p8.add(p9);
-        p10.add(p11);
-        p14.add(p15);
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+            p14.add(p15);
+        }
 
         p20.add(p21);
         p19.add(p20);
@@ -216,9 +230,12 @@ public class FilesService {
         document.add(p1);
         document.add(h1);
         document.add(p2);
+        document.add(p211);
         document.add(p6);
         document.add(p8);
-        document.add(p10);
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+            document.add(p10);
+        }
         document.add(p12);
         document.add(p13);
         document.add(p14);
@@ -251,24 +268,38 @@ public class FilesService {
         String fileName = "Karta Członkowska " + memberEntity.getFirstName().stripTrailing() + " " + memberEntity.getSecondName().stripTrailing() + ".pdf";
         LocalDate birthDate = birthDay(memberEntity.getPesel());
         Document document = new Document(PageSize.A4);
-        document.setMargins(20F, 20F, 35F, 55F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin() + document.bottomMargin() + document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
-
+        String s = "", s1 = "", s2 = "", s3 = "", s4 = "", s5 = "";
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+            writer.setPageEvent(new PageStamper(environment));
+            s = "Klubu Strzeleckiego „Dziesiątka” Ligi Obrony Kraju w Łodzi";
+            s1 = "Klub Strzelecki „Dziesiątka”";
+            s2 = "biuro@ksdziesiatka.pl";
+            s3 = "Stowarzyszenie Liga Obrony Kraju mające siedzibę główną w Warszawie pod adresem: ";
+            s4 = "ul. Chocimska 14, 00-791 Warszawa";
+            s5 = "KS „Dziesiątka” LOK Łódź";
+        }
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
+            s = "Klubu Strzeleckiego RCS Panaszew w Panaszewie";
+            s1 = "Klubu Strzeleckiego RCS Panaszew";
+            s2 = "biuro@rcspanaszew.pl";
+            s3 = "Stowarzyszenie Klub Strzelecki RCS Panaszew mające siedzibę w Panaszewie pod asresem: ";
+            s4 = "ul. Panaszew 4A, 99-200 Poddębice";
+            s5 = "KS „RCS” Panaszew";
+        }
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
 
-        // pobierać z ustawień
 
         String statement = "Oświadczenie:\n" +
-                "- Zobowiązuję się do przestrzegania Regulaminu Strzelnicy, oraz Regulaminu Klubu Strzeleckiego „Dziesiątka” Ligi Obrony Kraju w Łodzi.\n" +
-                "- Wyrażam zgodę na przesyłanie mi informacji przez Klub Strzelecki „Dziesiątka” za pomocą środków komunikacji elektronicznej, w szczególności pocztą elektroniczną oraz w postaci sms-ów/mms-ów.\n" +
-                "Wyrażenie zgody jest dobrowolne i może być odwołane w każdym czasie w na podstawie oświadczenia skierowanego na adres siedziby Klubu, na podstawie oświadczenia przesłanego za pośrednictwem poczty elektronicznej na adres: biuro@ksdziesiatka.pl lub w inny uzgodniony sposób.\n" +
-                "- Zgadzam się na przetwarzanie moich danych osobowych (w tym wizerunku) przez Administratora Danych, którym jest Stowarzyszenie Liga Obrony Kraju mające siedzibę główną w Warszawie pod adresem: \n" +
-                "ul. Chocimska 14, 00-791 Warszawa w celach związanych z moim członkostwem w KS „Dziesiątka” LOK Łódź.";
+                "- Zobowiązuję się do przestrzegania Regulaminu Strzelnicy, oraz Regulaminu " + s + ".\n" +
+                "- Wyrażam zgodę na przesyłanie mi informacji przez " + s1 + " za pomocą środków komunikacji elektronicznej, w szczególności pocztą elektroniczną oraz w postaci sms-ów/mms-ów.\n" +
+                "Wyrażenie zgody jest dobrowolne i może być odwołane w każdym czasie w na podstawie oświadczenia skierowanego na adres siedziby Klubu, na podstawie oświadczenia przesłanego za pośrednictwem poczty elektronicznej na adres: " + s2 + " lub w inny uzgodniony sposób.\n" +
+                "- Zgadzam się na przetwarzanie moich danych osobowych (w tym wizerunku) przez Administratora Danych, którym jest " + s3 + "\n" + s4 + " w celach związanych z moim członkostwem w " + s5 + ".";
 
 
         String sex = getSex(memberEntity.getPesel());
@@ -487,7 +518,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+        writer.setPageEvent(new PageStamper(environment));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -750,7 +781,7 @@ public class FilesService {
             counter++;
             PdfPCell cell = new PdfPCell(new Paragraph(collectPistol.get(i).getName() + "\n" + club.getName(), font(fontSize, 0)));
             PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectPistol.get(i).getDate().toString(), font(fontSize, 0)));
-            PdfPCell cell2 = new PdfPCell(new Paragraph("Łódź", font(fontSize, 0)));
+            PdfPCell cell2 = new PdfPCell(new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
             PdfPCell cell3 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
             PdfPCell cell4 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
             PdfPCell cell5 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
@@ -789,7 +820,7 @@ public class FilesService {
 
             PdfPCell cell = new PdfPCell(new Paragraph(collectRifle.get(i).getName() + "\n" + club.getName(), font(fontSize, 0)));
             PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectRifle.get(i).getDate().toString(), font(fontSize, 0)));
-            PdfPCell cell2 = new PdfPCell(new Paragraph("Łódź", font(fontSize, 0)));
+            PdfPCell cell2 = new PdfPCell(new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
             PdfPCell cell3 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
             PdfPCell cell4 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
             PdfPCell cell5 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
@@ -828,7 +859,7 @@ public class FilesService {
 
             PdfPCell cell = new PdfPCell(new Paragraph(collectShotgun.get(i).getName() + "\n" + club.getName(), font(fontSize, 0)));
             PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectShotgun.get(i).getDate().toString(), font(fontSize, 0)));
-            PdfPCell cell2 = new PdfPCell(new Paragraph("Łódź", font(fontSize, 0)));
+            PdfPCell cell2 = new PdfPCell(new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
             PdfPCell cell3 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
             PdfPCell cell4 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
             PdfPCell cell5 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
@@ -894,7 +925,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+        writer.setPageEvent(new PageStamper(environment));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -909,7 +940,7 @@ public class FilesService {
 
 
         Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase() + "\n" + c.getName(), font(13, 1));
-        Paragraph date = new Paragraph("Łódź, " + monthFormat(tournamentEntity.getDate()), font(10, 2));
+        Paragraph date = new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "" + ", " + monthFormat(tournamentEntity.getDate()), font(10, 2));
         Paragraph newLine = new Paragraph("\n", font(10, 0));
 
         document.add(title);
@@ -931,12 +962,11 @@ public class FilesService {
                 Paragraph competition = new Paragraph(competitionMembersListEntity.getName(), font(14, 1));
                 competition.add("\n");
                 document.add(competition);
-                float[] pointColumnWidths = null;
-                if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())&& competitionMembersListEntity.getScoreList().get(0).getSeries().size()>1) {
+                float[] pointColumnWidths;
+                if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName()) && competitionMembersListEntity.getScoreList().get(0).getSeries().size() > 1) {
                     pointColumnWidths = new float[]{25F, 150F, 125F, 25F, 25F, 50F};
 
-                }
-                else {
+                } else {
                     pointColumnWidths = new float[]{25F, 150F, 125F, 25F, 25F, 50F};
                 }
                 PdfPTable tableLabel = new PdfPTable(pointColumnWidths);
@@ -1176,9 +1206,349 @@ public class FilesService {
         return filesEntity;
     }
 
-    // zaświadczenie z Klubu
+    // zaświadczenie z Klubu RCS Panaszew
+    public FilesEntity CertificateOfClubMembership(String memberUUID, String reason, boolean enlargement) throws IOException, DocumentException {
+        MemberEntity member = memberRepository.getOne(memberUUID);
+        ClubEntity club = clubRepository.getOne(1);
+        String fileName = reason + " " + member.getMemberName() + ".pdf";
+
+        Document document = new Document(PageSize.A4);
+        setAttToDoc(fileName, document, true);
+
+        Paragraph newLine = new Paragraph("\n", font(12, 0));
+
+        String[] choice = {"ZAŚWIADCZENIE ZWYKŁE", "ZAŚWIADCZENIE DO WPA",};
+        Paragraph date = new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "" + ", " + LocalDate.now().format(dateFormat()), font(12, 0));
+        date.setAlignment(2);
+        document.add(date);
+        Paragraph title = new Paragraph("\n\nZaświadczenie\n", font(14, 1));
+        title.setAlignment(1);
+        Paragraph subTitle1 = new Paragraph("O CZŁONKOSTWIE W STOWARZYSZENIU \n", font(13, 1));
+        subTitle1.setAlignment(1);
+        Paragraph subTitle2 = new Paragraph("O CHARAKTERZE STRZELECKIM I KOLEKCJONERSKIM\n\n", font(13, 1));
+        subTitle2.setAlignment(1);
+        String pesel = "";
+        if (!reason.equals(choice[0])) {
+            pesel = " PESEL: " + member.getPesel();
+        }
+        String sex, address, having;
+        if (getSex(member.getPesel()).equals("Pani")) {
+            sex = "Pani";
+            address = "zamieszkała ";
+        } else {
+            sex = "Pan";
+            address = "zamieszkały ";
+        }
+        Paragraph par1 = new Paragraph("Niniejszym zaświadczam, że " + sex + " " + member.getMemberName() + " " + address + member.getAddress().toString() + ", nr. " + pesel + ", numer legitymacji klubowej: " + member.getLegitimationNumber() + ", " + " jest członkiem Stowarzyszenia Klub Strzelecki RCS Panaszew.", font(12, 0));
+        par1.setFirstLineIndent(40);
+        Paragraph par2 = new Paragraph("Niniejsze zaświadczenie stanowi potwierdzenie spełnienia jednego z warunków koniecznych do wydania pozwolenia na broń do celów sportowych i/lub kolekcjonerskich, o których mowa w Art. 10 ust. 3 pkt. 3 i 5 Ustawy z dnia 21 maja 1999r. o broni i amunicji (Dz.U. 1999 nr 53 poz. 549).", font(12, 0));
+        par2.setFirstLineIndent(40);
+        Paragraph par21 = new Paragraph("Zaświadczenie wydaje się na wniosek zainteresowanego.", font(12, 0));
+        par21.setFirstLineIndent(40);
+        Paragraph par3 = new Paragraph("W załączeniu przekazujemy potwierdzony za zgodność wyciąg ze statutu Stowarzyszenia.", font(12, 0));
+        par3.setFirstLineIndent(40);
+        Paragraph par4 = new Paragraph("....................................................", font(12, 0));
+        par4.setAlignment(2);
+        par4.setIndentationRight(40);
+        Paragraph par5 = new Paragraph("Podpis członka Zarządu", font(12, 0));
+        par5.setAlignment(2);
+        par5.setIndentationRight(60);
+        document.add(title);
+        document.add(subTitle1);
+        document.add(subTitle2);
+        document.add(par1);
+        if (reason.equals(choice[1])) {
+            document.add(par2);
+            document.add(par21);
+            document.add(par3);
+        }
+        document.add(newLine);
+        document.add(newLine);
+        document.add(newLine);
+        document.add(par4);
+        document.add(par5);
+
+        document.close();
+
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .belongToMemberUUID(memberUUID)
+                .data(data)
+                .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+
+        File file = new File(fileName);
+
+        file.delete();
+        return filesEntity;
+    }
+
+    public FilesEntity ApplicationForFirearmsLicense(String memberUUID, String thirdName, String birthPlace, String fatherName, String motherName, String motherMaidenName, String issuingAuthority, LocalDate parseIDDate, LocalDate parselicenseDate, String city) throws DocumentException, IOException {
+
+        MemberEntity member = memberRepository.getOne(memberUUID);
+
+        String fileName = "Wiosek o pozwolenie na broń " + member.getMemberName() + ".pdf";
+        String policeCity = "";
+        if (city.equals("Białystok")) {
+            policeCity = "w Białymstoku";
+        }
+        if (city.equals("Bydgoszcz")) {
+            policeCity = "w Bydgoszczy";
+        }
+        if (city.equals("Gdańsk")) {
+            policeCity = "w Gdańsku";
+        }
+        if (city.equals("Gorzów Wielkopolski")) {
+            policeCity = "w Gorzowie Wielkopolskim";
+        }
+        if (city.equals("Katowice")) {
+            policeCity = "w Katowicach";
+        }
+        if (city.equals("Kielce")) {
+            policeCity = "w Kielcach";
+        }
+        if (city.equals("Kraków")) {
+            policeCity = "w Krakowie";
+        }
+        if (city.equals("Lublin")) {
+            policeCity = "w Lublinie";
+        }
+        if (city.equals("Łódź")) {
+            policeCity = "w Łodzi";
+        }
+        if (city.equals("Olsztyn")) {
+            policeCity = "w Olsztynie";
+        }
+        if (city.equals("Opole")) {
+            policeCity = "w Opolu";
+        }
+        if (city.equals("Poznań")) {
+            policeCity = "w Poznaniu";
+        }
+        if (city.equals("Rzeszów")) {
+            policeCity = "w Rzeszowie";
+        }
+        if (city.equals("Szczecin")) {
+            policeCity = "w Szczecinie";
+        }
+        if (city.equals("Warszawa")) {
+            policeCity = "w Warszawie";
+        }
+        if (city.equals("Wrocław")) {
+            policeCity = "we Wrocławiu";
+        } else {
+            policeCity = "w Łodzi";
+        }
+
+
+        Document document = new Document(PageSize.A4);
+        setAttToDoc(fileName, document, false);
+        Paragraph newLine = new Paragraph("\n", font(10, 0));
+
+        Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "") + ", " + LocalDate.now().format(dateFormat()), font(10, 0));
+        date.setAlignment(2);
+        document.add(date);
+        Paragraph memberNames = new Paragraph(member.getFirstName() + ' ' + thirdName + ' ' + member.getSecondName(), font(10, 0));
+        memberNames.setAlignment(0);
+        Paragraph parentsNames = new Paragraph(fatherName + ' ' + motherName + ' ' + motherMaidenName, font(10, 0));
+        parentsNames.setAlignment(0);
+        Paragraph birthDateAndPlace = new Paragraph((birthDay(member.getPesel()).format(dateFormat())) + ' ' + birthPlace, font(10, 0));
+        parentsNames.setAlignment(0);
+        Paragraph zipCodeAndCity = new Paragraph(member.getAddress().getZipCode() + ' ' + member.getAddress().getPostOfficeCity(), font(10, 0));
+        zipCodeAndCity.setAlignment(0);
+        Paragraph phoneNumber = new Paragraph(member.getPhoneNumber(), font(10, 0));
+        phoneNumber.setAlignment(0);
+        Paragraph emailP = new Paragraph(member.getEmail(), font(10, 0));
+        emailP.setAlignment(0);
+        Paragraph peselP = new Paragraph(member.getPesel(), font(10, 0));
+        peselP.setAlignment(0);
+        Paragraph IDCard = new Paragraph(member.getIDCard(), font(10, 0));
+        IDCard.setAlignment(0);
+        Paragraph issuing = new Paragraph(issuingAuthority, font(10, 0));
+        issuing.setAlignment(0);
+        Paragraph IDDate = new Paragraph(parseIDDate.format(dateFormat()), font(10, 0));
+        IDCard.setAlignment(0);
+        Paragraph recipient = new Paragraph("KOMENDANT WOJEWÓDZKI POLICJI", font(13, 1));
+        recipient.setAlignment(2);
+        Paragraph recipient1 = new Paragraph(policeCity, font(13, 1));
+        recipient1.setAlignment(2);
+        recipient1.setIndentationRight(80);
+        Paragraph title = new Paragraph("PODANIE", font(13, 1));
+        title.setAlignment(1);
+        Paragraph par1 = new Paragraph("Niniejszym wnoszę o wydanie mi (w postaci decyzji administracyjnej):\n", font(10, 0));
+        par1.setFirstLineIndent(30);
+        Paragraph par2 = new Paragraph("1.   pozwolenia na posiadanie broni palnej sportowej w łącznej ilości 6 egzemplarzy do celów sportowych, w tym broni:\n", font(10, 0));
+        par2.setFirstLineIndent(20);
+        Paragraph par21 = new Paragraph("a. bocznego zapłonu z lufami gwintowanymi, o kalibrze do 6 mm,\n" +
+                "b. centralnego zapłonu z lufami gwintowanymi, o kalibrze do 12mm,\n" +
+                "c. gładko lufowej,\n", font(10, 0));
+        par21.setIndentationLeft(50);
+        Paragraph par3 = new Paragraph("2.   pozwolenia na posiadanie broni palnej sportowej w łącznej ilości 10 egzemplarzy do celów kolekcjonerskich.", font(10, 0));
+        par3.setFirstLineIndent(20);
+        Paragraph par4 = new Paragraph("3.   dopuszczenia do posiadania broni palnej sportowej (A,H,I,J,L) podczas uczestnictwa, organizacji lub przeprowadzania strzeleckich zawodów sportowych.", font(10, 0));
+        par4.setIndentationLeft(20);
+        Paragraph title1 = new Paragraph("UZASADNIENIE", font(13, 1));
+        title1.setAlignment(1);
+        Paragraph par5 = new Paragraph("Po mojej stronie nie występują żadne negatywne przesłanki uniemożliwiające posiadanie pozwolenia na broń, a ponadto przedstawiam ważną przyczynę posiadania broni, którą jest:", font(10, 0));
+        par5.setFirstLineIndent(20);
+        Paragraph par6 = new Paragraph("1.   dla broni do celów sportowych:", font(10, 0));
+        par6.setFirstLineIndent(20);
+        Paragraph par61 = new Paragraph("a. członkostwo w stowarzyszeniu o charakterze strzeleckim tj. w Stowarzyszenie Strzelecko-Kolekcjonerskie RCS Panaszew 99-200 Poddębice Panaszew 4A NIP:8281419076 REGON:388545546 KRS:0000907099\n" +
+                "b. posiadanie kwalifikacji sportowych o których mowa w art. 10b UoBiA tj. patentu strzeleckiego \n" +
+                member.getShootingPatent().getPatentNumber() + " w dyscyplinach: " + getDisciplinesFromShootingPatentOrLicense(member.getShootingPatent(), null) + "\n" +
+                "c. posiadanie ważnej licencji zawodniczej Polskiego Związku Strzelectwa Sportowego NR L-" + member.getLicense().getNumber() + "/" + getPartOfDate(parselicenseDate) + " Z dnia " + parselicenseDate.format(dateFormat()) + "r. w dyscyplinach: " + getDisciplinesFromShootingPatentOrLicense(null, member.getLicense()) + ",\n", font(10, 0));
+        par61.setIndentationLeft(50);
+        Paragraph par7 = new Paragraph("2.   dla broni sportowej do celów kolekcjonerskich:", font(10, 0));
+        par7.setFirstLineIndent(20);
+        Paragraph par71 = new Paragraph("a. członkostwo w stowarzyszeniu o charakterze kolekcjonerskim tj. w Stowarzyszenie Strzelecko-Kolekcjonerskie RCS Panaszew 99-200 Poddębice Panaszew 4A NIP:8281419076 REGON:388545546 KRS:0000907099\n" +
+                "b. posiadanie kwalifikacji sportowych o których mowa w art. 10b UoBiA tj. patentu strzeleckiego NR " + member.getShootingPatent().getPatentNumber() + " z dnia " + member.getShootingPatent().getDateOfPosting().format(dateFormat()) + " r. w dyscyplinach: " + getDisciplinesFromShootingPatentOrLicense(member.getShootingPatent(), null) + "\n" +
+                "c. posiadanie ważnej licencji zawodniczej Polskiego Związku Strzelectwa Sportowego L-" + member.getLicense().getNumber() + "/" + getPartOfDate(parselicenseDate) + " z dnia " + parselicenseDate.format(dateFormat()) + "r. w dyscyplinach: pistolet, karabin, strzelba gładkolufowa,\n", font(10, 0));
+        par71.setIndentationLeft(50);
+        Paragraph par8 = new Paragraph("3.   dla dopuszczenia do posiadania broni palnej sportowej:", font(10, 0));
+        par8.setFirstLineIndent(20);
+        Paragraph par81 = new Paragraph("a. spełnienie kryteriów, o których mowa w art. 30 ust. 1a ustawy o broni i amunicji, tj.  posiadanie ważnej licencji zawodnika strzelectwa sportowego nadanej przez Polski Związek Strzelectwa Sportowego nr L-" + member.getLicense().getNumber() + "/" + getPartOfDate(parselicenseDate) + " Z dnia " + parselicenseDate.format(dateFormat()) + "r.  w dyscyplinach: pistolet, karabin, strzelba gładkolufowa,", font(10, 0));
+        par81.setIndentationLeft(50);
+        Paragraph par9 = new Paragraph("Na podstawie posiadanych kwalifikacji sportowych tj. posiadania patentu strzeleckiego oraz ważnej licencji wydanych przez PZSS jestem zwolniony z egzaminu przed organem Policji, w zakresie broni sportowej, ponieważ zdałem go na podstawie odrębnych przepisów. ", font(10, 0));
+        par9.setFirstLineIndent(20);
+        Paragraph par10 = new Paragraph("Strzelectwo sportowe zamierzam uprawiać uczestnicząc we współzawodnictwie w ramach PZSS, jak również poza strukturami Związku. Zamierzam rozwijać się w tym sporcie i chcę strzelać z różnych rodzajów broni palnej sportowej, w wielu konkurencjach i dyscyplinach. Nie posiadając własnej broni nie jestem w stanie startować w planowanych przeze mnie konkurencjach.", font(10, 0));
+        par10.setFirstLineIndent(20);
+        Paragraph par11 = new Paragraph("Stowarzyszenie strzeleckie, którego jestem członkiem organizuje zawody w kilkudziesięciu różnych konkurencjach strzeleckich, rozgrywanych z różnego rodzaju broni, na różnych dystansach i w różnych warunkach. Są to zarówno konkurencje statyczne, jak i dynamiczne. Chcę brać udział w rywalizacji w dużej części tych konkurencji. W tej liczbie między innymi:\n", font(10, 0));
+        par11.setFirstLineIndent(20);
+        Paragraph par12 = new Paragraph("1. Karabin centralnego zapłonu, 50m, kategoria MANUAL\n" +
+                "2. Karabin centralnego zapłonu, 50m, kategoria OPEN\n" +
+                "3. Pistolet centralnego zapłonu, 25m, 10 strzałów stojąc, tarcza TS/2\n" +
+                "4. Strzelba dynamiczna, kategoria STANDARD\n" +
+                "5. Strzelba dynamiczna, kategoria SEMI-AUTO\n" +
+                "6. Strzelba dynamiczna IPSC\n" +
+                "7. Pistolet dynamiczny (IPSC), kategoria PRODUCTION\n" +
+                "8. Pistolet dynamiczny (IPSC), kategoria STANDARD/MINOR\n" +
+                "9. Pistolet dynamiczny (IPSC), kategoria STANDARD/MAJOR\n", font(10, 0));
+        par12.setIndentationLeft(20);
+        Paragraph par13 = new Paragraph("Zdecydowałem się pominąć konkurencje podobne lub takie, w których mógłbym na początku używać broni zakupionej też do innej konkurencji.  Niemniej jednak, interesują mnie także pozostałe typy strzelectwa sportowego (np. długodystansowe, dynamiczne, czarnoprochowe) i w przyszłości planuję brać udział w zawodach i konkurencjach je obejmujących. W szczególności interesuje mnie strzelectwo dynamiczno-praktyczne takie jak: IPSC, Liga Sportera czy 3 Gun.\n" +
+                "Oferta stowarzyszenia o charakterze strzeleckim do którego należę jest stale poszerzana i umożliwia mi szerokie eksplorowanie pasji strzeleckiej. Specyfika konkurencji, w których już startuje oraz będę startował sprawia, że wnioskowana ilość jednostek broni jest mi niezbędna do startu w nich, treningu oraz poszerzania swoich umiejętności sportowych. Mając bogatą ofertę zawodów sportowych potrzebuję dużej dozy elastyczności w wyborze zakupionej broni. Zamierzam nabywać kolejne egzemplarze, w miarę jak moje plany uprawiania sportu strzeleckiego będą tego wymagały.\n", font(10, 0));
+        par13.setFirstLineIndent(20);
+        Paragraph par14 = new Paragraph("Zamierzam kolekcjonować broń palną sportową różnych rodzajów, typów i modeli. W chwili obecnej nie jestem w stanie określić po ile egzemplarzy broni każdego rodzaju będę mieć w swojej kolekcji. Dopiero zaczynam realizację pasji kolekcjonerskiej i nie jestem w stanie powiedzieć, w którą stronę będę chciał się rozwinąć w najbliższej przyszłości.\n" +
+                "Chcę mieć dużą kolekcję stanowiącą przekrój najpopularniejszych modeli broni palnej. Na początek wielkość kolekcji, która \n" +
+                "z natury rzeczy nie jest i nie może być zbiorem zamkniętym, oceniam szacunkowo na liczbę 10 sztuk. I dlatego wnoszę o wydanie pozwolenia na taką właśnie ilość broni.\n", font(10, 0));
+        par14.setFirstLineIndent(20);
+        Paragraph par15 = new Paragraph("Rezygnuję niniejszym z prawa zapoznania się z aktami przed wydaniem decyzji, jeśli organ Policji dojdzie do wniosku, \n" +
+                "że należy wydać decyzję zgodną z moim żądaniem.\n", font(10, 0));
+        par15.setFirstLineIndent(20);
+        Paragraph par16 = new Paragraph("....................................................", font(10, 0));
+        par16.setAlignment(2);
+        par16.setIndentationRight(80);
+        Paragraph par17 = new Paragraph("(podpis)", font(10, 0));
+        par17.setAlignment(2);
+        par17.setIndentationRight(100);
+        Paragraph par18 = new Paragraph("Załączniki:", font(10, 1));
+        par18.setFirstLineIndent(20);
+        Paragraph par19 = new Paragraph("1) dowód wniesienia opłaty 242 zł za wydanie pozwolenia na broń do celów sportowych (oryginał),\n" +
+                "2) dowód wniesienia opłaty 242 zł za wydanie pozwolenia na broń do celów kolekcjonerskich (oryginał),\n" +
+                "3) dowód wniesienia opłaty skarbowej 10 zł za dopuszczenie do broni (oryginał),\n" +
+                "4) orzeczenie lekarskie  (oryginał),\n" +
+                "5) orzeczenie psychologiczne  (oryginał),\n" +
+                "6) zaświadczenie o członkostwie w strzeleckim klubie sportowym: RCS Panaszew 99-200 Poddębice Panaszew 4A NIP:8281419076 REGON:388545546 KRS:0000907099 (oryginał)\n" +
+                "7) decyzja nadania patentu strzeleckiego PZSS NR " + member.getShootingPatent().getPatentNumber() + " z dnia " + member.getShootingPatent().getDateOfPosting().format(dateFormat()) + "r. (wydruk)\n" +
+                "8) ważna licencja zawodnika L-" + member.getLicense().getNumber() + "/" + getPartOfDate(parselicenseDate) + " Z dnia " + parselicenseDate.format(dateFormat()) + "r. (wydruk)\n" +
+                "9) zdjęcia – 4szt. (zdjęcia podpisane na odwrocie) \n" +
+                "10) Kserokopia dowodu osobistego (oryginał do wglądu)\n", font(8, 0));
+        par19.setFirstLineIndent(0);
+        par19.setIndentationLeft(20);
+        document.add(memberNames);
+        document.add(parentsNames);
+        document.add(birthDateAndPlace);
+        document.add(zipCodeAndCity);
+        document.add(phoneNumber);
+        document.add(emailP);
+        document.add(peselP);
+        document.add(issuing);
+        document.add(IDCard);
+        document.add(IDDate);
+        document.add(recipient);
+        document.add(recipient1);
+        document.add(title);
+        document.add(par1);
+        document.add(par2);
+        document.add(par21);
+        document.add(par3);
+        document.add(par4);
+        document.add(newLine);
+        document.add(title1);
+        document.add(newLine);
+        document.add(par5);
+        document.add(par6);
+        document.add(par61);
+        document.add(par7);
+        document.add(par71);
+        document.add(par8);
+        document.add(par81);
+        document.newPage();
+        document.add(par9);
+        document.add(par10);
+        document.add(par11);
+        document.add(par12);
+        document.add(par13);
+        document.add(par14);
+        document.add(par15);
+        document.add(par16);
+        document.add(par17);
+        document.add(par18);
+        document.add(par19);
+
+        document.close();
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
+                .belongToMemberUUID(memberUUID)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+
+        File file = new File(fileName);
+        file.delete();
+        return filesEntity;
+    }
+
+    private String getPartOfDate(LocalDate date) {
+        String month, year;
+        month = date.getMonthValue() < 10 ? "0" + date.getMonthValue() : String.valueOf(date.getMonthValue());
+        year = String.valueOf(date.getYear());
+        return month + "/" + year;
+    }
+
+    private String getDisciplinesFromShootingPatentOrLicense(ShootingPatentEntity patent, LicenseEntity license) {
+        String pistol = null, rifle = null, shotgun = null;
+        if (patent != null) {
+            pistol = patent.getPistolPermission() ? "pistolet" : "";
+            rifle = patent.getRiflePermission() ? "karabin" : "";
+            shotgun = patent.getShotgunPermission() ? "strzelba gładkolufowa" : "";
+        }
+        if (license != null) {
+            pistol = license.isPistolPermission() ? "pistolet" : "";
+            rifle = license.isRiflePermission() ? "karabin" : "";
+            shotgun = license.isShotgunPermission() ? "strzelba gładkolufowa" : "";
+        }
+        return pistol + " " + rifle + " " + shotgun;
+    }
+
+    private Paragraph paragraph(String text, int fontSize, int fontStyle) throws IOException, DocumentException {
+        return new Paragraph("\n", font(12, 0));
+    }
+
+    // zaświadczenie z Klubu Dziesiątka
     public FilesEntity CertificateOfClubMembership(String memberUUID, String reason, String city, boolean enlargement) throws IOException, DocumentException {
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         ClubEntity club = clubRepository.getOne(1);
         String fileName = reason + " " + memberEntity.getMemberName() + ".pdf";
 
@@ -1187,7 +1557,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+        writer.setPageEvent(new PageStamper(environment));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -1316,7 +1686,7 @@ public class FilesService {
             }
         }
 
-        Paragraph date = new Paragraph("Łódź, " + LocalDate.now().format(dateFormat()), font(12, 0));
+        Paragraph date = new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "" + ", " + LocalDate.now().format(dateFormat()), font(12, 0));
         date.setAlignment(2);
         Paragraph police = new Paragraph(policeAddress, font(12, 0));
         police.setAlignment(2);
@@ -1487,11 +1857,11 @@ public class FilesService {
         } else {
             document = new Document(PageSize.A4);
         }
-        document.setMargins(35F, 35F, 30F, 50F);
+        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+        writer.setPageEvent(new PageStamper(environment));
 
         document.open();
         document.addTitle(fileName);
@@ -1525,6 +1895,7 @@ public class FilesService {
             }
             //  nazwa zawodów i tytuł
             Paragraph par1 = new Paragraph(tournamentEntity.getName().toUpperCase() + "    " + clubEntity.getName(), font(11, 1));
+//            Paragraph par1 = new Paragraph(tournamentEntity.getName().toUpperCase() + "    KOMUNALNI Ozorków", font(11, 1));
             par1.setAlignment(1);
             Paragraph par2 = new Paragraph(name.toUpperCase(), font(12, 1));
             par2.setAlignment(1);
@@ -1544,6 +1915,7 @@ public class FilesService {
             par2.add(chunk);
             // nazwa konkurencji
             Paragraph par3 = new Paragraph(comp.get(j), font(11, 1));
+//            Paragraph par3 = new Paragraph("Konkurencja", font(11, 1));
             par3.setAlignment(1);
 
             Paragraph par4 = new Paragraph("Podpis sędziego .............................", font(11, 0));
@@ -1582,6 +1954,7 @@ public class FilesService {
 
             document.add(par1); //  nazwa zawodów i tytuł
             document.add(par2); // nazwisko klub i numer startowy
+//            document.add(newLine); // nazwisko klub i numer startowy jako nowa linia
             document.add(par3); // nazwa konkurencji
             document.add(newLine); // nowa linia
             if (competitionEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
@@ -1611,7 +1984,6 @@ public class FilesService {
                     }
                 }
                 if (numberOfShots < 10) {
-                    System.out.println("aaaaaaaaaaaaa");
                     document.add(table);
 
                 }
@@ -1803,7 +2175,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+        writer.setPageEvent(new PageStamper(environment));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -1874,6 +2246,14 @@ public class FilesService {
                 contributionValidThruCell = new PdfPCell(new Paragraph("BRAK SKŁADEK", font(12, 1)));
 
             }
+            if (!memberEntity.getActive()) {
+                contributionDateCell.setBackgroundColor(BaseColor.RED);
+                contributionValidThruCell.setBackgroundColor(BaseColor.RED);
+                inDateCell.setBackgroundColor(BaseColor.RED);
+                legNumberCell.setBackgroundColor(BaseColor.RED);
+                nameCell.setBackgroundColor(BaseColor.RED);
+                lpCell.setBackgroundColor(BaseColor.RED);
+            }
 
             memberTable.addCell(lpCell);
             memberTable.addCell(nameCell);
@@ -1914,7 +2294,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+        writer.setPageEvent(new PageStamper(environment));
 
         document.open();
         document.setMarginMirroringTopBottom(true);
@@ -2011,13 +2391,13 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+        writer.setPageEvent(new PageStamper(environment));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
 
-        Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase() + "\n" + "„DZIESIĄTKA” ŁÓDŹ", font(13, 1));
-        Paragraph date = new Paragraph("Łódź, " + monthFormat(tournamentEntity.getDate()), font(10, 2));
+        Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase(), font(13, 1));
+        Paragraph date = new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "" + ", " + monthFormat(tournamentEntity.getDate()), font(10, 2));
 
         Paragraph listTitle = new Paragraph("WYKAZ SĘDZIÓW", font(13, 0));
         Paragraph newLine = new Paragraph("\n", font(13, 0));
@@ -2158,7 +2538,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+        writer.setPageEvent(new PageStamper(environment));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2256,12 +2636,7 @@ public class FilesService {
         Document document = new Document(PageSize.A4.rotate());
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
-        document.open();
-        document.addTitle(fileName);
-        document.addCreationDate();
+        setAttToDoc(fileName,document,false);
         String minute;
         if (LocalTime.now().getMinute() < 10) {
             minute = "0" + LocalTime.now().getMinute();
@@ -2387,12 +2762,7 @@ public class FilesService {
         Document document = new Document(PageSize.A4.rotate());
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
-        document.open();
-        document.addTitle(fileName);
-        document.addCreationDate();
+        setAttToDoc(fileName,document,false);
         String minute;
         if (LocalTime.now().getMinute() < 10) {
             minute = "0" + LocalTime.now().getMinute();
@@ -2503,7 +2873,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+        writer.setPageEvent(new PageStamper(environment));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2680,7 +3050,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+        writer.setPageEvent(new PageStamper(environment));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2838,12 +3208,7 @@ public class FilesService {
         Document document = new Document(PageSize.A4.rotate());
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
-        document.open();
-        document.addTitle(fileName);
-        document.addCreationDate();
+        setAttToDoc(fileName,document,false);
         String minute;
         if (LocalTime.now().getMinute() < 10) {
             minute = "0" + LocalTime.now().getMinute();
@@ -2851,7 +3216,7 @@ public class FilesService {
             minute = String.valueOf(LocalTime.now().getMinute());
         }
         String now = LocalTime.now().getHour() + ":" + minute;
-        Paragraph title = new Paragraph("Lista osób bez składek z ważnymi licencjami na dzień " + LocalDate.now().format(dateFormat()) + " " + now, font(14, 1));
+        Paragraph title = new Paragraph("Lista osób skreślonych na dzień " + LocalDate.now().format(dateFormat()) + " " + now, font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
 
@@ -2958,15 +3323,14 @@ public class FilesService {
 
     }
 
-    public FilesEntity getJudgingReportInChosenTime(/*LocalDate from, LocalDate to*/) throws IOException, DocumentException {
-// TODO wprowadzić daty do wyboru
+    public FilesEntity getJudgingReportInChosenTime(LocalDate firstDate, LocalDate secondDate) throws IOException, DocumentException {
         String fileName = "raport sędziowania.pdf";
         Document document = new Document(PageSize.A4);
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+//        writer.setPageEvent(new PageStamper(environment));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2978,7 +3342,7 @@ public class FilesService {
                 .collect(Collectors.toList());
 
 
-        Paragraph title = new Paragraph("Raport sędziowania „DZIESIĄTKA” ŁÓDŹ", font(13, 1));
+        Paragraph title = new Paragraph("Raport sędziowania", font(13, 1));
 //        Paragraph date = new Paragraph("Łódź, od " + dateFormat(from) + " do " + dateFormat(to), font(10, 2));
 
         document.add(title);
@@ -2986,13 +3350,13 @@ public class FilesService {
         // dla każdego sędziego
         for (MemberEntity arbiter : arbiters) {
             if (arbiter.getHistory().getJudgingHistory().size() > 0) {
-                Paragraph arbiterP = new Paragraph(arbiter.getFirstName() + arbiter.getSecondName(), font(10, 1));
-                document.add(arbiterP);
-
-                List<JudgingHistoryEntity> judgingHistory = arbiter.getHistory().getJudgingHistory();
+                List<JudgingHistoryEntity> judgingHistory = arbiter.getHistory().getJudgingHistory().stream().filter(f -> f.getDate().isAfter(firstDate) && f.getDate().isBefore(secondDate)).collect(Collectors.toList());
+                if (judgingHistory.size() > 0) {
+                    Paragraph arbiterP = new Paragraph(arbiter.getFirstName() + arbiter.getSecondName(), font(10, 1));
+                    document.add(arbiterP);
+                }
                 // dodawanie jego sędziowania
                 for (int j = 0; j < judgingHistory.size(); j++) {
-
                     Chunk tournamentIndex = new Chunk((j + 1) + " ", font(10, 0));
                     Chunk tournamentName = new Chunk(judgingHistory.get(j).getName() + " ", font(10, 0));
                     Chunk tournamentDate = new Chunk(judgingHistory.get(j).getDate().format(dateFormat()) + " ", font(10, 0));
@@ -3003,6 +3367,7 @@ public class FilesService {
                     tournament.add(tournamentDate);
                     tournament.add(tournamentFunction);
                     document.add(tournament);
+
                 }
             }
 
@@ -3039,24 +3404,18 @@ public class FilesService {
 
         String fileName = "raport_pracy_" + month.toLowerCase() + "_" + reportNumber + "_" + year + "_" + workType + ".pdf";
         Document document = new Document(PageSize.A4);
-        setAttToDoc(fileName, document);
+        setAttToDoc(fileName, document, true);
 
         String finalMonth = month.toLowerCase(Locale.ROOT);
         int pl = number(finalMonth);
 
         List<WorkingTimeEvidenceEntity> evidenceEntities = workRepo.findAllByStopQuery(year, pl)
                 .stream()
-//                .filter(f -> f.getStop() != null)
-//                .filter(f -> f.getStop().getYear() == year)
-//                .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
                 .filter(f -> f.getWorkType().equals(workType))
                 .collect(Collectors.toList());
 
         List<UserEntity> userEntityList = evidenceEntities
                 .stream()
-//                .filter(f -> f.getStop() != null)
-//                .filter(f -> f.getStop().getYear() == year)
-//                .filter(f -> f.getStop().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth))
                 .filter(f -> f.getWorkType().equals(workType))
                 .map(WorkingTimeEvidenceEntity::getUser)
                 .distinct()
@@ -3072,7 +3431,7 @@ public class FilesService {
                 {
                     //tutaj tworzę dokument
                     try {
-                        Paragraph title = new Paragraph("Raport Pracy „DZIESIĄTKA” ŁÓDŹ - " + pl + "/" + year + "/" + finalReportNumber, font(13, 1));
+                        Paragraph title = new Paragraph("Raport Pracy - " + pl + "/" + year + "/" + finalReportNumber, font(13, 1));
                         Paragraph name = new Paragraph(u.getFirstName() + " " + u.getSecondName() + " szczegółowy", font(fontSize, 0));
                         if (!detailed) {
                             name = new Paragraph(u.getFirstName() + " " + u.getSecondName(), font(fontSize, 0));
@@ -3230,7 +3589,7 @@ public class FilesService {
 
         String fileName = "Lista osób z licencjami.pdf";
         Document document = new Document(PageSize.A4);
-        setAttToDoc(fileName, document);
+        setAttToDoc(fileName, document, false);
 
         List<MemberEntity> collect = memberRepository.findAllByErasedFalse()
                 .stream()
@@ -3361,7 +3720,7 @@ public class FilesService {
         int fs = 10;
         int ls = 11;
         Document document = new Document(PageSize.A4);
-        setAttToDoc(fileName, document);
+        setAttToDoc(fileName, document, true);
 
         Paragraph newLine = new Paragraph("\n", font(fs, 0));
         Paragraph page = new Paragraph("1/3", font(fs, 0));
@@ -3896,7 +4255,8 @@ public class FilesService {
         document.add(newLine);
 
         table5 = new PdfPTable(2);
-        p5 = new Paragraph("..............Łódź.............. dnia ...........................", font(fs, 0));
+        String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "";
+        p5 = new Paragraph(".............. " + city + " .............. dnia ...........................", font(fs, 0));
         p5.setLeading(ls);
         cell5 = new PdfPCell();
         cell5.addElement(p5);
@@ -3960,13 +4320,15 @@ public class FilesService {
         return Collator.getInstance(Locale.forLanguageTag("pl"));
     }
 
-    private void setAttToDoc(String fileName, Document document) throws DocumentException, FileNotFoundException {
-        document.setMargins(20F, 20F, 35F, 55F);
+    private void setAttToDoc(String fileName, Document document, boolean pageEvents) throws DocumentException, FileNotFoundException {
+        document.setMargins(35F, 35F, 50F, 50F);
         // to musi zostać by spowolnić program bo inaczej nie robi tego co powinien
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper());
+        if (pageEvents) {
+            writer.setPageEvent(new PageStamper(environment));
+        }
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -4026,18 +4388,27 @@ public class FilesService {
     public List<FilesModel> getAllFilesList(Pageable page) {
 
         page = PageRequest.of(page.getPageNumber(), page.getPageSize(), Sort.by("date").and(Sort.by("time")).descending());
-        List<FilesModel> list = filesRepository.findAllByDateIsNotNullAndTimeIsNotNull(page)
+        return filesRepository.findAllByDateIsNotNullAndTimeIsNotNull(page)
                 .stream()
                 .map(Mapping::map)
                 .sorted(Comparator.comparing(FilesModel::getDate).thenComparing(FilesModel::getTime).reversed())
                 .collect(Collectors.toList());
-        list.addAll(filesRepository.findAllByDateIsNullAndTimeIsNull().stream().map(Mapping::map).collect(Collectors.toList()));
-        return list;
 
     }
 
     public FilesEntity getFile(String uuid) {
-        return filesRepository.findById(uuid).orElseThrow(EntityNotFoundException::new);
+        if (filesRepository.existsById(uuid))
+            return filesRepository.getOne(uuid);
+        else System.out.println("plik nie istnieje");
+        return null;
+    }
+
+    public FilesEntity getGunImg(String gunUUID) {
+        System.out.println(gunRepository.getOne(gunUUID).getImgUUID());
+        if (gunRepository.getOne(gunUUID).getImgUUID() != null && filesRepository.existsById(gunRepository.getOne(gunUUID).getImgUUID()))
+            return filesRepository.getOne(gunRepository.getOne(gunUUID).getImgUUID());
+        else System.out.println("plik nie istnieje");
+        return null;
     }
 
     public void store(MultipartFile file) throws IOException {
@@ -4048,8 +4419,21 @@ public class FilesService {
                 .data(file.getBytes())
                 .size(file.getSize())
                 .build();
-        FilesEntity fileEntity = createFileEntity(build);
+        createFileEntity(build);
+    }
 
+    public void addImageToGun(MultipartFile file, String gunUUID) throws IOException {
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        System.out.println(file.getSize());
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(file.getContentType()))
+                .data(file.getBytes())
+                .size(file.getSize())
+                .build();
+        FilesEntity fileEntity = createFileEntity(build);
+        System.out.println(fileEntity.getUuid());
+        armoryService.addImageToGun(gunUUID, fileEntity.getUuid());
     }
 
     public String store(MultipartFile file, MemberEntity member) throws IOException {
@@ -4257,60 +4641,86 @@ public class FilesService {
 //        return filesRepository.findAllByBelongToMemberUuidIsNotNullAndEquals(uuid).stream().map(Mapping::map).collect(Collectors.toList());
     }
 
+    public ResponseEntity<?> removeImageFromGun(String gunUUID) {
+        GunEntity one = gunRepository.getOne(gunUUID);
+        try {
+            filesRepository.deleteById(one.getImgUUID());
+        } catch (EmptyResultDataAccessException e) {
+            System.out.println("plik nie istnieje");
+        }
+        one.setImgUUID(null);
+        gunRepository.save(one);
+        return ResponseEntity.ok("usunięto zdjęcie");
+    }
+
 
     static class PageStamper extends PdfPageEventHelper {
+        private final Environment environment;
+
+        PageStamper(Environment environment) {
+            this.environment = environment;
+        }
+
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
-//            final int currentPageNumber = writer.getCurrentPageNumber();
-//            document.setMargins(20F, 20F, 35F, 55F);
-//            try {
-//                final Rectangle pageSize = document.getPageSize();
-//                final PdfContentByte directContent = writer.getDirectContent();
-//
-//                directContent.setColorFill(BaseColor.BLACK);
-//                directContent.setFontAndSize(BaseFont.createFont(), 10);
-//                PdfTextArray pdfTextArray = new PdfTextArray(String.valueOf(currentPageNumber));
-//                directContent.setTextMatrix(pageSize.getRight(40), pageSize.getBottom(25));
-//                directContent.showText(pdfTextArray);
-//
-//            } catch (DocumentException | IOException e) {
-//                e.printStackTrace();
-//            }
+
         }
 
         @Override
         public void onStartPage(PdfWriter writer, Document document) {
             try {
-//                document.setMargins(35F,35F,50F,50F);
-//                System.out.println(document.bottomMargin());
+                document.setMargins(35F, 35F, 50F, 50F);
+                System.out.println(document.bottomMargin());
                 // to działa w miejscu docelowym - nie ruszać tego
-                String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/pełna-nazwa(małe).bmp";
-                Image image = Image.getInstance(source);
-
                 Rectangle pageSize = document.getPageSize();
-                int multiplicity = 7;
-                image.scaleAbsolute(new Rectangle(16 * multiplicity, 9 * multiplicity));
-                float pw = pageSize.getWidth() / 2;
-                float iw = image.getScaledWidth() / 2;
-                float[] position = {pw - iw, -5};
-
-                image.setAbsolutePosition(position[0], position[1]);
-
                 PdfContentByte directContent = writer.getDirectContent();
+                document.addAuthor("Igor Żebrowski");
+                if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+                    String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/pełna-nazwa(małe).bmp";
+                    Image image = Image.getInstance(source);
+                    int multiplicity = 7;
+                    image.scaleAbsolute(new Rectangle(16 * multiplicity, 9 * multiplicity));
+                    float pw = pageSize.getWidth() / 2;
+                    float iw = image.getScaledWidth() / 2;
+                    float[] position = {pw - iw, -5};
 
-                directContent.addImage(image);
+                    image.setAbsolutePosition(position[0], position[1]);
 
-                final int currentPageNumber = writer.getCurrentPageNumber();
-                document.setMargins(35F, 35F, 30F, 50F);
 
-                pageSize = document.getPageSize();
-                directContent = writer.getDirectContent();
+                    directContent.addImage(image);
+                    final int currentPageNumber = writer.getCurrentPageNumber();
+                    document.setMargins(35F, 35F, 30F, 50F);
+                    document.addAuthor("Igor Żebrowski");
+                    pageSize = document.getPageSize();
+                    directContent = writer.getDirectContent();
 
-                directContent.setColorFill(BaseColor.BLACK);
-                directContent.setFontAndSize(BaseFont.createFont(), 10);
-                PdfTextArray pdfTextArray = new PdfTextArray(String.valueOf(currentPageNumber));
-                directContent.setTextMatrix(pageSize.getRight(40), pageSize.getBottom(25));
-                directContent.showText(pdfTextArray);
+                    directContent.setColorFill(BaseColor.BLACK);
+                    directContent.setFontAndSize(BaseFont.createFont(), 10);
+                    PdfTextArray pdfTextArray = new PdfTextArray(String.valueOf(currentPageNumber));
+                    directContent.setTextMatrix(pageSize.getRight(40), pageSize.getBottom(25));
+                    directContent.showText(pdfTextArray);
+                }
+                if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
+                    String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/logo-panaszew.jpg";
+                    Image image = Image.getInstance(source);
+                    int multiplicity = 7;
+                    image.scaleAbsolute(new Rectangle(20 * multiplicity, 15 * multiplicity));
+
+                    image.setAbsolutePosition(pageSize.getLeft(50), pageSize.getTop(140));
+                    directContent.addImage(image);
+
+                    source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/footer-panaszew.png";
+                    image = Image.getInstance(source);
+                    image.setBorder(0);
+                    image.scaleAbsolute(new Rectangle(pageSize.getWidth(), image.getScaledHeight() / 2));
+                    float pw = pageSize.getWidth();
+                    float iw = image.getScaledWidth();
+                    float[] position = {pw - iw, 30};
+
+                    image.setAbsolutePosition(position[0], position[1]);
+                    directContent.addImage(image);
+
+                }
 
             } catch (DocumentException | IOException e) {
                 e.printStackTrace();

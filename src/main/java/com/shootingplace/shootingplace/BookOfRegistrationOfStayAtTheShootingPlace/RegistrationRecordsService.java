@@ -77,8 +77,6 @@ public class RegistrationRecordsService {
                 int dayIndex = getDayIndex();
 
                 r.setDayIndex(dayIndex + 1);
-                LocalDateTime now = LocalDateTime.now();
-                System.out.println(now);
                 r.setDate(LocalDateTime.now());
                 r.setFirstName(o.getFirstName());
                 r.setSecondName(o.getSecondName());
@@ -104,8 +102,9 @@ public class RegistrationRecordsService {
         return dayIndex;
     }
 
-    public ResponseEntity<?> getRecordsFromDate(LocalDate date) {
-        List<RegistrationRecordEntity> collect = registrationRepo.findAll().stream().filter(f -> f.getDate().toLocalDate().equals(date)).sorted(Comparator.comparing(RegistrationRecordEntity::getDayIndex)).collect(Collectors.toList());
+    public ResponseEntity<?> getRecordsFromDate(LocalDate firstDate, LocalDate secondDate) {
+//        List<RegistrationRecordEntity> collect = registrationRepo.findAllByDateBeforeAndDateAfter(firstDate.minusDays(1), secondDate.plusDays(1)).stream().sorted(Comparator.comparing(RegistrationRecordEntity::getDate).reversed()).collect(Collectors.toList());
+        List<RegistrationRecordEntity> collect = registrationRepo.findAll().stream().filter(f -> f.getDate().toLocalDate().plusDays(1).isAfter(firstDate) && f.getDate().toLocalDate().plusDays(1).isBefore(secondDate)).sorted(Comparator.comparing(RegistrationRecordEntity::getDate).reversed()).collect(Collectors.toList());
         return ResponseEntity.ok(collect);
 
     }

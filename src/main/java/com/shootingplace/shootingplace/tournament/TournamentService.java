@@ -175,8 +175,6 @@ public class TournamentService {
                 .competitionsList(collect1)
                 .build();
 
-
-        LOG.info("Wyświetlono listę zawodów");
         return ResponseEntity.ok(tournament);
     }
 
@@ -580,12 +578,11 @@ public class TournamentService {
 
     public List<TournamentDTO> getClosedTournaments(Pageable page) {
         page = PageRequest.of(page.getPageNumber(), page.getPageSize(), Sort.by("date").descending());
-        List<TournamentEntity> all = tournamentRepository.findAllByOpenIsFalse(page).stream().filter(f -> !f.isOpen()).collect(Collectors.toList());
-//        List<TournamentEntity> all = tournamentRepository.findAll().stream().filter(f -> !f.isOpen()).collect(Collectors.toList());
-        List<TournamentDTO> allDTO = new ArrayList<>();
-        all.forEach(e -> allDTO.add(Mapping.map1(e)));
-        allDTO.sort(Comparator.comparing(TournamentDTO::getDate).reversed());
-        return allDTO;
+        return tournamentRepository.findAllByOpenIsFalse(page)
+                .stream()
+                .map(Mapping::map1)
+                .sorted(Comparator.comparing(TournamentDTO::getDate).reversed())
+                .collect(Collectors.toList());
     }
 
     public ResponseEntity<?> deleteTournament(String tournamentUUID, String pinCode) {

@@ -12,4 +12,6 @@ public interface ContributionRepository{
     Optional<ContributionEntity> findById(String contributionUUID);
 
     List<ContributionEntity> findAll();
+
+    ContributionEntity getOne(String contributionUUID);
 }

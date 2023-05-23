@@ -75,7 +75,7 @@ public class OtherPersonController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<OtherPersonEntity>> getAll() {
+    public ResponseEntity<?> getAll() {
         return ResponseEntity.ok().body(otherPersonService.getAll());
     }
 

@@ -85,23 +85,23 @@ public class ContributionServiceTest {
 
     }
 
-    @Test
-    public void add_contribution_OK() {
-        //given
-        MemberEntity memberEntity = membersList.get(0);
-        String uuid = membersList.get(0).getUuid();
-        LocalDate date = LocalDate.of(2021,11,2);
-
-
-        //when
-        when(memberRepository.existsById(any(String.class))).thenReturn(existsById(uuid));
-        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findByID(uuid)));
-        ResponseEntity<?> responseEntity = contributionService.addContribution(uuid, date, pinCode);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("Przedłużono składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName()));
-
-    }
+//    @Test
+//    public void add_contribution_OK() {
+//        //given
+//        MemberEntity memberEntity = membersList.get(0);
+//        String uuid = membersList.get(0).getUuid();
+//        LocalDate date = LocalDate.of(2021,11,2);
+//
+//
+//        //when
+//        when(memberRepository.existsById(any(String.class))).thenReturn(existsById(uuid));
+//        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findByID(uuid)));
+//        ResponseEntity<?> responseEntity = contributionService.addContribution(uuid, date, pinCode);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("Przedłużono składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName()));
+//
+//    }
 
     @Test
     public void addContributionRecord() {

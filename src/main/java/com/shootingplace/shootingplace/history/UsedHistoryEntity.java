@@ -8,7 +8,7 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @AllArgsConstructor
@@ -24,10 +24,13 @@ public class UsedHistoryEntity {
     private String gunName;
     private String gunUUID;
     private String gunSerialNumber;
-    private LocalDate date;
+    private LocalDateTime dateTime;
 
     private String usedType;
     private String evidenceUUID;
+    private boolean returnToStore;
+    private String userName;
+    private String memberUUID;
 
 
     public String getUuid() {
@@ -58,12 +61,12 @@ public class UsedHistoryEntity {
         this.gunSerialNumber = gunSerialNumber;
     }
 
-    public LocalDate getDate() {
-        return date;
+    public LocalDateTime getDateTime() {
+        return dateTime;
     }
 
-    public void setDate(LocalDate date) {
-        this.date = date;
+    public void setDateTime(LocalDateTime dateTime) {
+        this.dateTime = dateTime;
     }
 
     public String getUsedType() {
@@ -80,5 +83,29 @@ public class UsedHistoryEntity {
 
     public void setEvidenceUUID(String evidenceUUID) {
         this.evidenceUUID = evidenceUUID;
+    }
+
+    public boolean isReturnToStore() {
+        return returnToStore;
+    }
+
+    public void setReturnToStore(boolean returnToStore) {
+        this.returnToStore = returnToStore;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getMemberUUID() {
+        return memberUUID;
+    }
+
+    public void setMemberUUID(String userUUID) {
+        this.memberUUID = userUUID;
     }
 }

@@ -628,7 +628,7 @@ public class XLSXFilesService {
             cell5 = row1.createCell(5);
 
             cell.setCellValue(i + 1);
-            cell1.setCellValue(collect.get(i).getMemberName());
+            cell1.setCellValue(collect.get(i).getMemberName() + (!collect.get(i).getActive()? " - Nieaktywny" : "") );
             cell2.setCellValue(collect.get(i).getLegitimationNumber());
             cell3.setCellValue(collect.get(i).getJoinDate().toString());
 

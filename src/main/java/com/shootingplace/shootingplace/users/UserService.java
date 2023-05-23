@@ -96,7 +96,7 @@ public class UserService {
                 String splinted = value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase() + " ";
                 trim.append(splinted);
             }
-            String[] s2 = firstName.split(" ");
+            String[] s2 = secondName.split(" ");
             StringBuilder trim1 = new StringBuilder();
             for (String value : s2) {
                 String splinted = value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase() + " ";

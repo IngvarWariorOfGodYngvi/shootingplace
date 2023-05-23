@@ -15,4 +15,8 @@ public interface GunRepository{
     Optional<GunEntity> findById(String uuid);
 
     GunEntity getOne(String uuid);
+    GunEntity getByBarcode(String barcode);
+    List<GunEntity> findAllByInUseStatus(String status);
+
+
 }

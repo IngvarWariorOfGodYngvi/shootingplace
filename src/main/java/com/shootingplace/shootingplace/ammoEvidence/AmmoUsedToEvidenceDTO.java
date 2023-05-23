@@ -22,5 +22,7 @@ public class AmmoUsedToEvidenceDTO {
 
     private Integer legitimationNumber;
 
+    private Integer IDNumber;
+
 
 }

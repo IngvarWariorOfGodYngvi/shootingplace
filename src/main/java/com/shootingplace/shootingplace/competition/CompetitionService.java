@@ -58,7 +58,6 @@ public class CompetitionService {
             }
         }
 
-        LOG.info("Wyświetlono listę Konkurencji");
         competitionEntityList.sort(Comparator.comparing(CompetitionEntity::getOrdering));
         return competitionEntityList;
     }
@@ -126,7 +125,6 @@ public class CompetitionService {
         }
         if (!competition.getDiscipline().equals("")) {
             if (competition.getDiscipline().equals(Discipline.PISTOL.getName()) || competition.getDiscipline().equals(Discipline.RIFLE.getName()) || competition.getDiscipline().equals(Discipline.SHOTGUN.getName())) {
-                System.out.println(competition);
                 CompetitionEntity competitionEntity = CompetitionEntity.builder()
                         .name(competition.getName())
                         .numberOfShots(competition.getNumberOfShots())
@@ -166,11 +164,9 @@ public class CompetitionService {
                     .build();
             if (competition.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                 competitionEntity.setCountingMethod(CountingMethod.NORMAL.getName());
-                LOG.info("Ustawiono metodę liczenia " + CountingMethod.NORMAL.getName());
             }
             if (competition.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
                 LOG.info("Ustawiono metodę liczenia " + CountingMethod.COMSTOCK.getName());
-                competitionEntity.setCountingMethod(CountingMethod.COMSTOCK.getName());
             }
             competitionRepository.save(competitionEntity);
             LOG.info("Utworzono nową konkurencję " + competition.getName());

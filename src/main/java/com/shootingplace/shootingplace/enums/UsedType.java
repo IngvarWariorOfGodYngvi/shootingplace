@@ -6,6 +6,7 @@ public enum UsedType {
     CLEANING("Czyszczenie"),
     CLUB_COMPETITION("Zawody Klubowe"),
     OUTSIDE("Poza Klubem"),
+    REPAIR("Naprawa"),
     OTHER("Inne");
     private final String name;
 

@@ -31,12 +31,12 @@ public class BarCodeCardService {
     }
 
     public ResponseEntity<?> createNewCard(BarCodeCardDTO dto) {
-        String adminBarCode = findAdminBarCode(dto.getBarCode());
-        if (!adminBarCode.equals("false")) {
-            String s = dto.getBarCode().replaceAll(adminBarCode, "");
-            dto.setBarCode(s);
-            dto.setMaster(true);
-        }
+//        String adminBarCode = findAdminBarCode(dto.getBarCode());
+//        if (!adminBarCode.equals("false")) {
+//            String s = dto.getBarCode().replaceAll(adminBarCode, "");
+//            dto.setBarCode(s);
+//            dto.setMaster(true);
+//        }
 
         if (barCodeCardRepo.existsByBarCode(dto.getBarCode())) {
             return ResponseEntity.badRequest().body("Taki numer jest już do kogoś przypisany - użyj innej karty");
@@ -59,7 +59,7 @@ public class BarCodeCardService {
                     .barCode(bc)
                     .belongsTo(memberEntity.getUuid())
                     .isActive(true)
-                    .isMaster(dto.isMaster())
+                    .isMaster(true)
                     .activatedDay(LocalDate.now())
                     .type("Member")
                     .build();
@@ -81,7 +81,7 @@ public class BarCodeCardService {
                     .barCode(bc)
                     .belongsTo(userEntity.getUuid())
                     .isActive(true)
-                    .isMaster(dto.isMaster())
+                    .isMaster(true)
                     .activatedDay(LocalDate.now())
                     .type("User")
                     .subType(dto.getSubType())
@@ -190,7 +190,6 @@ public class BarCodeCardService {
                 z++;
             }
         }
-        boolean r = false;
         String res = "";
 
         char[] codeChars = code.toCharArray();
@@ -219,10 +218,8 @@ public class BarCodeCardService {
             }
             for (boolean b : ok) {
                 if (b) {
-                    r = b;
                     res = s;
                 } else {
-                    r = false;
                     res = "false";
                     break;
                 }

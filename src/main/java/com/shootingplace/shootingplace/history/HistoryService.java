@@ -356,29 +356,22 @@ public class HistoryService {
         }
     }
     public void checkStarts() {
-        List<MemberEntity> collect = memberRepository.findAll()
-                .stream()
-                .filter(f -> !f.getErased())
-                .collect(Collectors.toList());
+        List<MemberEntity> collect = memberRepository.findAllByErasedFalse();
         collect.forEach(e -> {
             int year = e.getLicense().getNumber() != null ? e.getLicense().getValidThru().getYear() : LocalDate.now().getYear();
             List<CompetitionHistoryEntity> collect1 = e.getHistory()
                     .getCompetitionHistory()
                     .stream()
-                    .filter(f -> f.getDate().getYear() == year)
+                    .filter(f -> f.getDate().getYear() == year && f.getDiscipline() !=null)
                     .collect(Collectors.toList());
             if (!collect1.isEmpty()) {
-                System.out.println(e.getSecondName());
                 long countPistol = collect1.stream()
-                        .filter(f -> f.getDiscipline() != null)
                         .filter(f -> f.getDiscipline().equals(Discipline.PISTOL.getName()))
                         .count();
                 long countRifle = collect1.stream()
-                        .filter(f -> f.getDiscipline() != null)
                         .filter(f -> f.getDiscipline().equals(Discipline.RIFLE.getName()))
                         .count();
                 long countShotgun = collect1.stream()
-                        .filter(f -> f.getDiscipline() != null)
                         .filter(f -> f.getDiscipline().equals(Discipline.SHOTGUN.getName()))
                         .count();
 
@@ -402,9 +395,6 @@ public class HistoryService {
                     }
                 }
                 HistoryEntity history = e.getHistory();
-                System.out.println("było: " + history.getPistolCounter() + "jest: " + (countPistol + pistolC));
-                System.out.println("było: " + history.getRifleCounter() + "jest: " + (countRifle + rifleC));
-                System.out.println("było: " + history.getShotgunCounter() + "jest: " + (countShotgun + shotgunC));
                 history.setPistolCounter((int) (countPistol + pistolC));
                 history.setRifleCounter((int) countRifle + rifleC);
                 history.setShotgunCounter((int) countShotgun + shotgunC);

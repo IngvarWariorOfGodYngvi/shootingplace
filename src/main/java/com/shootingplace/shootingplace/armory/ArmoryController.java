@@ -1,7 +1,9 @@
 package com.shootingplace.shootingplace.armory;
 
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,12 +18,14 @@ public class ArmoryController {
     private final ArmoryService armoryService;
     private final CaliberService caliberService;
     private final AmmoUsedService ammoUsedService;
+    private final ChangeHistoryService changeHistoryService;
 
 
-    public ArmoryController(ArmoryService armoryService, CaliberService caliberService, ChangeHistoryService changeHistoryService, AmmoUsedService ammoUsedService) {
+    public ArmoryController(ArmoryService armoryService, CaliberService caliberService, ChangeHistoryService changeHistoryService, AmmoUsedService ammoUsedService, ChangeHistoryService changeHistoryService1) {
         this.armoryService = armoryService;
         this.caliberService = caliberService;
         this.ammoUsedService = ammoUsedService;
+        this.changeHistoryService = changeHistoryService1;
     }
 
     @GetMapping("/recount")
@@ -39,13 +43,16 @@ public class ArmoryController {
     public ResponseEntity<List<String>> getCalibersNamesList() {
         return ResponseEntity.ok(caliberService.getCalibersNamesList());
     }
+    @GetMapping("/getGun")
+    public ResponseEntity<?> getGun(@RequestParam String gunUUID) {
+        return armoryService.getGun(gunUUID);
+    }
 
     @Transactional
     @GetMapping("/quantitySum")
     public ResponseEntity<?> getSumFromAllAmmoList(@RequestParam String firstDate, @RequestParam String secondDate) {
         LocalDate parseFirstDate = LocalDate.parse(firstDate);
         LocalDate parseSecondDate = LocalDate.parse(secondDate);
-//        armoryService.update();
         return ResponseEntity.ok(armoryService.getSumFromAllAmmoList(parseFirstDate, parseSecondDate));
     }
 
@@ -55,7 +62,7 @@ public class ArmoryController {
     }
 
     @GetMapping("/getGuns")
-    public ResponseEntity<List<GunStoreEntity>> getAllGuns() {
+    public ResponseEntity<?> getAllGuns() {
         return ResponseEntity.ok(armoryService.getAllGuns());
     }
 
@@ -123,6 +130,15 @@ public class ArmoryController {
         }
         return caliberService.createNewCaliber(caliber, pinCode);
     }
+    @PatchMapping("/changeCaliberQuantity")
+    public ResponseEntity<?> changeCaliberQuantity(@RequestParam String caliberUUID,@RequestParam Integer quantity, @RequestParam String pinCode) {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return armoryService.changeCaliberQuantity(caliberUUID,quantity,pinCode);
+        }else {
+            return code;
+        }
+    }
 
     @PostMapping("/newGunTypeName")
     public ResponseEntity<?> createNewGunStore(@RequestParam String nameType) {
@@ -130,6 +146,30 @@ public class ArmoryController {
             return ResponseEntity.badRequest().build();
         }
         return armoryService.createNewGunStore(nameType);
+    }
+    @Transactional
+    @PutMapping("/addGunToList")
+    public ResponseEntity<?> addGunToList(@RequestParam String evidenceUUID, @RequestParam String barcode, @Nullable @RequestParam String legitimationNumber, @Nullable @RequestParam String IDNumber) {
+        if(evidenceUUID.equals("undefined")){
+            evidenceUUID = null;
+        }
+        return armoryService.addGunToList(evidenceUUID, barcode, legitimationNumber, IDNumber);
+    }
+    @Transactional
+    @PutMapping("/addGunToRepair")
+    public ResponseEntity<?> addGunToRepair(@RequestParam String gunUUID) {
+        return armoryService.addGunToRepair(gunUUID);
+    }
+
+    @GetMapping("/getGunInAmmoEvidenceList")
+    public ResponseEntity<?> getGunInAmmoEvidenceList() {
+        return ResponseEntity.ok().body(armoryService.getGunInAmmoEvidenceList());
+    }
+
+    @Transactional
+    @PatchMapping("/returnToStore")
+    public ResponseEntity<?> returnToStore(@RequestParam List<String> gunsUUID){
+        return armoryService.returnToStore(gunsUUID);
     }
 
     @PatchMapping("/addImageToGun")

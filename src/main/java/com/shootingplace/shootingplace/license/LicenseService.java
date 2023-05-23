@@ -75,17 +75,15 @@ public class LicenseService {
     }
 
     public ResponseEntity<?> updateLicense(String memberUUID, License license) {
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         LicenseEntity licenseEntity = memberEntity.getLicense();
         if (memberEntity.getShootingPatent().getPatentNumber() == null && memberEntity.getAdult()) {
             LOG.info("Brak Patentu");
             return ResponseEntity.badRequest().body("Brak Patentu");
         }
         if (licenseEntity.getNumber() != null) {
-            System.out.println(memberEntity.getMemberName());
-            boolean match = memberRepository.findAll()
+            boolean match = memberRepository.findAllByErasedFalse()
                     .stream()
-                    .filter(f -> !f.getErased())
                     .filter(f -> f.getLicense().getNumber() != null)
                     .anyMatch(f -> f.getLicense().getNumber().equals(license.getNumber()));
             if (match && !licenseEntity.getNumber().equals(license.getNumber())) {
@@ -124,10 +122,12 @@ public class LicenseService {
             }
             LOG.info("zaktualizowano datę licencji");
         } else {
-            Integer validForYear = memberEntity.getHistory().getLicensePaymentHistory().get(0).getValidForYear();
-            licenseEntity.setValidThru(LocalDate.of(validForYear, 12, 31));
-            licenseEntity.setValid(true);
-            LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
+            if (memberEntity.getHistory().getLicensePaymentHistory().size() > 0) {
+                Integer validForYear = memberEntity.getHistory().getLicensePaymentHistory().get(0).getValidForYear();
+                licenseEntity.setValidThru(LocalDate.of(validForYear, 12, 31));
+                licenseEntity.setValid(true);
+                LOG.info("Brak ręcznego ustawienia daty, ustawiono na koniec bieżącego roku " + licenseEntity.getValidThru());
+            }
         }
         licenseEntity.setNumber(license.getNumber());
         licenseEntity.setPaid(false);
@@ -140,19 +140,13 @@ public class LicenseService {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
-        System.out.println(memberUUID);
-        System.out.println(number);
-        System.out.println(date);
-        System.out.println(isPaid);
-        System.out.println(pinCode);
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         LicenseEntity license = memberEntity.getLicense();
 
         if (number != null && !number.isEmpty() && !number.equals("null")) {
 
-            boolean match = memberRepository.findAll()
+            boolean match = memberRepository.findAllByErasedFalse()
                     .stream()
-                    .filter(f -> !f.getErased())
                     .filter(f -> f.getLicense().getNumber() != null)
                     .anyMatch(f -> f.getLicense().getNumber().equals(number));
 
@@ -302,14 +296,12 @@ public class LicenseService {
         }
         return getStringResponseEntity(pinCode, null, HttpStatus.OK, "prolongAllLicense", responseList);
 
-//        return ResponseEntity.ok(responseList);
     }
 
     public List<?> getAllLicencePayment() {
 
         List<LicensePaymentHistoryDTO> list1 = new ArrayList<>();
-        memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
+        memberRepository.findAllByErasedFalse()
                 .forEach(member -> member.getHistory().getLicensePaymentHistory()
                         .forEach(g -> list1.add(LicensePaymentHistoryDTO.builder()
                                 .paymentUuid(g.getUuid())

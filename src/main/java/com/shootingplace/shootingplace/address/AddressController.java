@@ -15,7 +15,7 @@ public class AddressController {
     }
 
     @PutMapping("/{memberUUID}")
-    public ResponseEntity<?> updateMemberAddress(@PathVariable String memberUUID, @RequestBody Address address) {
-       return addressService.updateAddress(memberUUID, address);
+    public ResponseEntity<?> updateMemberAddress(@PathVariable String memberUUID, @RequestBody Address address, @RequestParam String pinCode) {
+       return addressService.updateAddress(memberUUID, address, pinCode);
     }
 }

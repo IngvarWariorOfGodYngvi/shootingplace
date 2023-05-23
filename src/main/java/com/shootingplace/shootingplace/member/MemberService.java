@@ -17,6 +17,7 @@ import com.shootingplace.shootingplace.shootingPatent.ShootingPatentService;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -49,6 +50,9 @@ public class MemberService {
     private final ChangeHistoryService changeHistoryService;
     private final ErasedRepository erasedRepository;
     private final LicensePaymentHistoryRepository licensePaymentHistoryRepository;
+
+    private final Environment env;
+
     private final Logger LOG = LogManager.getLogger();
 
 
@@ -60,7 +64,7 @@ public class MemberService {
                          WeaponPermissionService weaponPermissionService,
                          MemberPermissionsService memberPermissionsService,
                          ClubRepository clubRepository,
-                         ErasedRepository erasedRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, ChangeHistoryService changeHistoryService) {
+                         ErasedRepository erasedRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, ChangeHistoryService changeHistoryService, Environment env) {
         this.memberRepository = memberRepository;
         this.licenseService = licenseService;
         this.licenseRepository = licenseRepository;
@@ -73,6 +77,7 @@ public class MemberService {
         this.erasedRepository = erasedRepository;
         this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
         this.changeHistoryService = changeHistoryService;
+        this.env = env;
     }
 
 
@@ -108,32 +113,58 @@ public class MemberService {
 
     public void checkMembers() {
         LOG.info("Sprawdzam składki i licencje");
-        // dorośli
-        historyService.checkStarts();
-        List<MemberEntity> adultMembers = memberRepository
-                .findAll()
-                .stream()
-                .filter(f -> !f.getErased())
-                .collect(Collectors.toList());
-        // nie ma żadnych składek
-        adultMembers.forEach(e -> {
-            if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
-                e.setActive(false);
-                memberRepository.save(e);
-            }
-            //dzisiejsza data jest później niż składka + 3 miesiące
-            else {
-                if (e.getAdult()) {
-                    if (e.getHistory().getContributionList().get(0).getValidThru().plusMonths(3).isBefore(LocalDate.now())) {
-                        if (e.getActive()) {
-                            e.setActive(false);
-                            LOG.info("zmieniono " + e.getSecondName());
-                            memberRepository.save(e);
+        if (env.getActiveProfiles()[0].equals("prod")) {
+            // dorośli
+            historyService.checkStarts();
+            List<MemberEntity> adultMembers = memberRepository.findAllByErasedFalse();
+            // nie ma żadnych składek
+            adultMembers.forEach(e -> {
+                if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
+                    e.setActive(false);
+                    memberRepository.save(e);
+                }
+                //dzisiejsza data jest później niż składka + 3 miesiące
+                else {
+                    if (e.getAdult()) {
+                        if (e.getHistory().getContributionList().get(0).getValidThru().plusMonths(3).isBefore(LocalDate.now())) {
+                            if (e.getActive()) {
+                                e.setActive(false);
+                                LOG.info("zmieniono " + e.getSecondName());
+                                memberRepository.save(e);
+                            }
+                        } else {
+                            e.setActive(true);
                         }
                     } else {
-                        e.setActive(true);
+                        LocalDate validThru = e.getHistory().getContributionList().get(0).getValidThru();
+                        if ((validThru.equals(LocalDate.of(validThru.getYear(), 2, 28)) && validThru.plusMonths(1).isBefore(LocalDate.now()))
+                                || (validThru.equals(LocalDate.of(validThru.getYear(), 8, 31)) && validThru.plusMonths(2).isBefore(LocalDate.now()))) {
+                            if (e.getActive()) {
+                                e.setActive(false);
+                                LOG.info("zmieniono " + e.getSecondName());
+                                memberRepository.save(e);
+                            }
+                        }
                     }
+                }
+                if (e.getLicense().getNumber() != null) {
+                    LicenseEntity license = e.getLicense();
+                    license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
+                    licenseRepository.save(license);
+                }
+            });
+            //młodzież
+            List<MemberEntity> nonAdultMembers = memberRepository.findAllByErasedFalse()
+                    .stream()
+                    .filter(f -> !f.getAdult())
+                    .collect(Collectors.toList());
+            // nie ma żadnych składek
+            nonAdultMembers.forEach(e -> {
+                if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
+                    e.setActive(false);
+                    memberRepository.save(e);
                 } else {
+                    //dzisiejsza data jest później niż składka + 1 || 2 miesiące
                     LocalDate validThru = e.getHistory().getContributionList().get(0).getValidThru();
                     if ((validThru.equals(LocalDate.of(validThru.getYear(), 2, 28)) && validThru.plusMonths(1).isBefore(LocalDate.now()))
                             || (validThru.equals(LocalDate.of(validThru.getYear(), 8, 31)) && validThru.plusMonths(2).isBefore(LocalDate.now()))) {
@@ -144,41 +175,40 @@ public class MemberService {
                         }
                     }
                 }
-            }
-            if (e.getLicense().getNumber() != null) {
-                LicenseEntity license = e.getLicense();
-                license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
-                licenseRepository.save(license);
-            }
-        });
-        //młodzież
-        List<MemberEntity> nonAdultMembers = memberRepository.findAllByErasedFalse()
-                .stream()
-                .filter(f -> !f.getAdult())
-                .collect(Collectors.toList());
-        // nie ma żadnych składek
-        nonAdultMembers.forEach(e -> {
-            if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
-                e.setActive(false);
-                memberRepository.save(e);
-            } else {
-                //dzisiejsza data jest później niż składka + 1 || 2 miesiące
-                LocalDate validThru = e.getHistory().getContributionList().get(0).getValidThru();
-                if ((validThru.equals(LocalDate.of(validThru.getYear(), 2, 28)) && validThru.plusMonths(1).isBefore(LocalDate.now()))
-                        || (validThru.equals(LocalDate.of(validThru.getYear(), 8, 31)) && validThru.plusMonths(2).isBefore(LocalDate.now()))) {
-                    if (e.getActive()) {
-                        e.setActive(false);
-                        LOG.info("zmieniono " + e.getSecondName());
-                        memberRepository.save(e);
+                if (e.getLicense().getNumber() != null) {
+                    LicenseEntity license = e.getLicense();
+                    license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
+                    licenseRepository.save(license);
+                }
+            });
+        }
+        if (env.getActiveProfiles()[0].equals("rcs")) {
+            historyService.checkStarts();
+            List<MemberEntity> members = memberRepository.findAllByErasedFalse();
+            members.forEach(e -> {
+                if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
+                    e.setActive(false);
+                    memberRepository.save(e);
+                } else {
+                    if (e.getAdult()) {
+                        if (e.getHistory().getContributionList().get(0).getValidThru().isBefore(LocalDate.now())) {
+                            if (e.getActive()) {
+                                e.setActive(false);
+                                LOG.info("zmieniono " + e.getSecondName());
+                                memberRepository.save(e);
+                            }
+                        } else {
+                            e.setActive(true);
+                        }
                     }
                 }
-            }
-            if (e.getLicense().getNumber() != null) {
-                LicenseEntity license = e.getLicense();
-                license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
-                licenseRepository.save(license);
-            }
-        });
+                if (e.getLicense().getNumber() != null) {
+                    LicenseEntity license = e.getLicense();
+                    license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
+                    licenseRepository.save(license);
+                }
+            });
+        }
     }
 
     //--------------------------------------------------------------------------
@@ -197,7 +227,6 @@ public class MemberService {
         }
         String finalEmail = member.getEmail();
         boolean anyMatch = memberEntityList.stream()
-//                .filter(f -> !f.getErased())
                 .filter(f -> f.getEmail() != null)
                 .filter(f -> !f.getEmail().isEmpty())
                 .anyMatch(f -> f.getEmail().equals(finalEmail));
@@ -384,8 +413,7 @@ public class MemberService {
     }
 
     //--------------------------------------------------------------------------
-    public ResponseEntity<?> updateMember(String memberUUID, Member member) {
-
+    public ResponseEntity<?> updateMember(String memberUUID, Member member, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.badRequest().build();
@@ -429,15 +457,6 @@ public class MemberService {
                 LOG.info("Zaktualizowano pomyślnie Email");
             }
         }
-        if (member.getPesel() != null && !member.getPesel().isEmpty()) {
-            if (memberRepository.findByPesel(member.getPesel()).isPresent()) {
-                LOG.error("Już ktoś ma taki sam numer PESEL");
-                return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Już ktoś ma taki sam numer PESEL");
-            } else {
-                memberEntity.setPesel(member.getPesel());
-                LOG.info("Zaktualizowano pomyślnie Numer PESEL");
-            }
-        }
         if (member.getPhoneNumber() != null && !member.getPhoneNumber().isEmpty()) {
             if (member.getPhoneNumber().replaceAll("\\s-", "").length() != 9 && !member.getPhoneNumber().isEmpty()) {
                 LOG.error("Żle podany numer");
@@ -461,14 +480,17 @@ public class MemberService {
                 LOG.info("Zaktualizowano pomyślnie Numer Dowodu");
             }
         }
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "update member", "Zaktualizowano dane klubowicza " + memberEntity.getMemberName());
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            memberRepository.save(memberEntity);
+        }
+        return response;
 
-        memberRepository.save(memberEntity);
-
-        return ResponseEntity.ok("Zaktualizowano dane klubowicza " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
     }
 
 
     public ResponseEntity<?> getMember(int number) {
+        System.out.println(number);
         if (memberRepository.existsByLegitimationNumber(number)) {
             MemberEntity memberEntity = memberRepository.findByLegitimationNumber(number).orElse(null);
             assert memberEntity != null;
@@ -498,75 +520,6 @@ public class MemberService {
 
         return ResponseEntity.ok(uuid);
 
-    }
-
-    public List<String> getMembersEmails(Boolean condition) {
-        List<String> list = new ArrayList<>();
-        List<MemberEntity> all = memberRepository.findAll();
-        all.sort(Comparator.comparing(MemberEntity::getSecondName).thenComparing(MemberEntity::getFirstName));
-        all.forEach(e -> {
-            if ((e.getEmail() != null && !e.getEmail().isEmpty()) && !e.getErased() && e.getAdult() == condition) {
-                list.add(e.getEmail().concat(";"));
-            }
-        });
-        return list;
-    }
-
-    public List<String> getMembersEmailsAdultActiveWithNoPatent() {
-        List<String> list = new ArrayList<>();
-        List<MemberEntity> all = memberRepository.findAllByErasedFalse();
-        all.sort(Comparator.comparing(MemberEntity::getSecondName).thenComparing(MemberEntity::getFirstName));
-        all.stream()
-                .filter(MemberEntity::getAdult)
-                .filter(MemberEntity::getActive)
-                .filter(f -> f.getShootingPatent() != null)
-                .filter(f -> f.getShootingPatent().getPatentNumber() == null || f.getShootingPatent().getPatentNumber().isEmpty())
-                .forEach(e -> {
-                    if ((e.getEmail() != null && !e.getEmail().isEmpty())) {
-                        list.add(e.getEmail().concat(";"));
-                    }
-                });
-        return list;
-    }
-
-    public List<String> getMembersPhoneNumbersWithNoPatent() {
-        List<String> list = new ArrayList<>();
-        List<MemberEntity> all = memberRepository.findAllByErasedFalse();
-        all.sort(Comparator.comparing(MemberEntity::getSecondName).thenComparing(MemberEntity::getFirstName));
-        all.stream()
-                .filter(MemberEntity::getAdult)
-                .filter(MemberEntity::getActive)
-                .filter(f -> f.getShootingPatent().getPatentNumber() == null || f.getShootingPatent().getPatentNumber().isEmpty())
-                .forEach(e -> {
-                    if ((e.getPhoneNumber() != null && !e.getPhoneNumber().isEmpty())) {
-                        String phone = e.getPhoneNumber();
-                        String split = phone.substring(0, 3) + " ";
-                        String split1 = phone.substring(3, 6) + " ";
-                        String split2 = phone.substring(6, 9) + " ";
-                        String split3 = phone.substring(9, 12) + " ";
-                        String phoneSplit = split + split1 + split2 + split3;
-                        list.add(phoneSplit.concat(" " + e.getSecondName() + " " + e.getFirstName() + ";"));
-                    }
-                });
-        return list;
-    }
-
-    public List<String> getMembersPhoneNumbers(Boolean condition) {
-        List<String> list = new ArrayList<>();
-        List<MemberEntity> all = memberRepository.findAll();
-        all.sort(Comparator.comparing(MemberEntity::getSecondName).thenComparing(MemberEntity::getFirstName));
-        all.forEach(e -> {
-            if ((e.getPhoneNumber() != null && !e.getPhoneNumber().isEmpty()) && !e.getErased() && e.getAdult() == condition) {
-                String phone = e.getPhoneNumber();
-                String split = phone.substring(0, 3) + " ";
-                String split1 = phone.substring(3, 6) + " ";
-                String split2 = phone.substring(6, 9) + " ";
-                String split3 = phone.substring(9, 12) + " ";
-                String phoneSplit = split + split1 + split2 + split3;
-                list.add(phoneSplit.concat(" " + e.getSecondName() + " " + e.getFirstName() + ";"));
-            }
-        });
-        return list;
     }
 
     public List<MemberInfo> getAllNames() {
@@ -751,135 +704,8 @@ public class MemberService {
         return list;
     }
 
-    public List<String> getMembersToEraseEmails() {
-        LocalDate notValidContribution = LocalDate.of(LocalDate.now().getYear(), 12, 31).minusYears(2);
-
-        List<String> list = new ArrayList<>();
-        List<MemberEntity> collect = memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> !f.getActive())
-                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
-                .collect(Collectors.toList());
-        collect.forEach(e -> {
-            if ((e.getEmail() != null && !e.getEmail().isEmpty()) && !e.getErased()) {
-                list.add(e.getEmail().concat(";"));
-            }
-        });
-        return list;
-
-    }
-
-    public List<String> getMembersToErasePhoneNumbers() {
-
-        LocalDate notValidContribution = LocalDate.of(LocalDate.now().getYear(), 12, 31).minusYears(2);
-
-        List<String> list = new ArrayList<>();
-        List<MemberEntity> collect = memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> !f.getActive())
-                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
-                .collect(Collectors.toList());
-        collect.forEach(e -> {
-            if ((e.getPhoneNumber() != null && !e.getPhoneNumber().isEmpty()) && !e.getErased()) {
-                String phone = e.getPhoneNumber();
-                String split = phone.substring(0, 3) + " ";
-                String split1 = phone.substring(3, 6) + " ";
-                String split2 = phone.substring(6, 9) + " ";
-                String split3 = phone.substring(9, 12) + " ";
-                String phoneSplit = split + split1 + split2 + split3;
-                list.add(phoneSplit.concat(" " + e.getSecondName() + " " + e.getFirstName() + ";"));
-            }
-        });
-        return list;
-    }
-
-    public List<String> getMembersToPoliceEmails() {
-        LocalDate notValidLicense = LocalDate.now().minusYears(1);
-
-        List<String> list = new ArrayList<>();
-        List<MemberEntity> collect = memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> f.getLicense().getNumber() != null)
-                .filter(f -> !f.getLicense().isValid())
-                .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
-                .collect(Collectors.toList());
-        collect.forEach(e -> {
-            if ((e.getEmail() != null && !e.getEmail().isEmpty()) && !e.getErased()) {
-                list.add(e.getEmail().concat(";"));
-            }
-        });
-        return list;
-    }
-
-    public List<String> getMembersToPolicePhoneNumbers() {
-
-        LocalDate notValidLicense = LocalDate.now().minusYears(1);
-
-        List<String> list = new ArrayList<>();
-        List<MemberEntity> collect = memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> f.getLicense().getNumber() != null)
-                .filter(f -> !f.getLicense().isValid())
-                .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
-                .collect(Collectors.toList());
-        collect.forEach(e -> {
-            if ((e.getPhoneNumber() != null && !e.getPhoneNumber().isEmpty()) && !e.getErased()) {
-                String phone = e.getPhoneNumber();
-                String split = phone.substring(0, 3) + " ";
-                String split1 = phone.substring(3, 6) + " ";
-                String split2 = phone.substring(6, 9) + " ";
-                String split3 = phone.substring(9, 12) + " ";
-                String phoneSplit = split + split1 + split2 + split3;
-                list.add(phoneSplit.concat(" " + e.getSecondName() + " " + e.getFirstName() + ";"));
-            }
-        });
-        return list;
-    }
-
     public MemberEntity getMemberByUUID(String uuid) {
         return memberRepository.getOne(uuid);
-    }
-
-    public List<String> getMembersEmailsNoActive() {
-
-        List<String> list = new ArrayList<>();
-        List<MemberEntity> collect = memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> !f.getActive())
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
-                .collect(Collectors.toList());
-        collect.forEach(e -> {
-            if ((e.getEmail() != null && !e.getEmail().isEmpty())) {
-                list.add(e.getEmail().concat(";"));
-            }
-        });
-        return list;
-    }
-
-    public List<String> getMembersPhoneNumbersNoActive() {
-
-        List<String> list = new ArrayList<>();
-        List<MemberEntity> collect = memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> !f.getActive())
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
-                .collect(Collectors.toList());
-        collect.forEach(e -> {
-            if ((e.getPhoneNumber() != null && !e.getPhoneNumber().isEmpty())) {
-                String phone = e.getPhoneNumber();
-                String split = phone.substring(0, 3) + " ";
-                String split1 = phone.substring(3, 6) + " ";
-                String split2 = phone.substring(6, 9) + " ";
-                String split3 = phone.substring(9, 12) + " ";
-                String phoneSplit = split + split1 + split2 + split3;
-                list.add(phoneSplit.concat(" " + e.getSecondName() + " " + e.getFirstName() + ";"));
-            }
-        });
-        return list;
     }
 
     public Boolean getMemberPeselIsPresent(String pesel) {
@@ -903,7 +729,7 @@ public class MemberService {
     public ResponseEntity<?> findMemberByBarCode(String barcode) {
 
         if (memberRepository.findByClubCardBarCode(barcode).isEmpty()) {
-            return ResponseEntity.badRequest().body("\"Nie znaleziono Klubowicza\"");
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
 
         MemberEntity memberEntity = memberRepository.findByClubCardBarCode(barcode).orElseThrow(EntityNotFoundException::new);
@@ -913,8 +739,7 @@ public class MemberService {
 
     public List<Member> getMembersToReportToThePolice() {
         LocalDate notValidLicense = LocalDate.now().minusYears(1);
-        return memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
+        return memberRepository.findAllByErasedFalse().stream()
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(f -> !f.getLicense().isValid())
                 .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
@@ -924,16 +749,13 @@ public class MemberService {
 
     public List<Member> getMembersToErase() {
         LocalDate notValidContribution = LocalDate.of(LocalDate.now().getYear(), 12, 31).minusYears(2);
-        return memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> !f.getActive())
+        return memberRepository.findAllByErasedFalseAndActiveFalse().stream()
                 .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))).map(Mapping::map).collect(Collectors.toList());
     }
 
     public List<Member> getMembersErased() {
-        return memberRepository.findAll().stream()
-                .filter(MemberEntity::getErased)
+        return memberRepository.findAllByErasedTrue().stream()
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .map(Mapping::map)
                 .collect(Collectors.toList());
@@ -967,7 +789,6 @@ public class MemberService {
         MemberEntity member = memberRepository.getOne(uuid);
 
         ClubEntity club = clubRepository.findByName(clubName);
-        System.out.println(club);
         member.setClub(clubRepository.getOne(club.getId()));
         memberRepository.save(member);
         return ResponseEntity.ok("Zmieniono Klub macierzysty zawodnika " + member.getMemberName() + " na: " + club.getName());

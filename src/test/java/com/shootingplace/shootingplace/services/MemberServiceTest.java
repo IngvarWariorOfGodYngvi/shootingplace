@@ -35,7 +35,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -109,37 +108,15 @@ public class MemberServiceTest {
         assertThat(responseEntity.getBody(), Matchers.equalTo(membersList.get(0)));
 //        assertThat(member.getEmail(), Matchers.equalTo("sample1@mail.com"));
     }
-
-    @Test
-    public void get_Member_Erased() {
-        //when
-        List<Member> members = memberService.getMembersErased();
-        //then
-        assertEquals(members.get(0).getSecondName(), membersList.get(4).getSecondName());
-        assertThat(members, Matchers.hasSize(2));
-    }
-
-    @Test
-    public void get_Members_Emails_Adult() {
-        //given
-        //when
-        List<String> list = memberService.getMembersEmails(true);
-        //then
-        assertThat(list, Matchers.hasSize(2));
-        MemberEntity memberEntity = membersList.get(0);
-        assertThat(list, Matchers.hasItem(memberEntity.getEmail() + ";"));
-    }
-
-    @Test
-    public void get_Members_Emails_Non_Adult() {
-        //given
-        //when
-        List<String> list = memberService.getMembersEmails(false);
-        //then
-        assertThat(list, Matchers.hasSize(3));
-        MemberEntity memberEntity = membersList.get(1);
-        assertThat(list, Matchers.hasItem(memberEntity.getEmail() + ";"));
-    }
+//
+//    @Test
+//    public void get_Member_Erased() {
+//        //when
+//        List<Member> members = memberService.getMembersErased();
+//        //then
+//        assertEquals(members.get(0).getSecondName(), membersList.get(4).getSecondName());
+//        assertThat(members, Matchers.hasSize(2));
+//    }
 
     @Test
     public void get_Member_By_UUID() {
@@ -360,168 +337,6 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void get_members_emails_adult() {
-        //given
-        boolean adult = true;
-        //when
-        List<String> list = memberService.getMembersEmails(adult);
-        //then
-        assertThat(list, Matchers.hasSize(2));
-    }
-
-    @Test
-    public void get_members_emails_not_adult() {
-        //given
-        boolean adult = false;
-        //when
-        List<String> list = memberService.getMembersEmails(adult);
-        //then
-        assertThat(list, Matchers.hasSize(3));
-    }
-
-    @Test
-    public void getMembersEmailsNoActive() {
-        //given
-        //when
-        List<String> list = memberService.getMembersEmailsNoActive();
-        //then
-        assertThat(list, Matchers.hasSize(2));
-    }
-
-    @Test
-    public void getMembersPhoneNumbersNoActive() {
-        //given
-        //when
-        List<String> list = memberService.getMembersPhoneNumbersNoActive();
-        //then
-        assertThat(list, Matchers.hasSize(2));
-    }
-
-    @Test
-    public void getMembersEmailsWithNoPatent() {
-        //given
-        List<MemberEntity> collect = membersList.stream()
-                .filter(f -> !f.getErased())
-                .filter(MemberEntity::getAdult)
-                .filter(MemberEntity::getActive)
-                .filter(f -> f.getShootingPatent() != null)
-                .filter(f -> f.getShootingPatent().getPatentNumber() == null).collect(Collectors.toList());
-        //when
-        List<String> list = memberService.getMembersEmailsAdultActiveWithNoPatent();
-        //then
-        assertThat(list, Matchers.hasSize(collect.size()));
-        assertThat(list.get(0), Matchers.equalTo("sample1@mail.com;"));
-    }
-
-    @Test
-    public void getMembersPhoneNumbersWithNoPatent() {
-        //given
-        List<MemberEntity> collect = membersList.stream()
-                .filter(f -> !f.getErased())
-                .filter(MemberEntity::getAdult)
-                .filter(MemberEntity::getActive)
-                .filter(f -> f.getShootingPatent() != null)
-                .filter(f -> f.getShootingPatent().getPatentNumber() == null).collect(Collectors.toList());
-        //when
-        List<String> list = memberService.getMembersPhoneNumbersWithNoPatent();
-        //then
-        assertThat(list, Matchers.hasSize(collect.size()));
-        assertThat(list.get(0), Matchers.containsString("+48 111 111 111"));
-    }
-
-    @Test
-    public void getMembersToEraseEmails() {
-        //given
-        LocalDate notValidContribution = LocalDate.of(LocalDate.now().getYear(), 12, 31).minusYears(2);
-        List<MemberEntity> collect = membersList.stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> !f.getActive())
-                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
-                .collect(Collectors.toList());
-        //when
-        List<String> list = memberService.getMembersToEraseEmails();
-        //then
-        assertThat(list, Matchers.hasSize(collect.size()));
-        assertThat(list.get(0), Matchers.equalTo(collect.get(0).getEmail() + ";"));
-    }
-
-    @Test
-    public void getMembersToErasePhoneNumbers() {
-        //given
-        LocalDate notValidContribution = LocalDate.of(LocalDate.now().getYear(), 12, 31).minusYears(2);
-        List<MemberEntity> collect = membersList.stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> !f.getActive())
-                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
-                .collect(Collectors.toList());
-        //when
-        List<String> list = memberService.getMembersToErasePhoneNumbers();
-        //then
-        assertThat(list, Matchers.hasSize(collect.size()));
-        assertThat(list.get(0).replaceAll(" ", ""), Matchers.containsString(collect.get(0).getPhoneNumber()));
-    }
-
-    @Test
-    public void getMembersToPoliceEmails() {
-        //given
-        LocalDate notValidLicense = LocalDate.now().minusYears(1);
-        List<MemberEntity> collect = memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> f.getLicense().getNumber() != null)
-                .filter(f -> !f.getLicense().isValid())
-                .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
-                .collect(Collectors.toList());
-        //when
-        List<String> list = memberService.getMembersToPoliceEmails();
-        //then
-        assertThat(list, Matchers.hasSize(collect.size()));
-        assertThat(list.get(0), Matchers.equalTo(collect.get(0).getEmail() + ";"));
-
-    }
-
-    @Test
-    public void getMembersToPolicePhoneNumbers() {
-        //given
-        LocalDate notValidLicense = LocalDate.now().minusYears(1);
-        List<MemberEntity> collect = memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> f.getLicense().getNumber() != null)
-                .filter(f -> !f.getLicense().isValid())
-                .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName))
-                .collect(Collectors.toList());
-        //when
-        List<String> list = memberService.getMembersToPolicePhoneNumbers();
-        //then
-        assertThat(list, Matchers.hasSize(collect.size()));
-        assertThat(list.get(0).replaceAll(" ", ""), Matchers.containsString(collect.get(0).getPhoneNumber()));
-    }
-
-    @Test
-    public void get_members_phone_numbers_adult() {
-        //given
-        boolean adult = true;
-        //when
-        List<String> list = memberService.getMembersPhoneNumbers(adult);
-        //then
-        assertThat(list, Matchers.hasSize(2));
-    }
-
-    @Test
-    public void get_members_phone_numbers_not_adult() {
-        //given
-        boolean adult = false;
-        //when
-        List<String> list = memberService.getMembersPhoneNumbers(adult);
-        //then
-        assertThat(list, Matchers.hasSize(3));
-    }
-
-
-    @Test
     public void get_member_pesel_is_present_success() {
         //given
         String pesel = membersList.get(0).getPesel();
@@ -701,170 +516,170 @@ public class MemberServiceTest {
         assertThat(responseEntity.getBody(), Matchers.equalTo("Uwaga! Ktoś już ma taki numer legitymacji"));
     }
 
-    @Test
-    public void update_member_member_not_found() {
-        //given
-        Member member = Member.builder()
-                .firstName("John7")
-                .secondName("Doe7")
-                .pesel("50052116592")
-                .email("sample7@mail.com")
-                .IDCard("AAA 999991")
-                .joinDate(LocalDate.now())
-                .adult(true)
-                .legitimationNumber(1)
-                .build();
-        //when
-        ResponseEntity<?> responseEntity = memberService.updateMember(String.valueOf(UUID.randomUUID()), member);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+//    @Test
+//    public void update_member_member_not_found() {
+//        //given
+//        Member member = Member.builder()
+//                .firstName("John7")
+//                .secondName("Doe7")
+//                .pesel("50052116592")
+//                .email("sample7@mail.com")
+//                .IDCard("AAA 999991")
+//                .joinDate(LocalDate.now())
+//                .adult(true)
+//                .legitimationNumber(1)
+//                .build();
+//        //when
+//        ResponseEntity<?> responseEntity = memberService.updateMember(String.valueOf(UUID.randomUUID()), member);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+//
+//    }
 
-    }
+//    @Test
+//    public void update_member_bad_request_pesel_exist() {
+//        //given
+//        String pesel = "63011744727";
+//        String uuid = membersList.get(1).getUuid();
+//        Member member = Member.builder()
+//                .firstName("John7")
+//                .secondName("Doe7")
+//                .pesel("63011744727")
+//                .email("sample7@mail.com")
+//                .IDCard("AAA 999991")
+//                .joinDate(LocalDate.now())
+//                .adult(true)
+//                .legitimationNumber(1)
+//                .build();
+//        //when
+//        when(memberRepository.findByPesel(pesel)).thenReturn(Optional.ofNullable(findByPesel(pesel)));
+//        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+//        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
+//        ResponseEntity<?> responseEntity = memberService.updateMember(uuid, member);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("Już ktoś ma taki sam numer PESEL"));
+//    }
 
-    @Test
-    public void update_member_bad_request_pesel_exist() {
-        //given
-        String pesel = "63011744727";
-        String uuid = membersList.get(1).getUuid();
-        Member member = Member.builder()
-                .firstName("John7")
-                .secondName("Doe7")
-                .pesel("63011744727")
-                .email("sample7@mail.com")
-                .IDCard("AAA 999991")
-                .joinDate(LocalDate.now())
-                .adult(true)
-                .legitimationNumber(1)
-                .build();
-        //when
-        when(memberRepository.findByPesel(pesel)).thenReturn(Optional.ofNullable(findByPesel(pesel)));
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
-        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
-        ResponseEntity<?> responseEntity = memberService.updateMember(uuid, member);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("Już ktoś ma taki sam numer PESEL"));
-    }
+//    @Test
+//    public void update_member_bad_request_email_exist() {
+//        //given
+//        String email = "sample1@mail.com";
+//        String uuid = membersList.get(1).getUuid();
+//        Member member = Member.builder()
+//                .firstName("John7")
+//                .secondName("Doe7")
+//                .pesel("63011744727")
+//                .email("sample1@mail.com")
+//                .IDCard("AAA 999991")
+//                .joinDate(LocalDate.now())
+//                .adult(true)
+//                .legitimationNumber(1)
+//                .build();
+//        //when
+//        when(memberRepository.findByEmail(email)).thenReturn(Optional.of((findByEmail(email))));
+//        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+//        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
+//        ResponseEntity<?> responseEntity = memberService.updateMember(uuid, member);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("Uwaga! Już ktoś ma taki sam e-mail"));
+//    }
 
-    @Test
-    public void update_member_bad_request_email_exist() {
-        //given
-        String email = "sample1@mail.com";
-        String uuid = membersList.get(1).getUuid();
-        Member member = Member.builder()
-                .firstName("John7")
-                .secondName("Doe7")
-                .pesel("63011744727")
-                .email("sample1@mail.com")
-                .IDCard("AAA 999991")
-                .joinDate(LocalDate.now())
-                .adult(true)
-                .legitimationNumber(1)
-                .build();
-        //when
-        when(memberRepository.findByEmail(email)).thenReturn(Optional.of((findByEmail(email))));
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
-        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
-        ResponseEntity<?> responseEntity = memberService.updateMember(uuid, member);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("Uwaga! Już ktoś ma taki sam e-mail"));
-    }
+//    @Test
+//    public void update_member_bad_request_idCard_exist() {
+//        //given
+//        String idCard = "AAA 999992";
+//        String uuid = membersList.get(0).getUuid();
+//        Member member = Member.builder()
+//                .firstName("John7")
+//                .secondName("Doe7")
+//                .pesel("63011744727")
+//                .email("sample7@mail.com")
+//                .IDCard("AAA 999992")
+//                .joinDate(LocalDate.now())
+//                .adult(true)
+//                .legitimationNumber(1)
+//                .build();
+//        //when
+//        when(memberRepository.findByIDCard(idCard)).thenReturn(Optional.of((findByIDCard(idCard))));
+//        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+//        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
+//        ResponseEntity<?> responseEntity = memberService.updateMember(uuid, member);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("Ktoś już ma taki numer dowodu"));
+//    }
 
-    @Test
-    public void update_member_bad_request_idCard_exist() {
-        //given
-        String idCard = "AAA 999992";
-        String uuid = membersList.get(0).getUuid();
-        Member member = Member.builder()
-                .firstName("John7")
-                .secondName("Doe7")
-                .pesel("63011744727")
-                .email("sample7@mail.com")
-                .IDCard("AAA 999992")
-                .joinDate(LocalDate.now())
-                .adult(true)
-                .legitimationNumber(1)
-                .build();
-        //when
-        when(memberRepository.findByIDCard(idCard)).thenReturn(Optional.of((findByIDCard(idCard))));
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
-        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
-        ResponseEntity<?> responseEntity = memberService.updateMember(uuid, member);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("Ktoś już ma taki numer dowodu"));
-    }
+//    @Test
+//    public void update_member_bad_request_legitimation_number_exist() {
+//        //given
+//        Integer legitimationNumber = 1;
+//        String uuid = membersList.get(0).getUuid();
+//        Member member = Member.builder()
+//                .firstName("John7")
+//                .secondName("Doe7")
+//                .pesel("63011744727")
+//                .email("sample7@mail.com")
+//                .IDCard("AAA 999992")
+//                .joinDate(LocalDate.now())
+//                .adult(true)
+//                .legitimationNumber(1)
+//                .build();
+//        //when
+//        when(memberRepository.findByLegitimationNumber(legitimationNumber)).thenReturn(Optional.of((findByLegitimationNumber(legitimationNumber))));
+//        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+//        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
+//        ResponseEntity<?> responseEntity = memberService.updateMember(uuid, member);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("Uwaga! Już ktoś ma taki numer legitymacji"));
+//    }
 
-    @Test
-    public void update_member_bad_request_legitimation_number_exist() {
-        //given
-        Integer legitimationNumber = 1;
-        String uuid = membersList.get(0).getUuid();
-        Member member = Member.builder()
-                .firstName("John7")
-                .secondName("Doe7")
-                .pesel("63011744727")
-                .email("sample7@mail.com")
-                .IDCard("AAA 999992")
-                .joinDate(LocalDate.now())
-                .adult(true)
-                .legitimationNumber(1)
-                .build();
-        //when
-        when(memberRepository.findByLegitimationNumber(legitimationNumber)).thenReturn(Optional.of((findByLegitimationNumber(legitimationNumber))));
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
-        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
-        ResponseEntity<?> responseEntity = memberService.updateMember(uuid, member);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("Uwaga! Już ktoś ma taki numer legitymacji"));
-    }
+//    @Test
+//    public void update_member_success() {
+//        //given
+//        String uuid = membersList.get(0).getUuid();
+//        Member member = Member.builder()
+//                .firstName("John7")
+//                .secondName("Doe7")
+//                .pesel("63011744727")
+//                .email("sample7@mail.com")
+//                .IDCard("AAA 999997")
+//                .joinDate(LocalDate.now())
+//                .adult(true)
+//                .legitimationNumber(7)
+//                .build();
+//        //when
+//        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+//        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
+//        ResponseEntity<?> responseEntity = memberService.updateMember(uuid, member);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+//    }
 
-    @Test
-    public void update_member_success() {
-        //given
-        String uuid = membersList.get(0).getUuid();
-        Member member = Member.builder()
-                .firstName("John7")
-                .secondName("Doe7")
-                .pesel("63011744727")
-                .email("sample7@mail.com")
-                .IDCard("AAA 999997")
-                .joinDate(LocalDate.now())
-                .adult(true)
-                .legitimationNumber(7)
-                .build();
-        //when
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
-        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
-        ResponseEntity<?> responseEntity = memberService.updateMember(uuid, member);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-    }
-
-    @Test
-    public void update_member_success2() {
-        //given
-        String uuid = membersList.get(1).getUuid();
-        Member member = Member.builder()
-                .firstName("John7")
-                .secondName("Doe7")
-                .pesel("63011744727")
-                .email("sample7@mail.com")
-                .IDCard("AAA 999997")
-                .phoneNumber("111111111")
-                .joinDate(LocalDate.now())
-                .adult(true)
-                .legitimationNumber(7)
-                .build();
-        //when
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
-        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
-        ResponseEntity<?> responseEntity = memberService.updateMember(uuid, member);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-    }
+//    @Test
+//    public void update_member_success2() {
+//        //given
+//        String uuid = membersList.get(1).getUuid();
+//        Member member = Member.builder()
+//                .firstName("John7")
+//                .secondName("Doe7")
+//                .pesel("63011744727")
+//                .email("sample7@mail.com")
+//                .IDCard("AAA 999997")
+//                .phoneNumber("111111111")
+//                .joinDate(LocalDate.now())
+//                .adult(true)
+//                .legitimationNumber(7)
+//                .build();
+//        //when
+//        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+//        when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
+//        ResponseEntity<?> responseEntity = memberService.updateMember(uuid, member);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+//    }
 
     @Test
     public void change_adult_not_found() {

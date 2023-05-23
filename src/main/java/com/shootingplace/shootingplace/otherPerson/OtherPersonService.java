@@ -12,9 +12,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,7 +34,7 @@ public class OtherPersonService {
         this.memberPermissionsRepository = memberPermissionsRepository;
     }
 
-    public ResponseEntity<String> addPerson(String club, OtherPerson person, MemberPermissions permissions) {
+    public ResponseEntity<?> addPerson(String club, OtherPerson person, MemberPermissions permissions) {
 
         MemberPermissionsEntity permissionsEntity = Mapping.map(permissions);
 
@@ -102,9 +104,9 @@ public class OtherPersonService {
         return list;
     }
 
-    public List<OtherPersonEntity> getAll() {
+    public List<?> getAll() {
         LOG.info("Wywołano wszystkich Nie-Klubowiczów");
-        return otherPersonRepository.findAll().stream().filter(OtherPersonEntity::isActive).sorted(Comparator.comparing(OtherPersonEntity::getSecondName).thenComparing(OtherPersonEntity::getFirstName)).collect(Collectors.toList());
+        return otherPersonRepository.findAll().stream().filter(OtherPersonEntity::isActive).sorted(Comparator.comparing(OtherPersonEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(OtherPersonEntity::getFirstName)).collect(Collectors.toList());
     }
 
     public List<OtherPersonEntity> getOthersWithPermissions() {

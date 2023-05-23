@@ -1,10 +1,12 @@
 package com.shootingplace.shootingplace.address;
 
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -14,14 +16,16 @@ import javax.persistence.EntityNotFoundException;
 public class AddressService {
     private final AddressRepository addressRepository;
     private final MemberRepository memberRepository;
+    private final ChangeHistoryService changeHistoryService;
     private final Logger LOG = LogManager.getLogger(getClass());
 
-    public AddressService(AddressRepository addressRepository, MemberRepository memberRepository) {
+    public AddressService(AddressRepository addressRepository, MemberRepository memberRepository, ChangeHistoryService changeHistoryService) {
         this.addressRepository = addressRepository;
         this.memberRepository = memberRepository;
+        this.changeHistoryService = changeHistoryService;
     }
 
-    public ResponseEntity<?> updateAddress(String memberUUID, Address address) {
+    public ResponseEntity<?> updateAddress(String memberUUID, Address address, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).body("Nie znaleziono Klubowicza");
@@ -61,9 +65,12 @@ public class AddressService {
             addressEntity.setFlatNumber(address.getFlatNumber().toUpperCase());
             LOG.info("Dodano Numer mieszkania");
         }
-        addressRepository.save(addressEntity);
-        LOG.info("Zaktualizowano adres");
-        return ResponseEntity.ok("Zaktualizowano adres " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "update address", "Zaktualizowano adres " + memberEntity.getMemberName());
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            addressRepository.save(addressEntity);
+            LOG.info("Zaktualizowano adres");
+        }
+        return response;
     }
 
     public Address getAddress() {
@@ -75,5 +82,17 @@ public class AddressService {
                 .flatNumber(null)
                 .build();
 
+    }
+
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, String body) {
+        ResponseEntity<String> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        if (memberEntity.getUuid() == null) {
+            memberEntity.setUuid("nowy");
+        }
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " " + methodName + " ", memberEntity.getUuid());
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
     }
 }

@@ -6,6 +6,7 @@ import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,14 +35,18 @@ public class AmmoEvidenceController {
     @PostMapping("/ammo")
     public ResponseEntity<?> createAmmoUsed(@RequestParam String caliberUUID, @RequestParam Integer legitimationNumber, @RequestParam int otherID, @RequestParam Integer counter) {
         if (counter != 0) {
-            recordsService.createRecordInBook(legitimationNumber,otherID);
+            recordsService.createRecordInBook(legitimationNumber, otherID);
             return ammoUsedService.addAmmoUsedEntity(caliberUUID, legitimationNumber, otherID, counter);
         } else {
             return ResponseEntity.badRequest().build();
         }
     }
 
-    // New ammo in evidence
+    @GetMapping("/personalAmmoFromList")
+    public ResponseEntity<?> getPersonalAmmoFromList(@Nullable @RequestParam String legitimationNumber, @Nullable @RequestParam String IDNumber, @RequestParam String evidenceUUID) {
+
+        return ResponseEntity.ok(ammoUsedService.getPersonalAmmoFromList(legitimationNumber, IDNumber, evidenceUUID));
+    }
 
     @GetMapping("/evidence")
     public ResponseEntity<?> getOpenEvidence() {
@@ -61,17 +66,6 @@ public class AmmoEvidenceController {
     @GetMapping("/checkAnyOpenEvidence")
     public ResponseEntity<?> checkAnyOpenEvidence() {
         return ResponseEntity.ok().body(ammoEvidenceService.checkAnyOpenEvidence());
-    }
-
-//    @GetMapping("/getGunInAmmoEvidenceList")
-//    public ResponseEntity<?> getGunInAmmoEvidenceList(@RequestParam String evidenceUUID) {
-//        return ResponseEntity.ok().body(ammoEvidenceService.getGunInAmmoEvidenceList(evidenceUUID));
-//    }
-
-    @Transactional
-    @PutMapping("/addGunToList")
-    public ResponseEntity<?> addGunToList(@RequestParam String evidenceUUID, @RequestParam String barcode) {
-        return ammoEvidenceService.addGunToList(evidenceUUID, barcode);
     }
 
     @PatchMapping("/ammo")

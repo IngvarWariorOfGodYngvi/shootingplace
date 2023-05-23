@@ -31,7 +31,7 @@ public class GunEntity {
     @NotNull
     private String gunType;
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @OrderBy("date DESC")
+    @OrderBy("dateTime DESC")
     private List<UsedHistoryEntity> usedHistoryEntityList;
 
     private String numberOfMagazines;
@@ -44,6 +44,8 @@ public class GunEntity {
 
     private String comment;
     private boolean inStock;
+    private boolean available;
+    private String inUseStatus;
     private String imgUUID;
     private String barcode;
 
@@ -146,6 +148,22 @@ public class GunEntity {
 
     public void setInStock(boolean inStock) {
         this.inStock = inStock;
+    }
+
+    public String getInUseStatus() {
+        return inUseStatus;
+    }
+
+    public void setInUseStatus(String inUseStatus) {
+        this.inUseStatus = inUseStatus;
+    }
+
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
     }
 
     public String getBasisForPurchaseOrAssignment() {

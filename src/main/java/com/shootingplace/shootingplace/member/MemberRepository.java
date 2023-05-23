@@ -32,10 +32,12 @@ public interface MemberRepository {
 
     Page<MemberEntity> findAll(Pageable page);
     List<MemberEntity> findAllByErasedFalse();
+    List<MemberEntity> findAllByErasedFalseAndActiveFalse();
 
     Page<MemberEntity> findAllByErasedFalse(Pageable pageable);
 
     List<MemberEntity> findAllByErasedTrue();
+
 
     void delete(MemberEntity one);
 }

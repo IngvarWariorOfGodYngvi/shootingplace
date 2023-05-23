@@ -40,7 +40,6 @@ public class MemberController {
 
     @GetMapping("/PESEL/{PESELNumber}")
     public ResponseEntity<?> getMemberByPESELNumber(@PathVariable String PESELNumber) {
-        System.out.println("coś");
         return memberService.getMemberByPESELNumber(PESELNumber);
     }
 
@@ -102,57 +101,9 @@ public class MemberController {
         return memberService.getMembersWithPermissions();
     }
 
-    @GetMapping("/membersEmails")
-    public ResponseEntity<?> getMembersEmails(@RequestParam Boolean condition) {
-        return ResponseEntity.ok(memberService.getMembersEmails(condition));
-    }
-
-    @GetMapping("/membersEmailsNoActive")
-    public ResponseEntity<?> getMembersEmailsNoActive() {
-        return ResponseEntity.ok(memberService.getMembersEmailsNoActive());
-    }
-
-    @GetMapping("/phoneNumbersNoActive")
-    public ResponseEntity<?> getMembersPhoneNumbersNoActive() {
-        return ResponseEntity.ok(memberService.getMembersPhoneNumbersNoActive());
-    }
     @GetMapping("/getMemberEmail")
     public ResponseEntity<?> getSingleMemberEmail(@RequestParam Integer number) {
         return memberService.getSingleMemberEmail(number);
-    }
-    @GetMapping("/membersEmailsNoPatent")
-    public ResponseEntity<?> getMembersEmailsWithNoPatent() {
-        return ResponseEntity.ok(memberService.getMembersEmailsAdultActiveWithNoPatent());
-    }
-
-    @GetMapping("/phoneNumbersNoPatent")
-    public ResponseEntity<?> getMembersPhoneNumbersWithNoPatent() {
-        return ResponseEntity.ok(memberService.getMembersPhoneNumbersWithNoPatent());
-    }
-
-    @GetMapping("/membersToEraseEmails")
-    public ResponseEntity<?> getMembersToEraseEmails() {
-        return ResponseEntity.ok(memberService.getMembersToEraseEmails());
-    }
-
-    @GetMapping("/membersToErasePhoneNumbers")
-    public ResponseEntity<?> getMembersToErasePhoneNumbers() {
-        return ResponseEntity.ok(memberService.getMembersToErasePhoneNumbers());
-    }
-
-    @GetMapping("/membersToPoliceEmails")
-    public ResponseEntity<?> getMembersToPoliceEmails() {
-        return ResponseEntity.ok(memberService.getMembersToPoliceEmails());
-    }
-
-    @GetMapping("/membersToPolicePhoneNumbers")
-    public ResponseEntity<?> getMembersToPolicePhoneNumbers() {
-        return ResponseEntity.ok(memberService.getMembersToPolicePhoneNumbers());
-    }
-
-    @GetMapping("/phoneNumbers")
-    public ResponseEntity<?> getMembersPhoneNumbers(@RequestParam Boolean condition) {
-        return ResponseEntity.ok(memberService.getMembersPhoneNumbers(condition));
     }
 
     @GetMapping("/pesel")
@@ -199,8 +150,8 @@ public class MemberController {
     }
 
     @PutMapping("/{uuid}")
-    public ResponseEntity<?> updateMember(@PathVariable String uuid, @RequestBody @Valid Member member) {
-        return memberService.updateMember(uuid, member);
+    public ResponseEntity<?> updateMember(@PathVariable String uuid, @RequestBody @Valid Member member, @RequestParam String pinCode) {
+        return memberService.updateMember(uuid, member, pinCode);
     }
 
     @GetMapping("/getMembersToReportToThePolice")
@@ -217,7 +168,7 @@ public class MemberController {
     public ResponseEntity<?> findMemberByBarCode(@RequestParam String barcode) {
         return memberService.findMemberByBarCode(barcode);
     }
-
+@Transactional
     @PatchMapping("/adult/{uuid}")
     public ResponseEntity<?> changeAdult(@PathVariable String uuid, @RequestParam String pinCode) {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);

@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.configurations;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceService;
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardService;
+import com.shootingplace.shootingplace.contributions.ContributionService;
 import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.member.MemberService;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
@@ -17,17 +18,19 @@ public class ScheduledTasks {
     private final MemberService memberServ;
     private final BarCodeCardService barCodeCardServ;
     private final AmmoEvidenceService ammoEvidenceService;
+    private final ContributionService contributionService;
     private final AmmoUsedService ammoUsedService;
 
-    public ScheduledTasks(WorkingTimeEvidenceService workRepo, MemberService memberServ, BarCodeCardService barCodeCardServ, AmmoEvidenceService ammoEvidenceService, AmmoUsedService ammoUsedService) {
+    public ScheduledTasks(WorkingTimeEvidenceService workRepo, MemberService memberServ, BarCodeCardService barCodeCardServ, AmmoEvidenceService ammoEvidenceService, ContributionService contributionService, AmmoUsedService ammoUsedService) {
         this.workServ = workRepo;
         this.memberServ = memberServ;
         this.barCodeCardServ = barCodeCardServ;
         this.ammoEvidenceService = ammoEvidenceService;
+        this.contributionService = contributionService;
         this.ammoUsedService = ammoUsedService;
     }
     @Transactional
-    @Scheduled(cron = "0 30 20 * * * ")
+    @Scheduled(cron = "0/5 * * * * *")
     public void recountAmmo() {
         ammoUsedService.recountAmmo();
     }

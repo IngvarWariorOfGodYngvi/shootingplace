@@ -8,8 +8,6 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
-
 @Service
 public class ShootingPatentService {
 
@@ -27,19 +25,16 @@ public class ShootingPatentService {
     }
 
     public ResponseEntity<?> updatePatent(String memberUUID, ShootingPatent shootingPatent) {
-
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono klubowicza");
         }
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         ShootingPatentEntity shootingPatentEntity = memberEntity.getShootingPatent();
-
         if (shootingPatent.getPatentNumber() != null && !shootingPatent.getPatentNumber().isEmpty()) {
 
-            boolean match = memberRepository.findAll()
+            boolean match = memberRepository.findAllByErasedFalse()
                     .stream()
-                    .filter(f -> !f.getErased())
-                    .filter(f -> f.getShootingPatent().getPatentNumber() != null)
+                    .filter(f -> f.getShootingPatent().getPatentNumber() != null && !f.getShootingPatent().getPatentNumber().contains("null"))
                     .anyMatch(f -> f.getShootingPatent().getPatentNumber().equals(shootingPatent.getPatentNumber()));
 
             if (match && !shootingPatentEntity.getPatentNumber().equals(shootingPatent.getPatentNumber())) {

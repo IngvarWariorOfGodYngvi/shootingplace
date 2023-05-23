@@ -74,7 +74,7 @@ public class AddressEntity {
 
     @Override
     public String toString() {
-        String flatNumber = this.flatNumber != null ? this.flatNumber : "";
+        String flatNumber = this.flatNumber != null ? "m." + this.flatNumber : "";
         return postOfficeCity + " " + zipCode + " " + street + " " + streetNumber + " " + flatNumber;
     }
 

@@ -9,4 +9,6 @@ public interface CaliberRepository{
     CaliberEntity save(CaliberEntity entity);
 
     Optional<CaliberEntity> findById(String caliberUUID);
+
+    CaliberEntity getOne(String caliberUUID);
 }

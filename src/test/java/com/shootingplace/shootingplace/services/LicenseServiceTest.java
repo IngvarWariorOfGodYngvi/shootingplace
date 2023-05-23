@@ -69,7 +69,7 @@ public class LicenseServiceTest {
 
     @Before
     public void init() {
-        when(memberRepository.findAll()).thenReturn(membersList);
+//        when(memberRepository.findAll()).thenReturn(membersList);
         when(memberRepository.findAllByErasedFalse()).thenReturn(membersList.stream().filter(f->!f.getErased()).collect(Collectors.toList()));
 
         MockitoAnnotations.initMocks(licenseService);

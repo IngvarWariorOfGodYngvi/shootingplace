@@ -219,8 +219,7 @@ public class AmmoUsedService {
                     .findFirst()
                     .orElseThrow(EntityNotFoundException::new);
 
-            Integer counter = ammoUsedEntity.getCounter();
-
+            Integer counter = (ammoUsedEntity.getCounter() != null ? ammoUsedEntity.getCounter() : 0);
             ammoUsedEntity.setCounter(counter + ammoUsedpersonal.getCounter());
             if (ammoUsedEntity.getCounter() < 0) {
                 ammoUsedEntity.setCounter(0);
@@ -275,4 +274,48 @@ public class AmmoUsedService {
         all2.forEach(ammoUsedToEvidenceEntityRepository::delete);
     }
 
+    public List<AmmoUsedToEvidenceDTO> getPersonalAmmoFromList(String legitimationNumber, String idNumber, String evidenceID) {
+
+        if (idNumber.equals("null")) {
+            idNumber = null;
+        }
+        if (legitimationNumber.equals("null")) {
+            legitimationNumber = null;
+        }
+        AmmoEvidenceEntity one = ammoEvidenceRepository.getOne(evidenceID);
+        List<AmmoUsedToEvidenceDTO> collect = new ArrayList<>();
+        if (legitimationNumber != null) {
+
+            String finalLegitimationNumber = legitimationNumber;
+            one.getAmmoInEvidenceEntityList().stream().map(Mapping::map)
+                    .forEach(e -> {
+                                List<AmmoUsedToEvidenceDTO> collect1 = e.getAmmoUsedToEvidenceDTOList()
+
+                                        .stream()
+                                        .filter(f -> f.getLegitimationNumber() != null)
+                                        .filter(f -> f.getLegitimationNumber().equals(Integer.valueOf(finalLegitimationNumber)))
+                                        .collect(Collectors.toList());
+                                collect.addAll(collect1);
+                            }
+                    );
+        }
+        if (idNumber != null) {
+
+            String finalIdNumber = idNumber;
+            one.getAmmoInEvidenceEntityList().stream().map(Mapping::map)
+                    .forEach(e -> {
+                                List<AmmoUsedToEvidenceDTO> collect1 = e.getAmmoUsedToEvidenceDTOList()
+
+                                        .stream()
+                                        .filter(f -> f.getIDNumber() != null)
+                                        .filter(f -> f.getIDNumber().equals(Integer.valueOf(finalIdNumber)))
+                                        .collect(Collectors.toList());
+                                collect.addAll(collect1);
+                            }
+                    );
+        }
+
+
+        return collect;
+    }
 }

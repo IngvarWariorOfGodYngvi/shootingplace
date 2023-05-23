@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: "jdbc:mysql://localhost:3306/shootingplace"
+    username: root
+    password: TezgLGg9UW4LJt0
+    driverClassName: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+  jooq:
+    sql-dialect: org.hibernate.dialect.MySQL8Dialect
+

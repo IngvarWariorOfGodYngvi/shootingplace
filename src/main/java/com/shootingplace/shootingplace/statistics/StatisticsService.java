@@ -7,9 +7,7 @@ import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoUsedToEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoUsedToEvidenceEntityRepository;
 import com.shootingplace.shootingplace.armory.Caliber;
-import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.history.CompetitionHistoryEntity;
-import com.shootingplace.shootingplace.history.HistoryRepository;
 import com.shootingplace.shootingplace.history.LicensePaymentHistoryDTO;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
@@ -19,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.text.Collator;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -29,22 +28,18 @@ import java.util.stream.Collectors;
 public class StatisticsService {
 
     private final MemberRepository memberRepository;
-    private final ContributionRepository contributionRepository;
     private final AmmoEvidenceRepository ammoEvidenceRepository;
     private final AmmoUsedToEvidenceEntityRepository used;
     private final RegistrationRecordRepository rrrepo;
     private final TournamentRepository tournamentRepository;
-    private final ScoreRepository scoreRepository;
     private final CompetitionMembersListRepository competitionMembersListRepository;
 
-    public StatisticsService(MemberRepository memberRepository, ContributionRepository contributionRepository, AmmoEvidenceRepository ammoEvidenceRepository, AmmoUsedToEvidenceEntityRepository used, RegistrationRecordRepository rrrepo, TournamentRepository tournamentRepository, HistoryRepository historyRepository, ScoreRepository scoreRepository, CompetitionMembersListRepository competitionMembersListRepository) {
+    public StatisticsService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, AmmoUsedToEvidenceEntityRepository used, RegistrationRecordRepository rrrepo, TournamentRepository tournamentRepository,ScoreRepository scoreRepository, CompetitionMembersListRepository competitionMembersListRepository) {
         this.memberRepository = memberRepository;
-        this.contributionRepository = contributionRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.used = used;
         this.rrrepo = rrrepo;
         this.tournamentRepository = tournamentRepository;
-        this.scoreRepository = scoreRepository;
         this.competitionMembersListRepository = competitionMembersListRepository;
     }
 
@@ -56,7 +51,7 @@ public class StatisticsService {
                     .filter(f -> f.getJoinDate().getYear() == year)
                     .filter(f -> f.getJoinDate().getMonth().getValue() == finalI + 1)
                     .map(Mapping::map2DTO)
-                    .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName))
+                    .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                     .collect(Collectors.toList());
 
             list.add(collect);
@@ -86,7 +81,7 @@ public class StatisticsService {
                                 .isNew(g.isNew())
                                 .build())));
 
-        list1.sort(Comparator.comparing(LicensePaymentHistoryDTO::getDate).thenComparing(LicensePaymentHistoryDTO::getSecondName).thenComparing(LicensePaymentHistoryDTO::getFirstName));
+        list1.sort(Comparator.comparing(LicensePaymentHistoryDTO::getDate).thenComparing(LicensePaymentHistoryDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(LicensePaymentHistoryDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))));
         return list1;
     }
 
@@ -96,7 +91,7 @@ public class StatisticsService {
                 .filter(f -> f.getJoinDate().isAfter(firstDate.minusDays(1)))
                 .filter(f -> f.getJoinDate().isBefore(secondDate.plusDays(1)))
                 .map(Mapping::map2DTO)
-                .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName))
+                .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
     }
 
@@ -107,39 +102,38 @@ public class StatisticsService {
                 .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1)))
                 .filter(f -> f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
                 .map(Mapping::map2DTO)
-                .sorted(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName))
+                .sorted(Comparator.comparing(MemberDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
 
     }
 
     public List<MemberDTO> getContributionSum(LocalDate firstDate, LocalDate secondDate) {
 
-        List<MemberEntity> memberEntities = memberRepository.findAll();
-
-        memberEntities.forEach(t -> t.getHistory().getContributionList().forEach(g -> {
-            if (g.getHistoryUUID() == null) {
-                g.setHistoryUUID(t.getUuid());
-                contributionRepository.save(g);
-            }
-        }));
-
-        contributionRepository.findAll().forEach(e -> {
-            if (e.getHistoryUUID() == null) {
-                contributionRepository.delete(e);
-            }
-        });
+//        List<MemberEntity> memberEntities = memberRepository.findAll();
+//
+//        memberEntities.forEach(t -> t.getHistory().getContributionList().forEach(g -> {
+//            if (g.getHistoryUUID() == null) {
+//                g.setHistoryUUID(t.getUuid());
+//                contributionRepository.save(g);
+//            }
+//        }));
+//
+//        contributionRepository.findAll().forEach(e -> {
+//            if (e.getHistoryUUID() == null) {
+//                contributionRepository.delete(e);
+//            }
+//        });
 
         List<MemberDTO> collect1 = new ArrayList<>();
 
         memberRepository.findAll()
                 .forEach(e -> e.getHistory().getContributionList()
                         .stream()
-                        .filter(f -> f.getHistoryUUID() != null)
                         .filter(f -> f.getPaymentDay().isAfter(firstDate.minusDays(1)))
                         .filter(f -> f.getPaymentDay().isBefore(secondDate.plusDays(1)))
                         .forEach(d -> collect1.add(Mapping.map2DTO(e))));
 
-        collect1.sort(Comparator.comparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName));
+        collect1.sort(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))));
 
         return collect1;
 
@@ -167,7 +161,7 @@ public class StatisticsService {
                         .filter(f -> f.getJoinDate().getYear() == year)
                         .filter(f -> f.getJoinDate().getMonth().getValue() == finalI + 1)
                         .map(Mapping::map2DTO)
-                        .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName))
+                        .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                         .collect(Collectors.toList());
                 if (!members.isEmpty()) {
                     list.add(members);
@@ -229,7 +223,7 @@ public class StatisticsService {
 
                                 }
                         )));
-        ammoList.sort(Comparator.comparing(MemberAmmo::getSecondName));
+        ammoList.sort(Comparator.comparing(MemberAmmo::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))));
         return ammoList;
     }
 
