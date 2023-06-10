@@ -20,7 +20,7 @@ public class ConfigController {
 
     @GetMapping("/ping")
     public ResponseEntity<?> ping() {
-        return ResponseEntity.ok("192.168.1.30"); // test
+        return ResponseEntity.ok("192.168.1.145:8080/strzelnica/#/"); // test
     }
     @GetMapping("/env")
     public ResponseEntity<?> env() {

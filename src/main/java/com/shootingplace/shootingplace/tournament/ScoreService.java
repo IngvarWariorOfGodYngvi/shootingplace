@@ -172,7 +172,7 @@ public class ScoreService {
                     points = (int) ((outerTen * 5) + (penalties * -10));
                 }
                 if (outerTen > numberOfShots) {
-                    return ResponseEntity.badRequest().body("Coś poszło nie tak. Sprawdź poprawność danych");
+                    return ResponseEntity.badRequest().body("Nie można dodać wyniku. Sprawdź ilość podanych strzałów");
                 }
                 scoreEntity.setOuterTen(outerTen);
                 if (points < 0) {

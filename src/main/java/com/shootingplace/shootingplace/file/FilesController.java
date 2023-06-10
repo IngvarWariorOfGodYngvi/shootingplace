@@ -343,6 +343,16 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
                 .body(filesEntity.getData());
     }
+    @GetMapping("/downloadEvidenceBook")
+    public ResponseEntity<byte[]> getEvidenceBookInChosenTime(@RequestParam String firstDate, @RequestParam String secondDate) throws DocumentException, IOException {
+        LocalDate firstDateParse = LocalDate.parse(firstDate);
+        LocalDate secondDateParse = LocalDate.parse(secondDate);
+        FilesEntity filesEntity = filesService.getEvidenceBookInChosenTime(firstDateParse, secondDateParse);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
+                .body(filesEntity.getData());
+    }
 
     // raport pracy
     @GetMapping("/downloadWorkReport")

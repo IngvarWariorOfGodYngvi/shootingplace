@@ -22,6 +22,7 @@ public class RegistrationRecordEntity {
     private String uuid;
 
     private LocalDateTime dateTime;
+    private LocalDateTime endDateTime;
     private int dayIndex;
     private String firstName;
     private String secondName;
@@ -42,6 +43,22 @@ public class RegistrationRecordEntity {
 
     public LocalDateTime getDate() {
         return dateTime;
+    }
+
+    public LocalDateTime getDateTime() {
+        return dateTime;
+    }
+
+    public void setDateTime(LocalDateTime dateTime) {
+        this.dateTime = dateTime;
+    }
+
+    public LocalDateTime getEndDateTime() {
+        return endDateTime;
+    }
+
+    public void setEndDateTime(LocalDateTime endDateTime) {
+        this.endDateTime = endDateTime;
     }
 
     public void setDate(LocalDateTime dateTime) {
@@ -118,5 +135,9 @@ public class RegistrationRecordEntity {
 
     public void setPeselOrID(String peselOrID) {
         this.peselOrID = peselOrID;
+    }
+
+    public String getNameOnRecord() {
+        return this.secondName + " " + this.firstName;
     }
 }

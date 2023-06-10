@@ -1,6 +1,8 @@
 package com.shootingplace.shootingplace.tournament;
 
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.competition.CompetitionEntity;
+import com.shootingplace.shootingplace.competition.CompetitionRepository;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
@@ -12,9 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class CompetitionMembersListService {
@@ -25,20 +28,67 @@ public class CompetitionMembersListService {
     private final OtherPersonRepository otherPersonRepository;
     private final ScoreService scoreService;
     private final TournamentRepository tournamentRepository;
+    private final CompetitionRepository competitionRepository;
     private final Logger LOG = LogManager.getLogger();
 
 
-    public CompetitionMembersListService(MemberRepository memberRepository, CompetitionMembersListRepository competitionMembersListRepository, HistoryService historyService, OtherPersonRepository otherPersonRepository, ScoreService scoreService, TournamentRepository tournamentRepository) {
+    public CompetitionMembersListService(MemberRepository memberRepository, CompetitionMembersListRepository competitionMembersListRepository, HistoryService historyService, OtherPersonRepository otherPersonRepository, ScoreService scoreService, TournamentRepository tournamentRepository, CompetitionRepository competitionRepository) {
         this.memberRepository = memberRepository;
         this.competitionMembersListRepository = competitionMembersListRepository;
         this.historyService = historyService;
         this.otherPersonRepository = otherPersonRepository;
         this.scoreService = scoreService;
         this.tournamentRepository = tournamentRepository;
+        this.competitionRepository = competitionRepository;
     }
 
-    public String addScoreToCompetitionList(String tournamentUUID, String competitionName, int legitimationNumber, int otherPerson) {
-        String competitionUUID = getCompetitionIDByName(competitionName, tournamentUUID);
+    public ResponseEntity<?> setCompetitionUUIDToCompetitionMemberList() {
+        int sizeCML = competitionMembersListRepository.findAll().size();
+        AtomicInteger counter = new AtomicInteger();
+        competitionMembersListRepository.findAll().forEach(e -> {
+            CompetitionEntity competitionEntity = competitionRepository.findByNameEquals(e.getName()).orElse(null);
+            if (competitionEntity != null) {
+                e.setCompetitionUUID(competitionEntity.getUuid());
+                counter.getAndIncrement();
+                String[] disciplines = e.getDisciplines();
+                if (disciplines == null) {
+                    e.setDisciplineList(new ArrayList<>());
+                } else {
+                    e.setDisciplineList(List.of(disciplines));
+                }
+                Integer[] numberOfManyShots1 = e.getNumberOfManyShots();
+                if (numberOfManyShots1 == null) {
+                    e.setNumberOfManyShotsList(new ArrayList<>());
+                } else {
+                    List<String> numberOfManyShotsList = Stream.of(numberOfManyShots1).map(String::valueOf).collect(Collectors.toList());
+                    e.setNumberOfManyShotsList(numberOfManyShotsList);
+
+                }
+                competitionMembersListRepository.save(e);
+            }
+        });
+        competitionRepository.findAll().forEach(e -> {
+            String[] disciplines = e.getDisciplines();
+            if (disciplines == null) {
+                e.setDisciplineList(new ArrayList<>());
+            } else {
+                e.setDisciplineList(List.of(disciplines));
+            }
+            Integer[] numberOfManyShots1 = e.getNumberOfManyShots();
+            if (numberOfManyShots1 == null) {
+                e.setNumberOfManyShotsList(new ArrayList<>());
+            } else {
+                List<String> numberOfManyShotsList = Stream.of(numberOfManyShots1).map(String::valueOf).collect(Collectors.toList());
+                e.setNumberOfManyShotsList(numberOfManyShotsList);
+
+            }
+            competitionRepository.save(e);
+        });
+        return ResponseEntity.ok("ilość list: " + sizeCML + ". ilość nadanych id: " + counter);
+    }
+
+    public String addScoreToCompetitionList(String competitionUUID, int legitimationNumber, int otherPerson) {
+//        String competitionUUID = getCompetitionIDByName(competitionName, tournamentUUID);
         CompetitionMembersListEntity list = competitionMembersListRepository.findById(competitionUUID).orElseThrow(EntityNotFoundException::new);
         List<ScoreEntity> scoreList = list.getScoreList();
 
@@ -49,7 +99,7 @@ public class CompetitionMembersListService {
             boolean match = scoreList.stream().anyMatch(f -> f.getMember() == member);
             if (match) {
                 LOG.info("Nie można dodać bo osoba już się znajduje na liście");
-                return failed.concat(" " + competitionName);
+                return failed.concat(" " + list.getName());
             } else {
                 ScoreEntity score = scoreService.createScore(0, 0, 0, 0, competitionUUID, member, null);
                 scoreList.add(score);
@@ -64,7 +114,7 @@ public class CompetitionMembersListService {
                 if (member != null) {
                     historyService.addCompetitionRecord(member.getUuid(), list);
                 }
-                return success.concat(" " + competitionName);
+                return success.concat(" " + list.getName());
             }
         }
         if (otherPerson > 0) {
@@ -73,7 +123,7 @@ public class CompetitionMembersListService {
                 boolean match1 = scoreList.stream().anyMatch(a -> a.getOtherPersonEntity() == otherPersonEntity);
                 if (match1) {
                     LOG.info("Nie można dodać bo osoba już się znajduje na liście");
-                    return failed.concat(" " + competitionName);
+                    return failed.concat(" " + list.getName());
                 } else {
                     ScoreEntity score = scoreService.createScore(0, 0, 0, 0, competitionUUID, null, otherPersonEntity);
                     scoreList.add(score);
@@ -85,7 +135,7 @@ public class CompetitionMembersListService {
                             .thenComparing(ScoreEntity::isPk));
                     LOG.info("Dodano Obcego Zawodnika do Listy");
                     competitionMembersListRepository.save(list);
-                    return success.concat(" " + competitionName);
+                    return success.concat(" " + list.getName());
                 }
             }
         } else {
@@ -95,9 +145,9 @@ public class CompetitionMembersListService {
     }
 
 
-    public String removeScoreFromList(String tournamentUUID, String competitionName, int legitimationNumber, int otherPerson) {
+    public String removeScoreFromList(String competitionUUID, int legitimationNumber, int otherPerson) {
 
-        String competitionUUID = getCompetitionIDByName(competitionName, tournamentUUID);
+//        String competitionUUID = getCompetitionIDByName(competitionName, tournamentUUID);
         CompetitionMembersListEntity list = competitionMembersListRepository.findById(competitionUUID).orElseThrow(EntityNotFoundException::new);
         List<ScoreEntity> scoreList = list.getScoreList();
         ScoreEntity score;
@@ -114,7 +164,7 @@ public class CompetitionMembersListService {
         if (score.getMember() != null) {
             historyService.removeCompetitionRecord(score.getMember().getUuid(), list);
         }
-        return "Usunięto osobę do Listy " + competitionName;
+        return "Usunięto osobę do Listy ";
     }
 
     public String getCompetitionIDByName(String competitionName, String tournamentUUID) {
@@ -184,24 +234,24 @@ public class CompetitionMembersListService {
                                 metricNumber.add(g.getMetricNumber());
                             }));
         }
-        if(metricNumber.isEmpty()){
+        if (metricNumber.isEmpty()) {
             return ResponseEntity.badRequest().body("Taka osoba nie znajduje się na żadnej liście");
         }
         return ResponseEntity.ok(metricNumber.get(0));
 
     }
 
-    public List<String> getMemberStartsInTournament(int legNumber, int otherID, String tournamentUUID) {
+    public Map<String,String> getMemberStartsInTournament(int legNumber, int otherID, String tournamentUUID) {
 
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
-        List<String> list = new ArrayList<>();
+        Map<String,String> map = new HashMap<>();
 
         if (otherID > 0) {
             OtherPersonEntity otherPersonEntity = otherPersonRepository.findById(otherID).orElseThrow(EntityNotFoundException::new);
 
             tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(f -> f.getOtherPersonEntity() != null).forEach(g -> {
                 if (g.getOtherPersonEntity().getId().equals(otherPersonEntity.getId())) {
-                    list.add(e.getName());
+                    map.put(e.getName(),e.getCompetitionUUID());
                 }
             }));
         } else {
@@ -209,11 +259,11 @@ public class CompetitionMembersListService {
 
             tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(f -> f.getMember() != null).forEach(g -> {
                 if (g.getMember().getUuid().equals(memberEntity.getUuid())) {
-                    list.add(e.getName());
+                    map.put(e.getName(),e.getCompetitionUUID());
                 }
             }));
         }
-        return list;
+        return map;
 
     }
 

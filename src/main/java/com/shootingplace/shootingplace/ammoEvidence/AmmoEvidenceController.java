@@ -35,7 +35,7 @@ public class AmmoEvidenceController {
     @PostMapping("/ammo")
     public ResponseEntity<?> createAmmoUsed(@RequestParam String caliberUUID, @RequestParam Integer legitimationNumber, @RequestParam int otherID, @RequestParam Integer counter) {
         if (counter != 0) {
-            recordsService.createRecordInBook(legitimationNumber, otherID);
+//            recordsService.createRecordInBook(legitimationNumber, otherID);
             return ammoUsedService.addAmmoUsedEntity(caliberUUID, legitimationNumber, otherID, counter);
         } else {
             return ResponseEntity.badRequest().build();

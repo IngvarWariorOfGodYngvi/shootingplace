@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.otherPerson;
 
+import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.member.MemberPermissionsEntity;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,10 @@ public class OtherPersonEntity {
     private String secondName;
     private String phoneNumber;
     private String email;
+    private String weaponPermissionNumber;
     private boolean active;
+    @OneToOne
+    private AddressEntity address;
     @ManyToOne
     private ClubEntity club;
     @OneToOne(orphanRemoval = true)
@@ -87,4 +91,21 @@ public class OtherPersonEntity {
     public void setActive(boolean active) {
         this.active = active;
     }
+
+    public String getWeaponPermissionNumber() {
+        return weaponPermissionNumber;
+    }
+
+    public void setWeaponPermissionNumber(String weaponPermissionNumber) {
+        this.weaponPermissionNumber = weaponPermissionNumber;
+    }
+
+    public AddressEntity getAddress() {
+        return address;
+    }
+
+    public void setAddress(AddressEntity address) {
+        this.address = address;
+    }
+
 }

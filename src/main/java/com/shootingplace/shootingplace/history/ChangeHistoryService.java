@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.history;
 
 import com.google.common.hash.Hashing;
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
@@ -52,20 +53,24 @@ public class ChangeHistoryService {
 
     public ResponseEntity<String> addRecordToChangeHistory(String pinCode, String classNamePlusMethod, String uuid) {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
-        UserEntity userEntity = userRepository.findAll().stream().filter(f -> f.getPinCode().equals(pin)).findFirst().orElse(null);
+        UserEntity userEntity = userRepository.findByPinCode(pin);
         // user is found
         if (userEntity != null) {
             // user isn't in work
             if (!workServ.isInWork(userEntity)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Najpierw zarejestruj pobyt w Klubie");
             }
-            userEntity.getList().add(addRecord(userEntity, classNamePlusMethod, uuid));
-            userRepository.save(userEntity);
-            return null;
+            if (userEntity.getSubType().contains(UserSubType.MANAGEMENT.getName()) || userEntity.getSubType().contains(UserSubType.WORKER.getName())) {
+                userEntity.getList().add(addRecord(userEntity, classNamePlusMethod, uuid));
+                userRepository.save(userEntity);
+                return null;
+            } else {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Brak uprawnień");
+            }
         }
         //user not found
         else {
-            return ResponseEntity.status(403).body("Brak Uprawnień");
+            return ResponseEntity.status(403).body("Brak Użytkownika");
         }
     }
 }

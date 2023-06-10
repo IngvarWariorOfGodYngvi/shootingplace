@@ -2,7 +2,7 @@ package com.shootingplace.shootingplace.member;
 
 
 import com.shootingplace.shootingplace.address.Address;
-import com.shootingplace.shootingplace.domain.MemberWithAddress;
+import com.shootingplace.shootingplace.wrappers.MemberWithAddressWrapper;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -128,12 +128,12 @@ public class MemberController {
 
     @Transactional
     @PostMapping("/")
-    public ResponseEntity<?> addMember(@RequestBody @Valid MemberWithAddress memberWithAddress,@RequestParam boolean returningToClub, @RequestParam String pinCode) {
+    public ResponseEntity<?> addMember(@RequestBody @Valid MemberWithAddressWrapper memberWithAddressWrapper, @RequestParam boolean returningToClub, @RequestParam String pinCode) {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             ResponseEntity<?> result;
-            Member member = memberWithAddress.getMember();
-            Address address = memberWithAddress.getAddress();
+            Member member = memberWithAddressWrapper.getMember();
+            Address address = memberWithAddressWrapper.getAddress();
             if (member.getPesel().isEmpty() || member.getPhoneNumber().isEmpty() || member.getFirstName().isEmpty() || member.getSecondName().isEmpty() || member.getIDCard().isEmpty()) {
                 result = ResponseEntity.status(406).body("Uwaga! Nie podano wszystkich lub żadnej informacji");
             } else {

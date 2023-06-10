@@ -73,6 +73,10 @@ public class OtherPersonController {
     public ResponseEntity<List<String>> getAllOthersArbiters() {
         return ResponseEntity.ok().body(otherPersonService.getAllOthersArbiters());
     }
+    @GetMapping("/getOhterByPhone/{phone}")
+    public ResponseEntity<?> getOhterByPhone(@PathVariable String phone) {
+        return otherPersonService.getOhterByPhone(phone);
+    }
 
     @GetMapping("/all")
     public ResponseEntity<?> getAll() {

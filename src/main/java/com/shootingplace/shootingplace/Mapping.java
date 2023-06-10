@@ -411,7 +411,6 @@ public class Mapping {
                 .uuid(e.getUuid())
                 .belongToMemberUUID(e.getBelongToMemberUUID())
                 .name(e.getName())
-//                .data(e.getData())
                 .type(e.getType())
                 .date(e.getDate())
                 .time(e.getTime())

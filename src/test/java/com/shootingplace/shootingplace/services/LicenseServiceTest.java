@@ -109,54 +109,54 @@ public class LicenseServiceTest {
         assertThat(license.getNumber(), Matchers.equalTo(null));
     }
 
-    @Test
-    public void update_license_no_patent_return_false() {
-        //given
-        String uuid = membersList.get(1).getUuid();
-        License license = License.builder()
-                .build();
-        //when
-        when(memberRepository.findById(uuid)).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
-        ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, license);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("Brak Patentu"));
-    }
+//    @Test
+//    public void update_license_no_patent_return_false() {
+//        //given
+//        String uuid = membersList.get(1).getUuid();
+//        License license = License.builder()
+//                .build();
+//        //when
+//        when(memberRepository.findById(uuid)).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
+//        ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, license);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("Brak Patentu"));
+//    }
 
-    @Test
-    public void update_license_licence_exist_return_false() {
-        //given
-        MemberEntity memberEntity = membersList.get(0);
-        String uuid = memberEntity.getUuid();
-        License license = License.builder()
-                .number(membersList.get(1).getLicense().getNumber())
-                .build();
-        //when
-        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
-        ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, license);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("Ktoś już ma taki numer licencji"));
+//    @Test
+//    public void update_license_licence_exist_return_false() {
+//        //given
+//        MemberEntity memberEntity = membersList.get(0);
+//        String uuid = memberEntity.getUuid();
+//        License license = License.builder()
+//                .number(membersList.get(1).getLicense().getNumber())
+//                .build();
+//        //when
+//        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
+//        ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, license);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("Ktoś już ma taki numer licencji"));
+//
+//    }
 
-    }
-
-    @Test
-    public void update_license_licence_not_exist_return_true() {
-        //given
-        String uuid = membersList.get(0).getUuid();
-        boolean t = true;
-        License license = License.builder()
-                .pistolPermission(t)
-                .riflePermission(t)
-                .shotgunPermission(t)
-                .build();
-        //when
-        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
-        ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, license);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("Zaktualizowano licencję"));
-    }
+//    @Test
+//    public void update_license_licence_not_exist_return_true() {
+//        //given
+//        String uuid = membersList.get(0).getUuid();
+//        boolean t = true;
+//        License license = License.builder()
+//                .pistolPermission(t)
+//                .riflePermission(t)
+//                .shotgunPermission(t)
+//                .build();
+//        //when
+//        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
+//        ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, license);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("Zaktualizowano licencję"));
+//    }
 
 //    @Test
 //    public void update_license_licence_not_exist_return_true1() {

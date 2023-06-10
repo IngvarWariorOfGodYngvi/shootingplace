@@ -29,10 +29,13 @@ public class CompetitionMembersListEntity {
     private LocalDate date;
 
     private String discipline;
+    private Integer numberOfShots;
 
     private String[] disciplines;
-    private Integer numberOfShots;
+    private String disciplineList;
+
     private Integer[] numberOfManyShots;
+    private String numberOfManyShotsList;
 
     private String type;
 
@@ -44,10 +47,47 @@ public class CompetitionMembersListEntity {
 
     private Integer practiceShots;
 
+    private String competitionUUID;
+
     private String caliberUUID;
 
     @ManyToMany
     private List<ScoreEntity> scoreList = new ArrayList<>();
+
+    public List<String> getDisciplineList() {
+        List<String> vals = new ArrayList<>();
+        if (disciplineList != null) {
+            for (String s : disciplineList.split(";")) {
+                vals.add(String.valueOf(s));
+            }
+        }
+        return vals;
+    }
+
+    public void setDisciplineList(List<String> disciplineList) {
+        String value = "";
+        for (String f : disciplineList) {
+            value = value.concat(f + ";");
+        }
+        this.disciplineList = value;
+    }
+    public List<String> getNumberOfManyShotsList() {
+        List<String> vals = new ArrayList<>();
+        if (numberOfManyShotsList != null) {
+            for (String s : numberOfManyShotsList.split(";")) {
+                vals.add(String.valueOf(s));
+            }
+        }
+        return vals;
+    }
+
+    public void setNumberOfManyShotsList(List<String> numberOfManyShotsList) {
+        String value = "";
+        for (String f : numberOfManyShotsList) {
+            value = value.concat(f + ";");
+        }
+        this.numberOfManyShotsList = value;
+    }
 
     public String getCaliberUUID() {
         return caliberUUID;
@@ -139,6 +179,14 @@ public class CompetitionMembersListEntity {
 
     public void setOrdering(Integer ordering) {
         this.ordering = ordering;
+    }
+
+    public String getCompetitionUUID() {
+        return competitionUUID;
+    }
+
+    public void setCompetitionUUID(String competitionUUID) {
+        this.competitionUUID = competitionUUID;
     }
 
     public String[] getDisciplines() {

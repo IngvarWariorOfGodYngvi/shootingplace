@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/competitionMembersList")
@@ -17,6 +18,11 @@ public class CompetitionMembersListController {
 
     public CompetitionMembersListController(CompetitionMembersListService competitionMembersListService) {
         this.competitionMembersListService = competitionMembersListService;
+    }
+
+    @PatchMapping("/setCompetitionUUIDToCompetitionMemberList")
+    public ResponseEntity<?> setCompetitionUUIDToCompetitionMemberList() {
+        return competitionMembersListService.setCompetitionUUIDToCompetitionMemberList();
     }
 
     @GetMapping("/getID")
@@ -40,7 +46,7 @@ public class CompetitionMembersListController {
     }
 
     @GetMapping("/getMemberStartsByLegitimation")
-    public ResponseEntity<List<String>> getMemberStartsInTournament(@RequestParam int legNumber, @RequestParam int otherID, @RequestParam String tournamentUUID) {
+    public ResponseEntity<Map<String,String>> getMemberStartsInTournament(@RequestParam int legNumber, @RequestParam int otherID, @RequestParam String tournamentUUID) {
         return ResponseEntity.ok(competitionMembersListService.getMemberStartsInTournament(legNumber, otherID, tournamentUUID));
     }
 
@@ -51,9 +57,9 @@ public class CompetitionMembersListController {
 
     @Transactional
     @PutMapping("/addMember")
-    public ResponseEntity<?> addScoreToCompetitionMembersList(@RequestParam String tournamentUUID, @RequestParam List<String> competitionNameList, @RequestParam int legitimationNumber, @RequestParam @Nullable int otherPerson) {
+    public ResponseEntity<?> addScoreToCompetitionMembersList(@RequestParam List<String> competitionUUIDList, @RequestParam int legitimationNumber, @RequestParam @Nullable int otherPerson) {
         List<String> list = new ArrayList<>();
-        competitionNameList.forEach(e->list.add(competitionMembersListService.addScoreToCompetitionList(tournamentUUID, e.replaceAll("\\.",","), legitimationNumber, otherPerson)));
+        competitionUUIDList.forEach(e -> list.add(competitionMembersListService.addScoreToCompetitionList( e.replaceAll("\\.", ","), legitimationNumber, otherPerson)));
 
         if (!list.isEmpty()) {
             return ResponseEntity.ok(list);
@@ -63,10 +69,10 @@ public class CompetitionMembersListController {
 
     @Transactional
     @PostMapping("/removeMember")
-    public ResponseEntity<?> removeMemberFromList(@RequestParam String tournamentUUID, @RequestParam List<String> competitionNameList, @RequestParam int legitimationNumber, @RequestParam @Nullable int otherPerson) {
+    public ResponseEntity<?> removeMemberFromList(@RequestParam List<String> competitionNameList, @RequestParam int legitimationNumber, @RequestParam @Nullable int otherPerson) {
 
         List<String> list = new ArrayList<>();
-        competitionNameList.forEach(e->list.add(competitionMembersListService.removeScoreFromList(tournamentUUID,e.replaceAll("\\.",","), legitimationNumber, otherPerson) + e ));
+        competitionNameList.forEach(e -> list.add(competitionMembersListService.removeScoreFromList(e.replaceAll("\\.", ","), legitimationNumber, otherPerson) + e));
 
         if (!list.isEmpty()) {
             return ResponseEntity.ok(list);

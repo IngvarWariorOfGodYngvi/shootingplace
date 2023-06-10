@@ -4,6 +4,7 @@ import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlac
 import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface RegistrationRecordSQlRepository extends RegistrationRecordRepository, JpaRepository<RegistrationRecordEntity, String> {
+import java.util.List;
 
+public interface RegistrationRecordSQlRepository extends RegistrationRecordRepository, JpaRepository<RegistrationRecordEntity, String> {
 }

@@ -30,7 +30,7 @@ public class UserEntity extends Person {
 
     private String secondName;
 
-    private int legitimationNumber;
+    private Integer otherID;
 
     private String pinCode;
     @OneToMany
@@ -44,7 +44,8 @@ public class UserEntity extends Person {
     private List<ChangeHistoryEntity> changeHistoryEntities;
 
     private String subType;
-@Nullable
+
+    @Nullable
     public MemberEntity getMember() {
         return member;
     }
@@ -99,12 +100,12 @@ public class UserEntity extends Person {
         this.changeHistoryEntities = changeHistoryEntities;
     }
 
-    public int getLegitimationNumber() {
-        return legitimationNumber;
+    public Integer getOtherID() {
+        return otherID;
     }
 
-    public void setLegitimationNumber(int legitimationNumber) {
-        this.legitimationNumber = legitimationNumber;
+    public void setOtherID(Integer otherID) {
+        this.otherID = otherID;
     }
 
     public boolean isSuperUser() {
@@ -136,7 +137,7 @@ public class UserEntity extends Person {
         return "UserEntity{" +
                 "firstName='" + firstName + '\'' +
                 ", secondName='" + secondName + '\'' +
-                ", legitimationNumber=" + legitimationNumber +
+                ", legitimationNumber=" + otherID +
                 ", superUser=" + superUser +
                 ", active=" + active +
                 ", subType='" + subType + '\'' +

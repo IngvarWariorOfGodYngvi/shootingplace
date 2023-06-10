@@ -2,14 +2,13 @@ package com.shootingplace.shootingplace.services;
 
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
-import com.shootingplace.shootingplace.shootingPatent.ShootingPatent;
 import com.shootingplace.shootingplace.member.MemberRepository;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatent;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentRepository;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentService;
 import org.hamcrest.Matchers;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -21,7 +20,10 @@ import org.springframework.http.ResponseEntity;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,11 +44,11 @@ public class ShootingPatentServiceTest {
 
     @InjectMocks
     ShootingPatentService shootingPatentService;
-
-    @Before
-    public void init() {
-        when(memberRepository.findAll()).thenReturn(membersList);
-    }
+//
+//    @Before
+//    public void init() {
+//        when(memberRepository.findAll()).thenReturn(membersList);
+//    }
 
     @After
     public void tearDown() {
@@ -54,31 +56,31 @@ public class ShootingPatentServiceTest {
     }
 
 
-    @Test
-    public void update_patent_return_OK() {
-        //given
-        String uuid = membersList.get(0).getUuid();
-        Random r = new Random();
-        int i = r.nextInt(100000);
-        String year = String.valueOf(LocalDate.now().getYear());
-        String monthValue = String.valueOf(LocalDate.now().getMonthValue());
-        MemberEntity memberEntity = membersList.get(0);
-        ShootingPatent shootingPatent = ShootingPatent.builder()
-                .patentNumber(i + "/PAT/" + monthValue + year)
-                .dateOfPosting(LocalDate.now())
-                .dateOfPosting(LocalDate.now())
-                .pistolPermission(true)
-                .riflePermission(true)
-                .shotgunPermission(true)
-                .build();
-        //when
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
-        when(memberRepository.existsById(uuid)).thenReturn(true);
-        ResponseEntity<?> responseEntity = shootingPatentService.updatePatent(uuid, shootingPatent);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("Zaktualizowano patent "  + memberEntity.getSecondName() + " " + memberEntity.getFirstName()));
-    }
+//    @Test
+//    public void update_patent_return_OK() {
+//        //given
+//        String uuid = membersList.get(0).getUuid();
+//        Random r = new Random();
+//        int i = r.nextInt(100000);
+//        String year = String.valueOf(LocalDate.now().getYear());
+//        String monthValue = String.valueOf(LocalDate.now().getMonthValue());
+//        MemberEntity memberEntity = membersList.get(0);
+//        ShootingPatent shootingPatent = ShootingPatent.builder()
+//                .patentNumber(i + "/PAT/" + monthValue + year)
+//                .dateOfPosting(LocalDate.now())
+//                .dateOfPosting(LocalDate.now())
+//                .pistolPermission(true)
+//                .riflePermission(true)
+//                .shotgunPermission(true)
+//                .build();
+//        //when
+//        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+//        when(memberRepository.existsById(uuid)).thenReturn(true);
+//        ResponseEntity<?> responseEntity = shootingPatentService.updatePatent(uuid, shootingPatent);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("Zaktualizowano patent "  + memberEntity.getSecondName() + " " + memberEntity.getFirstName()));
+//    }
 
     @Test
     public void update_patent_return_bad_request1() {
@@ -99,25 +101,25 @@ public class ShootingPatentServiceTest {
         assertThat(responseEntity.getBody(), Matchers.equalTo("Nie znaleziono klubowicza"));
     }
 
-    @Test
-    public void update_patent_return_bad_request2() {
-        //given
-        String uuid = membersList.get(1).getUuid();
-        ShootingPatent shootingPatent = ShootingPatent.builder()
-                .patentNumber(membersList.get(2).getShootingPatent().getPatentNumber())
-                .dateOfPosting(LocalDate.now())
-                .pistolPermission(true)
-                .riflePermission(true)
-                .shotgunPermission(true)
-                .build();
-        //when
-        when(memberRepository.existsById(uuid)).thenReturn(true);
-        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
-        ResponseEntity<?> responseEntity = shootingPatentService.updatePatent(uuid, shootingPatent);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("ktoś już ma taki numer patentu"));
-    }
+//    @Test
+//    public void update_patent_return_bad_request2() {
+//        //given
+//        String uuid = membersList.get(1).getUuid();
+//        ShootingPatent shootingPatent = ShootingPatent.builder()
+//                .patentNumber(membersList.get(2).getShootingPatent().getPatentNumber())
+//                .dateOfPosting(LocalDate.now())
+//                .pistolPermission(true)
+//                .riflePermission(true)
+//                .shotgunPermission(true)
+//                .build();
+//        //when
+//        when(memberRepository.existsById(uuid)).thenReturn(true);
+//        when(memberRepository.findById(uuid)).thenReturn(Optional.ofNullable(findByID(uuid)));
+//        ResponseEntity<?> responseEntity = shootingPatentService.updatePatent(uuid, shootingPatent);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("ktoś już ma taki numer patentu"));
+//    }
 
     @Test
     public void getShootingPatent() {

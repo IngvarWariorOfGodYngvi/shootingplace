@@ -58,9 +58,9 @@ public class WorkingTimeEvidenceService {
 
         // szukam osoby do której należy karta
         UserEntity user = userRepository.findById(belongsTo).orElse(null);
-        if (user != null) {
-            recordsService.createRecordInBook(user.getLegitimationNumber(), 0);
-        }
+//        if (user != null) {
+//            recordsService.createRecordInBook(user.getOtherID(), 0);
+//        }
         // biorę wszystkie niezamknięte wiersze z obecnego miesiąca gdzie występuje osoba
         WorkingTimeEvidenceEntity entity1 = workRepo.findAll()
                 .stream()

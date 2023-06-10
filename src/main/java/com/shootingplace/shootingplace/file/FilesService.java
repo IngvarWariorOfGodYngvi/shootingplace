@@ -2,6 +2,8 @@ package com.shootingplace.shootingplace.file;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordEntity;
+import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
 import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
@@ -78,10 +80,11 @@ public class FilesService {
     private final WorkingTimeEvidenceService workServ;
     private final Environment environment;
     private final ArmoryService armoryService;
+    private final RegistrationRecordRepository registrationRepo;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ, Environment environment, ArmoryService armoryService) {
+    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ, Environment environment, ArmoryService armoryService, RegistrationRecordRepository registrationRepo) {
         this.memberRepository = memberRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.filesRepository = filesRepository;
@@ -96,6 +99,7 @@ public class FilesService {
         this.workServ = workServ;
         this.environment = environment;
         this.armoryService = armoryService;
+        this.registrationRepo = registrationRepo;
     }
 
     private FilesEntity createFileEntity(FilesModel filesModel) {
@@ -105,6 +109,31 @@ public class FilesService {
         LOG.info(filesModel.getName().trim() + " Encja została zapisana");
         return filesRepository.save(filesEntity);
 
+    }
+
+    public void store(MultipartFile file) throws IOException {
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(file.getContentType()))
+                .data(file.getBytes())
+                .size(file.getSize())
+                .build();
+        createFileEntity(build);
+    }
+
+    public String storeImageEvidenceBook(String imageString) {
+        String s = imageString.split(",")[1];
+        String fileName = "3EvidenceBook.png";
+        byte[] data = Base64.getMimeDecoder().decode(s);
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(MediaType.IMAGE_PNG))
+                .data(data)
+                .size(data.length)
+                .build();
+        FilesEntity fileEntity = createFileEntity(build);
+        return fileEntity.getUuid();
     }
 
     public FilesEntity contributionConfirm(String memberUUID, String contributionUUID, Boolean a5rotate) throws DocumentException, IOException {
@@ -186,20 +215,20 @@ public class FilesService {
         Paragraph h1 = new Paragraph("Grupa ", font(11, 0));
         Phrase h2 = new Phrase(group, font(14, 1));
         Paragraph p2 = new Paragraph("\nNazwisko i Imię : ", font(11, 0));
-        Paragraph p211 = new Paragraph("\nNumer Legitymacji : ", font(11, 0));
+        Paragraph p211 = new Paragraph("Numer Legitymacji : ", font(11, 0));
         Phrase p3 = new Phrase(memberEntity.getSecondName() + " " + memberEntity.getFirstName(), font(18, 1));
         Phrase p5 = new Phrase(String.valueOf(memberEntity.getLegitimationNumber()), font(14, 1));
         Paragraph p6 = new Paragraph("\nData opłacenia składki : ", font(11, 0));
         Phrase p7 = new Phrase(String.valueOf(contribution), font(11, 1));
-        Paragraph p8 = new Paragraph("\nSkładka ważna do : ", font(11, 0));
+        Paragraph p8 = new Paragraph("Składka ważna do : ", font(11, 0));
         Phrase p9 = new Phrase(String.valueOf(validThru), font(11, 1));
-        Paragraph p10 = new Paragraph("\n" + getSex(memberEntity.getPesel()) + memberEntity.getMemberName() + " dnia : " + contribution + " " + status + " półroczną składkę członkowską w wysokości " + contributionLevel + " PLN.", font(11, 0));
+        Paragraph p10 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getMemberName() + " dnia : " + contribution + " " + status + " półroczną składkę członkowską w wysokości " + contributionLevel + " PLN.", font(11, 0));
 
-        Paragraph p12 = new Paragraph("\nTermin opłacenia kolejnej składki : ", font(11, 0));
-        Paragraph p13 = new Paragraph("\n" + (nextContribution), font(11, 1));
+        Paragraph p12 = new Paragraph("Termin opłacenia kolejnej składki : "  + (nextContribution), font(11, 0));
+//        Paragraph p13 = new Paragraph("\n", font(11, 1));
         Paragraph p14 = new Paragraph("", font(11, 0));
 
-        Phrase p15 = new Phrase("\n" + contributionText, font(11, 2));
+        Phrase p15 = new Phrase(contributionText, font(11, 2));
 
         Paragraph p16 = new Paragraph("\n\n", font(11, 0));
         Paragraph p19 = new Paragraph("pieczęć klubu", font(11, 0));
@@ -237,7 +266,7 @@ public class FilesService {
             document.add(p10);
         }
         document.add(p12);
-        document.add(p13);
+//        document.add(p13);
         document.add(p14);
         document.add(p16);
         document.add(p19);
@@ -925,7 +954,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment));
+//        writer.setPageEvent(new PageStamper(environment));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -1861,7 +1890,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment));
+//        writer.setPageEvent(new PageStamper(environment));
 
         document.open();
         document.addTitle(fileName);
@@ -1878,14 +1907,14 @@ public class FilesService {
 
             ScoreEntity score = tournamentEntity.getCompetitionsList()
                     .stream()
-                    .filter(f -> f.getName().equals(comp.get(finalJ)))
+                    .filter(f -> f.getCompetitionUUID().equals(comp.get(finalJ)))
                     .findFirst().orElseThrow(EntityNotFoundException::new)
                     .getScoreList()
                     .stream()
                     .filter(f -> f.getMetricNumber() == d)
                     .findFirst().orElseThrow(EntityNotFoundException::new);
 
-            CompetitionEntity competitionEntity = competitionRepository.findAll().stream().filter(f -> f.getName().equals(comp.get(finalJ))).findFirst().orElseThrow(EntityNotFoundException::new);
+            CompetitionEntity competitionEntity = competitionRepository.findAll().stream().filter(f -> f.getUuid().equals(comp.get(finalJ))).findFirst().orElseThrow(EntityNotFoundException::new);
             int compShots = competitionEntity.getNumberOfShots();
             int numberOfShots;
             if (competitionEntity.getNumberOfShots() > 10) {
@@ -1914,7 +1943,7 @@ public class FilesService {
             Chunk chunk = new Chunk("                            " + a + " " + b + "  Nr. " + startNumber, font(13, 1));
             par2.add(chunk);
             // nazwa konkurencji
-            Paragraph par3 = new Paragraph(comp.get(j), font(11, 1));
+            Paragraph par3 = new Paragraph(competitionRepository.getOne(comp.get(j)).getName(), font(11, 1));
 //            Paragraph par3 = new Paragraph("Konkurencja", font(11, 1));
             par3.setAlignment(1);
 
@@ -1945,11 +1974,13 @@ public class FilesService {
                 Arrays.fill(pointColumnWidths, 25F);
             }
             PdfPTable table = new PdfPTable(pointColumnWidths);
+            PdfPTable table11 = new PdfPTable(pointColumnWidths);
             PdfPTable table1 = new PdfPTable(pointColumnWidths);
             PdfPTable table2 = new PdfPTable(pointColumnWidths);
 
             table.setWidthPercentage(100F);
             table1.setWidthPercentage(100F);
+            table11.setWidthPercentage(100F);
             table2.setWidthPercentage(100F);
 
             document.add(par1); //  nazwa zawodów i tytuł
@@ -1984,7 +2015,19 @@ public class FilesService {
                     }
                 }
                 if (numberOfShots < 10) {
-                    document.add(table);
+                    for (int i = 0; i < numberOfColumns; i++) {
+
+                        Chunk c = new Chunk(" ", font(26, 0));
+                        Paragraph p = new Paragraph(c);
+                        PdfPCell cell = new PdfPCell(p);
+                        table11.addCell(cell);
+
+
+                        if (i == numberOfColumns - 1) {
+                            document.add(table11);
+                            break;
+                        }
+                    }
 
                 }
                 int serial = 0;
@@ -2636,7 +2679,7 @@ public class FilesService {
         Document document = new Document(PageSize.A4.rotate());
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
-        setAttToDoc(fileName,document,false);
+        setAttToDoc(fileName, document, false);
         String minute;
         if (LocalTime.now().getMinute() < 10) {
             minute = "0" + LocalTime.now().getMinute();
@@ -2762,7 +2805,7 @@ public class FilesService {
         Document document = new Document(PageSize.A4.rotate());
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
-        setAttToDoc(fileName,document,false);
+        setAttToDoc(fileName, document, false);
         String minute;
         if (LocalTime.now().getMinute() < 10) {
             minute = "0" + LocalTime.now().getMinute();
@@ -3208,7 +3251,7 @@ public class FilesService {
         Document document = new Document(PageSize.A4.rotate());
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
-        setAttToDoc(fileName,document,false);
+        setAttToDoc(fileName, document, false);
         String minute;
         if (LocalTime.now().getMinute() < 10) {
             minute = "0" + LocalTime.now().getMinute();
@@ -3370,6 +3413,59 @@ public class FilesService {
 
                 }
             }
+
+        }
+
+
+        document.close();
+
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+
+        File file = new File(fileName);
+
+        //noinspection ResultOfMethodCallIgnored
+        file.delete();
+        return filesEntity;
+    }
+
+    public FilesEntity getEvidenceBookInChosenTime(LocalDate firstDate, LocalDate secondDate) throws IOException, DocumentException {
+        String fileName = "Książka pobytu na strzelnicy od " + firstDate + " do " + secondDate + ".pdf";
+        Document document = new Document(PageSize.A4);
+        setAttToDoc(fileName, document, false);
+        List<RegistrationRecordEntity> collect = registrationRepo.findAll().stream().filter(f -> f.getDate().toLocalDate().isAfter(firstDate.minusDays(1)) && f.getDate().toLocalDate().isBefore(secondDate.plusDays(1))).sorted(Comparator.comparing(RegistrationRecordEntity::getDate).reversed()).collect(Collectors.toList());
+
+
+        Paragraph title = new Paragraph("Książka pobytu na strzelnicy od " + firstDate + " do " + secondDate, font(13, 1));
+
+        document.add(title);
+        // dla każdego rekordu
+        for (int i = 0; i < collect.size(); i++) {
+            RegistrationRecordEntity record = collect.get(i);
+            Chunk recordIndex = new Chunk((i + 1) + " ", font(10, 0));
+            Chunk recordName = new Chunk(record.getNameOnRecord() + " ", font(10, 0));
+            Chunk recordDateTime = new Chunk(record.getDateTime().toString().replace("T", " ").substring(0,16) + " ", font(10, 0));
+            Chunk recordEndDateTime = new Chunk(record.getEndDateTime()!=null?record.getEndDateTime().toString().replace("T", " ").substring(0,16) + " ": "", font(10, 0));
+            Chunk recordAddressOrWeaponPermissionNumber = new Chunk(record.getWeaponPermission() != null ? record.getWeaponPermission() + " " : record.getAddress(), font(10, 0));
+            Chunk recordDataProcessingAgreement = new Chunk(record.isDataProcessingAgreement() ? "tak " : "nie ", font(10, 0));
+            Paragraph par = new Paragraph();
+            par.add(recordIndex);
+            par.add(recordName);
+            par.add(recordDateTime);
+            par.add(recordEndDateTime);
+            par.add(recordAddressOrWeaponPermissionNumber);
+            par.add(recordDataProcessingAgreement);
+            document.add(par);
+
 
         }
 
@@ -4411,17 +4507,6 @@ public class FilesService {
         return null;
     }
 
-    public void store(MultipartFile file) throws IOException {
-        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-        FilesModel build = FilesModel.builder()
-                .name(fileName)
-                .type(String.valueOf(file.getContentType()))
-                .data(file.getBytes())
-                .size(file.getSize())
-                .build();
-        createFileEntity(build);
-    }
-
     public void addImageToGun(MultipartFile file, String gunUUID) throws IOException {
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
         System.out.println(file.getSize());
@@ -4652,7 +4737,6 @@ public class FilesService {
         gunRepository.save(one);
         return ResponseEntity.ok("usunięto zdjęcie");
     }
-
 
     static class PageStamper extends PdfPageEventHelper {
         private final Environment environment;

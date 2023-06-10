@@ -29,7 +29,7 @@ public class ClubService {
     public List<String> getAllClubsToTournament() {
         List<String> list = new ArrayList<>();
         clubRepository.findAll().stream()
-                .filter(f -> f.getId() != 1 && f.getId() != 2)
+                .filter(f -> f.getId() != 1)
                 .forEach(e -> list.add(e.getName()));
         list.sort(String::compareTo);
         return list;
@@ -113,8 +113,8 @@ public class ClubService {
 
         clubRepository.save(ClubEntity.builder()
                 .id(id)
-                .name(club.getName())
-                .fullName(club.getFullName())
+                .name(club.getName().trim())
+                .fullName(club.getFullName().trim())
                 .phoneNumber("+48 " + club.getPhoneNumber())
                 .email(club.getEmail())
                 .address(club.getAddress())

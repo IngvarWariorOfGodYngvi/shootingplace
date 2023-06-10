@@ -776,7 +776,7 @@ public class MemberService {
     public ResponseEntity<?> getMemberByPESELNumber(String PESELNumber) {
         PESELNumber.replaceAll(" ", "");
         MemberEntity member = memberRepository.findByPesel(PESELNumber).orElse(null);
-        return member != null ? ResponseEntity.ok(Mapping.map(member)) : ResponseEntity.badRequest().body("coś poszło nie tak");
+        return member != null ? ResponseEntity.ok(Mapping.map(member)) : ResponseEntity.badRequest().body("Brak numeru w Bazie");
     }
 
     public ResponseEntity<?> changeClub(String uuid, String clubName) {

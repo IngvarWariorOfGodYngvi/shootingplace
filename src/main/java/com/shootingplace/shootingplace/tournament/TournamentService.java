@@ -26,9 +26,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -146,7 +144,7 @@ public class TournamentService {
                 .forEach(e ->
                 {
                     if (e.getOrdering() == null) {
-                        CompetitionEntity competitionEntity = competitionRepository.findByNameEquals(e.getName()).orElseThrow(EntityNotFoundException::new);
+                        CompetitionEntity competitionEntity = competitionRepository.getOne(e.getCompetitionUUID());
                         e.setOrdering(competitionEntity.getOrdering());
                         competitionMembersListRepository.save(e);
                     }
@@ -416,7 +414,7 @@ public class TournamentService {
                     tournamentEntity.setCommissionRTSArbiter(null);
                     tournamentRepository.save(tournamentEntity);
                     LOG.info("Ustawiono sędziego biura obliczeń");
-                    return ResponseEntity.ok("Ustawiono sędziego RTSń");
+                    return ResponseEntity.ok("Ustawiono sędziego RTS");
                 } else {
                     return ResponseEntity.badRequest().body("Nie udało się przypisać sędziego");
                 }
@@ -537,6 +535,7 @@ public class TournamentService {
                         .discipline(competition.getDiscipline())
                         .disciplines(competition.getDisciplines())
                         .countingMethod(competition.getCountingMethod())
+                        .competitionUUID(competition.getUuid())
                         .type(competition.getType())
                         .numberOfShots(competition.getNumberOfShots())
                         .WZSS(tournamentEntity.isWZSS())
@@ -544,6 +543,8 @@ public class TournamentService {
                         .caliberUUID(competition.getCaliberUUID())
                         .practiceShots(competition.getPracticeShots())
                         .build();
+                competitionMembersList.setNumberOfManyShotsList(competition.getNumberOfManyShotsList());
+                competitionMembersList.setDisciplineList(competition.getDisciplineList());
                 competitionMembersListRepository.save(competitionMembersList);
                 List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
                 competitionsList.add(competitionMembersList);
@@ -619,24 +620,23 @@ public class TournamentService {
 
     }
 
-    public List<String> getCompetitionsListInTournament(String tournamentUUID) {
+    public Map<String,String> getCompetitionsListInTournament(String tournamentUUID) {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
-        List<String> list = new ArrayList<>();
+        Map<String,String> map = new HashMap<>();
 
         List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
         competitionsList.sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
         competitionsList.forEach(e ->
         {
             if (e.getOrdering() == null) {
-                System.out.println(e.getName());
                 CompetitionEntity competitionEntity = competitionRepository.findAll().stream().filter(f -> f.getName().equals(e.getName())).findFirst().orElseThrow(EntityNotFoundException::new);
                 e.setOrdering(competitionEntity.getOrdering());
                 competitionMembersListRepository.save(e);
             }
-            list.add(e.getName());
+            map.put(e.getUuid(),e.getName());
         });
 
-        return list;
+        return map;
     }
 
     public ResponseEntity<?> addOthersRTSArbiters(String tournamentUUID, String barcode) {

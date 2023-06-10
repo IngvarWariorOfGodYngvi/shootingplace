@@ -37,9 +37,9 @@ public class CompetitionController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<?> updateCompetition(@RequestParam String uuid, @RequestBody Competition competition) {
+    public ResponseEntity<?> updateCompetition(@RequestParam String uuid, @RequestBody Competition competition,@RequestParam String pinCode) {
 
-        return competitionService.updateCompetition(uuid, competition);
+        return competitionService.updateCompetition(uuid, competition,pinCode);
     }
 
     @PutMapping("/score/set")

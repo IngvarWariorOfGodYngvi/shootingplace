@@ -26,7 +26,7 @@ public class TournamentController {
         this.armoryService = armoryService;
     }
 
-    @GetMapping("/list")
+    @GetMapping("/openTournament")
     public ResponseEntity<?> getListOfTournaments() {
         return tournamentService.getOpenTournament();
     }

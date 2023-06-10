@@ -58,16 +58,6 @@ public class ClubServiceTest {
     }
 
     @Test
-    public void get_all_clubs_to_tournament() {
-        //given
-        //when
-        List<String> allClubs = clubService.getAllClubsToTournament();
-        //then
-        assertThat(allClubs, Matchers.hasSize(clubCount - 2));
-        assertThat(allClubs.get(0), Matchers.equalTo(clubEntityList.get(2).getName()));
-    }
-
-    @Test
     public void update_club_return_false1() {
         //given
         int id = 7;

@@ -8,7 +8,9 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
@@ -24,12 +26,13 @@ public class CompetitionEntity {
     private String name;
 
     private String discipline;
-
-    private String[] disciplines;
-
     private Integer numberOfShots;
 
+    private String[] disciplines;
+    private String disciplineList;
+
     private Integer[] numberOfManyShots;
+    private String numberOfManyShotsList;
 
     private String type;
 
@@ -40,6 +43,39 @@ public class CompetitionEntity {
     private Integer practiceShots;
 
     private String caliberUUID;
+    public List<String> getDisciplineList() {
+        List<String> vals = new ArrayList<>();
+        if (disciplineList != null) {
+            for (String s : disciplineList.split(";")) {
+                vals.add(String.valueOf(s));
+            }
+        }
+        return vals;
+    }
+
+    public void setDisciplineList(List<String> disciplineList) {
+        String value = "";
+        for (String f : disciplineList) {
+            value = value.concat(f + ";");
+        }
+        this.disciplineList = value;
+    }
+    public List<String> getNumberOfManyShotsList() {
+        List<String> vals = new ArrayList<>();
+        if (numberOfManyShotsList != null) {
+            for (String s : numberOfManyShotsList.split(";")) {
+                vals.add(String.valueOf(s));
+            }
+        }
+        return vals;
+    }
+    public void setNumberOfManyShotsList(List<String> numberOfManyShotsList) {
+        String value = "";
+        for (String f : numberOfManyShotsList) {
+            value = value.concat(f + ";");
+        }
+        this.numberOfManyShotsList = value;
+    }
 
     public String getCaliberUUID() {
         return caliberUUID;

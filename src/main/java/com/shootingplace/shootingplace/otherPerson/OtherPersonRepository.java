@@ -11,6 +11,7 @@ public interface OtherPersonRepository{
     OtherPersonEntity save(OtherPersonEntity entity);
 
     OtherPersonEntity getOne(Integer id);
+    Optional<OtherPersonEntity> findByPhoneNumber(String phone);
 
     boolean existsById(int id);
 }

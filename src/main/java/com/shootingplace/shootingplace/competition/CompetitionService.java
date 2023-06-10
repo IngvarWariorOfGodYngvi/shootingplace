@@ -3,25 +3,33 @@ package com.shootingplace.shootingplace.competition;
 import com.shootingplace.shootingplace.enums.CompetitionType;
 import com.shootingplace.shootingplace.enums.CountingMethod;
 import com.shootingplace.shootingplace.enums.Discipline;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.tournament.CompetitionMembersListRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 public class CompetitionService {
 
     private final CompetitionRepository competitionRepository;
     private final CompetitionMembersListRepository competitionMembersListRepository;
+    private final ChangeHistoryService changeHistoryService;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public CompetitionService(CompetitionRepository competitionRepository, CompetitionMembersListRepository competitionMembersListRepository) {
+    public CompetitionService(CompetitionRepository competitionRepository, CompetitionMembersListRepository competitionMembersListRepository, ChangeHistoryService changeHistoryService) {
         this.competitionRepository = competitionRepository;
         this.competitionMembersListRepository = competitionMembersListRepository;
+        this.changeHistoryService = changeHistoryService;
     }
 
     public List<CompetitionEntity> getAllCompetitions() {
@@ -175,16 +183,9 @@ public class CompetitionService {
         }
     }
 
-    public ResponseEntity<?> updateCompetition(String uuid, Competition competition) {
-
-        List<CompetitionEntity> all = competitionRepository.findAll();
-
-        CompetitionEntity competitionEntity = all.stream().filter(f -> f.getOrdering().equals(competition.getOrdering())).findFirst().orElse(null);
+    public ResponseEntity<?> updateCompetition(String uuid, Competition competition, String pinCode) {
 
         CompetitionEntity one = competitionRepository.getOne(uuid);
-        if (competitionEntity != null) {
-            competitionEntity.setOrdering(one.getOrdering());
-        }
         if (competition.getOrdering() != null) {
             one.setOrdering(competition.getOrdering());
         }
@@ -194,26 +195,54 @@ public class CompetitionService {
         if (competition.getCaliberUUID() != null) {
             one.setCaliberUUID(competition.getCaliberUUID());
         }
-        competitionRepository.save(one);
-        if (competitionEntity != null) {
-            competitionRepository.save(competitionEntity);
+        if (competition.getName() != null) {
+            if (competitionRepository.findByNameEquals(competition.getName()).isEmpty()) {
+                one.setName(competition.getName());
+            } else {
+                return ResponseEntity.badRequest().body("taka nazwa już istnieje i nie można zaktualizować konkurencji");
+            }
         }
-        competitionMembersListRepository.findAll()
-                .stream()
-                .filter(f -> f.getName().equals(one.getName()))
-                .forEach(e -> {
-                    e.setOrdering(competition.getOrdering());
-                    competitionMembersListRepository.save(e);
-                });
-        return ResponseEntity.ok("Zaktualizowano konkurencję");
+        if (competition.getNumberOfShots() != null) {
+            one.setNumberOfShots(competition.getNumberOfShots());
+        }
+        System.out.println(competition.getCountingMethod());
+        if (competition.getCountingMethod() != null) {
+            one.setCountingMethod(competition.getCountingMethod());
+        }
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, one, HttpStatus.OK, "update Competition", "Zaktualizowano konkurencję");
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            competitionRepository.save(one);
+            competitionMembersListRepository.findAll()
+                    .stream()
+                    .filter(f-> f.getCompetitionUUID().equals(one.getUuid()))
+                    .forEach(e -> {
+                        e.setOrdering(competition.getOrdering());
+                        e.setPracticeShots(competition.getPracticeShots()!=null?competition.getPracticeShots():e.getPracticeShots());
+                        e.setCaliberUUID(competition.getCaliberUUID()!=null?competition.getCaliberUUID():e.getCaliberUUID());
+                        e.setName(competition.getName()!=null?competition.getName():e.getName());
+                        e.setNumberOfShots(competition.getNumberOfShots()!=null?competition.getNumberOfShots():e.getNumberOfShots());
+                        e.setCountingMethod(competition.getCountingMethod()!=null?competition.getCountingMethod():e.getCountingMethod());
+                        competitionMembersListRepository.save(e);
+                    });
+        }
+        return response;
     }
 
     public ResponseEntity<?> getCompetitionMemberList(String competitionMembersListUUID) {
-        if(competitionMembersListRepository.existsById(competitionMembersListUUID)){
-        return ResponseEntity.ok(competitionMembersListRepository.findById(competitionMembersListUUID));
+        if (competitionMembersListRepository.existsById(competitionMembersListUUID)) {
+            return ResponseEntity.ok(competitionMembersListRepository.findById(competitionMembersListUUID));
 
-        }else {
+        } else {
             return ResponseEntity.badRequest().body("brak takiej konkurencji");
         }
+    }
+
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, CompetitionEntity entity, HttpStatus status, String methodName, Object body) {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, entity != null ? entity.getClass().getSimpleName() + " " + methodName + " " : methodName, entity != null ? entity.getUuid() : "nie dotyczy");
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
     }
 }

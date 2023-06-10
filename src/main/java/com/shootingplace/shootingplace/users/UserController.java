@@ -39,13 +39,20 @@ public class UserController {
     }
 
     @PostMapping("/createSuperUser")
-    public ResponseEntity<?> createSuperUser(@RequestParam String firstName, @RequestParam String secondName,  @RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode,@RequestParam @Nullable String memberUUID) {
-        return userService.createSuperUser(firstName, secondName, subType, pinCode, superPinCode, memberUUID);
+    public ResponseEntity<?> createSuperUser(@RequestParam String firstName, @RequestParam String secondName,  @RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode,@RequestParam @Nullable String memberUUID, @RequestParam @Nullable Integer otherID) {
+        return userService.createSuperUser(firstName, secondName, subType, pinCode, superPinCode, memberUUID, otherID);
     }
 
     @PostMapping("/createUser")
-    public ResponseEntity<?> createUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode,@RequestParam @Nullable String memberUUID) {
-        return userService.createUser(firstName, secondName, subType, pinCode, superPinCode, memberUUID);
+    public ResponseEntity<?> createUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode,@RequestParam @Nullable String memberUUID, @RequestParam @Nullable Integer otherID) {
+        return userService.createUser(firstName, secondName, subType, pinCode, superPinCode, memberUUID, otherID);
+    }
+    @PostMapping("/editUser")
+    public ResponseEntity<?> editUser(@Nullable @RequestParam String firstName,@Nullable @RequestParam String secondName,@Nullable @RequestParam String subType,@Nullable @RequestParam String pinCode, @RequestParam String superPinCode,@RequestParam @Nullable String memberUUID, @RequestParam @Nullable String otherID,@RequestParam String userUUID) {
+        if(pinCode.equals("null")){
+            pinCode=null;
+        }
+        return userService.editUser(firstName, secondName, subType, pinCode, superPinCode, memberUUID, otherID, userUUID);
     }
 
     @GetMapping("/checkPinCode")
