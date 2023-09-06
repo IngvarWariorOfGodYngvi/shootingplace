@@ -27,6 +27,7 @@ public class CaliberUsedEntity {
     private LocalDate date;
     private LocalTime time;
     private Integer ammoUsed;
+    private float unitPrice;
 
     public String getUuid() {
         return uuid;
@@ -54,6 +55,14 @@ public class CaliberUsedEntity {
 
     public void setTime(LocalTime time) {
         this.time = time;
+    }
+
+    public float getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(float unitPrice) {
+        this.unitPrice = unitPrice;
     }
 
     public Integer getAmmoUsed() {

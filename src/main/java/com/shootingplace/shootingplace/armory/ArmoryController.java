@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/armory")
@@ -19,17 +20,19 @@ public class ArmoryController {
     private final CaliberService caliberService;
     private final AmmoUsedService ammoUsedService;
     private final ChangeHistoryService changeHistoryService;
+    private final ShootingPacketService shootingPacketService;
 
 
-    public ArmoryController(ArmoryService armoryService, CaliberService caliberService, ChangeHistoryService changeHistoryService, AmmoUsedService ammoUsedService, ChangeHistoryService changeHistoryService1) {
+    public ArmoryController(ArmoryService armoryService, CaliberService caliberService, AmmoUsedService ammoUsedService, ChangeHistoryService changeHistoryService, ShootingPacketService shootingPacketService) {
         this.armoryService = armoryService;
         this.caliberService = caliberService;
         this.ammoUsedService = ammoUsedService;
-        this.changeHistoryService = changeHistoryService1;
+        this.changeHistoryService = changeHistoryService;
+        this.shootingPacketService = shootingPacketService;
     }
 
     @GetMapping("/recount")
-    public void recount(){
+    public void recount() {
         ammoUsedService.recountAmmo();
     }
 
@@ -43,6 +46,7 @@ public class ArmoryController {
     public ResponseEntity<List<String>> getCalibersNamesList() {
         return ResponseEntity.ok(caliberService.getCalibersNamesList());
     }
+
     @GetMapping("/getGun")
     public ResponseEntity<?> getGun(@RequestParam String gunUUID) {
         return armoryService.getGun(gunUUID);
@@ -92,6 +96,15 @@ public class ArmoryController {
     public ResponseEntity<?> getGunUsedHistory(@RequestParam String gunUUID) {
         return ResponseEntity.ok(armoryService.getGunUsedHistory(gunUUID));
     }
+    @GetMapping("/getAllShootingPacket")
+    public ResponseEntity<?> getAllShootingPacket(){
+        return ResponseEntity.ok(shootingPacketService.getAllShootingPacket());
+    }
+    @Transactional
+    @PostMapping("/addShootingPacket")
+    public ResponseEntity<?> addShootingPacket(@RequestParam String name, @RequestParam float price, @RequestBody Map<String,Integer> map,@RequestParam String pinCode) {
+        return shootingPacketService.addShootingPacket(name,price,map,pinCode);
+    }
 
     @PutMapping("/addAmmo")
     public ResponseEntity<?> updateAmmoQuantity(@RequestParam String caliberUUID, @RequestParam Integer count, @RequestParam String date, @RequestParam String description) {
@@ -130,12 +143,33 @@ public class ArmoryController {
         }
         return caliberService.createNewCaliber(caliber, pinCode);
     }
+
     @PatchMapping("/changeCaliberQuantity")
-    public ResponseEntity<?> changeCaliberQuantity(@RequestParam String caliberUUID,@RequestParam Integer quantity, @RequestParam String pinCode) {
+    public ResponseEntity<?> changeCaliberQuantity(@RequestParam String caliberUUID, @RequestParam Integer quantity, @RequestParam String pinCode) {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
-            return armoryService.changeCaliberQuantity(caliberUUID,quantity,pinCode);
-        }else {
+            return armoryService.changeCaliberQuantity(caliberUUID, quantity, pinCode);
+        } else {
+            return code;
+        }
+    }
+
+    @PatchMapping("/changeCaliberUnitPrice")
+    public ResponseEntity<?> changeCaliberUnitPrice(@RequestParam String caliberUUID, @RequestParam Float price, @RequestParam String pinCode) {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return armoryService.changeCaliberUnitPrice(caliberUUID, price, pinCode);
+        } else {
+            return code;
+        }
+    }
+
+    @PatchMapping("/changeCaliberUnitPriceForNotMember")
+    public ResponseEntity<?> changeCaliberUnitPriceForNotMember(@RequestParam String caliberUUID, @RequestParam Float price, @RequestParam String pinCode) {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return armoryService.changeCaliberUnitPriceForNotMember(caliberUUID, price, pinCode);
+        } else {
             return code;
         }
     }
@@ -147,14 +181,16 @@ public class ArmoryController {
         }
         return armoryService.createNewGunStore(nameType);
     }
+
     @Transactional
     @PutMapping("/addGunToList")
     public ResponseEntity<?> addGunToList(@RequestParam String evidenceUUID, @RequestParam String barcode, @Nullable @RequestParam String legitimationNumber, @Nullable @RequestParam String IDNumber) {
-        if(evidenceUUID.equals("undefined")){
+        if (evidenceUUID.equals("undefined")) {
             evidenceUUID = null;
         }
         return armoryService.addGunToList(evidenceUUID, barcode, legitimationNumber, IDNumber);
     }
+
     @Transactional
     @PutMapping("/addGunToRepair")
     public ResponseEntity<?> addGunToRepair(@RequestParam String gunUUID) {
@@ -168,7 +204,7 @@ public class ArmoryController {
 
     @Transactional
     @PatchMapping("/returnToStore")
-    public ResponseEntity<?> returnToStore(@RequestParam List<String> gunsUUID){
+    public ResponseEntity<?> returnToStore(@RequestParam List<String> gunsUUID) {
         return armoryService.returnToStore(gunsUUID);
     }
 

@@ -29,6 +29,9 @@ public class CaliberEntity {
     @OneToMany
     private List<CalibersAddedEntity> ammoAdded;
 
+    private float unitPrice;
+    private float unitPriceForNotMember;
+
     public String getUuid() {
         return uuid;
     }
@@ -51,6 +54,22 @@ public class CaliberEntity {
 
     public List<CaliberUsedEntity> getAmmoUsed() {
         return ammoUsed;
+    }
+
+    public float getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(float unitPrice) {
+        this.unitPrice = unitPrice;
+    }
+
+    public float getUnitPriceForNotMember() {
+        return unitPriceForNotMember;
+    }
+
+    public void setUnitPriceForNotMember(float unitPriceForNotMember) {
+        this.unitPriceForNotMember = unitPriceForNotMember;
     }
 
     public void setAmmoUsed(List<CaliberUsedEntity> ammoUsed) {

@@ -41,7 +41,7 @@ public class ContributionService {
 
     public ResponseEntity<?> addContribution(String memberUUID, LocalDate contributionPaymentDay, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza" );
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         List<ContributionEntity> contributionEntityList = memberEntity.getHistory().getContributionList();
@@ -52,51 +52,59 @@ public class ContributionService {
                 .paymentDay(null)
                 .validThru(null)
                 .build();
-        if (environment.getActiveProfiles()[0].equals("prod")) {
-            if (memberEntity.getAdult()) {
-                if (contributionEntityList.size() < 1) {
-                    contributionEntity.setPaymentDay(contributionPaymentDay);
-                    if (contributionPaymentDay.isBefore(LocalDate.of(validThru.getYear(), 6, 30))) {
-                        contributionEntity.setValidThru(LocalDate.of(validThru.getYear(), 6, 30));
-                    } else {
-                        contributionEntity.setValidThru(LocalDate.of(validThru.getYear(), 12, 31));
-                    }
-                } else {
-                    contributionEntity.setPaymentDay(contributionPaymentDay);
-                    if (contributionEntityList.get(0).getValidThru().equals(LocalDate.of(validThru.getYear(), 6, 30))) {
-                        contributionEntity.setValidThru(LocalDate.of(contributionEntityList.get(0).getValidThru().getYear(), 12, 31));
-                    } else {
-                        contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusMonths(6));
-                    }
-                }
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+            if (contributionEntityList.size() < 1) {
+                contributionEntity.setPaymentDay(contributionPaymentDay);
+                contributionEntity.setValidThru(contributionPaymentDay.plusMonths(6));
+            } else {
+                contributionEntity.setPaymentDay(contributionPaymentDay);
+                contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusMonths(6));
             }
-            if (!memberEntity.getAdult()) {
-                if (contributionEntityList.size() < 1) {
-                    contributionEntity.setPaymentDay(contributionPaymentDay);
-                    if (contributionPaymentDay.isBefore(LocalDate.of(validThru.getYear(), 2, 28))) {
-                        contributionEntity.setValidThru(LocalDate.of(validThru.getYear(), 2, 28));
-                    } else {
-                        contributionEntity.setValidThru(LocalDate.of(validThru.getYear(), 8, 31));
-                    }
-                } else {
-                    contributionEntity.setPaymentDay(contributionPaymentDay);
-                    if (contributionEntityList.get(0).getValidThru().equals(LocalDate.of(validThru.getYear(), 2, 28))) {
-                        contributionEntity.setValidThru(LocalDate.of(contributionEntityList.get(0).getValidThru().getYear(), 8, 31));
-                        System.out.println(1);
-                    } else {
-                        System.out.println(2);
-                        LocalDate c;
-                        if (contributionEntityList.get(0).getValidThru().getMonth().getValue() == 2 && contributionEntityList.get(0).getValidThru().getDayOfMonth() == 28) {
-                            c = contributionEntityList.get(0).getValidThru().plusMonths(6).plusDays(3);
-                            contributionEntity.setValidThru(c);
-                        } else {
-                            contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusMonths(6));
-                        }
-                    }
-                }
-            }
+//  Niech zostanie dla potomności - półroczne składki dorosłych i młodzieży
+//            if (memberEntity.getAdult()) {
+//                if (contributionEntityList.size() < 1) {
+//                    contributionEntity.setPaymentDay(contributionPaymentDay);
+//                    if (contributionPaymentDay.isBefore(LocalDate.of(validThru.getYear(), 6, 30))) {
+//                        contributionEntity.setValidThru(LocalDate.of(validThru.getYear(), 6, 30));
+//                    } else {
+//                        contributionEntity.setValidThru(LocalDate.of(validThru.getYear(), 12, 31));
+//                    }
+//                } else {
+//                    contributionEntity.setPaymentDay(contributionPaymentDay);
+//                    if (contributionEntityList.get(0).getValidThru().equals(LocalDate.of(validThru.getYear(), 6, 30))) {
+//                        contributionEntity.setValidThru(LocalDate.of(contributionEntityList.get(0).getValidThru().getYear(), 12, 31));
+//                    } else {
+//                        contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusMonths(6));
+//                    }
+//                }
+//            }
+//            if (!memberEntity.getAdult()) {
+//                if (contributionEntityList.size() < 1) {
+//                    contributionEntity.setPaymentDay(contributionPaymentDay);
+//                    if (contributionPaymentDay.isBefore(LocalDate.of(validThru.getYear(), 2, 28))) {
+//                        contributionEntity.setValidThru(LocalDate.of(validThru.getYear(), 2, 28));
+//                    } else {
+//                        contributionEntity.setValidThru(LocalDate.of(validThru.getYear(), 8, 31));
+//                    }
+//                } else {
+//                    contributionEntity.setPaymentDay(contributionPaymentDay);
+//                    if (contributionEntityList.get(0).getValidThru().equals(LocalDate.of(validThru.getYear(), 2, 28))) {
+//                        contributionEntity.setValidThru(LocalDate.of(contributionEntityList.get(0).getValidThru().getYear(), 8, 31));
+//                        System.out.println(1);
+//                    } else {
+//                        System.out.println(2);
+//                        LocalDate c;
+//                        if (contributionEntityList.get(0).getValidThru().getMonth().getValue() == 2 && contributionEntityList.get(0).getValidThru().getDayOfMonth() == 28) {
+//                            c = contributionEntityList.get(0).getValidThru().plusMonths(6).plusDays(3);
+//                            contributionEntity.setValidThru(c);
+//                        } else {
+//                            contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusMonths(6));
+//                        }
+//                    }
+//                }
+//            }
         }
-        if (environment.getActiveProfiles()[0].equals("rcs")){
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
             if (contributionEntityList.size() < 1) {
                 contributionEntity.setPaymentDay(contributionPaymentDay);
                 contributionEntity.setValidThru(contributionPaymentDay.plusYears(1));
@@ -130,7 +138,7 @@ public class ContributionService {
 
     public ResponseEntity<?> addContributionRecord(String memberUUID, LocalDate paymentDate, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza" );
         }
 
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
@@ -141,12 +149,12 @@ public class ContributionService {
                 .paymentDay(paymentDate)
                 .validThru(validThru)
                 .build();
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Dodano składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Dodano składkę " + memberEntity.getFullName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             memberEntity.setActive(!memberEntity.getHistory().getContributionList().get(0).getValidThru().plusMonths(3).isBefore(LocalDate.now()));
             contributionRepository.save(contributionEntity);
             historyService.addContribution(memberUUID, contributionEntity);
-            LOG.info("zmieniono " + memberEntity.getSecondName());
+            LOG.info("Dodano składkę " + memberEntity.getFullName());
             memberRepository.save(memberEntity);
         }
         return response;
@@ -156,39 +164,44 @@ public class ContributionService {
     public ContributionEntity addFirstContribution(String memberUUID, LocalDate contributionPaymentDay) {
 
         ContributionEntity contributionEntity = getContributionEntity(memberUUID, contributionPaymentDay);
-        LOG.info("utworzono pierwszą składkę");
+        LOG.info("utworzono pierwszą składkę" );
         return contributionRepository.save(contributionEntity);
     }
 
     private ContributionEntity getContributionEntity(String memberUUID, LocalDate contributionPaymentDay) {
-        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
         LocalDate validThru = contributionPaymentDay;
-        if(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())){
-        if (memberEntity.getAdult()) {
-            if (validThru.isBefore(LocalDate.of(contributionPaymentDay.getYear(), 6, 30))) {
-                validThru = LocalDate.of(contributionPaymentDay.getYear(), 6, 30);
-            } else {
-                validThru = LocalDate.of(contributionPaymentDay.getYear(), 12, 31);
-            }
-            if (memberEntity.getHistory().getContributionList() != null) {
-                if (!memberEntity.getHistory().getContributionList().isEmpty()) {
-                    validThru = memberEntity.getHistory().getContributionList().get(0).getValidThru();
-                }
-            }
+//  Dla potomności - pierwsza składka w trybie półrocznym
+//        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+//        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
+//            if (memberEntity.getAdult()) {
+//                if (validThru.isBefore(LocalDate.of(contributionPaymentDay.getYear(), 6, 30))) {
+//                    validThru = LocalDate.of(contributionPaymentDay.getYear(), 6, 30);
+//                } else {
+//                    validThru = LocalDate.of(contributionPaymentDay.getYear(), 12, 31);
+//                }
+//                if (memberEntity.getHistory().getContributionList() != null) {
+//                    if (!memberEntity.getHistory().getContributionList().isEmpty()) {
+//                        validThru = memberEntity.getHistory().getContributionList().get(0).getValidThru();
+//                    }
+//                }
+//            }
+//            if (!memberEntity.getAdult()) {
+//                if (validThru.isBefore(LocalDate.of(contributionPaymentDay.getYear(), 2, 28))) {
+//                    validThru = LocalDate.of(contributionPaymentDay.getYear(), 2, 28);
+//                } else {
+//                    validThru = LocalDate.of(contributionPaymentDay.getYear(), 8, 31);
+//                }
+//                if (memberEntity.getHistory().getContributionList() != null) {
+//                    if (!memberEntity.getHistory().getContributionList().isEmpty()) {
+//                        validThru = memberEntity.getHistory().getContributionList().get(0).getValidThru();
+//                    }
+//                }
+//            }
+//        }
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+            validThru = contributionPaymentDay.plusMonths(6);
         }
-        if (!memberEntity.getAdult()) {
-            if (validThru.isBefore(LocalDate.of(contributionPaymentDay.getYear(), 2, 28))) {
-                validThru = LocalDate.of(contributionPaymentDay.getYear(), 2, 28);
-            } else {
-                validThru = LocalDate.of(contributionPaymentDay.getYear(), 8, 31);
-            }
-            if (memberEntity.getHistory().getContributionList() != null) {
-                if (!memberEntity.getHistory().getContributionList().isEmpty()) {
-                    validThru = memberEntity.getHistory().getContributionList().get(0).getValidThru();
-                }
-            }
-        }}
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
             validThru = contributionPaymentDay.plusYears(1);
         }
@@ -202,7 +215,7 @@ public class ContributionService {
 
     public ResponseEntity<?> removeContribution(String memberUUID, String contributionUUID, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza" );
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
 
@@ -228,7 +241,7 @@ public class ContributionService {
 
     public ResponseEntity<?> updateContribution(String memberUUID, String contributionUUID, LocalDate paymentDay, LocalDate validThru, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza" );
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
 

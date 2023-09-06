@@ -12,6 +12,9 @@ public class Caliber {
     private String name;
 
     private Integer quantity;
+    private float unitPrice;
+    private float unitPriceForNotMember;
+
 
     public String getUuid() {
         return uuid;
@@ -35,6 +38,22 @@ public class Caliber {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public float getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(float unitPrice) {
+        this.unitPrice = unitPrice;
+    }
+
+    public float getUnitPriceForNotMember() {
+        return unitPriceForNotMember;
+    }
+
+    public void setUnitPriceForNotMember(float unitPriceForNotMember) {
+        this.unitPriceForNotMember = unitPriceForNotMember;
     }
 
     @Override

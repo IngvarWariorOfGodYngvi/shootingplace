@@ -468,7 +468,7 @@ public class XLSXFilesService {
             cell4.setCellStyle(cellStyleNormalCenterAlignment);
             cell5.setCellStyle(cellStyleNormalCenterAlignment);
 
-            cell3.setCellValue(memberDTO.getMemberName());
+            cell3.setCellValue(memberDTO.getFullName());
             cell4.setCellValue(memberDTO.getLegitimationNumber());
             cell5.setCellValue(memberDTO.getJoinDate().toString());
 
@@ -551,7 +551,7 @@ public class XLSXFilesService {
             cell4.setCellStyle(cellStyleNormalCenterAlignment);
             cell5.setCellStyle(cellStyleNormalCenterAlignment);
 
-            cell3.setCellValue(memberDTO.getMemberName());
+            cell3.setCellValue(memberDTO.getFullName());
             cell4.setCellValue(memberDTO.getLegitimationNumber());
             cell5.setCellValue(memberDTO.getErasedEntity().getDate().toString());
 
@@ -628,7 +628,7 @@ public class XLSXFilesService {
             cell5 = row1.createCell(5);
 
             cell.setCellValue(i + 1);
-            cell1.setCellValue(collect.get(i).getMemberName() + (!collect.get(i).getActive()? " - Nieaktywny" : "") );
+            cell1.setCellValue(collect.get(i).getFullName() + (!collect.get(i).getActive()? " - Nieaktywny" : "") );
             cell2.setCellValue(collect.get(i).getLegitimationNumber());
             cell3.setCellValue(collect.get(i).getJoinDate().toString());
 

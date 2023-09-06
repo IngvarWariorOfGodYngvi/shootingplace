@@ -8,6 +8,7 @@ import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
 import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.file.FilesEntity;
 import com.shootingplace.shootingplace.file.FilesRepository;
+import com.shootingplace.shootingplace.file.IFile;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.slf4j.Logger;
@@ -48,6 +49,9 @@ public class WorkingTimeEvidenceService {
 
     public String createNewWTE(String number) {
         String msg;
+        if (!barCodeCardRepo.existsByBarCode(number)) {
+            return "Brak takiego numeru";
+        }
         BarCodeCardEntity barCode = barCodeCardRepo.findByBarCode(number);
         if (!barCode.isActive()) {
             msg = "Karta jest nieaktywna i nie można jej użyć ponownie";
@@ -208,7 +212,6 @@ public class WorkingTimeEvidenceService {
     public void closeAllActiveWorkTime(String workType) {
         log.info("zamykam to co jest otwarte");
         List<WorkingTimeEvidenceEntity> allByCloseFalse = workRepo.findAllByIsCloseFalse();
-//        workRepo.findAll()
         allByCloseFalse
                 .stream()
                 .filter(f -> !f.isClose())
@@ -408,11 +411,12 @@ public class WorkingTimeEvidenceService {
             String workType = workRepo.getOne(list.get(0).getUuid()).getWorkType();
             int yearValue = list.get(0).getStart().getYear();
             String finalMonth = month.toLowerCase();
-            List<FilesEntity> collect = filesRepo.findAllByNameContains("%" + month.toLowerCase() + "%", "%" + yearValue + "%", "%" + workType + "%");
+            List<IFile> collect = filesRepo.findAllByNameContains("%" + month.toLowerCase() + "%", "%" + yearValue + "%", "%" + workType + "%");
             if (!collect.isEmpty()) {
                 collect.forEach(e -> {
-                    e.setName("raport_pracy_" + finalMonth + "_" + (e.getVersion()) + "_" + yearValue + "_" + workType + ".pdf");
-                    filesRepo.save(e);
+                    FilesEntity one = filesRepo.getOne(e.getUuid());
+                    one.setName("raport_pracy_" + finalMonth + "_" + (e.getVersion()) + "_" + yearValue + "_" + workType + ".pdf");
+                    filesRepo.save(one);
                 });
             }
 

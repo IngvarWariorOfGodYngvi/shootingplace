@@ -2,10 +2,7 @@ package com.shootingplace.shootingplace.armory;
 
 import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.*;
-import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.member.PersonalEvidenceEntity;
-import com.shootingplace.shootingplace.member.PersonalEvidenceRepository;
+import com.shootingplace.shootingplace.member.*;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
@@ -17,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -84,8 +82,8 @@ public class AmmoUsedService {
                 String name;
                 if (legitimationNumber > 0) {
                     MemberEntity memberEntity = memberRepository.findByLegitimationNumber(legitimationNumber).orElseThrow(EntityNotFoundException::new);
-                    LOG.info("member " + memberEntity.getMemberName());
-                    name = memberEntity.getMemberName();
+                    LOG.info("member " + memberEntity.getFullName());
+                    name = memberEntity.getFullName();
                     AmmoUsedPersonal ammoUsedPersonal = AmmoUsedPersonal.builder()
                             .caliberName(caliberName)
                             .counter(quantity)
@@ -94,8 +92,6 @@ public class AmmoUsedService {
                             .memberName(name)
                             .date(LocalDate.now())
                             .build();
-
-
                     AmmoUsedEvidence ammoUsedEvidence = AmmoUsedEvidence.builder()
                             .caliberName(caliberName)
                             .counter(quantity)
@@ -139,7 +135,7 @@ public class AmmoUsedService {
             String name;
             if (legitimationNumber > 0) {
                 MemberEntity memberEntity = memberRepository.findByLegitimationNumber(legitimationNumber).orElseThrow(EntityNotFoundException::new);
-                name = memberEntity.getMemberName();
+                name = memberEntity.getFullName();
                 AmmoUsedPersonal ammoUsedPersonal = AmmoUsedPersonal.builder()
                         .caliberName(caliberName)
                         .counter(quantity)
@@ -186,6 +182,93 @@ public class AmmoUsedService {
 
         }
         return ResponseEntity.badRequest().body("Coś poszło nie tak - Sprawdź stany magazynowe " + caliberName);
+    }
+
+    @Transactional
+    public ResponseEntity<?> addListOfAmmoToEvidence(Map<String, String> caliberUUIDAmmoQuantityMap, Integer legitimationNumber, int otherID) {
+        if (!workingTimeEvidenceRepository.existsByIsCloseFalse()) {
+            return ResponseEntity.badRequest().body("Najpierw zarejestruj pobyt");
+        }
+
+        if (ammoEvidenceRepository.existsByOpenTrueAndForceOpenFalse()) {
+            AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository.findAllByOpenTrueAndForceOpenFalse().stream().findFirst().orElseThrow(EntityNotFoundException::new);
+            if (ammoEvidenceEntity.getDate().isBefore(LocalDate.now())) {
+                ammoEvidenceEntity.setOpen(false);
+                ammoEvidenceEntity.setForceOpen(false);
+                ammoEvidenceRepository.save(ammoEvidenceEntity);
+                LOG.info("zamknięto starą listę");
+            }
+        }
+        boolean[] caliberAmmocheck = new boolean[caliberUUIDAmmoQuantityMap.size()];
+        final int[] iterator = {0};
+        caliberUUIDAmmoQuantityMap.forEach((key, value) -> {
+            caliberAmmocheck[iterator[0]] = caliberRepository.getOne(key).getQuantity() - Integer.parseInt(value) >= 0;
+            iterator[0]++;
+        });
+        boolean check = true;
+        for (boolean b : caliberAmmocheck) {
+            if (!b) {
+                check = false;
+                break;
+            }
+        }
+        if (!check) {
+            return ResponseEntity.badRequest().body("Coś poszło nie tak - Sprawdź stany magazynowe ");
+        }
+        List<String> returnList = new ArrayList<>();
+        caliberUUIDAmmoQuantityMap.forEach((key, value) -> {
+            CaliberEntity one = caliberRepository.getOne(key);
+            boolean substrat = Integer.parseInt(value) > 0;
+
+            if (substrat) {
+                armoryService.substratAmmo(key, Integer.parseInt(value));
+                LOG.info("dodaję amunicję do listy");
+            } else {
+                LOG.info("odejmuję amunicję z listy");
+            }
+            MemberEntity memberEntity = null;
+            OtherPersonEntity otherPersonEntity = null;
+            if (legitimationNumber > 0) {
+                memberEntity = memberRepository.findByLegitimationNumber(legitimationNumber).orElseThrow(EntityNotFoundException::new);
+                LOG.info("member " + memberEntity.getFullName());
+                AmmoUsedPersonal ammoUsedPersonal = AmmoUsedPersonal.builder()
+                        .caliberName(one.getName())
+                        .counter(Integer.parseInt(value))
+                        .memberUUID(memberEntity.getUuid())
+                        .caliberUUID(key)
+                        .memberName(memberEntity.getFullName())
+                        .date(LocalDate.now())
+                        .time(LocalTime.now())
+                        .build();
+                validateAmmo(ammoUsedPersonal);
+            } else {
+                otherPersonEntity = otherPersonRepository
+                        .findById(otherID)
+                        .orElseThrow(EntityNotFoundException::new);
+                LOG.info("not member " + otherPersonEntity.getFullName());
+
+            }
+            AmmoUsedEvidence ammoUsedEvidence = AmmoUsedEvidence.builder()
+                    .caliberName(one.getName())
+                    .counter(Integer.parseInt(value))
+                    .memberEntity(memberEntity)
+                    .otherPersonEntity(otherPersonEntity)
+                    .userName(memberEntity != null ? memberEntity.getFullName() : otherPersonEntity.getFullName())
+                    .caliberUUID(key)
+                    .date(LocalDate.now())
+                    .time(LocalTime.now())
+                    .build();
+            if (starEvidence(ammoUsedEvidence)) {
+                if (substrat) {
+                    returnList.add("Dodano do listy " + (memberEntity != null ? memberEntity.getFullName() : otherPersonEntity.getFullName()) + " " + one.getName() + " " + value);
+                } else {
+                    returnList.add("Zwrócono do magazynu " + (memberEntity != null ? memberEntity.getFullName() : otherPersonEntity.getFullName()) + " " + one.getName() + " " + value);
+                }
+            }
+        });
+        return ResponseEntity.ok(returnList);
+
+
     }
 
     private void validateAmmo(AmmoUsedPersonal ammoUsedpersonal) {

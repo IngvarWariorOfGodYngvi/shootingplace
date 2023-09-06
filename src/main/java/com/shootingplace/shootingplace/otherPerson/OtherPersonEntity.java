@@ -108,4 +108,11 @@ public class OtherPersonEntity {
         this.address = address;
     }
 
+    /**
+     * Return secondName plus firstName of OtherPerson
+     */
+    public String getFullName() {
+        return this.getSecondName().replaceAll(" ", "") + ' ' +
+                this.getFirstName().replaceAll(" ", "");
+    }
 }

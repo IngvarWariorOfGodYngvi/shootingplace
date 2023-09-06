@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -73,6 +74,7 @@ public class AmmoInEvidenceService {
                         .evidenceUUID(buildEvidence.getUuid())
                         .quantity(0)
                         .ammoUsedToEvidenceEntityList(new ArrayList<>())
+                        .dateTime(LocalDateTime.now())
                         .build();
 
                 build.getAmmoUsedToEvidenceEntityList().add(ammoUsedToEvidenceEntity);
@@ -111,7 +113,7 @@ public class AmmoInEvidenceService {
                 List<AmmoUsedToEvidenceEntity> ammoUsedToEvidenceEntityList = ammoInEvidenceEntity.getAmmoUsedToEvidenceEntityList();
                 if (ammoUsedToEvidenceEntityList.stream().noneMatch(f -> f.getName().equals(ammoUsedToEvidenceEntity.getName()))) {
                     if (ammoUsedToEvidenceEntity.getCounter() <= 0) {
-                        LOG.info("1nie można dodać ujemnej wartości");
+                        LOG.info("nie można dodać ujemnej wartości");
                         return false;
                     } else {
                         ammoUsedToEvidenceEntityList.add(ammoUsedToEvidenceEntity);
@@ -157,6 +159,7 @@ public class AmmoInEvidenceService {
                         .caliberUUID(ammoUsedToEvidenceEntity.getCaliberUUID())
                         .evidenceUUID(ammoEvidenceEntity.getUuid())
                         .quantity(0)
+                        .dateTime(LocalDateTime.now())
                         .ammoUsedToEvidenceEntityList(new ArrayList<>())
                         .build();
 

@@ -65,7 +65,7 @@ public class AddressService {
             addressEntity.setFlatNumber(address.getFlatNumber().toUpperCase());
             LOG.info("Dodano Numer mieszkania");
         }
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "update address", "Zaktualizowano adres " + memberEntity.getMemberName());
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "update address", "Zaktualizowano adres " + memberEntity.getFullName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             addressRepository.save(addressEntity);
             LOG.info("Zaktualizowano adres");

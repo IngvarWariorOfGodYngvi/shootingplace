@@ -65,4 +65,8 @@ public class ScheduledTasks {
     public void setEndTimeToAllRegistrationRecordEntity() {
         registrationRecordsService.setEndTimeToAllRegistrationRecordEntity();
     }
+//    @Scheduled(cron = "0 0 0 * * *")
+//    public void checkAdult() {
+//        memberServ.automateChangeAdult();
+//    }
 }

@@ -74,8 +74,7 @@ public class HistoryService {
     // Contribution
     public void addContribution(String memberUUID, ContributionEntity contribution) {
         HistoryEntity historyEntity = memberRepository
-                .findById(memberUUID)
-                .orElseThrow(EntityNotFoundException::new)
+                .getOne(memberUUID)
                 .getHistory();
         contribution.setHistoryUUID(historyEntity.getUuid());
         List<ContributionEntity> contributionList = historyEntity
@@ -97,8 +96,7 @@ public class HistoryService {
 
     public void removeContribution(String memberUUID, ContributionEntity contribution) {
         HistoryEntity historyEntity = memberRepository
-                .findById(memberUUID)
-                .orElseThrow(EntityNotFoundException::new)
+                .getOne(memberUUID)
                 .getHistory();
         historyEntity
                 .getContributionList()
@@ -112,8 +110,7 @@ public class HistoryService {
     // license
     public void addLicenseHistoryRecord(String memberUUID, int index) {
         HistoryEntity historyEntity = memberRepository
-                .findById(memberUUID)
-                .orElseThrow(EntityNotFoundException::new)
+                .getOne(memberUUID)
                 .getHistory();
 
         String[] licenseTab = historyEntity.getLicenseHistory().clone();
@@ -135,9 +132,8 @@ public class HistoryService {
     }
 
     void addDateToPatentPermissions(String memberUUID, LocalDate date, int index) {
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        HistoryEntity historyEntity = historyRepository.findById(memberEntity.getHistory().getUuid())
-                .orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
+        HistoryEntity historyEntity = memberEntity.getHistory();
         LocalDate[] dateTab = historyEntity.getPatentDay().clone();
         if (index == 0) {
             if (memberEntity.getShootingPatent().getDateOfPosting() != null) {
@@ -187,7 +183,7 @@ public class HistoryService {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         LicenseEntity licenseEntity = memberEntity.getLicense();
 
         HistoryEntity historyEntity = memberEntity.getHistory();
@@ -249,7 +245,7 @@ public class HistoryService {
 
     //  Tournament
     private CompetitionHistoryEntity createCompetitionHistoryEntity(String tournamentUUID, LocalDate date, String discipline, String[] disciplines, String attachedTo) {
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
         String name = tournamentEntity.getName();
         return CompetitionHistoryEntity.builder()
                 .name(name)
@@ -263,7 +259,7 @@ public class HistoryService {
     }
 
     public void addCompetitionRecord(String memberUUID, CompetitionMembersListEntity list) {
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
         CompetitionHistoryEntity competitionHistoryEntity = createCompetitionHistoryEntity(list.getAttachedToTournament(), list.getDate(), list.getDiscipline(), list.getDisciplines(), list.getUuid());
         competitionHistoryRepository.save(competitionHistoryEntity);
@@ -292,7 +288,6 @@ public class HistoryService {
                 .filter(f -> f.getDisciplines() == null)
                 .filter(f -> f.getDiscipline().equals(Discipline.PISTOL.getName()))
                 .filter(f -> f.getDate().getYear() == licenseYear).count();
-//                .collect(Collectors.toList());
 
         long countRifle = historyEntity.getCompetitionHistory()
                 .stream()
@@ -300,7 +295,6 @@ public class HistoryService {
                 .filter(f -> f.getDiscipline().equals(Discipline.RIFLE.getName()))
                 .filter(f -> f.getDate().getYear() == licenseYear)
                 .count();
-//                .collect(Collectors.toList());
 
         long countShotgun = historyEntity.getCompetitionHistory()
                 .stream()
@@ -308,7 +302,6 @@ public class HistoryService {
                 .filter(f -> f.getDiscipline().equals(Discipline.SHOTGUN.getName()))
                 .filter(f -> f.getDate().getYear() == licenseYear)
                 .count();
-//                .collect(Collectors.toList());
 
         int pistolC = 0, rifleC = 0, shotgunC = 0;
         List<CompetitionHistoryEntity> competitionHistory = historyEntity.getCompetitionHistory();
@@ -404,8 +397,7 @@ public class HistoryService {
     }
 
     public void removeCompetitionRecord(String memberUUID, CompetitionMembersListEntity list) {
-        HistoryEntity historyEntity = memberRepository.findById(memberUUID)
-                .orElseThrow(EntityNotFoundException::new)
+        HistoryEntity historyEntity = memberRepository.getOne(memberUUID)
                 .getHistory();
         CompetitionHistoryEntity competitionHistoryEntity = new CompetitionHistoryEntity();
         for (CompetitionHistoryEntity e : historyEntity.getCompetitionHistory()) {
@@ -447,11 +439,10 @@ public class HistoryService {
 
     public void addJudgingRecord(String memberUUID, String tournamentUUID, String function) {
 
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
 
         HistoryEntity historyEntity = memberRepository
-                .findById(memberUUID)
-                .orElseThrow(EntityNotFoundException::new)
+                .getOne(memberUUID)
                 .getHistory();
 
         JudgingHistoryEntity judgingHistoryEntity = createJudgingHistoryEntity(tournamentEntity.getDate(), tournamentEntity.getName(), tournamentEntity.getUuid(), function);
@@ -467,8 +458,7 @@ public class HistoryService {
 
     public void removeJudgingRecord(String memberUUID, String tournamentUUID) {
 
-        List<JudgingHistoryEntity> judgingHistoryEntityList = memberRepository.findById(memberUUID)
-                .orElseThrow(EntityNotFoundException::new)
+        List<JudgingHistoryEntity> judgingHistoryEntityList = memberRepository.getOne(memberUUID)
                 .getHistory().getJudgingHistory();
 
         JudgingHistoryEntity any = judgingHistoryEntityList
@@ -477,8 +467,7 @@ public class HistoryService {
                 .findFirst().orElseThrow(EntityNotFoundException::new);
         judgingHistoryEntityList.remove(any);
         HistoryEntity historyEntity = memberRepository
-                .findById(memberUUID)
-                .orElseThrow(EntityNotFoundException::new)
+                .getOne(memberUUID)
                 .getHistory();
         historyEntity.setJudgingHistory(judgingHistoryEntityList);
         historyRepository.save(historyEntity);
@@ -515,7 +504,7 @@ public class HistoryService {
     }
 
     public void updateTournamentInJudgingHistory(String tournamentUUID) {
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
         if (tournamentEntity.getArbitersList() != null) {
             tournamentEntity
                     .getArbitersList()
@@ -557,26 +546,26 @@ public class HistoryService {
         }
 
     }
-
-    public void changeContributionTime(String memberUUID) {
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-        LocalDate date;
-        if (memberEntity.getHistory().getContributionList().get(0).getValidThru().getDayOfMonth() == 28) {
-            date = LocalDate.of(LocalDate.now().getYear(), 6, 30);
-        } else {
-            date = memberEntity.getHistory().getContributionList().get(0).getValidThru().plusMonths(4);
-        }
-        ContributionEntity contribution = ContributionEntity.builder()
-                .paymentDay(LocalDate.now())
-                .validThru(date)
-                .historyUUID(memberEntity.getHistory().getUuid())
-                .build();
-        contributionRepository.save(contribution);
-        addContribution(memberUUID, contribution);
-    }
+// Dla Potomności
+//    public void changeContributionTime(String memberUUID) {
+//        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+//        LocalDate date;
+//        if (memberEntity.getHistory().getContributionList().get(0).getValidThru().getDayOfMonth() == 28) {
+//            date = LocalDate.of(LocalDate.now().getYear(), 6, 30);
+//        } else {
+//            date = memberEntity.getHistory().getContributionList().get(0).getValidThru().plusMonths(4);
+//        }
+//        ContributionEntity contribution = ContributionEntity.builder()
+//                .paymentDay(LocalDate.now())
+//                .validThru(date)
+//                .historyUUID(memberEntity.getHistory().getUuid())
+//                .build();
+//        contributionRepository.save(contribution);
+//        addContribution(memberUUID, contribution);
+//    }
 
     public void updateShootingPatentHistory(String memberUUID, ShootingPatent shootingPatent) {
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         ShootingPatentEntity shootingPatentEntity = memberEntity.getShootingPatent();
         HistoryEntity historyEntity =
                 memberEntity.getHistory();

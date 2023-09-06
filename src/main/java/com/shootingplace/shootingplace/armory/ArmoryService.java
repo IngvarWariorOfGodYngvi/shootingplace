@@ -140,6 +140,7 @@ public class ArmoryService {
                 .time(LocalTime.now())
                 .belongTo(caliberUUID)
                 .ammoUsed(quantity)
+                .unitPrice(caliberEntity.getUnitPrice())
                 .build();
         caliberUsedRepository.save(caliberUsedEntity);
 
@@ -539,7 +540,7 @@ public class ArmoryService {
         }
         MemberEntity member = memberRepository.findByLegitimationNumber(Integer.valueOf(legitimationNumber)).orElse(null);
         OtherPersonEntity other = otherPersonRepository.findById(Integer.parseInt(IDNumber)).orElse(null);
-        String userName = member != null ? member.getMemberName() : other != null ? other.getSecondName() + " " + other.getFirstName() : null;
+        String userName = member != null ? member.getFullName() : other != null ? other.getSecondName() + " " + other.getFirstName() : null;
         String s = addUseToGun(barcode, evidenceUUID, userName, member != null ? member.getUuid() : null, UsedType.TRAINING.getName());
         return ResponseEntity.ok(s);
     }
@@ -565,4 +566,18 @@ public class ArmoryService {
         caliberEntity.setQuantity(quantity);
         return getStringResponseEntity(pinCode, null, HttpStatus.OK,"changeCaliberQuantity" + caliberEntity.getName(),"zmieniono ilość amunicji");
     }
+
+    public ResponseEntity<?> changeCaliberUnitPrice(String caliberUUID, Float price, String pinCode) {
+        CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
+        caliberEntity.setUnitPrice(price);
+        return getStringResponseEntity(pinCode, null, HttpStatus.OK,"changeCaliberUnitPrice" + caliberEntity.getName(),"zmieniono cenę amunicji");
+
+    }
+    public ResponseEntity<?> changeCaliberUnitPriceForNotMember(String caliberUUID, Float price, String pinCode) {
+        CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
+        caliberEntity.setUnitPriceForNotMember(price);
+        return getStringResponseEntity(pinCode, null, HttpStatus.OK,"changeCaliberUnitPriceForNotMember" + caliberEntity.getName(),"zmieniono cenę amunicji dla pozostałych");
+
+    }
+
 }

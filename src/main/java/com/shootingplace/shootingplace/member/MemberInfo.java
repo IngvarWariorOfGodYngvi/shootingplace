@@ -17,4 +17,5 @@ public class MemberInfo {
     Integer legitimationNumber;
     boolean isActive;
     boolean isAdult;
+    boolean declarationLOK;
 }

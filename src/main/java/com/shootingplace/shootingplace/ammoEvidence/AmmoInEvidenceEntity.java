@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -31,6 +32,10 @@ public class AmmoInEvidenceEntity {
     private Integer quantity;
     @ManyToMany
     private List<AmmoUsedToEvidenceEntity> ammoUsedToEvidenceEntityList;
+
+    private LocalDateTime dateTime;
+
+    private float price;
 
     public String getUuid() {
         return uuid;
@@ -66,6 +71,23 @@ public class AmmoInEvidenceEntity {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public LocalDateTime getDateTime() {
+        return dateTime;
+    }
+
+    public float getPrice() {
+        return price;
+    }
+
+    public void setPrice(float price) {
+        this.price = price;
+    }
+
+    public void setDateTime(LocalDateTime dateTime) {
+        this.dateTime = dateTime;
+
     }
 
     public List<AmmoUsedToEvidenceEntity> getAmmoUsedToEvidenceEntityList() {

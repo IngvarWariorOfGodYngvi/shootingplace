@@ -147,7 +147,7 @@ public class OtherPersonService {
                 .active(true)
                 .email(person.getEmail())
                 .permissionsEntity(null)
-                .weaponPermissionNumber(person.getWeaponPermissionNumber().toUpperCase(Locale.ROOT))
+                .weaponPermissionNumber(person.getWeaponPermissionNumber()!=null?person.getWeaponPermissionNumber().toUpperCase(Locale.ROOT):null)
                 .address(addressEntity)
                 .club(clubEntity)
                 .build();

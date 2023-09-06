@@ -28,6 +28,8 @@ public class MemberDTO extends Person {
     private Boolean adult = true;
     private Boolean active = true;
     private Boolean erased = false;
+    private Club club;
+    private Boolean declarationLOK = false;
 
     public Club getClub() {
         return club;
@@ -37,7 +39,6 @@ public class MemberDTO extends Person {
         this.club = club;
     }
 
-    private Club club;
 
     public String getUuid() {
         return uuid;
@@ -139,11 +140,16 @@ public class MemberDTO extends Person {
         this.memberPermissions = memberPermissions;
     }
 
+    public boolean getDeclarationLOK() {
+        return declarationLOK;
+    }
+
     /**
      * Return secondName plus firstName of Member
      */
-    public String getMemberName() {
+    public String getFullName() {
         return this.getSecondName().replaceAll(" ", "") + ' ' +
                 this.getFirstName().replaceAll(" ", "");
     }
+
 }

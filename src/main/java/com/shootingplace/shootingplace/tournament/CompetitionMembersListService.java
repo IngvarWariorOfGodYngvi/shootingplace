@@ -197,7 +197,7 @@ public class CompetitionMembersListService {
 
             tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(f -> f.getOtherPersonEntity() != null).forEach(g -> {
                 if (g.getOtherPersonEntity().getId().equals(otherPersonEntity.getId())) {
-                    list.add(e.getName());
+                    list.add(e.getName()+";" + e.getCompetitionUUID());
                 }
             }));
         } else {
@@ -205,7 +205,7 @@ public class CompetitionMembersListService {
 
             tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(f -> f.getMember() != null).forEach(g -> {
                 if (g.getMember().getUuid().equals(memberEntity.getUuid())) {
-                    list.add(e.getName());
+                    list.add(e.getName()+";" + e.getCompetitionUUID());
                 }
             }));
         }
@@ -241,17 +241,17 @@ public class CompetitionMembersListService {
 
     }
 
-    public Map<String,String> getMemberStartsInTournament(int legNumber, int otherID, String tournamentUUID) {
+    public List<String> getMemberStartsInTournament(int legNumber, int otherID, String tournamentUUID) {
 
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
-        Map<String,String> map = new HashMap<>();
+        List<String> list = new ArrayList<>();
 
         if (otherID > 0) {
             OtherPersonEntity otherPersonEntity = otherPersonRepository.findById(otherID).orElseThrow(EntityNotFoundException::new);
 
             tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(f -> f.getOtherPersonEntity() != null).forEach(g -> {
                 if (g.getOtherPersonEntity().getId().equals(otherPersonEntity.getId())) {
-                    map.put(e.getName(),e.getCompetitionUUID());
+                    list.add(e.getName() + ";" + e.getCompetitionUUID());
                 }
             }));
         } else {
@@ -259,11 +259,11 @@ public class CompetitionMembersListService {
 
             tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(f -> f.getMember() != null).forEach(g -> {
                 if (g.getMember().getUuid().equals(memberEntity.getUuid())) {
-                    map.put(e.getName(),e.getCompetitionUUID());
+                    list.add(e.getName() + ";" + e.getCompetitionUUID());
                 }
             }));
         }
-        return map;
+        return list;
 
     }
 

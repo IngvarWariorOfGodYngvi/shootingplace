@@ -83,24 +83,6 @@ public class MemberService {
 
     //--------------------------------------------------------------------------
 
-    public List<Member> getMembersWithPermissions() {
-        List<Member> list = new ArrayList<>();
-
-        memberRepository.findAll().stream().filter(f -> f.getMemberPermissions() != null).forEach(e -> {
-            if (
-                    (e.getMemberPermissions().getShootingLeaderNumber() != null)
-
-                            || (e.getMemberPermissions().getArbiterNumber() != null)
-
-                            || (e.getMemberPermissions().getInstructorNumber() != null)) {
-                list.add(Mapping.map(e));
-            }
-        });
-        list.sort(Comparator.comparing(Member::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))));
-        LOG.info("Wywołano listę osób z uprawnieniami");
-        return list;
-    }
-
     public List<String> getArbiters() {
         List<String> list = new ArrayList<>();
         memberRepository.findAll().stream()
@@ -113,103 +95,33 @@ public class MemberService {
 
     public void checkMembers() {
         LOG.info("Sprawdzam składki i licencje");
-        if (env.getActiveProfiles()[0].equals("prod")) {
-            // dorośli
-            historyService.checkStarts();
-            List<MemberEntity> adultMembers = memberRepository.findAllByErasedFalse();
-            // nie ma żadnych składek
-            adultMembers.forEach(e -> {
-                if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
-                    e.setActive(false);
-                    memberRepository.save(e);
-                }
-                //dzisiejsza data jest później niż składka + 3 miesiące
-                else {
-                    if (e.getAdult()) {
-                        if (e.getHistory().getContributionList().get(0).getValidThru().plusMonths(3).isBefore(LocalDate.now())) {
-                            if (e.getActive()) {
-                                e.setActive(false);
-                                LOG.info("zmieniono " + e.getSecondName());
-                                memberRepository.save(e);
-                            }
-                        } else {
-                            e.setActive(true);
-                        }
-                    } else {
-                        LocalDate validThru = e.getHistory().getContributionList().get(0).getValidThru();
-                        if ((validThru.equals(LocalDate.of(validThru.getYear(), 2, 28)) && validThru.plusMonths(1).isBefore(LocalDate.now()))
-                                || (validThru.equals(LocalDate.of(validThru.getYear(), 8, 31)) && validThru.plusMonths(2).isBefore(LocalDate.now()))) {
-                            if (e.getActive()) {
-                                e.setActive(false);
-                                LOG.info("zmieniono " + e.getSecondName());
-                                memberRepository.save(e);
-                            }
-                        }
-                    }
-                }
-                if (e.getLicense().getNumber() != null) {
-                    LicenseEntity license = e.getLicense();
-                    license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
-                    licenseRepository.save(license);
-                }
-            });
-            //młodzież
-            List<MemberEntity> nonAdultMembers = memberRepository.findAllByErasedFalse()
-                    .stream()
-                    .filter(f -> !f.getAdult())
-                    .collect(Collectors.toList());
-            // nie ma żadnych składek
-            nonAdultMembers.forEach(e -> {
-                if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
-                    e.setActive(false);
-                    memberRepository.save(e);
-                } else {
-                    //dzisiejsza data jest później niż składka + 1 || 2 miesiące
-                    LocalDate validThru = e.getHistory().getContributionList().get(0).getValidThru();
-                    if ((validThru.equals(LocalDate.of(validThru.getYear(), 2, 28)) && validThru.plusMonths(1).isBefore(LocalDate.now()))
-                            || (validThru.equals(LocalDate.of(validThru.getYear(), 8, 31)) && validThru.plusMonths(2).isBefore(LocalDate.now()))) {
+        historyService.checkStarts();
+        List<MemberEntity> members = memberRepository.findAllByErasedFalse();
+        members.forEach(e -> {
+            if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
+                e.setActive(false);
+                memberRepository.save(e);
+            } else {
+                if (e.getAdult()) {
+                    if (e.getHistory().getContributionList().get(0).getValidThru().isBefore(LocalDate.now())) {
                         if (e.getActive()) {
                             e.setActive(false);
                             LOG.info("zmieniono " + e.getSecondName());
                             memberRepository.save(e);
                         }
+                    } else {
+                        e.setActive(true);
                     }
                 }
-                if (e.getLicense().getNumber() != null) {
-                    LicenseEntity license = e.getLicense();
-                    license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
-                    licenseRepository.save(license);
-                }
-            });
-        }
-        if (env.getActiveProfiles()[0].equals("rcs")) {
-            historyService.checkStarts();
-            List<MemberEntity> members = memberRepository.findAllByErasedFalse();
-            members.forEach(e -> {
-                if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
-                    e.setActive(false);
-                    memberRepository.save(e);
-                } else {
-                    if (e.getAdult()) {
-                        if (e.getHistory().getContributionList().get(0).getValidThru().isBefore(LocalDate.now())) {
-                            if (e.getActive()) {
-                                e.setActive(false);
-                                LOG.info("zmieniono " + e.getSecondName());
-                                memberRepository.save(e);
-                            }
-                        } else {
-                            e.setActive(true);
-                        }
-                    }
-                }
-                if (e.getLicense().getNumber() != null) {
-                    LicenseEntity license = e.getLicense();
-                    license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
-                    licenseRepository.save(license);
-                }
-            });
-        }
+            }
+            if (e.getLicense().getNumber() != null) {
+                LicenseEntity license = e.getLicense();
+                license.setValid(!e.getLicense().getValidThru().isBefore(LocalDate.now()));
+                licenseRepository.save(license);
+            }
+        });
     }
+
 
     //--------------------------------------------------------------------------
     public ResponseEntity<?> addNewMember(Member member, Address address, boolean returningToClub, String pinCode) {
@@ -362,6 +274,17 @@ public class MemberService {
         return response;
     }
 
+    public void automateChangeAdult() {
+        List<MemberEntity> list = memberRepository.findAllByAdultFalseAndErasedFalse();
+        list.forEach(e -> {
+            if (e.getBirthDate().plusYears(18).isBefore(LocalDate.now())) {
+                LOG.info("Przenoszę do Grupy Ogólnej: " + e.getFullName());
+                e.setAdult(true);
+                memberRepository.save(e);
+            }
+        });
+    }
+
     public ResponseEntity<?> changeAdult(String memberUUID, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
@@ -380,7 +303,7 @@ public class MemberService {
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             memberEntity.setAdult(true);
             memberRepository.save(memberEntity);
-            historyService.changeContributionTime(memberUUID);
+//            historyService.changeContributionTime(memberUUID);
             LOG.info("Klubowicz należy od teraz do grupy dorosłej : " + LocalDate.now());
         }
         return response;
@@ -480,7 +403,7 @@ public class MemberService {
                 LOG.info("Zaktualizowano pomyślnie Numer Dowodu");
             }
         }
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "update member", "Zaktualizowano dane klubowicza " + memberEntity.getMemberName());
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "update member", "Zaktualizowano dane klubowicza " + memberEntity.getFullName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             memberRepository.save(memberEntity);
         }
@@ -490,7 +413,6 @@ public class MemberService {
 
 
     public ResponseEntity<?> getMember(int number) {
-        System.out.println(number);
         if (memberRepository.existsByLegitimationNumber(number)) {
             MemberEntity memberEntity = memberRepository.findByLegitimationNumber(number).orElse(null);
             assert memberEntity != null;
@@ -791,7 +713,7 @@ public class MemberService {
         ClubEntity club = clubRepository.findByName(clubName);
         member.setClub(clubRepository.getOne(club.getId()));
         memberRepository.save(member);
-        return ResponseEntity.ok("Zmieniono Klub macierzysty zawodnika " + member.getMemberName() + " na: " + club.getName());
+        return ResponseEntity.ok("Zmieniono Klub macierzysty zawodnika " + member.getFullName() + " na: " + club.getName());
     }
 
     public ResponseEntity<?> deleteMember(String uuid) {
@@ -826,5 +748,21 @@ public class MemberService {
             else return ResponseEntity.badRequest().body("Brak takiego Klubowicza");
         else return ResponseEntity.badRequest().body("Brak takiego Klubowicza");
 
+    }
+
+    public ResponseEntity<?> toggleDeclaration(String uuid, boolean isSigned) {
+        MemberEntity one = memberRepository.getOne(uuid);
+        boolean b = one.toggleDeclaration(isSigned);
+        boolean sex = one.getSex();
+        memberRepository.save(one);
+        return ResponseEntity.ok("Oznaczono, że " + one.getFullName() + " " + (b ? "" : "nie ") + "podpisał" + (sex ? "" : "a") + " Deklaracj" + (b ? "ę" : "i") + " LOK");
+    }
+
+    public ResponseEntity<?> togglePzss(String uuid, boolean isSignedTo) {
+        MemberEntity one = memberRepository.getOne(uuid);
+        boolean b = one.togglePzss(isSignedTo);
+        boolean sex = one.getSex();
+        memberRepository.save(one);
+        return ResponseEntity.ok("Oznaczono, że " + one.getFullName() + " " + (b ? "" : "nie ") + "jest wpisan" + (sex ? "y" : "a") + " do portalu PZSS");
     }
 }

@@ -1,9 +1,8 @@
 package com.shootingplace.shootingplace.license;
 
-import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
-import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
@@ -39,12 +38,12 @@ public class LicenseController {
     }
 
     @GetMapping("/membersWithValidLicense")
-    public ResponseEntity<List<MemberDTO>> getMembersNamesAndLicense() {
+    public ResponseEntity<List<?>> getMembersNamesAndLicense() {
         return ResponseEntity.ok(licenseService.getMembersNamesAndLicense());
     }
 
     @GetMapping("/membersWithNotValidLicense")
-    public ResponseEntity<List<MemberDTO>> getMembersNamesAndLicenseNotValid() {
+    public ResponseEntity<List<?>> getMembersNamesAndLicenseNotValid() {
         return ResponseEntity.ok(licenseService.getMembersNamesAndLicenseNotValid());
     }
 

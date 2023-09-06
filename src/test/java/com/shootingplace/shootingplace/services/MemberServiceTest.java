@@ -133,7 +133,7 @@ public class MemberServiceTest {
     public void get_All_Names() {
         //given
         //when
-        List<MemberInfo> allNames = memberService.getAllNames();
+        List<?> allNames = memberService.getAllNames();
         //then
         assertThat(allNames, Matchers.hasSize(5));
 
@@ -323,17 +323,6 @@ public class MemberServiceTest {
         assertThat(list.get(0), Matchers.containsString("Doe1"));
         assertThat(list, Matchers.hasSize(1));
 
-    }
-
-
-    @Test
-    public void get_members_with_permissions() {
-        //given
-        //when
-        List<Member> list = memberService.getMembersWithPermissions();
-        //then
-        assertThat(list.get(0).getMemberPermissions(), Matchers.notNullValue());
-        assertThat(list, Matchers.hasSize(1));
     }
 
     @Test

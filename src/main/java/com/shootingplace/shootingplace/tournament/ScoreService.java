@@ -427,7 +427,7 @@ public class ScoreService {
     private String getNameFromScore(ScoreEntity scoreEntity) {
         String name;
         if (scoreEntity.getMember() != null) {
-            name = scoreEntity.getMember().getMemberName();
+            name = scoreEntity.getMember().getFullName();
         } else {
             name = scoreEntity.getOtherPersonEntity().getFirstName() + scoreEntity.getOtherPersonEntity().getSecondName();
         }

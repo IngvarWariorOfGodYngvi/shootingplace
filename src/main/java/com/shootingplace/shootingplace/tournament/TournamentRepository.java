@@ -17,4 +17,6 @@ public interface TournamentRepository {
     boolean existsById(String uuid);
 
     void delete(TournamentEntity entity);
+
+    TournamentEntity getOne(String tournamentUUID);
 }

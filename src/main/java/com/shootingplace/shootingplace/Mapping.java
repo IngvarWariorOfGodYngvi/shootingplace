@@ -3,10 +3,7 @@ package com.shootingplace.shootingplace;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.ammoEvidence.*;
-import com.shootingplace.shootingplace.armory.Caliber;
-import com.shootingplace.shootingplace.armory.CaliberEntity;
-import com.shootingplace.shootingplace.armory.Gun;
-import com.shootingplace.shootingplace.armory.GunEntity;
+import com.shootingplace.shootingplace.armory.*;
 import com.shootingplace.shootingplace.club.Club;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.contributions.Contribution;
@@ -33,6 +30,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Mapping {
+    public final CaliberRepository caliberRepository;
+
+    public Mapping(CaliberRepository caliberRepository) {
+        this.caliberRepository = caliberRepository;
+    }
 
     public static Member map(MemberEntity e) {
         return Member.builder()
@@ -101,47 +103,28 @@ public class Mapping {
                 .name(e.getSecondName().replaceAll(" ", "") + " " + e.getFirstName().replaceAll(" ", "") + " " + e.getLegitimationNumber())
                 .isActive(e.getActive())
                 .legitimationNumber(e.getLegitimationNumber())
-                .isAdult(e.getAdult()).build();
+                .isAdult(e.getAdult())
+                .declarationLOK(e.getDeclarationLOK()).build();
     }
 
     public static MemberDTO map2DTO(MemberEntity e) {
-        if (e.getErasedEntity() != null) {
-            return Optional.of(e).map(o ->
-                    MemberDTO.builder()
-                            .uuid(e.getUuid())
-                            .firstName(e.getFirstName())
-                            .secondName(e.getSecondName())
-                            .image(e.getImageUUID())
-                            .adult(e.getAdult())
-                            .active(e.getActive())
-                            .erased(e.getErased())
-                            .erasedEntity(map(e.getErasedEntity()))
-                            .pzss(e.getPzss())
-                            .legitimationNumber(e.getLegitimationNumber())
-                            .license(map(e.getLicense()))
-                            .joinDate(e.getJoinDate())
-                            .memberPermissions(map(e.getMemberPermissions()))
-                            .club(map(e.getClub()))
-                            .build()).orElse(null);
-        } else {
-            return Optional.of(e).map(o ->
-                    MemberDTO.builder()
-                            .uuid(e.getUuid())
-                            .firstName(e.getFirstName())
-                            .secondName(e.getSecondName())
-                            .image(e.getImageUUID())
-                            .adult(e.getAdult())
-                            .active(e.getActive())
-                            .erased(e.getErased())
-                            .pzss(e.getPzss())
-                            .legitimationNumber(e.getLegitimationNumber())
-                            .license(map(e.getLicense()))
-                            .joinDate(e.getJoinDate())
-                            .memberPermissions(map(e.getMemberPermissions()))
-                            .club(map(e.getClub()))
-                            .build()).orElse(null);
-        }
-
+        return MemberDTO.builder()
+                .uuid(e.getUuid())
+                .firstName(e.getFirstName())
+                .secondName(e.getSecondName())
+                .image(e.getImageUUID())
+                .adult(e.getAdult())
+                .active(e.getActive())
+                .erased(e.getErased())
+                .erasedEntity(e.getErasedEntity() != null?map(e.getErasedEntity()):null)
+                .pzss(e.getPzss())
+                .declarationLOK(e.getDeclarationLOK())
+                .legitimationNumber(e.getLegitimationNumber())
+                .license(map(e.getLicense()))
+                .joinDate(e.getJoinDate())
+                .memberPermissions(map(e.getMemberPermissions()))
+                .club(map(e.getClub()))
+                .build();
     }
 
 
@@ -258,7 +241,7 @@ public class Mapping {
                 .build();
     }
 
-    private static Contribution map(ContributionEntity e) {
+    public static Contribution map(ContributionEntity e) {
         return Contribution.builder()
                 .historyUUID(e.getHistoryUUID())
                 .paymentDay(e.getPaymentDay())
@@ -381,7 +364,7 @@ public class Mapping {
                 .dsq(s.isDsq())
                 .pk(s.isPk())
                 .hf(s.getHf())
-                .series(s.getSeries() != null ? s.getSeries(): null)
+                .series(s.getSeries() != null ? s.getSeries() : null)
                 .procedures(s.getProcedures())
                 .otherPersonEntity(s.getOtherPersonEntity())
                 .score(s.getScore())
@@ -424,6 +407,8 @@ public class Mapping {
                 .name(e.getName())
                 .uuid(e.getUuid())
                 .quantity(e.getQuantity())
+                .unitPrice(e.getUnitPrice())
+                .unitPriceForNotMember(e.getUnitPriceForNotMember())
                 .build()).orElse(null);
     }
 
@@ -580,6 +565,21 @@ public class Mapping {
                 .name(a.getName())
                 .legitimationNumber(a.getMemberEntity() != null ? a.getMemberEntity().getLegitimationNumber() : null)
                 .IDNumber(a.getOtherPersonEntity() != null ? a.getOtherPersonEntity().getId() : null)
+                .build();
+    }
+
+    public static ShootingPacketDTO map(ShootingPacketEntity s) {
+        return ShootingPacketDTO.builder()
+                .name(s.getName())
+                .price(s.getPrice())
+                .calibers(s.getCalibers().stream().map(Mapping::map).collect(Collectors.toList())).build();
+    }
+
+    private static CaliberForShootingPacketDTO map(CaliberForShootingPacketEntity c) {
+        return CaliberForShootingPacketDTO.builder()
+                .caliberName(c.getCaliberName())
+                .caliberUUID(c.getCaliberUUID())
+                .quantity(c.getQuantity())
                 .build();
     }
 }

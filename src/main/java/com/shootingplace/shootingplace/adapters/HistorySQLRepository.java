@@ -5,4 +5,5 @@ import com.shootingplace.shootingplace.history.HistoryRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface HistorySQLRepository extends HistoryRepository, JpaRepository<HistoryEntity,String> {
+
 }

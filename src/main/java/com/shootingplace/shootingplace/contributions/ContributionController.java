@@ -43,11 +43,12 @@ public class ContributionController {
             return code;
         }
     }
-@Transactional
+
+    @Transactional
     @PutMapping("/edit")
     public ResponseEntity<?> editContribution(@RequestParam String memberUUID, @RequestParam String contributionUUID, @RequestParam String paymentDay, @RequestParam String validThru, @RequestParam String pinCode) {
-    ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
-    if (code.getStatusCode().equals(HttpStatus.OK)) {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
             LocalDate parsedPaymentDay = null;
             if (paymentDay != null && !paymentDay.isEmpty() && !paymentDay.equals("null")) {
                 parsedPaymentDay = LocalDate.parse(paymentDay);
@@ -62,11 +63,12 @@ public class ContributionController {
             return code;
         }
     }
-@Transactional
+
+    @Transactional
     @PatchMapping("/remove/{memberUUID}")
     public ResponseEntity<?> removeContribution(@PathVariable String memberUUID, @RequestParam String contributionUUID, @RequestParam String pinCode) {
-    ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
-    if (code.getStatusCode().equals(HttpStatus.OK)) {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
             return contributionService.removeContribution(memberUUID, contributionUUID, pinCode);
         } else {
             return code;

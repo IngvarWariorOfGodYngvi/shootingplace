@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/competitionMembersList")
@@ -36,8 +35,8 @@ public class CompetitionMembersListController {
     }
 
     @GetMapping("/getMemberStarts")
-    public ResponseEntity<List<String>> getMemberStartsInTournament(@RequestParam String memberUUID, @RequestParam int otherID, @RequestParam String tournamentUUID) {
-        return ResponseEntity.ok(competitionMembersListService.getMemberStartsInTournament(memberUUID, otherID, tournamentUUID));
+    public List<String> getMemberStartsInTournament(@RequestParam String memberUUID, @RequestParam int otherID, @RequestParam String tournamentUUID) {
+        return competitionMembersListService.getMemberStartsInTournament(memberUUID, otherID, tournamentUUID);
     }
 
     @GetMapping("/getMetricNumber")
@@ -46,8 +45,8 @@ public class CompetitionMembersListController {
     }
 
     @GetMapping("/getMemberStartsByLegitimation")
-    public ResponseEntity<Map<String,String>> getMemberStartsInTournament(@RequestParam int legNumber, @RequestParam int otherID, @RequestParam String tournamentUUID) {
-        return ResponseEntity.ok(competitionMembersListService.getMemberStartsInTournament(legNumber, otherID, tournamentUUID));
+    public List<String> getMemberStartsInTournament(@RequestParam int legNumber, @RequestParam int otherID, @RequestParam String tournamentUUID) {
+        return competitionMembersListService.getMemberStartsInTournament(legNumber, otherID, tournamentUUID);
     }
 
     @GetMapping("/getScoreIdByNumberAndCompetitionName")

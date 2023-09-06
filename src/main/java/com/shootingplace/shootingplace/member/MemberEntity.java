@@ -1,11 +1,11 @@
 package com.shootingplace.shootingplace.member;
 
-import com.shootingplace.shootingplace.club.ClubEntity;
-import com.shootingplace.shootingplace.history.HistoryEntity;
-import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
+import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.domain.Person;
+import com.shootingplace.shootingplace.history.HistoryEntity;
+import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.validators.ValidPESEL;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionEntity;
@@ -72,6 +72,7 @@ public class MemberEntity extends Person {
     private Boolean adult = true;
     private Boolean erased = false;
     private Boolean pzss = false;
+    private boolean declarationLOK = false;
     @Nullable
     @OneToOne(orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private ErasedEntity erasedEntity;
@@ -288,9 +289,89 @@ public class MemberEntity extends Person {
     /**
      * Return secondName plus firstName of Member
      */
-    public String getMemberName() {
+    public String getFullName() {
         return this.getSecondName().replaceAll(" ", "") + ' ' +
                 this.getFirstName().replaceAll(" ", "");
     }
 
+    public boolean getDeclarationLOK() {
+        return declarationLOK;
+    }
+
+    public boolean toggleDeclaration(boolean isSigned) {
+       return this.declarationLOK = isSigned;
+    }
+    /**
+    * Return member Sex
+     * if false -> woman
+     * if true -> man
+    */
+    public boolean getSex() {
+        return Integer.parseInt(String.valueOf(this.pesel.toCharArray()[10])) % 2 == 0;
+    }
+
+    public boolean togglePzss(boolean isSignedTo) {
+        return this.pzss = isSignedTo;
+    }
+
+    LocalDate getBirthDate(){
+       return LocalDate.of(getBirthYear(),getBirthMonth(),getBirthDay());
+    }
+
+    private int getBirthYear() {
+        int[] PESEL = getInts();
+        int year;
+        int month;
+        year = 10 * PESEL[0];
+        year += PESEL[1];
+        month = 10 * PESEL[2];
+        month += PESEL[3];
+        if (month > 80 && month < 93) {
+            year += 1800;
+        } else if (month > 0 && month < 13) {
+            year += 1900;
+        } else if (month > 20 && month < 33) {
+            year += 2000;
+        } else if (month > 40 && month < 53) {
+            year += 2100;
+        } else if (month > 60 && month < 73) {
+            year += 2200;
+        }
+        return year;
+
+    }
+
+    private int getBirthMonth() {
+        int[] PESEL = getInts();
+        int month;
+        month = 10 * PESEL[2];
+        month += PESEL[3];
+        if (month > 80 && month < 93) {
+            month -= 80;
+        } else if (month > 20 && month < 33) {
+            month -= 20;
+        } else if (month > 40 && month < 53) {
+            month -= 40;
+        } else if (month > 60 && month < 73) {
+            month -= 60;
+        }
+        return month;
+    }
+
+    private int[] getInts() {
+        char[] chars = this.pesel.toCharArray();
+        int[] PESEL = new int[11];
+        for (int i =0; i<chars.length;i++){
+            PESEL[i] = Integer.parseInt(String.valueOf(chars[i]));
+        }
+        return PESEL;
+    }
+
+    private int getBirthDay() {
+        int[] PESEL = getInts();
+        int day;
+        day = 10 * PESEL[4];
+        day += PESEL[5];
+        return day;
+    }
 }

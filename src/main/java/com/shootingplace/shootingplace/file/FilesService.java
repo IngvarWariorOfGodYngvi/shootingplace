@@ -147,7 +147,7 @@ public class FilesService {
         }
         LocalDate contribution = contributionEntity.getPaymentDay();
         LocalDate validThru = contributionEntity.getValidThru();
-        String fileName = "Składka_" + memberEntity.getMemberName() + "_" + LocalDate.now().format(dateFormat()) + ".pdf";
+        String fileName = "Składka_" + memberEntity.getFullName() + "_" + LocalDate.now().format(dateFormat()) + ".pdf";
 
         String clubFullName = club.getFullName().toUpperCase();
 
@@ -222,7 +222,7 @@ public class FilesService {
         Phrase p7 = new Phrase(String.valueOf(contribution), font(11, 1));
         Paragraph p8 = new Paragraph("Składka ważna do : ", font(11, 0));
         Phrase p9 = new Phrase(String.valueOf(validThru), font(11, 1));
-        Paragraph p10 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getMemberName() + " dnia : " + contribution + " " + status + " półroczną składkę członkowską w wysokości " + contributionLevel + " PLN.", font(11, 0));
+        Paragraph p10 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFullName() + " dnia : " + contribution + " " + status + " półroczną składkę członkowską w wysokości " + contributionLevel + " PLN.", font(11, 0));
 
         Paragraph p12 = new Paragraph("Termin opłacenia kolejnej składki : "  + (nextContribution), font(11, 0));
 //        Paragraph p13 = new Paragraph("\n", font(11, 1));
@@ -644,7 +644,7 @@ public class FilesService {
     public FilesEntity createApplicationForExtensionOfTheCompetitorsLicense(String memberUUID) throws IOException, DocumentException {
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
-        String fileName = "Wniosek " + memberEntity.getMemberName() + ".pdf";
+        String fileName = "Wniosek " + memberEntity.getFullName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
         document.setMargins(35F, 35F, 50F, 50F);
@@ -1239,7 +1239,7 @@ public class FilesService {
     public FilesEntity CertificateOfClubMembership(String memberUUID, String reason, boolean enlargement) throws IOException, DocumentException {
         MemberEntity member = memberRepository.getOne(memberUUID);
         ClubEntity club = clubRepository.getOne(1);
-        String fileName = reason + " " + member.getMemberName() + ".pdf";
+        String fileName = reason + " " + member.getFullName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
         setAttToDoc(fileName, document, true);
@@ -1247,7 +1247,7 @@ public class FilesService {
         Paragraph newLine = new Paragraph("\n", font(12, 0));
 
         String[] choice = {"ZAŚWIADCZENIE ZWYKŁE", "ZAŚWIADCZENIE DO WPA",};
-        Paragraph date = new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "" + ", " + LocalDate.now().format(dateFormat()), font(12, 0));
+        Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "") + ", " + LocalDate.now().format(dateFormat()), font(12, 0));
         date.setAlignment(2);
         document.add(date);
         Paragraph title = new Paragraph("\n\nZaświadczenie\n", font(14, 1));
@@ -1268,7 +1268,7 @@ public class FilesService {
             sex = "Pan";
             address = "zamieszkały ";
         }
-        Paragraph par1 = new Paragraph("Niniejszym zaświadczam, że " + sex + " " + member.getMemberName() + " " + address + member.getAddress().toString() + ", nr. " + pesel + ", numer legitymacji klubowej: " + member.getLegitimationNumber() + ", " + " jest członkiem Stowarzyszenia Klub Strzelecki RCS Panaszew.", font(12, 0));
+        Paragraph par1 = new Paragraph("Niniejszym zaświadczam, że " + sex + " " + member.getFullName() + " " + address + member.getAddress().toString() + ", nr. " + pesel + ", numer legitymacji klubowej: " + member.getLegitimationNumber() + ", " + " jest członkiem Stowarzyszenia Klub Strzelecki RCS Panaszew.", font(12, 0));
         par1.setFirstLineIndent(40);
         Paragraph par2 = new Paragraph("Niniejsze zaświadczenie stanowi potwierdzenie spełnienia jednego z warunków koniecznych do wydania pozwolenia na broń do celów sportowych i/lub kolekcjonerskich, o których mowa w Art. 10 ust. 3 pkt. 3 i 5 Ustawy z dnia 21 maja 1999r. o broni i amunicji (Dz.U. 1999 nr 53 poz. 549).", font(12, 0));
         par2.setFirstLineIndent(40);
@@ -1322,7 +1322,7 @@ public class FilesService {
 
         MemberEntity member = memberRepository.getOne(memberUUID);
 
-        String fileName = "Wiosek o pozwolenie na broń " + member.getMemberName() + ".pdf";
+        String fileName = "Wiosek o pozwolenie na broń " + member.getFullName() + ".pdf";
         String policeCity = "";
         if (city.equals("Białystok")) {
             policeCity = "w Białymstoku";
@@ -1579,7 +1579,7 @@ public class FilesService {
     public FilesEntity CertificateOfClubMembership(String memberUUID, String reason, String city, boolean enlargement) throws IOException, DocumentException {
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         ClubEntity club = clubRepository.getOne(1);
-        String fileName = reason + " " + memberEntity.getMemberName() + ".pdf";
+        String fileName = reason + " " + memberEntity.getFullName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
         document.setMargins(35F, 35F, 50F, 50F);
@@ -1715,7 +1715,7 @@ public class FilesService {
             }
         }
 
-        Paragraph date = new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "" + ", " + LocalDate.now().format(dateFormat()), font(12, 0));
+        Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "") + ", " + LocalDate.now().format(dateFormat()), font(12, 0));
         date.setAlignment(2);
         Paragraph police = new Paragraph(policeAddress, font(12, 0));
         police.setAlignment(2);
@@ -1872,7 +1872,7 @@ public class FilesService {
             club = otherPersonEntity.getClub().getName();
         } else {
             MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-            name = memberEntity.getMemberName();
+            name = memberEntity.getFullName();
             club = memberEntity.getClub().getName();
         }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
@@ -3493,9 +3493,9 @@ public class FilesService {
 
     public FilesEntity getWorkTimeReport(int year, String month, String workType, boolean detailed) throws IOException, DocumentException {
         int reportNumber = 1;
-        List<FilesEntity> collect = filesRepository.findAllByNameContains("%" + month.toLowerCase() + "%", "%" + year + "%", "%" + workType + "%");
+        List<IFile> collect = filesRepository.findAllByNameContains("%" + month.toLowerCase() + "%", "%" + year + "%", "%" + workType + "%");
         if (!collect.isEmpty()) {
-            reportNumber = collect.stream().max(Comparator.comparing(FilesEntity::getVersion)).orElseThrow(EntityNotFoundException::new).getVersion();
+            reportNumber = collect.stream().max(Comparator.comparing(IFile::getVersion)).orElseThrow(EntityNotFoundException::new).getVersion();
         }
 
         String fileName = "raport_pracy_" + month.toLowerCase() + "_" + reportNumber + "_" + year + "_" + workType + ".pdf";
@@ -3810,7 +3810,7 @@ public class FilesService {
     public FilesEntity getMembershipDeclarationLOK(String uuid) throws DocumentException, IOException {
         MemberEntity member = memberRepository.getOne(uuid);
 
-        String fileName = "Deklaracja Członkowska LOK " + member.getMemberName() + ".pdf";
+        String fileName = "Deklaracja Członkowska LOK " + member.getFullName() + ".pdf";
         String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/logo_LOK.png";
         Image img = Image.getInstance(source);
         int fs = 10;
@@ -3917,7 +3917,7 @@ public class FilesService {
         table1.addCell(addressCell);
         table1.completeRow();
 
-        PdfPCell cell2 = new PdfPCell(new Paragraph("Posiadane\nodznaczenia\npaństwowe/LOK", font(11, 1)));
+        PdfPCell cell2 = new PdfPCell(new Paragraph("Posiadane\nodznaczenia\npaństwowe/LOK", font(10, 1)));
         table1.addCell(cell2);
         table1.addCell(new PdfPCell(new Paragraph(" ", font(11, 0))));
         table1.completeRow();
@@ -4038,11 +4038,11 @@ public class FilesService {
         state = getSex(member.getPesel()).equals("Pan") ? "Pana" : "Pani";
         Paragraph p3d = new Paragraph("d)     " + state + " dane osobowe będą (mogą być) przekazywane:\n" +
                 "        - nadrzędnym władzom LOK oraz w niezbędnym zakresie:\n" +
-                "           • współpracującym z Lok instytucjom, urzędom administracji państwowej i samorządowej oraz firmom\n" +
+                "           • współpracującym z LOK instytucjom, urzędom administracji państwowej i samorządowej oraz firmom\n" +
                 "           w związku z realizacją zadań statutowych;\n" +
                 "           • innym podwykonawcom realizującym wspólnie z LOK zadania statutowe;\n" +
                 "           • urzędom uprawnionym do nadawania wyróżnień i odznaczeń państwowych;\n" +
-                "           • klientom Lok oraz innym członkom Lok, którzy będą chcieli sprawdzić kwalifikacje kadry szkolącej\n" +
+                "           • klientom LOK oraz innym członkom LOK, którzy będą chcieli sprawdzić kwalifikacje kadry szkolącej\n" +
                 "           realizującej usługę szkoleniową;\n" +
                 "           • redakcji Biuletynu Ligi Obrony Kraju \"Czata\";\n" +
                 "           • administratorom: stron internetowych, mediów społecznościowych dokumentujących działalność\n" +
@@ -4330,7 +4330,7 @@ public class FilesService {
         document.add(newLine);
         document.add(newLine);
         state = getSex(member.getPesel()).equals("Pan") ? " został przyjęty" : " została przyjęta";
-        Paragraph p12 = new Paragraph("Potwierdzam, że " + getSex(member.getPesel()) + " " + member.getMemberName().toUpperCase() + state + " do:", font(12, 0));
+        Paragraph p12 = new Paragraph("Potwierdzam, że " + getSex(member.getPesel()) + " " + member.getFullName().toUpperCase() + state + " do:", font(12, 0));
         Paragraph p13 = new Paragraph(clubRepository.getOne(1).getFullName(), font(12, 0));
         Paragraph p14 = new Paragraph("na podstawie uchwały nr: ...................................... z dnia .........................", font(12, 0));
         p12.setIndentationLeft(55);
@@ -4481,13 +4481,14 @@ public class FilesService {
         return Integer.parseInt(sequence.substring(substringStart, substringEnd));
     }
 
-    public List<FilesModel> getAllFilesList(Pageable page) {
+    public List<?> getAllFilesList(Pageable page) {
 
         page = PageRequest.of(page.getPageNumber(), page.getPageSize(), Sort.by("date").and(Sort.by("time")).descending());
         return filesRepository.findAllByDateIsNotNullAndTimeIsNotNull(page)
                 .stream()
-                .map(Mapping::map)
-                .sorted(Comparator.comparing(FilesModel::getDate).thenComparing(FilesModel::getTime).reversed())
+//                .map(Mapping::map)
+//                .sorted(Comparator.comparing(FilesModel::getDate).thenComparing(FilesModel::getTime).reversed())
+//                .sorted(Comparator.comparing(FileWithNoData::getDate).thenComparing(FileWithNoData::getTime).reversed())
                 .collect(Collectors.toList());
 
     }
@@ -4713,9 +4714,9 @@ public class FilesService {
         return DateTimeFormatter.ofPattern(europeanDatePattern);
     }
 
-    public List<FilesModel> getAllMemberFiles(String uuid) {
+    public List<?> getAllMemberFiles(String uuid) {
 
-        return filesRepository.findAllByBelongToMemberUUIDEquals(uuid).stream().map(Mapping::map).collect(Collectors.toList());
+        return filesRepository.findAllByBelongToMemberUUIDEquals(uuid);
 //
 //        return filesRepository.findAll()
 //                .stream()
@@ -4736,6 +4737,10 @@ public class FilesService {
         one.setImgUUID(null);
         gunRepository.save(one);
         return ResponseEntity.ok("usunięto zdjęcie");
+    }
+
+    public ResponseEntity<?> countPages() {
+        return ResponseEntity.ok(filesRepository.countAllRecordsDividedBy50());
     }
 
     static class PageStamper extends PdfPageEventHelper {
@@ -4793,16 +4798,16 @@ public class FilesService {
                     image.setAbsolutePosition(pageSize.getLeft(50), pageSize.getTop(140));
                     directContent.addImage(image);
 
-                    source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/footer-panaszew.png";
-                    image = Image.getInstance(source);
-                    image.setBorder(0);
-                    image.scaleAbsolute(new Rectangle(pageSize.getWidth(), image.getScaledHeight() / 2));
-                    float pw = pageSize.getWidth();
-                    float iw = image.getScaledWidth();
-                    float[] position = {pw - iw, 30};
-
-                    image.setAbsolutePosition(position[0], position[1]);
-                    directContent.addImage(image);
+//                    source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/footer-panaszew.png";
+//                    image = Image.getInstance(source);
+//                    image.setBorder(0);
+//                    image.scaleAbsolute(new Rectangle(pageSize.getWidth(), image.getScaledHeight() / 2));
+//                    float pw = pageSize.getWidth();
+//                    float iw = image.getScaledWidth();
+//                    float[] position = {pw - iw, 30};
+//
+//                    image.setAbsolutePosition(position[0], position[1]);
+//                    directContent.addImage(image);
 
                 }
 

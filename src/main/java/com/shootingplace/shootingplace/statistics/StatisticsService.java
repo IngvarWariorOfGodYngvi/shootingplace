@@ -7,12 +7,17 @@ import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoUsedToEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoUsedToEvidenceEntityRepository;
 import com.shootingplace.shootingplace.armory.Caliber;
+import com.shootingplace.shootingplace.contributions.ContributionEntity;
+import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.history.CompetitionHistoryEntity;
 import com.shootingplace.shootingplace.history.LicensePaymentHistoryDTO;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryRepository;
+import com.shootingplace.shootingplace.member.IMemberDTO;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.tournament.*;
+import com.shootingplace.shootingplace.wrappers.MemberWithContributionWrapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -28,159 +33,94 @@ import java.util.stream.Collectors;
 public class StatisticsService {
 
     private final MemberRepository memberRepository;
+    private final ContributionRepository contributionRepository;
     private final AmmoEvidenceRepository ammoEvidenceRepository;
     private final AmmoUsedToEvidenceEntityRepository used;
     private final RegistrationRecordRepository rrrepo;
     private final TournamentRepository tournamentRepository;
     private final CompetitionMembersListRepository competitionMembersListRepository;
+    private final LicensePaymentHistoryRepository licensePaymentHistoryRepository;
 
-    public StatisticsService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, AmmoUsedToEvidenceEntityRepository used, RegistrationRecordRepository rrrepo, TournamentRepository tournamentRepository,ScoreRepository scoreRepository, CompetitionMembersListRepository competitionMembersListRepository) {
+    public StatisticsService(MemberRepository memberRepository, ContributionRepository contributionRepository, AmmoEvidenceRepository ammoEvidenceRepository, AmmoUsedToEvidenceEntityRepository used, RegistrationRecordRepository rrrepo, TournamentRepository tournamentRepository, ScoreRepository scoreRepository, CompetitionMembersListRepository competitionMembersListRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository) {
         this.memberRepository = memberRepository;
+        this.contributionRepository = contributionRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.used = used;
         this.rrrepo = rrrepo;
         this.tournamentRepository = tournamentRepository;
         this.competitionMembersListRepository = competitionMembersListRepository;
-    }
-
-    public List<List<MemberDTO>> joinMonthSum(int year) {
-        List<List<MemberDTO>> list = new ArrayList<>();
-        for (int i = 0; i < 12; i++) {
-            int finalI = i;
-            List<MemberDTO> collect = memberRepository.findAll().stream()
-                    .filter(f -> f.getJoinDate().getYear() == year)
-                    .filter(f -> f.getJoinDate().getMonth().getValue() == finalI + 1)
-                    .map(Mapping::map2DTO)
-                    .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
-                    .collect(Collectors.toList());
-
-            list.add(collect);
-        }
-        return list;
+        this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
     }
 
     public List<LicensePaymentHistoryDTO> getLicenseSum(LocalDate firstDate, LocalDate secondDate) {
         List<LicensePaymentHistoryDTO> list1 = new ArrayList<>();
-        memberRepository.findAll()
-                .forEach(member -> member.getHistory().getLicensePaymentHistory()
-                        .stream()
-                        .filter(lp -> lp.getDate().isAfter(firstDate.minusDays(1)))
-                        .filter(lp -> lp.getDate().isBefore(secondDate.plusDays(1)))
-                        .forEach(g -> list1.add(LicensePaymentHistoryDTO.builder()
-                                .paymentUuid(g.getUuid())
-                                .firstName(member.getFirstName())
-                                .secondName(member.getSecondName())
-                                .active(member.getActive())
-                                .adult(member.getAdult())
-                                .legitimationNumber(member.getLegitimationNumber())
-                                .memberUUID(member.getUuid())
-                                .isPayInPZSSPortal(g.isPayInPZSSPortal())
-                                .date(g.getDate())
-                                .licenseUUID(g.getUuid())
-                                .validForYear(g.getValidForYear())
-                                .isNew(g.isNew())
-                                .build())));
+        licensePaymentHistoryRepository.findAllByPayInPZSSPortalBetweenDate(firstDate,secondDate).forEach(e->{
+            MemberEntity member = memberRepository.getOne(e.getMemberUUID());
+            list1.add(LicensePaymentHistoryDTO.builder()
+                    .paymentUuid(e.getUuid())
+                    .firstName(member.getFirstName())
+                    .secondName(member.getSecondName())
+                    .active(member.getActive())
+                    .adult(member.getAdult())
+                    .legitimationNumber(member.getLegitimationNumber())
+                    .memberUUID(member.getUuid())
+                    .isPayInPZSSPortal(e.isPayInPZSSPortal())
+                    .date(e.getDate())
+                    .licenseUUID(e.getUuid())
+                    .validForYear(e.getValidForYear())
+                    .isNew(e.isNew())
+                    .build());
+        });
 
-        list1.sort(Comparator.comparing(LicensePaymentHistoryDTO::getDate).thenComparing(LicensePaymentHistoryDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(LicensePaymentHistoryDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))));
+        list1.sort(Comparator.comparing(LicensePaymentHistoryDTO::getDate).thenComparing(LicensePaymentHistoryDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(LicensePaymentHistoryDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))));
         return list1;
     }
 
-    public List<MemberDTO> getJoinDateSum(LocalDate firstDate, LocalDate secondDate) {
-
-        return memberRepository.findAll().stream()
-                .filter(f -> f.getJoinDate().isAfter(firstDate.minusDays(1)))
-                .filter(f -> f.getJoinDate().isBefore(secondDate.plusDays(1)))
-                .map(Mapping::map2DTO)
-                .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
-                .collect(Collectors.toList());
+    public List<?> getJoinDateSum(LocalDate firstDate, LocalDate secondDate) {
+        return memberRepository.getMemberBetweenJoinDate(firstDate, secondDate);
     }
 
     public List<MemberDTO> getErasedMembersSum(LocalDate firstDate, LocalDate secondDate) {
 
-        return memberRepository.findAll().stream()
+        return memberRepository.findAllByErasedTrue().stream()
                 .filter(f -> f.getErasedEntity() != null)
                 .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1)))
                 .filter(f -> f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
                 .map(Mapping::map2DTO)
-                .sorted(Comparator.comparing(MemberDTO::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .sorted(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
 
     }
 
-    public List<MemberDTO> getContributionSum(LocalDate firstDate, LocalDate secondDate) {
+    public List<?> getContributionSum(LocalDate firstDate, LocalDate secondDate) {
+        List<MemberWithContributionWrapper> collect1 = new ArrayList<>();
+        List<ContributionEntity> allPaymentDayBetween = contributionRepository.getAllPaymentDayBetween(firstDate, secondDate);
+        allPaymentDayBetween.forEach(e -> {
+            IMemberDTO byHistoryUUID = memberRepository.getByHistoryUUID(e.getHistoryUUID());
+            if (byHistoryUUID != null)
+                collect1.add(MemberWithContributionWrapper.builder()
+                        .member(byHistoryUUID)
+                        .contribution(Mapping.map(e))
+                        .build());
 
-//        List<MemberEntity> memberEntities = memberRepository.findAll();
-//
-//        memberEntities.forEach(t -> t.getHistory().getContributionList().forEach(g -> {
-//            if (g.getHistoryUUID() == null) {
-//                g.setHistoryUUID(t.getUuid());
-//                contributionRepository.save(g);
-//            }
-//        }));
-//
-//        contributionRepository.findAll().forEach(e -> {
-//            if (e.getHistoryUUID() == null) {
-//                contributionRepository.delete(e);
-//            }
-//        });
-
-        List<MemberDTO> collect1 = new ArrayList<>();
-
-        memberRepository.findAll()
-                .forEach(e -> e.getHistory().getContributionList()
-                        .stream()
-                        .filter(f -> f.getPaymentDay().isAfter(firstDate.minusDays(1)))
-                        .filter(f -> f.getPaymentDay().isBefore(secondDate.plusDays(1)))
-                        .forEach(d -> collect1.add(Mapping.map2DTO(e))));
-
-        collect1.sort(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName,Collator.getInstance(Locale.forLanguageTag("pl"))));
-
+        });
         return collect1;
 
     }
 
     public String getMaxLegNumber() {
-        var value = 0;
-        if (!memberRepository.findAll().isEmpty()) {
-            MemberEntity memberEntity = memberRepository.findAll().stream().max(Comparator.comparing(MemberEntity::getLegitimationNumber)).orElseThrow();
-            value = memberEntity.getLegitimationNumber();
-        }
-        return String.valueOf(value);
+        return String.valueOf(memberRepository.getMaxLegitimationNumber());
     }
 
     public String getActualYearMemberCounts() {
-        var count = 0;
-        if (!memberRepository.findAll().isEmpty()) {
-            int year = LocalDate.now().getYear();
+        int count = memberRepository.countActualYearMemberCounts(LocalDate.of(LocalDate.now().getYear(), 1, 1), LocalDate.of(LocalDate.now().getYear(), 12, 31));
 
-            List<List<MemberDTO>> list = new ArrayList<>();
-
-            for (int i = 0; i < 12; i++) {
-                int finalI = i;
-                List<MemberDTO> members = memberRepository.findAll().stream()
-                        .filter(f -> f.getJoinDate().getYear() == year)
-                        .filter(f -> f.getJoinDate().getMonth().getValue() == finalI + 1)
-                        .map(Mapping::map2DTO)
-                        .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
-                        .collect(Collectors.toList());
-                if (!members.isEmpty()) {
-                    list.add(members);
-                }
-            }
-            for (List<MemberDTO> memberDTOS : list) {
-                count += memberDTOS.size();
-            }
-        }
         return String.valueOf(count);
     }
 
     public List<MemberAmmo> getMembersAmmoTakesInTime(LocalDate firstDate, LocalDate secondDate) {
+        List<AmmoEvidenceEntity> collect = ammoEvidenceRepository.getAllDateBetween(firstDate, secondDate);
 
-        List<AmmoEvidenceEntity> collect = ammoEvidenceRepository.findAll()
-                .stream()
-                .filter(f -> f.getDate().isAfter(firstDate.minusDays(1)))
-                .filter(f -> f.getDate().isBefore(secondDate.plusDays(1)))
-                .collect(Collectors.toList());
         List<MemberAmmo> ammoList = new ArrayList<>();
 
         collect.forEach(e -> e.getAmmoInEvidenceEntityList()
@@ -223,7 +163,7 @@ public class StatisticsService {
 
                                 }
                         )));
-        ammoList.sort(Comparator.comparing(MemberAmmo::getSecondName,Collator.getInstance(Locale.forLanguageTag("pl"))));
+        ammoList.sort(Comparator.comparing(MemberAmmo::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))));
         return ammoList;
     }
 
@@ -310,9 +250,8 @@ public class StatisticsService {
 
     public ResponseEntity<?> getTop10Competitors() {
 //  top 10 zawodników
-        List<MemberEntity> all = memberRepository.findAll()
+        List<MemberEntity> all = memberRepository.findAllByErasedFalse()
                 .stream()
-                .filter(f -> !f.getErased())
                 .filter(f -> f.getHistory() != null)
                 .filter(f -> f.getHistory().getCompetitionHistory().size() > 0)
                 .collect(Collectors.toList());
@@ -332,7 +271,7 @@ public class StatisticsService {
         }
 
         Map<String, Integer> map = new LinkedHashMap<>();
-        list1.forEach(e -> map.put(e.getMemberName(), (int) e.getHistory().getCompetitionHistory().stream().filter(f -> f.getDate().getYear() == LocalDate.now().getYear()).count()));
+        list1.forEach(e -> map.put(e.getFullName(), (int) e.getHistory().getCompetitionHistory().stream().filter(f -> f.getDate().getYear() == LocalDate.now().getYear()).count()));
         List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
         list.sort(Map.Entry.<String, Integer>comparingByValue().reversed());
 
@@ -367,7 +306,7 @@ public class StatisticsService {
             }
         }
         Map<String, Integer> map = new LinkedHashMap<>();
-        list1.forEach(e -> map.put(e.getMemberName(), (int) e.getHistory().getContributionList().stream().filter(f -> f.getPaymentDay().getYear() == LocalDate.now().getYear()).count()));
+        list1.forEach(e -> map.put(e.getFullName(), (int) e.getHistory().getContributionList().stream().filter(f -> f.getPaymentDay().getYear() == LocalDate.now().getYear()).count()));
         List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
         list.sort(Map.Entry.<String, Integer>comparingByValue().reversed());
 
@@ -395,7 +334,7 @@ public class StatisticsService {
                                 CompetitionMembersListEntity competitionMembersListEntity = competitionMembersListRepository.findById(g.getAttachedToList()).orElseThrow();
 
                                 score.updateAndGet(v -> v + competitionMembersListEntity.getScoreList().stream().filter(f -> f.getMember() != null).filter(f -> f.getMember().getUuid().equals(e.getUuid())).findFirst().get().getScore());
-                                map1.put(e.getMemberName(), Float.valueOf(score.toString()));
+                                map1.put(e.getFullName(), Float.valueOf(score.toString()));
                             });
                 }
         );

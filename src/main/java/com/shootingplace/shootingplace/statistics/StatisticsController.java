@@ -45,12 +45,6 @@ public class StatisticsController {
         return ResponseEntity.ok(statisticsService.getLicenseSum(parseFirstDate, parseSecondDate));
     }
 
-    @GetMapping("/joinMonthSum")
-    public ResponseEntity<?> joinMonthSum(@RequestParam String year) {
-        LocalDate parseYear = LocalDate.parse(year);
-        return ResponseEntity.ok(statisticsService.joinMonthSum(parseYear.getYear()));
-    }
-
     @GetMapping("/maxLegNumber")
     public ResponseEntity<?> getMaxLegNumber() {
         return ResponseEntity.ok(statisticsService.getMaxLegNumber());

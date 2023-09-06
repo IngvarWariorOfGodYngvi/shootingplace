@@ -1,6 +1,5 @@
 package com.shootingplace.shootingplace.ammoEvidence;
 
-import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordsService;
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/ammoEvidence")
@@ -20,23 +20,43 @@ public class AmmoEvidenceController {
     private final AmmoEvidenceService ammoEvidenceService;
     private final AmmoUsedService ammoUsedService;
     private final ChangeHistoryService changeHistoryService;
-    private final RegistrationRecordsService recordsService;
 
-    public AmmoEvidenceController(AmmoEvidenceService ammoEvidenceService, AmmoUsedService ammoUsedService, ChangeHistoryService changeHistoryService, RegistrationRecordsService recordsService) {
+    public AmmoEvidenceController(AmmoEvidenceService ammoEvidenceService, AmmoUsedService ammoUsedService, ChangeHistoryService changeHistoryService) {
         this.ammoEvidenceService = ammoEvidenceService;
         this.ammoUsedService = ammoUsedService;
         this.changeHistoryService = changeHistoryService;
-        this.recordsService = recordsService;
     }
 
 
-    // New ammo used by Member
     @Transactional
     @PostMapping("/ammo")
     public ResponseEntity<?> createAmmoUsed(@RequestParam String caliberUUID, @RequestParam Integer legitimationNumber, @RequestParam int otherID, @RequestParam Integer counter) {
         if (counter != 0) {
-//            recordsService.createRecordInBook(legitimationNumber, otherID);
             return ammoUsedService.addAmmoUsedEntity(caliberUUID, legitimationNumber, otherID, counter);
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    @Transactional
+    @PostMapping("/listOfAmmo")
+    public ResponseEntity<?> createAmmoUsed(@RequestBody Map<String,String> caliberUUIDAmmoQuantityMap, @RequestParam Integer legitimationNumber, @RequestParam int otherID) {
+        boolean[] caliberAmmocheck = new boolean[caliberUUIDAmmoQuantityMap.size()];
+        System.out.println(caliberUUIDAmmoQuantityMap.size());
+        final int[] iterator = {0};
+        caliberUUIDAmmoQuantityMap.forEach((key, value) -> {
+            caliberAmmocheck[iterator[0]] = value != null && Integer.parseInt(value) != 0;
+            System.out.println(caliberAmmocheck[iterator[0]]);
+            iterator[0]++;
+        });
+        boolean check = true;
+        for (boolean b : caliberAmmocheck) {
+            if (!b) {
+                check = false;
+                break;
+            }
+        }
+        if (check) {
+            return ammoUsedService.addListOfAmmoToEvidence(caliberUUIDAmmoQuantityMap, legitimationNumber, otherID);
         } else {
             return ResponseEntity.badRequest().build();
         }

@@ -1,16 +1,10 @@
 package com.shootingplace.shootingplace.license;
 
-import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
-import com.shootingplace.shootingplace.history.LicensePaymentHistoryDTO;
-import com.shootingplace.shootingplace.history.ChangeHistoryService;
-import com.shootingplace.shootingplace.history.HistoryEntity;
-import com.shootingplace.shootingplace.history.HistoryRepository;
-import com.shootingplace.shootingplace.history.HistoryService;
+import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.history.*;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.history.LicensePaymentHistoryRepository;
-import com.shootingplace.shootingplace.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -50,10 +44,7 @@ public class LicenseService {
     }
 
     public List<MemberDTO> getMembersNamesAndLicense() {
-        return memberRepository.findAllByErasedFalse().stream()
-                .filter(f -> f.getClub().getId().equals(1))
-                .filter(MemberEntity::getPzss)
-                .filter(f -> f.getLicense().getNumber() != null && f.getLicense().isValid())
+        return memberRepository.findAllWhereCLubEquals1ErasedFalsePzssTrueLicenseValidTrue().stream()
                 .map(Mapping::map2DTO)
                 .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()))
                 .collect(Collectors.toList());
@@ -64,11 +55,7 @@ public class LicenseService {
     }
 
     public List<MemberDTO> getMembersNamesAndLicenseNotValid() {
-        return memberRepository.findAllByErasedFalse()
-                .stream()
-                .filter(f -> f.getClub().getId().equals(1))
-                .filter(MemberEntity::getPzss)
-                .filter(f -> f.getLicense().getNumber() != null && !f.getLicense().isValid())
+        return memberRepository.findAllWhereCLubEquals1ErasedFalsePzssTrueLicenseValidFalse().stream()
                 .map(Mapping::map2DTO)
                 .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()))
                 .collect(Collectors.toList());
@@ -301,24 +288,25 @@ public class LicenseService {
     public List<?> getAllLicencePayment() {
 
         List<LicensePaymentHistoryDTO> list1 = new ArrayList<>();
-        memberRepository.findAllByErasedFalse()
-                .forEach(member -> member.getHistory().getLicensePaymentHistory()
-                        .forEach(g -> list1.add(LicensePaymentHistoryDTO.builder()
-                                .paymentUuid(g.getUuid())
-                                .firstName(member.getFirstName())
-                                .secondName(member.getSecondName())
-                                .active(member.getActive())
-                                .adult(member.getAdult())
-                                .legitimationNumber(member.getLegitimationNumber())
-                                .memberUUID(member.getUuid())
-                                .isPayInPZSSPortal(g.isPayInPZSSPortal())
-                                .date(g.getDate())
-                                .licenseUUID(g.getUuid())
-                                .validForYear(g.getValidForYear())
-                                .isNew(g.isNew())
-                                .build())));
+        licensePaymentHistoryRepository.findAllByPayInPZSSPortalFalse().forEach(e -> {
+            MemberEntity member = memberRepository.getOne(e.getMemberUUID());
+            list1.add(LicensePaymentHistoryDTO.builder()
+                    .paymentUuid(e.getUuid())
+                    .firstName(member.getFirstName())
+                    .secondName(member.getSecondName())
+                    .active(member.getActive())
+                    .adult(member.getAdult())
+                    .legitimationNumber(member.getLegitimationNumber())
+                    .memberUUID(member.getUuid())
+                    .isPayInPZSSPortal(e.isPayInPZSSPortal())
+                    .date(e.getDate())
+                    .licenseUUID(e.getUuid())
+                    .validForYear(e.getValidForYear())
+                    .isNew(e.isNew())
+                    .build());
+        });
         return list1.stream()
-                .filter(f -> !f.isPayInPZSSPortal()).sorted(Comparator.comparing(LicensePaymentHistoryDTO::getSecondName, pl()).thenComparing(LicensePaymentHistoryDTO::getFirstName, pl())).collect(Collectors.toList());
+                .sorted(Comparator.comparing(LicensePaymentHistoryDTO::getSecondName, pl()).thenComparing(LicensePaymentHistoryDTO::getFirstName, pl())).collect(Collectors.toList());
     }
 
     public ResponseEntity<?> removeLicensePaymentRecord(String paymentUUID, String pinCode) {

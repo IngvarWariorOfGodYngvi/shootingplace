@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,6 +24,8 @@ public class AmmoUsedPersonal {
     private Integer counter;
 
     private LocalDate date;
+
+    private LocalTime time;
 
     public LocalDate getDate() {
         return date;
@@ -70,5 +73,13 @@ public class AmmoUsedPersonal {
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public LocalTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalTime time) {
+        this.time = time;
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/member")
+@RequestMapping("/member" )
 @CrossOrigin
 public class MemberController {
 
@@ -28,57 +28,57 @@ public class MemberController {
         this.changeHistoryService = changeHistoryService;
     }
 
-    @GetMapping("/{number}")
+    @GetMapping("/{number}" )
     public ResponseEntity<?> getMember(@PathVariable int number) {
         return memberService.getMember(number);
     }
 
-    @GetMapping("/ID/{number}")
+    @GetMapping("/ID/{number}" )
     public ResponseEntity<?> getMemberUUIDByLegitimationNumber(@PathVariable int number) {
         return memberService.getMemberUUIDByLegitimationNumber(number);
     }
 
-    @GetMapping("/PESEL/{PESELNumber}")
+    @GetMapping("/PESEL/{PESELNumber}" )
     public ResponseEntity<?> getMemberByPESELNumber(@PathVariable String PESELNumber) {
         return memberService.getMemberByPESELNumber(PESELNumber);
     }
 
-    @GetMapping("/uuid/{uuid}")
+    @GetMapping("/uuid/{uuid}" )
     public ResponseEntity<MemberEntity> getMemberByUUID(@PathVariable String uuid) {
         return ResponseEntity.ok(memberService.getMemberByUUID(uuid));
     }
 
-    @GetMapping("/erased")
+    @GetMapping("/erased" )
     public ResponseEntity<?> getErasedMembers() {
         return ResponseEntity.ok(memberService.getMembersErased());
     }
 
-    @GetMapping("/getAllNames")
+    @GetMapping("/getAllNames" )
     public List<MemberInfo> getAllNames() {
         return memberService.getAllNames();
     }
 
-    @GetMapping("/getAllMemberDTO")
+    @GetMapping("/getAllMemberDTO" )
     public ResponseEntity<List<MemberDTO>> getAllMemberDTO() {
         return ResponseEntity.ok(memberService.getAllMemberDTO());
     }
 
-    @GetMapping("/getAllMemberDTOWithArgs")
+    @GetMapping("/getAllMemberDTOWithArgs" )
     public ResponseEntity<List<MemberDTO>> getAllMemberDTO(@RequestParam @Nullable String adult, @Nullable @RequestParam String active, @RequestParam String erase) {
         Boolean adult1;
         Boolean active1;
         Boolean erase1;
-        if (adult == null || adult.equals("null")) {
+        if (adult == null || adult.equals("null" )) {
             adult1 = null;
         } else {
             adult1 = Boolean.valueOf(adult);
         }
-        if (active == null || active.equals("null")) {
+        if (active == null || active.equals("null" )) {
             active1 = null;
         } else {
             active1 = Boolean.valueOf(active);
         }
-        if (erase == null || erase.equals("null")) {
+        if (erase == null || erase.equals("null" )) {
             erase1 = null;
         } else {
             erase1 = Boolean.valueOf(erase);
@@ -86,48 +86,43 @@ public class MemberController {
         return ResponseEntity.ok(memberService.getAllMemberDTO(adult1, active1, erase1));
     }
 
-    @GetMapping("/membersQuantity")
+    @GetMapping("/membersQuantity" )
     public List<Long> getMembersQuantity() {
         return memberService.getMembersQuantity();
     }
 
-    @GetMapping("/getArbiters")
+    @GetMapping("/getArbiters" )
     public List<String> getArbiters() {
         return memberService.getArbiters();
     }
 
-    @GetMapping("/membersWithPermissions")
-    public List<Member> getMembersWithPermissions() {
-        return memberService.getMembersWithPermissions();
-    }
-
-    @GetMapping("/getMemberEmail")
+    @GetMapping("/getMemberEmail" )
     public ResponseEntity<?> getSingleMemberEmail(@RequestParam Integer number) {
         return memberService.getSingleMemberEmail(number);
     }
 
-    @GetMapping("/pesel")
+    @GetMapping("/pesel" )
     public ResponseEntity<?> getMemberPeselIsPresent(@RequestParam String pesel) {
         return ResponseEntity.ok(memberService.getMemberPeselIsPresent(pesel));
     }
 
-    @GetMapping("/IDCard")
+    @GetMapping("/IDCard" )
     public ResponseEntity<?> getMemberIDCardPresent(@RequestParam String IDCard) {
         return ResponseEntity.ok(memberService.getMemberIDCardPresent(IDCard));
     }
 
-    @GetMapping("/email")
+    @GetMapping("/email" )
     public ResponseEntity<?> getMemberEmailPresent(@RequestParam String email) {
         return ResponseEntity.ok(memberService.getMemberEmailPresent(email));
     }
 
-    @GetMapping("/erasedType")
+    @GetMapping("/erasedType" )
     public ResponseEntity<?> getErasedType() {
         return ResponseEntity.ok(memberService.getErasedType());
     }
 
     @Transactional
-    @PostMapping("/")
+    @PostMapping("/" )
     public ResponseEntity<?> addMember(@RequestBody @Valid MemberWithAddressWrapper memberWithAddressWrapper, @RequestParam boolean returningToClub, @RequestParam String pinCode) {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
@@ -135,10 +130,10 @@ public class MemberController {
             Member member = memberWithAddressWrapper.getMember();
             Address address = memberWithAddressWrapper.getAddress();
             if (member.getPesel().isEmpty() || member.getPhoneNumber().isEmpty() || member.getFirstName().isEmpty() || member.getSecondName().isEmpty() || member.getIDCard().isEmpty()) {
-                result = ResponseEntity.status(406).body("Uwaga! Nie podano wszystkich lub żadnej informacji");
+                result = ResponseEntity.status(406).body("Uwaga! Nie podano wszystkich lub żadnej informacji" );
             } else {
                 try {
-                    result = memberService.addNewMember(member,address,returningToClub, pinCode);
+                    result = memberService.addNewMember(member, address, returningToClub, pinCode);
                 } catch (IllegalArgumentException e) {
                     result = ResponseEntity.status(HttpStatus.CONFLICT).build();
                 }
@@ -149,27 +144,28 @@ public class MemberController {
         }
     }
 
-    @PutMapping("/{uuid}")
+    @PutMapping("/{uuid}" )
     public ResponseEntity<?> updateMember(@PathVariable String uuid, @RequestBody @Valid Member member, @RequestParam String pinCode) {
         return memberService.updateMember(uuid, member, pinCode);
     }
 
-    @GetMapping("/getMembersToReportToThePolice")
+    @GetMapping("/getMembersToReportToThePolice" )
     public ResponseEntity<?> getMembersToReportToThePolice() {
         return ResponseEntity.ok(memberService.getMembersToReportToThePolice());
     }
 
-    @GetMapping("/getMembersToErase")
+    @GetMapping("/getMembersToErase" )
     public ResponseEntity<?> getMembersToErase() {
         return ResponseEntity.ok(memberService.getMembersToErase());
     }
 
-    @GetMapping("/findByBarCode")
+    @GetMapping("/findByBarCode" )
     public ResponseEntity<?> findMemberByBarCode(@RequestParam String barcode) {
         return memberService.findMemberByBarCode(barcode);
     }
-@Transactional
-    @PatchMapping("/adult/{uuid}")
+
+    @Transactional
+    @PatchMapping("/adult/{uuid}" )
     public ResponseEntity<?> changeAdult(@PathVariable String uuid, @RequestParam String pinCode) {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
@@ -179,12 +175,17 @@ public class MemberController {
         }
     }
 
-    @PatchMapping("/pzss/{uuid}")
+    @PatchMapping("/pzss/{uuid}" )
     public ResponseEntity<?> changePzss(@PathVariable String uuid) {
         return memberService.changePzss(uuid);
     }
 
-    @PatchMapping("/{uuid}")
+    @PatchMapping("/togglePzss/{uuid}" )
+    public ResponseEntity<?> togglePzss(@PathVariable String uuid, @RequestParam boolean isSignedTo) {
+        return memberService.togglePzss(uuid, isSignedTo);
+    }
+
+    @PatchMapping("/{uuid}" )
     public ResponseEntity<?> activateOrDeactivateMember(@PathVariable String uuid, @RequestParam String pinCode) {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
@@ -194,14 +195,14 @@ public class MemberController {
         }
     }
 
-    @PatchMapping("/erase/{uuid}")
+    @PatchMapping("/erase/{uuid}" )
     public ResponseEntity<?> eraseMember(@PathVariable String uuid, @RequestParam String additionalDescription, @RequestParam String erasedDate, @RequestParam String erasedType, @RequestParam String pinCode) {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
-            if (additionalDescription.trim().isEmpty() || additionalDescription.trim().isBlank() || additionalDescription.trim().equals("null")) {
+            if (additionalDescription.trim().isEmpty() || additionalDescription.trim().isBlank() || additionalDescription.trim().equals("null" )) {
                 additionalDescription = null;
             }
-            if (erasedDate.trim().isEmpty() || erasedDate.trim().isBlank() || erasedDate.trim().equals("null")) {
+            if (erasedDate.trim().isEmpty() || erasedDate.trim().isBlank() || erasedDate.trim().equals("null" )) {
                 erasedDate = String.valueOf(LocalDate.now());
             }
             LocalDate parsedDate = LocalDate.parse(erasedDate);
@@ -210,12 +211,18 @@ public class MemberController {
             return code;
         }
     }
-    @PatchMapping("/changeClub/{uuid}")
-    public ResponseEntity<?> changeClub(@PathVariable String uuid,@RequestParam String clubName){
-        return memberService.changeClub(uuid,clubName);
+
+    @PatchMapping("/changeClub/{uuid}" )
+    public ResponseEntity<?> changeClub(@PathVariable String uuid, @RequestParam String clubName) {
+        return memberService.changeClub(uuid, clubName);
     }
+    @PatchMapping("/toggleDeclaration/{uuid}" )
+    public ResponseEntity<?> toggleDeclaration(@PathVariable String uuid, @RequestParam boolean isSigned) {
+        return memberService.toggleDeclaration(uuid, isSigned);
+    }
+
     @Transactional
-    @DeleteMapping("/delete/{uuid}")
+    @DeleteMapping("/delete/{uuid}" )
     public ResponseEntity<?> deleteMember(@PathVariable String uuid) {
         return memberService.deleteMember(uuid);
     }

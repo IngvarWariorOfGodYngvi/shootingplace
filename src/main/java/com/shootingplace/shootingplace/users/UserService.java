@@ -229,6 +229,9 @@ public class UserService {
                     return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                 }
             }
+            if(otherID == null) {
+                otherID = 0;
+            }
             UserEntity userEntity = UserEntity.builder()
                     .superUser(false)
                     .firstName(trim.toString())

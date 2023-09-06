@@ -29,7 +29,6 @@ public class UserEntity extends Person {
     private String firstName;
 
     private String secondName;
-
     private Integer otherID;
 
     private String pinCode;

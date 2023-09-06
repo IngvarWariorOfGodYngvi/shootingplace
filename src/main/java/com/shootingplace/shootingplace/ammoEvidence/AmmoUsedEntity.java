@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @AllArgsConstructor
@@ -34,6 +35,7 @@ public class AmmoUsedEntity {
     private Integer counter;
 
     private LocalDate date;
+    private LocalTime time;
 
     public LocalDate getDate() {
         return date;
@@ -89,6 +91,14 @@ public class AmmoUsedEntity {
 
     public String getUserName() {
         return userName;
+    }
+
+    public LocalTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalTime time) {
+        this.time = time;
     }
 
     public void setUserName(String userName) {

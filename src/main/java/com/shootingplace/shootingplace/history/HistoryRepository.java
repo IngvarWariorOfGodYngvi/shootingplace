@@ -9,4 +9,6 @@ public interface HistoryRepository{
     Optional<HistoryEntity> findById(String uuid);
 
     List<HistoryEntity> findAll();
+
+    void delete(HistoryEntity e);
 }
