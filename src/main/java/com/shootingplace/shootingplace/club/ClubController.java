@@ -26,6 +26,11 @@ public class ClubController {
         return ResponseEntity.ok(clubService.getAllClubsToTournament());
     }
 
+    @GetMapping("/member")
+    public ResponseEntity<List<ClubEntity>> getAllClubsToMember() {
+        return ResponseEntity.ok(clubService.getAllClubsToMember());
+    }
+
     @PutMapping("/{clubID}")
     public ResponseEntity<?> updateClub(@PathVariable int clubID, @RequestBody Club club) {
         if (clubService.updateClub(clubID, club)) {

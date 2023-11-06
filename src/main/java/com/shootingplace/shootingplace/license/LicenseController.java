@@ -54,7 +54,6 @@ public class LicenseController {
 
     @PutMapping("/{memberUUID}")
     public ResponseEntity<?> updateLicense(@PathVariable String memberUUID, @RequestBody License license) {
-        // TODO wprowadzić blokadę kodem
         return licenseService.updateLicense(memberUUID, license);
     }
 
@@ -99,11 +98,11 @@ public class LicenseController {
         }
     }
 
-    @PatchMapping("/paymentToggle")
-    public ResponseEntity<?> toggleLicencePaymentInPZSS(@RequestParam String paymentUUID, @RequestParam String pinCode) {
+    @PatchMapping("/paymentChange")
+    public ResponseEntity<?> paymentChange(@RequestParam String paymentUUID, @RequestParam String pinCode, @RequestParam boolean condition) {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
-            return historyService.toggleLicencePaymentInPZSS(paymentUUID);
+            return historyService.toggleLicencePaymentInPZSS(paymentUUID, condition);
         } else {
             return code;
         }
@@ -111,12 +110,12 @@ public class LicenseController {
 
     @Transactional
     @PatchMapping("/paymentToggleArray")
-    public ResponseEntity<?> toggleLicencePaymentInPZSSArray(@RequestParam List<String> paymentUUIDs, @RequestParam String pinCode) {
+    public ResponseEntity<?> toggleLicencePaymentInPZSSArray(@RequestParam List<String> paymentUUIDs, @RequestParam String pinCode, @RequestParam boolean condition) {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             ResponseEntity<?> result = null;
             for (String paymentUUID : paymentUUIDs) {
-                result = historyService.toggleLicencePaymentInPZSS(paymentUUID);
+                result = historyService.toggleLicencePaymentInPZSS(paymentUUID, condition);
             }
             return result;
         } else {

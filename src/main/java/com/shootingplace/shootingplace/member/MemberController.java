@@ -92,7 +92,7 @@ public class MemberController {
     }
 
     @GetMapping("/getArbiters" )
-    public List<String> getArbiters() {
+    public List<MemberInfo> getArbiters() {
         return memberService.getArbiters();
     }
 
@@ -213,8 +213,8 @@ public class MemberController {
     }
 
     @PatchMapping("/changeClub/{uuid}" )
-    public ResponseEntity<?> changeClub(@PathVariable String uuid, @RequestParam String clubName) {
-        return memberService.changeClub(uuid, clubName);
+    public ResponseEntity<?> changeClub(@PathVariable String uuid, @RequestParam int clubID) {
+        return memberService.changeClub(uuid, clubID);
     }
     @PatchMapping("/toggleDeclaration/{uuid}" )
     public ResponseEntity<?> toggleDeclaration(@PathVariable String uuid, @RequestParam boolean isSigned) {

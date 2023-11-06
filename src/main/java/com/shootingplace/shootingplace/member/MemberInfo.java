@@ -11,9 +11,12 @@ import lombok.NoArgsConstructor;
 @Data
 public class MemberInfo {
 
+    String uuid;
     String secondName;
     String firstName;
     String name;
+    String arbiterClass;
+    int id;
     Integer legitimationNumber;
     boolean isActive;
     boolean isAdult;

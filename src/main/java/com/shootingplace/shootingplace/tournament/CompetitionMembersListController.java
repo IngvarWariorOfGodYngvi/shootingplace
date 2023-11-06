@@ -1,5 +1,7 @@
 package com.shootingplace.shootingplace.tournament;
 
+import com.shootingplace.shootingplace.armory.AmmoUsedService;
+import com.shootingplace.shootingplace.armory.CaliberRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,14 +16,28 @@ import java.util.List;
 public class CompetitionMembersListController {
 
     private final CompetitionMembersListService competitionMembersListService;
+    private final CaliberRepository caliberRepository;
+    private final AmmoUsedService ammoUsedService;
+    private final ScoreService scoreService;
+    private final CompetitionMembersListRepository competitionMembersListRepository;
 
-    public CompetitionMembersListController(CompetitionMembersListService competitionMembersListService) {
+
+    public CompetitionMembersListController(CompetitionMembersListService competitionMembersListService, AmmoUsedService ammoUsedService, CaliberRepository caliberRepository, ScoreService scoreService, CompetitionMembersListRepository competitionMembersListRepository) {
         this.competitionMembersListService = competitionMembersListService;
+        this.caliberRepository = caliberRepository;
+        this.ammoUsedService = ammoUsedService;
+        this.scoreService = scoreService;
+        this.competitionMembersListRepository = competitionMembersListRepository;
     }
 
     @PatchMapping("/setCompetitionUUIDToCompetitionMemberList")
     public ResponseEntity<?> setCompetitionUUIDToCompetitionMemberList() {
         return competitionMembersListService.setCompetitionUUIDToCompetitionMemberList();
+    }
+
+    @GetMapping("/memberScores")
+    public ResponseEntity<?> getMemberScoresFromCompetitionMemberListUUID(@RequestParam String competitionMemberListUUID) {
+        return competitionMembersListService.getMemberScoresFromComtetitionMemberListUUID(competitionMemberListUUID);
     }
 
     @GetMapping("/getID")
@@ -56,12 +72,31 @@ public class CompetitionMembersListController {
 
     @Transactional
     @PutMapping("/addMember")
-    public ResponseEntity<?> addScoreToCompetitionMembersList(@RequestParam List<String> competitionUUIDList, @RequestParam int legitimationNumber, @RequestParam @Nullable int otherPerson) {
-        List<String> list = new ArrayList<>();
-        competitionUUIDList.forEach(e -> list.add(competitionMembersListService.addScoreToCompetitionList( e.replaceAll("\\.", ","), legitimationNumber, otherPerson)));
-
+    public ResponseEntity<?> addScoreToCompetitionMembersList(@RequestParam List<String> competitionUUIDList, @RequestParam List<String> addAmmoList, @RequestParam int legitimationNumber, @RequestParam @Nullable int otherPerson) {
+        List<List<String>> list = new ArrayList<>();
+        competitionUUIDList.forEach(e -> list.add(competitionMembersListService.addScoreToCompetitionList(e.replaceAll("\\.", ","), legitimationNumber, otherPerson)));
+        addAmmoList.forEach(e -> {
+            CompetitionMembersListEntity one = competitionMembersListRepository.getOne(e);
+            one.setPracticeShots(one.getPracticeShots() != null ? one.getPracticeShots() : 0);
+            ammoUsedService.addAmmoUsedEntity(one.getCaliberUUID(), legitimationNumber, otherPerson, one.getNumberOfShots() + one.getPracticeShots());
+            String uuid;
+            if (legitimationNumber > 0) {
+                uuid = one.getScoreList().stream().filter(f -> f.getMember() != null && f.getMember().getLegitimationNumber().equals(legitimationNumber)).findFirst().get().getUuid();
+            } else {
+                uuid = one.getScoreList().stream().filter(f -> f.getOtherPersonEntity() != null && f.getOtherPersonEntity().getId().equals(otherPerson)).findFirst().get().getUuid();
+            }
+            scoreService.toggleAmmunitionInScore(uuid);
+        });
         if (!list.isEmpty()) {
-            return ResponseEntity.ok(list);
+            List<String> list1 = new ArrayList<>();
+            list.forEach(e -> {
+                if (e.get(0) == null) {
+                    list1.add(e.get(1));
+                } else {
+                    list1.add(e.get(0));
+                }
+            });
+            return ResponseEntity.ok(list1);
         } else
             return ResponseEntity.badRequest().body("pusta lista");
     }

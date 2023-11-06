@@ -68,6 +68,8 @@ public class MemberEntity extends Person {
 
     private String imageUUID;
 
+    private String signBy;
+
     private Boolean active = true;
     private Boolean adult = true;
     private Boolean erased = false;
@@ -284,6 +286,14 @@ public class MemberEntity extends Person {
 
     public void setPzss(Boolean pzss) {
         this.pzss = pzss;
+    }
+
+    public String getSignBy() {
+        return signBy;
+    }
+
+    public void setSignBy(String signBy) {
+        this.signBy = signBy;
     }
 
     /**

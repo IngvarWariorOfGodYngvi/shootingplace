@@ -231,16 +231,16 @@ public class HistoryService {
 
     }
 
-    public ResponseEntity<?> toggleLicencePaymentInPZSS(String paymentUUID) {
+    public ResponseEntity<?> toggleLicencePaymentInPZSS(String paymentUUID, boolean condition) {
 
         if (!licensePaymentHistoryRepository.existsById(paymentUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono płatności");
         }
 
         LicensePaymentHistoryEntity licensePaymentHistoryEntity = licensePaymentHistoryRepository.findById(paymentUUID).orElseThrow(EntityNotFoundException::new);
-        licensePaymentHistoryEntity.setPayInPZSSPortal(true);
+        licensePaymentHistoryEntity.setPayInPZSSPortal(condition);
         licensePaymentHistoryRepository.save(licensePaymentHistoryEntity);
-        return ResponseEntity.ok("Oznaczono jako opłacone w Portalu PZSS");
+        return ResponseEntity.ok("Oznaczono jako " + (condition?"":"nie") +"opłacone w Portalu PZSS");
     }
 
     //  Tournament
@@ -546,23 +546,6 @@ public class HistoryService {
         }
 
     }
-// Dla Potomności
-//    public void changeContributionTime(String memberUUID) {
-//        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-//        LocalDate date;
-//        if (memberEntity.getHistory().getContributionList().get(0).getValidThru().getDayOfMonth() == 28) {
-//            date = LocalDate.of(LocalDate.now().getYear(), 6, 30);
-//        } else {
-//            date = memberEntity.getHistory().getContributionList().get(0).getValidThru().plusMonths(4);
-//        }
-//        ContributionEntity contribution = ContributionEntity.builder()
-//                .paymentDay(LocalDate.now())
-//                .validThru(date)
-//                .historyUUID(memberEntity.getHistory().getUuid())
-//                .build();
-//        contributionRepository.save(contribution);
-//        addContribution(memberUUID, contribution);
-//    }
 
     public void updateShootingPatentHistory(String memberUUID, ShootingPatent shootingPatent) {
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);

@@ -304,6 +304,15 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+    // spis broni
+    @GetMapping("/downloadGunRegistryXlsx")
+    public ResponseEntity<byte[]> getGunRegistryXlsx(@RequestParam List<String> guns) throws IOException, DocumentException {
+        FilesEntity filesEntity = xlsxFiles.getGunRegistryXlsx(guns);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
+    }
 
     // list przewozowy broni
     @GetMapping("/downloadGunTransportCertificate")

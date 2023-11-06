@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.member;
 
+import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.club.ClubEntity;
@@ -14,10 +15,11 @@ import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.license.LicenseService;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentService;
+import com.shootingplace.shootingplace.users.UserEntity;
+import com.shootingplace.shootingplace.users.UserRepository;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.core.env.Environment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -27,6 +29,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.nio.charset.StandardCharsets;
 import java.text.Collator;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -51,7 +54,7 @@ public class MemberService {
     private final ErasedRepository erasedRepository;
     private final LicensePaymentHistoryRepository licensePaymentHistoryRepository;
 
-    private final Environment env;
+    private final UserRepository userRepository;
 
     private final Logger LOG = LogManager.getLogger();
 
@@ -64,7 +67,10 @@ public class MemberService {
                          WeaponPermissionService weaponPermissionService,
                          MemberPermissionsService memberPermissionsService,
                          ClubRepository clubRepository,
-                         ErasedRepository erasedRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, ChangeHistoryService changeHistoryService, Environment env) {
+                         ErasedRepository erasedRepository,
+                         LicensePaymentHistoryRepository licensePaymentHistoryRepository,
+                         ChangeHistoryService changeHistoryService,
+                         UserRepository userRepository) {
         this.memberRepository = memberRepository;
         this.licenseService = licenseService;
         this.licenseRepository = licenseRepository;
@@ -77,20 +83,18 @@ public class MemberService {
         this.erasedRepository = erasedRepository;
         this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
         this.changeHistoryService = changeHistoryService;
-        this.env = env;
+        this.userRepository = userRepository;
     }
 
 
     //--------------------------------------------------------------------------
 
-    public List<String> getArbiters() {
-        List<String> list = new ArrayList<>();
-        memberRepository.findAll().stream()
-                .filter(e -> e.getMemberPermissions() != null)
-                .filter(e -> e.getMemberPermissions().getArbiterNumber() != null)
-                .forEach(e -> list.add(e.getSecondName().concat(" " + e.getFirstName() + " " + e.getMemberPermissions().getArbiterClass() + " leg. " + e.getLegitimationNumber())));
-        list.sort(Comparator.comparing(String::new));
-        return list;
+    public List<MemberInfo> getArbiters() {
+        return memberRepository.findAllByErasedFalse().stream()
+                .filter(e->e.getMemberPermissions()!=null && e.getMemberPermissions().getArbiterNumber() != null)
+                .map(Mapping::map2)
+                .sorted(Comparator.comparing(MemberInfo::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberInfo::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .collect(Collectors.toList());
     }
 
     public void checkMembers() {
@@ -242,9 +246,12 @@ public class MemberService {
             member.setErasedEntity(null);
             member.setActive(true);
 
-            ResponseEntity<?> response = getStringResponseEntity(pinCode, Mapping.map(member), HttpStatus.CREATED, "addNewMember", "nowy Klubowicz");
+            ResponseEntity<?> response = getStringResponseEntity(pinCode, Mapping.map(member), HttpStatus.CREATED, "addNewMember " + member.getFullName(), "nowy Klubowicz");
             if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                 memberEntity = memberRepository.save(Mapping.map(member));
+                UserEntity user = userRepository.findByPinCode(Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString());
+                memberEntity.setSignBy(user.getFullName());
+                memberRepository.save(memberEntity);
                 historyService.addContribution(memberEntity.getUuid(),
                         contributionService.addFirstContribution(memberEntity.getUuid(), LocalDate.now()));
                 response = ResponseEntity.status(201).body(memberEntity.getUuid());
@@ -670,7 +677,7 @@ public class MemberService {
     }
 
     public List<Member> getMembersToErase() {
-        LocalDate notValidContribution = LocalDate.of(LocalDate.now().getYear(), 12, 31).minusYears(2);
+        LocalDate notValidContribution = LocalDate.now().minusYears(1).minusMonths(6);
         return memberRepository.findAllByErasedFalseAndActiveFalse().stream()
                 .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))).map(Mapping::map).collect(Collectors.toList());
@@ -701,17 +708,17 @@ public class MemberService {
         return member != null ? ResponseEntity.ok(Mapping.map(member)) : ResponseEntity.badRequest().body("Brak numeru w Bazie");
     }
 
-    public ResponseEntity<?> changeClub(String uuid, String clubName) {
+    public ResponseEntity<?> changeClub(String uuid, int clubID) {
         if (!memberRepository.existsById(uuid)) {
             return ResponseEntity.badRequest().body("Nie znaleziono klubowicza");
         }
-        if (!clubRepository.existsByName(clubName)) {
+        if (!clubRepository.existsById(clubID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubu");
         }
         MemberEntity member = memberRepository.getOne(uuid);
 
-        ClubEntity club = clubRepository.findByName(clubName);
-        member.setClub(clubRepository.getOne(club.getId()));
+        ClubEntity club = clubRepository.getOne(clubID);
+        member.setClub(club);
         memberRepository.save(member);
         return ResponseEntity.ok("Zmieniono Klub macierzysty zawodnika " + member.getFullName() + " na: " + club.getName());
     }

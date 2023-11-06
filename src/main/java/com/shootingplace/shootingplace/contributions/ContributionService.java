@@ -41,75 +41,28 @@ public class ContributionService {
 
     public ResponseEntity<?> addContribution(String memberUUID, LocalDate contributionPaymentDay, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza" );
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         List<ContributionEntity> contributionEntityList = memberEntity.getHistory().getContributionList();
-
-        LocalDate validThru = getDate(contributionPaymentDay);
 
         ContributionEntity contributionEntity = ContributionEntity.builder()
                 .paymentDay(null)
                 .validThru(null)
                 .build();
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+            contributionEntity.setPaymentDay(contributionPaymentDay);
             if (contributionEntityList.size() < 1) {
-                contributionEntity.setPaymentDay(contributionPaymentDay);
                 contributionEntity.setValidThru(contributionPaymentDay.plusMonths(6));
             } else {
-                contributionEntity.setPaymentDay(contributionPaymentDay);
                 contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusMonths(6));
             }
-//  Niech zostanie dla potomności - półroczne składki dorosłych i młodzieży
-//            if (memberEntity.getAdult()) {
-//                if (contributionEntityList.size() < 1) {
-//                    contributionEntity.setPaymentDay(contributionPaymentDay);
-//                    if (contributionPaymentDay.isBefore(LocalDate.of(validThru.getYear(), 6, 30))) {
-//                        contributionEntity.setValidThru(LocalDate.of(validThru.getYear(), 6, 30));
-//                    } else {
-//                        contributionEntity.setValidThru(LocalDate.of(validThru.getYear(), 12, 31));
-//                    }
-//                } else {
-//                    contributionEntity.setPaymentDay(contributionPaymentDay);
-//                    if (contributionEntityList.get(0).getValidThru().equals(LocalDate.of(validThru.getYear(), 6, 30))) {
-//                        contributionEntity.setValidThru(LocalDate.of(contributionEntityList.get(0).getValidThru().getYear(), 12, 31));
-//                    } else {
-//                        contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusMonths(6));
-//                    }
-//                }
-//            }
-//            if (!memberEntity.getAdult()) {
-//                if (contributionEntityList.size() < 1) {
-//                    contributionEntity.setPaymentDay(contributionPaymentDay);
-//                    if (contributionPaymentDay.isBefore(LocalDate.of(validThru.getYear(), 2, 28))) {
-//                        contributionEntity.setValidThru(LocalDate.of(validThru.getYear(), 2, 28));
-//                    } else {
-//                        contributionEntity.setValidThru(LocalDate.of(validThru.getYear(), 8, 31));
-//                    }
-//                } else {
-//                    contributionEntity.setPaymentDay(contributionPaymentDay);
-//                    if (contributionEntityList.get(0).getValidThru().equals(LocalDate.of(validThru.getYear(), 2, 28))) {
-//                        contributionEntity.setValidThru(LocalDate.of(contributionEntityList.get(0).getValidThru().getYear(), 8, 31));
-//                        System.out.println(1);
-//                    } else {
-//                        System.out.println(2);
-//                        LocalDate c;
-//                        if (contributionEntityList.get(0).getValidThru().getMonth().getValue() == 2 && contributionEntityList.get(0).getValidThru().getDayOfMonth() == 28) {
-//                            c = contributionEntityList.get(0).getValidThru().plusMonths(6).plusDays(3);
-//                            contributionEntity.setValidThru(c);
-//                        } else {
-//                            contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusMonths(6));
-//                        }
-//                    }
-//                }
-//            }
         }
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
+            contributionEntity.setPaymentDay(contributionPaymentDay);
             if (contributionEntityList.size() < 1) {
-                contributionEntity.setPaymentDay(contributionPaymentDay);
                 contributionEntity.setValidThru(contributionPaymentDay.plusYears(1));
             } else {
-                contributionEntity.setPaymentDay(contributionPaymentDay);
                 contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusYears(1));
             }
         }
@@ -117,8 +70,8 @@ public class ContributionService {
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             contributionRepository.save(contributionEntity);
             historyService.addContribution(memberUUID, contributionEntity);
-            memberEntity.setActive(!memberEntity.getHistory().getContributionList().get(0).getValidThru().plusMonths(3).isBefore(LocalDate.now()));
             LOG.info("zmieniono " + memberEntity.getSecondName());
+            memberEntity.setActive(contributionEntity.getValidThru().isAfter(LocalDate.now()));
             memberRepository.save(memberEntity);
         }
         return response;
@@ -138,7 +91,7 @@ public class ContributionService {
 
     public ResponseEntity<?> addContributionRecord(String memberUUID, LocalDate paymentDate, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza" );
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
 
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
@@ -151,10 +104,10 @@ public class ContributionService {
                 .build();
         ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Dodano składkę " + memberEntity.getFullName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
-            memberEntity.setActive(!memberEntity.getHistory().getContributionList().get(0).getValidThru().plusMonths(3).isBefore(LocalDate.now()));
             contributionRepository.save(contributionEntity);
             historyService.addContribution(memberUUID, contributionEntity);
             LOG.info("Dodano składkę " + memberEntity.getFullName());
+            memberEntity.setActive(memberEntity.getHistory().getContributionList().get(0).getValidThru().isAfter(LocalDate.now()));
             memberRepository.save(memberEntity);
         }
         return response;
@@ -164,7 +117,7 @@ public class ContributionService {
     public ContributionEntity addFirstContribution(String memberUUID, LocalDate contributionPaymentDay) {
 
         ContributionEntity contributionEntity = getContributionEntity(memberUUID, contributionPaymentDay);
-        LOG.info("utworzono pierwszą składkę" );
+        LOG.info("utworzono pierwszą składkę");
         return contributionRepository.save(contributionEntity);
     }
 
@@ -215,7 +168,7 @@ public class ContributionService {
 
     public ResponseEntity<?> removeContribution(String memberUUID, String contributionUUID, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza" );
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
 
@@ -230,10 +183,10 @@ public class ContributionService {
 
         ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Usunięto składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
-            memberEntity.setActive(!memberEntity.getHistory().getContributionList().get(0).getValidThru().plusMonths(3).isBefore(LocalDate.now()));
             historyService.removeContribution(memberUUID, contributionEntity);
             contributionRepository.delete(contributionEntity);
             LOG.info("zmieniono " + memberEntity.getSecondName());
+            memberEntity.setActive(memberEntity.getHistory().getContributionList().get(0).getValidThru().isAfter(LocalDate.now()));
             memberRepository.save(memberEntity);
         }
         return response;
@@ -241,11 +194,11 @@ public class ContributionService {
 
     public ResponseEntity<?> updateContribution(String memberUUID, String contributionUUID, LocalDate paymentDay, LocalDate validThru, String pinCode) {
         if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza" );
+            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
-        ContributionEntity contributionEntity = contributionRepository.findById(contributionUUID).orElseThrow(EntityNotFoundException::new);
+        ContributionEntity contributionEntity = contributionRepository.getOne(contributionUUID);
 
         if (paymentDay != null) {
             contributionEntity.setPaymentDay(paymentDay);
@@ -258,6 +211,8 @@ public class ContributionService {
         ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Edytowano składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             contributionRepository.save(contributionEntity);
+            memberEntity.setActive(memberEntity.getHistory().getContributionList().get(0).getValidThru().isAfter(LocalDate.now()));
+            memberRepository.save(memberEntity);
         }
         return response;
     }

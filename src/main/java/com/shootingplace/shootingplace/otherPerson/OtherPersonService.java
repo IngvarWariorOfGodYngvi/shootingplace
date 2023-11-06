@@ -5,6 +5,7 @@ import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.address.AddressRepository;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
+import com.shootingplace.shootingplace.member.MemberInfo;
 import com.shootingplace.shootingplace.member.MemberPermissions;
 import com.shootingplace.shootingplace.member.MemberPermissionsEntity;
 import com.shootingplace.shootingplace.member.MemberPermissionsRepository;
@@ -165,13 +166,23 @@ public class OtherPersonService {
         return list;
     }
 
-    public List<String> getAllOthersArbiters() {
-
-        List<String> list = new ArrayList<>();
-        otherPersonRepository.findAll().stream().filter(f -> f.getPermissionsEntity() != null).filter(OtherPersonEntity::isActive)
-                .forEach(e -> list.add(e.getSecondName().concat(" " + e.getFirstName() + " Klub " + e.getClub().getName() + " Klasa " + e.getPermissionsEntity().getArbiterClass() + " ID: " + e.getId())));
-        list.sort(Comparator.comparing(String::new));
-        return list;
+    public List<MemberInfo> getAllOthersArbiters() {
+        return otherPersonRepository.findAll()
+                .stream()
+                .filter(f->f.getPermissionsEntity()!=null && f.getPermissionsEntity().getArbiterNumber()!=null)
+                .map(m-> MemberInfo.builder()
+                        .id(m.getId())
+                        .arbiterClass(m.getPermissionsEntity().getArbiterClass())
+                        .firstName(m.getFirstName())
+                        .secondName(m.getSecondName())
+                        .name(m.getFullName())
+                        .build()
+                ).collect(Collectors.toList());
+//        List<String> list = new ArrayList<>();
+//        otherPersonRepository.findAll().stream().filter(f -> f.getPermissionsEntity() != null).filter(OtherPersonEntity::isActive)
+//                .forEach(e -> list.add(e.getSecondName().concat(" " + e.getFirstName() + " Klub " + e.getClub().getName() + " Klasa " + e.getPermissionsEntity().getArbiterClass() + " ID: " + e.getId())));
+//        list.sort(Comparator.comparing(String::new));
+//        return list;
     }
 
     public List<?> getAll() {

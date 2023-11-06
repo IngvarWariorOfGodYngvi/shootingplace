@@ -54,7 +54,7 @@ public class StatisticsService {
 
     public List<LicensePaymentHistoryDTO> getLicenseSum(LocalDate firstDate, LocalDate secondDate) {
         List<LicensePaymentHistoryDTO> list1 = new ArrayList<>();
-        licensePaymentHistoryRepository.findAllByPayInPZSSPortalBetweenDate(firstDate,secondDate).forEach(e->{
+        licensePaymentHistoryRepository.findAllByPayInPZSSPortalBetweenDate(firstDate, secondDate).forEach(e -> {
             MemberEntity member = memberRepository.getOne(e.getMemberUUID());
             list1.add(LicensePaymentHistoryDTO.builder()
                     .paymentUuid(e.getUuid())
@@ -142,6 +142,55 @@ public class StatisticsService {
                                             // tutaj znalazło drugi i więcej raz osobę
                                             MemberAmmo memberAmmo = ammoList.stream()
                                                     .filter(f -> f.getUuid().equals(h.getMemberEntity().getUuid()))
+                                                    .findFirst().orElseThrow(EntityNotFoundException::new);
+                                            if (memberAmmo.getCaliber().stream().anyMatch(a -> a.getName().equals(g.getCaliberName()))) {
+                                                Caliber caliber = memberAmmo.getCaliber().stream().filter(f -> f.getName().equals(g.getCaliberName())).findFirst().orElseThrow(EntityNotFoundException::new);
+                                                Integer quantity = caliber.getQuantity();
+                                                caliber.setQuantity(quantity + h.getCounter());
+
+                                            } else {
+                                                Caliber caliber = Caliber.builder()
+                                                        .name(g.getCaliberName())
+                                                        .quantity(h.getCounter())
+                                                        .build();
+                                                List<Caliber> list = memberAmmo.getCaliber();
+                                                list.add(caliber);
+                                                memberAmmo.setCaliber(list);
+
+                                            }
+                                        }
+                                    }
+
+                                }
+                        )));
+        ammoList.sort(Comparator.comparing(MemberAmmo::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))));
+        return ammoList;
+    }
+
+    public List<MemberAmmo> getOthersAmmoTakesInTime(LocalDate firstDate, LocalDate secondDate) {
+        List<AmmoEvidenceEntity> collect = ammoEvidenceRepository.getAllDateBetween(firstDate, secondDate);
+
+        List<MemberAmmo> ammoList = new ArrayList<>();
+
+        collect.forEach(e -> e.getAmmoInEvidenceEntityList()
+                .forEach(g -> g.getAmmoUsedToEvidenceEntityList()
+                        .forEach(h -> {
+                                    if (h.getOtherPersonEntity() != null) {
+                                        //znalazło pierwszy raz osobę
+                                        if (ammoList.stream().noneMatch(a -> a.getLegitimationNumber().equals(h.getOtherPersonEntity().getId()))) {
+                                            MemberAmmo memberAmmo = Mapping.map4(h.getOtherPersonEntity());
+                                            List<Caliber> list = new ArrayList<>();
+                                            Caliber caliber = Caliber.builder()
+                                                    .name(g.getCaliberName())
+                                                    .quantity(h.getCounter())
+                                                    .build();
+                                            list.add(caliber);
+                                            memberAmmo.setCaliber(list);
+                                            ammoList.add(memberAmmo);
+                                        } else {
+                                            // tutaj znalazło drugi i więcej raz osobę
+                                            MemberAmmo memberAmmo = ammoList.stream()
+                                                    .filter(f -> f.getUuid().equals(String.valueOf(h.getOtherPersonEntity().getId())))
                                                     .findFirst().orElseThrow(EntityNotFoundException::new);
                                             if (memberAmmo.getCaliber().stream().anyMatch(a -> a.getName().equals(g.getCaliberName()))) {
                                                 Caliber caliber = memberAmmo.getCaliber().stream().filter(f -> f.getName().equals(g.getCaliberName())).findFirst().orElseThrow(EntityNotFoundException::new);

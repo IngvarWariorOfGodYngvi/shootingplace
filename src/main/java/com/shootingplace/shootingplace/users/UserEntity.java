@@ -142,4 +142,7 @@ public class UserEntity extends Person {
                 ", subType='" + subType + '\'' +
                 '}';
     }
+    public String getFullName() {
+        return this.secondName + ' ' + this.firstName;
+    }
 }

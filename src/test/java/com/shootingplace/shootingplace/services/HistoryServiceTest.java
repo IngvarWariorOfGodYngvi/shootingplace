@@ -41,7 +41,7 @@ public class HistoryServiceTest {
         String uuid = String.valueOf(UUID.randomUUID());
         //when
         when(licensePaymentHistoryRepository.existsById(any(String.class))).thenReturn(existById(uuid));
-        ResponseEntity<?> responseEntity = historyService.toggleLicencePaymentInPZSS(uuid);
+        ResponseEntity<?> responseEntity = historyService.toggleLicencePaymentInPZSS(uuid, true);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
         assertThat(responseEntity.getBody(), Matchers.equalTo("Nie znaleziono płatności"));

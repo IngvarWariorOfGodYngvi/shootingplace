@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.otherPerson;
 
 import com.shootingplace.shootingplace.enums.ArbiterClass;
+import com.shootingplace.shootingplace.member.MemberInfo;
 import com.shootingplace.shootingplace.member.MemberPermissions;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
@@ -70,8 +71,8 @@ public class OtherPersonController {
     }
 
     @GetMapping("/arbiters")
-    public ResponseEntity<List<String>> getAllOthersArbiters() {
-        return ResponseEntity.ok().body(otherPersonService.getAllOthersArbiters());
+    public List<MemberInfo> getAllOthersArbiters() {
+        return otherPersonService.getAllOthersArbiters();
     }
     @GetMapping("/getOhterByPhone/{phone}")
     public ResponseEntity<?> getOhterByPhone(@PathVariable String phone) {

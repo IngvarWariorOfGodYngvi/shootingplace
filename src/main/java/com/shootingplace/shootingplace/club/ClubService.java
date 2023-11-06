@@ -9,6 +9,7 @@ import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ClubService {
@@ -122,5 +123,17 @@ public class ClubService {
                 .url(club.getUrl())
                 .build());
         return ResponseEntity.ok("Utworzono nowy Klub");
+    }
+
+    public List<ClubEntity> getAllClubsToMember() {
+        List<ClubEntity> list = new ArrayList<>();
+        list.add(clubRepository.getOne(1));
+        List<ClubEntity> collect = clubRepository.findAll()
+                .stream()
+                .filter(f -> f.getId() != 1)
+                .sorted(Comparator.comparing(ClubEntity::getName))
+                .collect(Collectors.toList());
+        list.addAll(collect);
+        return list;
     }
 }

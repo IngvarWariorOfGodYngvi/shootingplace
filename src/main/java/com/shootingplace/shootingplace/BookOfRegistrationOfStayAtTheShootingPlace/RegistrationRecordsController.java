@@ -32,13 +32,13 @@ public class RegistrationRecordsController {
     @Transactional
     @PostMapping("/")
     public ResponseEntity<?> saveToEvidenceBook(@RequestBody String imageString, @RequestParam String pesel) {
-        String imegeUUID = filesService.storeImageEvidenceBook(imageString);
+        String imegeUUID = filesService.storeImageEvidenceBook(imageString,pesel);
         return recordsServ.createRecordInBook(pesel, imegeUUID);
     }
     @Transactional
     @PostMapping("/other")
     public ResponseEntity<?> saveToEvidenceBookNonMember(@Nullable @RequestParam String phone, @Nullable @RequestBody ImageOtherPersonWrapper other, @Nullable @RequestParam String club, @RequestParam Boolean rememberMe) {
-        String imegeUUID = filesService.storeImageEvidenceBook(other.getImageString());
+        String imegeUUID = filesService.storeImageEvidenceBook(other.getImageString(),phone);
         return recordsServ.createRecordInBook(imegeUUID,phone, other,club,rememberMe);
     }
 

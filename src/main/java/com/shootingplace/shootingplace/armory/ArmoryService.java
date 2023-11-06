@@ -231,6 +231,7 @@ public class ArmoryService {
                 .comment(gun.getComment())
                 .basisForPurchaseOrAssignment(gun.getBasisForPurchaseOrAssignment())
                 .barcode(gun.getBarcode())
+                .available(true)
                 .inStock(true).build();
 
         gunRepository.save(gunEntity);
@@ -245,12 +246,9 @@ public class ArmoryService {
 
     }
 
-    public List<String> getGunTypeList() {
-        List<GunStoreEntity> all = gunStoreRepository.findAll();
-        all.sort(Comparator.comparing(GunStoreEntity::getTypeName));
-        List<String> list = new ArrayList<>();
-        all.forEach(e -> list.add(e.getTypeName()));
-        return list;
+    public List<GunStoreEntity> getGunTypeList() {
+        return gunStoreRepository.findAll().stream().map(m->GunStoreEntity.builder().uuid(m.getUuid()).gunEntityList(null).typeName(m.getTypeName()).build())
+                .sorted(Comparator.comparing(GunStoreEntity::getTypeName)).collect(Collectors.toList());
     }
 
     public List<?> getAllGuns() {

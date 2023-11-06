@@ -61,6 +61,12 @@ public class StatisticsController {
         LocalDate parseSecondDate = LocalDate.parse(secondDate);
         return ResponseEntity.ok(statisticsService.getMembersAmmoTakesInTime(parseFirstDate, parseSecondDate));
     }
+    @GetMapping("/otherAmmoTakesInTime")
+    public ResponseEntity<?> getOthersAmmoTakesInTime(@RequestParam String firstDate, @RequestParam String secondDate) {
+        LocalDate parseFirstDate = LocalDate.parse(firstDate);
+        LocalDate parseSecondDate = LocalDate.parse(secondDate);
+        return ResponseEntity.ok(statisticsService.getOthersAmmoTakesInTime(parseFirstDate, parseSecondDate));
+    }
 
     @GetMapping("/personal")
     public ResponseEntity<?> getPersonalStatistic(@RequestParam String uuid) {

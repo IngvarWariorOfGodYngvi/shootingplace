@@ -1,8 +1,13 @@
 package com.shootingplace.shootingplace.file;
 
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.armory.GunEntity;
+import com.shootingplace.shootingplace.armory.GunRepository;
+import com.shootingplace.shootingplace.armory.GunStoreEntity;
+import com.shootingplace.shootingplace.armory.GunStoreRepository;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
+import com.shootingplace.shootingplace.configurations.ProfilesEnum;
 import com.shootingplace.shootingplace.enums.CountingMethod;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
@@ -14,9 +19,11 @@ import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
@@ -44,15 +51,21 @@ public class XLSXFilesService {
     private final ClubRepository clubRepository;
     private final FilesRepository filesRepository;
     private final MemberRepository memberRepository;
+    private final GunStoreRepository gunStoreRepository;
+    private final GunRepository gunRepository;
+    private final Environment environment;
 
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public XLSXFilesService(TournamentRepository tournamentRepository, ClubRepository clubRepository, FilesRepository filesRepository, MemberRepository memberRepository) {
+    public XLSXFilesService(TournamentRepository tournamentRepository, ClubRepository clubRepository, FilesRepository filesRepository, MemberRepository memberRepository, GunStoreRepository gunStoreRepository, GunRepository gunRepository, Environment environment) {
         this.tournamentRepository = tournamentRepository;
         this.clubRepository = clubRepository;
         this.filesRepository = filesRepository;
         this.memberRepository = memberRepository;
+        this.gunStoreRepository = gunStoreRepository;
+        this.gunRepository = gunRepository;
+        this.environment = environment;
     }
 
 
@@ -128,7 +141,7 @@ public class XLSXFilesService {
             sheet.setColumnWidth(i, 18 * 128);
         }
         cell.setCellValue(tournamentEntity.getName().toUpperCase() + c.getName());
-        cell1.setCellValue("Łódź, " + dateFormat(tournamentEntity.getDate()));
+        cell1.setCellValue((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())?"Łódź, " : "Panaszew, ") + dateFormat(tournamentEntity.getDate()));
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
         sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 6));
 
@@ -137,9 +150,14 @@ public class XLSXFilesService {
             if (!tournamentEntity.getCompetitionsList().get(i).getScoreList().isEmpty()) {
                 CompetitionMembersListEntity competitionMembersListEntity = tournamentEntity.getCompetitionsList().get(i);
 
-                List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream().filter(f -> !f.isDsq()).filter(f -> !f.isDnf()).filter(f -> !f.isPk()).sorted(Comparator.comparing(ScoreEntity::getScore).reversed()).collect(Collectors.toList());
+                List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream()
+                        .filter(f -> !f.isDsq() && !f.isDnf() && !f.isPk())
+                        .sorted(Comparator.comparing(ScoreEntity::getScore).reversed())
+                        .collect(Collectors.toList());
 
-                List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream().filter(f -> f.isDnf() || f.isDsq() || f.isPk()).collect(Collectors.toList());
+                List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream()
+                        .filter(f -> f.isDnf() || f.isDsq() || f.isPk())
+                        .sorted(Comparator.comparing(ScoreEntity::getScore).reversed()).collect(Collectors.toList());
                 scoreList.addAll(collect);
                 XSSFRow row2 = sheet.createRow(rc);
                 XSSFCell cell2 = row2.createCell(cc);
@@ -644,6 +662,145 @@ public class XLSXFilesService {
 
             }
         }
+
+        try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
+            workbook.write(outputStream);
+        }
+        workbook.close();
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.TEXT_XML))
+                .size(data.length)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+        File file = new File(fileName);
+        file.delete();
+        LOG.info("Pobrano plik " + fileName);
+
+        return filesEntity;
+    }
+
+    public FilesEntity getGunRegistryXlsx(List<String> guns) throws IOException {
+
+        String fileName = "Lista_broni_w_magazynie_na_dzień" + LocalDate.now().format(dateFormat()) + ".xlsx";
+
+
+        List<String> list = new ArrayList<>();
+
+        for (int i = 0; i < guns.size(); i++) {
+            int finalI = i;
+            GunStoreEntity gunStoreEntity = gunStoreRepository.findAll()
+                    .stream()
+                    .filter(f -> f.getUuid().equals(guns.get(finalI)))
+                    .findFirst().orElseThrow(EntityNotFoundException::new);
+            if (!gunStoreEntity.getGunEntityList().isEmpty()) {
+                list.add(gunStoreEntity.getTypeName());
+            }
+            list.sort(String::compareTo);
+        }
+
+        int rc = 0;
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        XSSFSheet sheet = workbook.createSheet("Lista klubowiczów");
+
+        XSSFCellStyle cellStyleTitle = workbook.createCellStyle();
+        XSSFFont fontTitle = workbook.createFont();
+        fontTitle.setBold(true);
+        fontTitle.setFontHeightInPoints((short) 14);
+        fontTitle.setFontName("Calibri");
+        cellStyleTitle.setFont(fontTitle);
+        cellStyleTitle.setAlignment(HorizontalAlignment.CENTER);
+        cellStyleTitle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        XSSFRow row = sheet.createRow(rc++);
+
+//        sheet.setColumnWidth(0, 8 * 128); //lp
+//        sheet.setColumnWidth(1, 10 * 128); //Marka i Model
+//        sheet.setColumnWidth(2, 10 * 128); //Kaliber i rok produkcji
+//        sheet.setColumnWidth(3, 10 * 128); //Numer i seria
+//        sheet.setColumnWidth(4, 10 * 128); //Poz. z książki ewidencji
+//        sheet.setColumnWidth(5, 10 * 128); //Magazynki
+//        sheet.setColumnWidth(5, 10 * 128); //Numer świadectwa
+
+        XSSFCell cell = row.createCell(0);
+        XSSFCell cell1 = row.createCell(1);
+        XSSFCell cell2 = row.createCell(2);
+        XSSFCell cell3 = row.createCell(3);
+        XSSFCell cell4 = row.createCell(4);
+        XSSFCell cell5 = row.createCell(5);
+        XSSFCell cell6 = row.createCell(6);
+
+        cell.setCellValue("lp");
+        cell1.setCellValue("Marka i Model");
+        cell2.setCellValue("Kaliber i rok produkcji");
+        cell3.setCellValue("Numer i seria");
+        cell4.setCellValue("Poz. z książki ewidencji");
+        cell5.setCellValue("Magazynki");
+        cell6.setCellValue("Numer świadectwa");
+
+        for (int i = 0; i < list.size(); i++) {
+            XSSFRow row1 = sheet.createRow(rc++);
+            cell = row1.createCell(0);
+            cell.setCellValue(list.get(i));
+            sheet.addMergedRegion(new CellRangeAddress(rc-1, rc-1, 0, 6));
+            cell.setCellStyle(cellStyleTitle);
+
+            int finalI = i;
+            List<GunEntity> collect = gunRepository.findAll()
+                    .stream()
+                    .filter(f -> f.getGunType().equals(list.get(finalI)))
+                    .filter(GunEntity::isInStock)
+                    .sorted(Comparator.comparing(GunEntity::getCaliber).thenComparing(GunEntity::getModelName))
+                    .collect(Collectors.toList());
+            if (collect.size() > 0) {
+
+                for (int j = 0; j < collect.size(); j++) {
+                    GunEntity gun = collect.get(j);
+
+                    XSSFRow row2 = sheet.createRow(rc++);
+                    cell = row2.createCell(0);
+                    cell1 = row2.createCell(1);
+                    cell2 = row2.createCell(2);
+                    cell3 = row2.createCell(3);
+                    cell4 = row2.createCell(4);
+                    cell5 = row2.createCell(5);
+                    cell6 = row2.createCell(6);
+
+                    cell.setCellValue(j + 1);
+                    cell1.setCellValue(gun.getModelName());
+                    String caliberAndProductionYearGun;
+
+
+                    if (gun.getProductionYear() != null && !gun.getProductionYear().isEmpty() && !gun.getProductionYear().equals("null")) {
+                        caliberAndProductionYearGun = gun.getCaliber() + " rok " + gun.getProductionYear();
+                    } else {
+                        caliberAndProductionYearGun = gun.getCaliber();
+                    }
+
+                    cell2.setCellValue(caliberAndProductionYearGun);
+                    cell3.setCellValue(gun.getSerialNumber());
+                    cell4.setCellValue(gun.getRecordInEvidenceBook());
+                    cell5.setCellValue(gun.getNumberOfMagazines());
+                    cell6.setCellValue(gun.getGunCertificateSerialNumber());
+
+                }
+                sheet.createRow(rc++);
+            }
+        }
+
+        sheet.autoSizeColumn(0);//lp
+        sheet.autoSizeColumn(1);//Marka i Model
+        sheet.autoSizeColumn(2);//Kaliber i rok produkcji
+        sheet.autoSizeColumn(3);//Numer i seria
+        sheet.autoSizeColumn(4);//Poz. z książki ewidencji
+        sheet.autoSizeColumn(5);//Magazynki
+        sheet.autoSizeColumn(6);//Numer świadectwa
 
         try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
             workbook.write(outputStream);

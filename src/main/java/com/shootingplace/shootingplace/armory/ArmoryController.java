@@ -61,7 +61,7 @@ public class ArmoryController {
     }
 
     @GetMapping("/gunType")
-    public ResponseEntity<List<String>> getGunTypeList() {
+    public ResponseEntity<List<GunStoreEntity>> getGunTypeList() {
         return ResponseEntity.ok(armoryService.getGunTypeList());
     }
 

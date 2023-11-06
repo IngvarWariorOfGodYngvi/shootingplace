@@ -127,7 +127,7 @@ public class LicenseService {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         LicenseEntity license = memberEntity.getLicense();
 
         if (number != null && !number.isEmpty() && !number.equals("null")) {
@@ -160,7 +160,7 @@ public class LicenseService {
 
     public ResponseEntity<?> renewLicenseValid(String memberUUID, License license) {
 
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         LicenseEntity licenseEntity = memberEntity.getLicense();
 
 
@@ -225,7 +225,7 @@ public class LicenseService {
 
     public ResponseEntity<?> updateLicensePayment(String memberUUID, String paymentUUID, LocalDate date, Integer year, String pinCode) {
 
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         LicensePaymentHistoryEntity licensePaymentHistoryEntity = memberEntity.getHistory().getLicensePaymentHistory().stream().filter(f -> f.getUuid().equals(paymentUUID)).findFirst().orElseThrow(EntityNotFoundException::new);
 
         if (date != null) {

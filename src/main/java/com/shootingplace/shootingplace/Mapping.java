@@ -14,6 +14,7 @@ import com.shootingplace.shootingplace.history.*;
 import com.shootingplace.shootingplace.license.License;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.member.*;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatent;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.statistics.MemberAmmo;
@@ -106,6 +107,18 @@ public class Mapping {
                 .isAdult(e.getAdult())
                 .declarationLOK(e.getDeclarationLOK()).build();
     }
+    public static MemberInfo map2(MemberEntity e) {
+        return MemberInfo.builder()
+                .uuid(e.getUuid())
+                .firstName(e.getFirstName())
+                .secondName(e.getSecondName())
+                .name(e.getSecondName().replaceAll(" ", "") + " " + e.getFirstName().replaceAll(" ", "") + " " + e.getLegitimationNumber())
+                .isActive(e.getActive())
+                .legitimationNumber(e.getLegitimationNumber())
+                .isAdult(e.getAdult())
+                .arbiterClass(e.getMemberPermissions()!=null?e.getMemberPermissions().getArbiterClass():null)
+                .declarationLOK(e.getDeclarationLOK()).build();
+    }
 
     public static MemberDTO map2DTO(MemberEntity e) {
         return MemberDTO.builder()
@@ -134,6 +147,14 @@ public class Mapping {
                 .firstName(e.getFirstName())
                 .secondName(e.getSecondName())
                 .legitimationNumber(e.getLegitimationNumber())
+                .build();
+    }
+    public static MemberAmmo map4(OtherPersonEntity e) {
+        return MemberAmmo.builder()
+                .uuid(String.valueOf(e.getId()))
+                .firstName(e.getFirstName())
+                .secondName(e.getSecondName())
+                .legitimationNumber(e.getId())
                 .build();
     }
 
