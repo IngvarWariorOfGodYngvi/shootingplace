@@ -30,7 +30,7 @@ public class ScheduledTasks {
         this.registrationRecordsService = registrationRecordsService;
     }
     @Transactional
-    @Scheduled(cron = "0/5 * * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     public void recountAmmo() {
         ammoUsedService.recountAmmo();
     }

@@ -192,21 +192,20 @@ public class CompetitionService {
         if (competition.getPracticeShots() != null) {
             one.setPracticeShots(competition.getPracticeShots());
         }
-        if (competition.getCaliberUUID() != null) {
+        if (competition.getCaliberUUID() != null && !competition.getNumberOfShots().equals("null")) {
             one.setCaliberUUID(competition.getCaliberUUID());
         }
-        if (competition.getName() != null) {
+        if (competition.getName() != null   && !competition.getName().equals("null")) {
             if (competitionRepository.findByNameEquals(competition.getName()).isEmpty()) {
                 one.setName(competition.getName());
             } else {
                 return ResponseEntity.badRequest().body("taka nazwa już istnieje i nie można zaktualizować konkurencji");
             }
         }
-        if (competition.getNumberOfShots() != null) {
+        if (competition.getNumberOfShots() != null && !competition.getNumberOfShots().equals("null")) {
             one.setNumberOfShots(competition.getNumberOfShots());
         }
-        System.out.println(competition.getCountingMethod());
-        if (competition.getCountingMethod() != null) {
+        if (competition.getCountingMethod() != null && !competition.getCountingMethod().equals("null")) {
             one.setCountingMethod(competition.getCountingMethod());
         }
         ResponseEntity<?> response = getStringResponseEntity(pinCode, one, HttpStatus.OK, "update Competition", "Zaktualizowano konkurencję");
@@ -214,9 +213,10 @@ public class CompetitionService {
             competitionRepository.save(one);
             competitionMembersListRepository.findAll()
                     .stream()
-                    .filter(f-> f.getCompetitionUUID().equals(one.getUuid()))
+                    .filter(f -> f.getCompetitionUUID() != null && f.getCompetitionUUID().equals(one.getUuid()))
                     .forEach(e -> {
-                        e.setOrdering(competition.getOrdering());
+                        e.setOrdering(
+                                competition.getOrdering());
                         e.setPracticeShots(competition.getPracticeShots()!=null?competition.getPracticeShots():e.getPracticeShots());
                         e.setCaliberUUID(competition.getCaliberUUID()!=null?competition.getCaliberUUID():e.getCaliberUUID());
                         e.setName(competition.getName()!=null?competition.getName():e.getName());

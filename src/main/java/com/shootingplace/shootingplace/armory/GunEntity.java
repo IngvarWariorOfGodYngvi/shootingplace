@@ -8,6 +8,7 @@ import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
@@ -48,6 +49,8 @@ public class GunEntity {
     private String inUseStatus;
     private String imgUUID;
     private String barcode;
+
+    private LocalDate addedDate;
 
     public String getImgUUID() {
         return imgUUID;
@@ -188,5 +191,13 @@ public class GunEntity {
 
     public void setUsedHistoryEntityList(List<UsedHistoryEntity> usedHistoryEntityList) {
         this.usedHistoryEntityList = usedHistoryEntityList;
+    }
+
+    public LocalDate getAddedDate() {
+        return addedDate;
+    }
+
+    public void setAddedDate(LocalDate addedDate) {
+        this.addedDate = addedDate;
     }
 }

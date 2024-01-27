@@ -385,6 +385,7 @@ public class Mapping {
                 .dsq(s.isDsq())
                 .pk(s.isPk())
                 .hf(s.getHf())
+                .edited(s.isEdited())
                 .series(s.getSeries() != null ? s.getSeries() : null)
                 .procedures(s.getProcedures())
                 .otherPersonEntity(s.getOtherPersonEntity())
@@ -523,6 +524,7 @@ public class Mapping {
                 .productionYear(c.getProductionYear())
                 .recordInEvidenceBook(c.getRecordInEvidenceBook())
                 .serialNumber(c.getSerialNumber())
+                .addedDate(c.getAddedDate())
                 .uuid(c.getUuid())
                 .build();
     }

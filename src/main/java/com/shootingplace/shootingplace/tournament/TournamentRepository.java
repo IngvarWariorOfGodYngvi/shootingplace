@@ -19,4 +19,6 @@ public interface TournamentRepository {
     void delete(TournamentEntity entity);
 
     TournamentEntity getOne(String tournamentUUID);
+
+    TournamentEntity findByOpenIsTrue();
 }

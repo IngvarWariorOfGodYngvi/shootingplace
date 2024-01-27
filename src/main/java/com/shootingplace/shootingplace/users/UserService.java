@@ -7,6 +7,7 @@ import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
+import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import com.shootingplace.shootingplace.tournament.TournamentService;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
@@ -31,17 +32,19 @@ public class UserService {
     private final MemberRepository memberRepository;
     private final OtherPersonRepository otherPersonRepository;
     private final TournamentService tournamentService;
+    private final TournamentRepository tournamentRepository;
 
     private final WorkingTimeEvidenceRepository workingTimeEvidenceRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public UserService(UserRepository userRepository, ChangeHistoryService changeHistoryService, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, TournamentService tournamentService, WorkingTimeEvidenceRepository workingTimeEvidenceRepository) {
+    public UserService(UserRepository userRepository, ChangeHistoryService changeHistoryService, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, TournamentService tournamentService, TournamentRepository tournamentRepository, WorkingTimeEvidenceRepository workingTimeEvidenceRepository) {
         this.userRepository = userRepository;
         this.changeHistoryService = changeHistoryService;
         this.memberRepository = memberRepository;
         this.otherPersonRepository = otherPersonRepository;
         this.tournamentService = tournamentService;
+        this.tournamentRepository = tournamentRepository;
         this.workingTimeEvidenceRepository = workingTimeEvidenceRepository;
     }
 
@@ -439,7 +442,9 @@ public class UserService {
                     }
                 } else {
                     if (otherPersonRepository.getOne(user.getOtherID()).getPermissionsEntity().getArbiterNumber() != null) {
-                        return ResponseEntity.ok(otherPersonRepository.getOne(user.getOtherID()).getPermissionsEntity().getArbiterNumber());
+
+                        return ResponseEntity.ok(tournamentRepository.findByOpenIsTrue().getUuid());
+//                        return ResponseEntity.ok(otherPersonRepository.getOne(user.getOtherID()).getPermissionsEntity().getArbiterNumber());
                     } else {
                         return ResponseEntity.badRequest().body("użytkownik nie posiada licencji sędziowskiej");
                     }

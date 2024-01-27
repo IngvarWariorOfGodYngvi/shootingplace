@@ -1,11 +1,13 @@
 package com.shootingplace.shootingplace.tournament;
 
+import com.shootingplace.shootingplace.configurations.ProfilesEnum;
 import com.shootingplace.shootingplace.enums.CountingMethod;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -22,13 +24,15 @@ public class ScoreService {
     private final ScoreRepository scoreRepository;
     private final CompetitionMembersListRepository competitionMembersListRepository;
     private final TournamentRepository tournamentRepository;
+    private final Environment environment;
 
     private final Logger LOG = LogManager.getLogger(getClass());
 
-    public ScoreService(ScoreRepository scoreRepository, CompetitionMembersListRepository competitionMembersListRepository, TournamentRepository tournamentRepository) {
+    public ScoreService(ScoreRepository scoreRepository, CompetitionMembersListRepository competitionMembersListRepository, TournamentRepository tournamentRepository, Environment environment) {
         this.scoreRepository = scoreRepository;
         this.competitionMembersListRepository = competitionMembersListRepository;
         this.tournamentRepository = tournamentRepository;
+        this.environment = environment;
     }
 
     public ScoreEntity createScore(float score, float innerTen, float outerTen, int procedures, String competitionMembersListEntityUUID, MemberEntity memberEntity, OtherPersonEntity otherPersonEntity) {
@@ -159,6 +163,7 @@ public class ScoreService {
                     .collect(Collectors.toList());
             if (competitionMembersListEntity.getNumberOfShots() == null) {
                 scoreEntity.setScore(score);
+                scoreEntity.setEdited(true);
                 scoreRepository.save(scoreEntity);
             } else {
                 int numberOfShots = competitionMembersListEntity.getNumberOfShots();
@@ -178,7 +183,12 @@ public class ScoreService {
                 if (points < 0) {
                     points = 0;
                 }
-                float hf = points / (innerTen + (procedures * 3)) /*time*/;
+                float hf;
+                if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())){
+                    hf = points / (innerTen + (procedures * 3)) /*time*/;
+                } else {
+                    hf = points / (innerTen + (procedures * 5)) /*time*/;
+                }
                 scoreEntity.setInnerTen(innerTen);
 
                 float hf1;
@@ -204,7 +214,7 @@ public class ScoreService {
                     scoreEntity.setScore(0);
                     scoreEntity.setHf(0);
                 }
-
+                scoreEntity.setEdited(true);
                 scoreRepository.save(scoreEntity);
                 scoreList.forEach(e -> {
                     if (e.getHf() > 0) {
@@ -239,17 +249,16 @@ public class ScoreService {
                 outerTen = scoreEntity.getOuterTen();
             }
 //            scoreEntity.setScore(score);
-            if (series.size()>0) {
-                List<Float> series1 = scoreEntity.getSeries();
-                for (int i = 0; i < scoreEntity.getSeries().size(); i++) {
-                    series1.set(i, series.get(i) == null ? series1.get(i) : series.get(i));
-                }
-                series = series1;
-                scoreEntity.setSeries(series);
-                scoreEntity.setScore((float) series.stream().mapToDouble(a -> a).sum());
+            List<Float> series1 = scoreEntity.getSeries();
+            for (int i = 0; i < scoreEntity.getSeries().size(); i++) {
+                series1.set(i, series.get(i) == null ? series1.get(i) : series.get(i));
             }
+            series = series1;
+            scoreEntity.setSeries(series);
+            scoreEntity.setScore((float) series.stream().mapToDouble(a -> a).sum());
             scoreEntity.setInnerTen(innerTen);
             scoreEntity.setOuterTen(outerTen);
+            scoreEntity.setEdited(true);
             scoreRepository.save(scoreEntity);
 
             List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList()
@@ -266,6 +275,9 @@ public class ScoreService {
                     .getScoreList()
                     .stream()
                     .filter(f -> f.isDnf() || f.isDsq() || f.isPk())
+                    .sorted(Comparator.comparing(ScoreEntity::getScore)
+                            .thenComparing(ScoreEntity::getInnerTen)
+                            .thenComparing(ScoreEntity::getOuterTen).reversed())
                     .collect(Collectors.toList());
             scoreList.addAll(collect);
 
@@ -363,6 +375,7 @@ public class ScoreService {
         CompetitionMembersListEntity competitionMembersListEntity = competitionMembersListRepository.findById(competitionMembersListEntityUUID).orElseThrow(EntityNotFoundException::new);
 
         scoreEntity.setScore(score);
+        scoreEntity.setEdited(true);
         scoreRepository.save(scoreEntity);
         List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream().filter(f -> !f.isDsq()).filter(f -> !f.isDnf()).filter(f -> !f.isPk()).sorted(Comparator.comparing(ScoreEntity::getScore)
                 .reversed()).collect(Collectors.toList());
@@ -402,6 +415,9 @@ public class ScoreService {
             List<ScoreEntity> collect = competitionMembersListEntity.getScoreList()
                     .stream()
                     .filter(f -> f.isDsq() || f.isDnf() || f.isPk())
+                    .sorted(Comparator.comparing(ScoreEntity::getScore)
+                            .thenComparing(ScoreEntity::getInnerTen)
+                            .thenComparing(ScoreEntity::getOuterTen).reversed())
                     .collect(Collectors.toList());
             scoreList.addAll(collect);
         } else {

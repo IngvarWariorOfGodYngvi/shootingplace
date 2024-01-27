@@ -30,12 +30,8 @@ public class AmmoInEvidenceService {
     }
 
     boolean addAmmoUsedEntityToAmmoInEvidenceEntity(AmmoUsedToEvidenceEntity ammoUsedToEvidenceEntity) {
-        boolean isEmpty = !ammoEvidenceRepository.existsByOpenTrue();
-        System.out.println(isEmpty);
-        boolean isEmpty1 = ammoEvidenceRepository.findAll().stream().noneMatch(AmmoEvidenceEntity::isOpen);
-        System.out.println(isEmpty1);
         //      Nie znaleziono żadnej listy
-        if (isEmpty) {
+        if (!ammoEvidenceRepository.existsByOpenTrue()) {
             if (ammoUsedToEvidenceEntity.getCounter() < 0) {
                 LOG.info("nie można dodać ujemnej wartości");
             } else {
@@ -172,10 +168,8 @@ public class AmmoInEvidenceService {
 
         }
 //          Usuwanie listy jeśli ilość sztuk wynosi 0
-        System.out.println(!ammoEvidenceRepository.existsByOpenTrue());
-        AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository
-                .findAll()
-                .stream().filter(AmmoEvidenceEntity::isOpen)
+        AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository.findAllByOpenTrue()
+                .stream()
                 .findFirst()
                 .orElse(null);
         if (ammoEvidenceEntity == null) {

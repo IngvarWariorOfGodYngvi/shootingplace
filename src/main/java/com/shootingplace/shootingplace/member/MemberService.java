@@ -91,7 +91,7 @@ public class MemberService {
 
     public List<MemberInfo> getArbiters() {
         return memberRepository.findAllByErasedFalse().stream()
-                .filter(e->e.getMemberPermissions()!=null && e.getMemberPermissions().getArbiterNumber() != null)
+                .filter(e -> e.getMemberPermissions() != null && e.getMemberPermissions().getArbiterNumber() != null)
                 .map(Mapping::map2)
                 .sorted(Comparator.comparing(MemberInfo::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberInfo::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
@@ -106,17 +106,17 @@ public class MemberService {
                 e.setActive(false);
                 memberRepository.save(e);
             } else {
-                if (e.getAdult()) {
-                    if (e.getHistory().getContributionList().get(0).getValidThru().isBefore(LocalDate.now())) {
-                        if (e.getActive()) {
-                            e.setActive(false);
-                            LOG.info("zmieniono " + e.getSecondName());
-                            memberRepository.save(e);
-                        }
-                    } else {
-                        e.setActive(true);
+                if (e.getHistory().getContributionList().get(0).getValidThru().isBefore(LocalDate.now())) {
+                    if (e.getActive()) {
+                        e.setActive(false);
+                        LOG.info("zmieniono " + e.getSecondName());
+                        memberRepository.save(e);
                     }
+                } else {
+                    e.setActive(true);
+                    memberRepository.save(e);
                 }
+
             }
             if (e.getLicense().getNumber() != null) {
                 LicenseEntity license = e.getLicense();
@@ -181,20 +181,13 @@ public class MemberService {
             if (member.getEmail() == null || member.getEmail().isEmpty()) {
                 email = "";
             }
-            LocalDate joinDate;
+            LocalDate joinDate = member.getJoinDate( )== null?LocalDate.now():member.getJoinDate();
             int legitimationNumber;
-            if (member.getJoinDate() == null) {
-                joinDate = LocalDate.now();
-                LOG.info("ustawiono domyślną datę zapisu " + joinDate);
-            } else {
-                joinDate = member.getJoinDate();
-                LOG.info("ustawiono datę zapisu na " + joinDate);
-            }
+            LOG.info("ustawiono " + (member.getJoinDate() == null?"domyślną ":"") + "datę zapisu na" + joinDate);
+
             if (member.getLegitimationNumber() == null) {
-                int number;
-                if (memberEntityList.isEmpty()) {
-                    number = 1;
-                } else {
+                int number = 1;
+                if (!memberEntityList.isEmpty()) {
                     number = memberEntityList.stream().filter(f -> f.getLegitimationNumber() != null).max(Comparator.comparing(MemberEntity::getLegitimationNumber)).orElseThrow(EntityNotFoundException::new).getLegitimationNumber() + 1;
                 }
                 legitimationNumber = number;
@@ -204,18 +197,10 @@ public class MemberService {
                 legitimationNumber = member.getLegitimationNumber();
             }
             String s = "+48";
-            String phone = null;
-            if (member.getPhoneNumber() != null) {
-                phone = (s + member.getPhoneNumber().replaceAll("\\s", ""));
-            }
-            boolean adult;
-            if (!member.getAdult()) {
-                LOG.info("Klubowicz należy do młodzieży");
-                adult = false;
-            } else {
-                LOG.info("Klubowicz należy do grupy dorosłej");
-                adult = true;
-            }
+            String phone = (s + member.getPhoneNumber().replaceAll("\\s", ""));
+
+            boolean adult = member.getAdult();
+            LOG.info("Klubowicz należy do " + (adult ? "grupy dorosłej" : "grupy młodzieżowej"));
             String[] s1 = member.getFirstName().split(" ");
             StringBuilder firstNames = new StringBuilder();
             for (String value : s1) {
@@ -253,7 +238,7 @@ public class MemberService {
                 memberEntity.setSignBy(user.getFullName());
                 memberRepository.save(memberEntity);
                 historyService.addContribution(memberEntity.getUuid(),
-                        contributionService.addFirstContribution(memberEntity.getUuid(), LocalDate.now()));
+                        contributionService.addFirstContribution(LocalDate.now(),pinCode));
                 response = ResponseEntity.status(201).body(memberEntity.getUuid());
             }
             return response;
@@ -310,7 +295,6 @@ public class MemberService {
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             memberEntity.setAdult(true);
             memberRepository.save(memberEntity);
-//            historyService.changeContributionTime(memberUUID);
             LOG.info("Klubowicz należy od teraz do grupy dorosłej : " + LocalDate.now());
         }
         return response;
@@ -603,24 +587,6 @@ public class MemberService {
 
         list.sort(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))));
         return list;
-    }
-
-    public ResponseEntity<?> changePzss(String uuid) {
-        if (memberRepository.existsById(uuid)) {
-            MemberEntity memberEntity = memberRepository.getOne(uuid);
-            if (!memberEntity.getPzss()) {
-                memberEntity.setPzss(true);
-                memberRepository.save(memberEntity);
-                return ResponseEntity.ok("Wskazano, że Klubowicz jest wpisany do Portalu PZSS");
-            } else {
-                memberEntity.setPzss(false);
-                memberRepository.save(memberEntity);
-                return ResponseEntity.ok("Wskazano, że Klubowicz NIE jest wpisany do Portalu PZSS");
-            }
-        } else {
-            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
-        }
-
     }
 
     public List<String> getErasedType() {

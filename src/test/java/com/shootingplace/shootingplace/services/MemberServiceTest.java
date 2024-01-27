@@ -735,18 +735,6 @@ public class MemberServiceTest {
 //    }
 
     @Test
-    public void change_pzss_return_bad_request() {
-        //given
-        String uuid = String.valueOf(UUID.randomUUID());
-        //when
-        when(memberRepository.existsById(uuid)).thenReturn(existsById(uuid));
-        ResponseEntity<?> responseEntity = memberService.changePzss(uuid);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("Nie znaleziono Klubowicza"));
-    }
-
-    @Test
     public void activate_or_deactivate_member_not_found() {
         //given
         String uuid = String.valueOf(UUID.randomUUID());

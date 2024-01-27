@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -32,6 +34,8 @@ public class Gun {
     private String imgUUID;
 
     private String barcode;
+
+    private LocalDate addedDate;
 
     public String getUuid() {
         return uuid;
@@ -159,5 +163,13 @@ public class Gun {
 
     public void setImgUUID(String imgUUID) {
         this.imgUUID = imgUUID;
+    }
+
+    public LocalDate getAddedDate() {
+        return addedDate;
+    }
+
+    public void setAddedDate(LocalDate addedDate) {
+        this.addedDate = addedDate;
     }
 }

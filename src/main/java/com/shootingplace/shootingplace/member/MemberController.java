@@ -175,11 +175,6 @@ public class MemberController {
         }
     }
 
-    @PatchMapping("/pzss/{uuid}" )
-    public ResponseEntity<?> changePzss(@PathVariable String uuid) {
-        return memberService.changePzss(uuid);
-    }
-
     @PatchMapping("/togglePzss/{uuid}" )
     public ResponseEntity<?> togglePzss(@PathVariable String uuid, @RequestParam boolean isSignedTo) {
         return memberService.togglePzss(uuid, isSignedTo);

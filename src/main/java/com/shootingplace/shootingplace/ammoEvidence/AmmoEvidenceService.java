@@ -1,15 +1,7 @@
 package com.shootingplace.shootingplace.ammoEvidence;
 
 import com.shootingplace.shootingplace.Mapping;
-import com.shootingplace.shootingplace.armory.ArmoryService;
-import com.shootingplace.shootingplace.armory.GunRepository;
-import com.shootingplace.shootingplace.enums.UsedType;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
-import com.shootingplace.shootingplace.history.UsedHistoryRepository;
-import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.member.MemberRepository;
-import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
-import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.PageRequest;
@@ -30,22 +22,12 @@ public class AmmoEvidenceService {
 
     private final AmmoEvidenceRepository ammoEvidenceRepository;
     private final ChangeHistoryService changeHistoryService;
-    private final UsedHistoryRepository usedHistoryRepository;
-    private final MemberRepository memberRepository;
-    private final OtherPersonRepository otherPersonRepository;
-    private final GunRepository gunRepository;
-    private final ArmoryService armoryService;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public AmmoEvidenceService(AmmoEvidenceRepository ammoEvidenceRepository, ChangeHistoryService changeHistoryService, UsedHistoryRepository usedHistoryRepository, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ArmoryService armoryService) {
+    public AmmoEvidenceService(AmmoEvidenceRepository ammoEvidenceRepository, ChangeHistoryService changeHistoryService) {
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.changeHistoryService = changeHistoryService;
-        this.usedHistoryRepository = usedHistoryRepository;
-        this.memberRepository = memberRepository;
-        this.otherPersonRepository = otherPersonRepository;
-        this.gunRepository = gunRepository;
-        this.armoryService = armoryService;
     }
 
     public ResponseEntity<?> getOpenEvidence() {

@@ -26,6 +26,8 @@ public class ContributionEntity {
     private LocalDate validThru;
 
     private String historyUUID;
+    private String acceptedBy;
+    private boolean edited = false;
 
     public String getUuid() {
         return uuid;
@@ -53,5 +55,21 @@ public class ContributionEntity {
 
     public void setHistoryUUID(String historyUUID) {
         this.historyUUID = historyUUID;
+    }
+
+    public String getAcceptedBy() {
+        return acceptedBy;
+    }
+
+    public void setAcceptedBy(String acceptedBy) {
+        this.acceptedBy = acceptedBy;
+    }
+
+    public boolean isEdited() {
+        return edited;
+    }
+
+    public void setEdited(boolean edited) {
+        this.edited = edited;
     }
 }

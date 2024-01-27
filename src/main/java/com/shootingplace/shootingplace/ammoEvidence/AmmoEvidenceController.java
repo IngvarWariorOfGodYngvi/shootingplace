@@ -39,13 +39,11 @@ public class AmmoEvidenceController {
     }
     @Transactional
     @PostMapping("/listOfAmmo")
-    public ResponseEntity<?> createAmmoUsed(@RequestBody Map<String,String> caliberUUIDAmmoQuantityMap, @RequestParam Integer legitimationNumber, @RequestParam int otherID) {
+    public ResponseEntity<?> createAmmoUsed(@RequestBody Map<String,String> caliberUUIDAmmoQuantityMap, @RequestParam Integer legitimationNumber, @RequestParam Integer otherID) {
         boolean[] caliberAmmocheck = new boolean[caliberUUIDAmmoQuantityMap.size()];
-        System.out.println(caliberUUIDAmmoQuantityMap.size());
         final int[] iterator = {0};
         caliberUUIDAmmoQuantityMap.forEach((key, value) -> {
             caliberAmmocheck[iterator[0]] = value != null && Integer.parseInt(value) != 0;
-            System.out.println(caliberAmmocheck[iterator[0]]);
             iterator[0]++;
         });
         boolean check = true;
@@ -54,6 +52,9 @@ public class AmmoEvidenceController {
                 check = false;
                 break;
             }
+        }
+        if (otherID == 0 ) {
+            otherID = null;
         }
         if (check) {
             return ammoUsedService.addListOfAmmoToEvidence(caliberUUIDAmmoQuantityMap, legitimationNumber, otherID);

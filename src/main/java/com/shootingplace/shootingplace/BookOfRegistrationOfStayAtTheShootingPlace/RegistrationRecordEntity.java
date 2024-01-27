@@ -41,10 +41,6 @@ public class RegistrationRecordEntity {
         return uuid;
     }
 
-    public LocalDateTime getDate() {
-        return dateTime;
-    }
-
     public LocalDateTime getDateTime() {
         return dateTime;
     }
@@ -59,10 +55,6 @@ public class RegistrationRecordEntity {
 
     public void setEndDateTime(LocalDateTime endDateTime) {
         this.endDateTime = endDateTime;
-    }
-
-    public void setDate(LocalDateTime dateTime) {
-        this.dateTime = dateTime;
     }
 
     public int getDayIndex() {

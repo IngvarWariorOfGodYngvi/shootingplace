@@ -650,7 +650,7 @@ public class TournamentService {
             .name(m.getName()                    )
             .numberOfShots(m.getNumberOfShots())
             .practiceShots(m.getPracticeShots())
-            .caliberUUID(m.getCaliberUUID()!=null?caliberRepository.getOne(m.getCaliberUUID()).getName():null)
+            .caliberUUID(m.getCaliberUUID()!=null?caliberRepository.getOne(m.getCaliberUUID()).getUuid():null)
             .build()).collect(Collectors.toList());
 //        return map;
     }

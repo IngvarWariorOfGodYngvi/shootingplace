@@ -102,7 +102,7 @@ public class LicenseController {
     public ResponseEntity<?> paymentChange(@RequestParam String paymentUUID, @RequestParam String pinCode, @RequestParam boolean condition) {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
-            return historyService.toggleLicencePaymentInPZSS(paymentUUID, condition);
+            return historyService.toggleLicencePaymentInPZSS(paymentUUID, condition, pinCode);
         } else {
             return code;
         }
@@ -115,7 +115,7 @@ public class LicenseController {
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             ResponseEntity<?> result = null;
             for (String paymentUUID : paymentUUIDs) {
-                result = historyService.toggleLicencePaymentInPZSS(paymentUUID, condition);
+                result = historyService.toggleLicencePaymentInPZSS(paymentUUID, condition, pinCode);
             }
             return result;
         } else {

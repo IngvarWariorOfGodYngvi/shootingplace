@@ -44,6 +44,7 @@ public class ScoreEntity {
     private boolean dnf;
     private boolean dsq;
     private boolean pk;
+    private boolean edited;
 
     private String competitionMembersListEntityUUID;
     @OneToOne(orphanRemoval = true)
@@ -227,5 +228,13 @@ public class ScoreEntity {
 
     public void setPk(boolean pk) {
         this.pk = pk;
+    }
+
+    public boolean isEdited() {
+        return edited;
+    }
+
+    public void setEdited(boolean edited) {
+        this.edited = edited;
     }
 }

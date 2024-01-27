@@ -165,7 +165,7 @@ public class ArmoryService {
 
         if ((gun.getModelName().isEmpty() || gun.getModelName().equals("null")) || (gun.getCaliber().isEmpty() || gun.getCaliber().equals("null")) || (gun.getGunType().isEmpty() || gun.getGunType().equals("null")) || (gun.getSerialNumber().isEmpty() || gun.getSerialNumber().equals("null"))) {
             LOG.info("Nie podano wszystkich informacji");
-            return ResponseEntity.badRequest().body("\"Nie podano wszystkich informacji\"");
+            return ResponseEntity.badRequest().body("Nie podano wszystkich informacji");
         }
         if (gun.getProductionYear() == null || gun.getProductionYear().isEmpty() || gun.getProductionYear().equals("null")) {
             gun.setProductionYear(null);
@@ -191,25 +191,25 @@ public class ArmoryService {
         if (gun.getGunCertificateSerialNumber() != null) {
             if (all.stream().filter(f -> f.getGunCertificateSerialNumber() != null).anyMatch(f -> f.getGunCertificateSerialNumber().equals(gun.getGunCertificateSerialNumber()))) {
                 LOG.info("Nie można dodać broni. Upewnij się, że numer seryjny, numer świadectwa lub numer z książki ewidencji się nie powtarza");
-                return ResponseEntity.badRequest().body("\"Nie można dodać broni. Upewnij się, że numer seryjny, numer świadectwa lub numer z książki ewidencji się nie powtarza\"");
+                return ResponseEntity.badRequest().body("Nie można dodać broni. Upewnij się, że numer seryjny, numer świadectwa lub numer z książki ewidencji się nie powtarza");
             }
         }
         if (gun.getSerialNumber() != null) {
             if (all.stream().filter(f -> f.getSerialNumber() != null).anyMatch(e -> e.getSerialNumber().equals(gun.getSerialNumber()))) {
                 LOG.info("Nie można dodać broni. Upewnij się, że numer seryjny, numer świadectwa lub numer z książki ewidencji się nie powtarza");
-                return ResponseEntity.badRequest().body("\"Nie można dodać broni. Upewnij się, że numer seryjny, numer świadectwa lub numer z książki ewidencji się nie powtarza\"");
+                return ResponseEntity.badRequest().body("Nie można dodać broni. Upewnij się, że numer seryjny, numer świadectwa lub numer z książki ewidencji się nie powtarza");
             }
         }
         if (gun.getRecordInEvidenceBook() != null) {
             if (all.stream().filter(f -> f.getRecordInEvidenceBook() != null).anyMatch(e -> e.getRecordInEvidenceBook().equals(gun.getRecordInEvidenceBook()))) {
                 LOG.info("Nie można dodać broni. Upewnij się, że numer seryjny, numer świadectwa lub numer z książki ewidencji się nie powtarza");
-                return ResponseEntity.badRequest().body("\"Nie można dodać broni. Upewnij się, że numer seryjny, numer świadectwa lub numer z książki ewidencji się nie powtarza\"");
+                return ResponseEntity.badRequest().body("Nie można dodać broni. Upewnij się, że numer seryjny, numer świadectwa lub numer z książki ewidencji się nie powtarza");
             }
         }
         if (gun.getBarcode() != null) {
             if (all.stream().filter(f -> f.getBarcode() != null).anyMatch(e -> e.getBarcode().equals(gun.getBarcode()))) {
                 LOG.info("Nie można Nadać kodu kreskowego gdyż jest przypisany już gdzieś indziej");
-                return ResponseEntity.badRequest().body("\"Nie można Nadać kodu kreskowego gdyż jest przypisany już gdzieś indziej\"");
+                return ResponseEntity.badRequest().body("Nie można Nadać kodu kreskowego gdyż jest przypisany już gdzieś indziej");
             }
         }
 
@@ -231,11 +231,16 @@ public class ArmoryService {
                 .comment(gun.getComment())
                 .basisForPurchaseOrAssignment(gun.getBasisForPurchaseOrAssignment())
                 .barcode(gun.getBarcode())
+                .addedDate(gun.getAddedDate() != null ? gun.getAddedDate() : LocalDate.now())
                 .available(true)
                 .inStock(true).build();
 
         gunRepository.save(gunEntity);
-        GunStoreEntity gunStoreEntity = gunStoreRepository.findAll().stream().filter(f -> f.getTypeName().equals(gun.getGunType())).findFirst().orElseThrow(EntityNotFoundException::new);
+        GunStoreEntity gunStoreEntity = gunStoreRepository.findByTypeName(gunEntity.getGunType());
+//        GunStoreEntity gunStoreEntity = gunStoreRepository.findAll()
+//                .stream()
+//                .filter(f -> f.getTypeName().equals(gun.getGunType()))
+//                .findFirst().orElseThrow(EntityNotFoundException::new);
         List<GunEntity> gunEntityList = gunStoreEntity.getGunEntityList();
         gunEntityList.add(gunEntity);
 
@@ -247,7 +252,7 @@ public class ArmoryService {
     }
 
     public List<GunStoreEntity> getGunTypeList() {
-        return gunStoreRepository.findAll().stream().map(m->GunStoreEntity.builder().uuid(m.getUuid()).gunEntityList(null).typeName(m.getTypeName()).build())
+        return gunStoreRepository.findAll().stream().map(m -> GunStoreEntity.builder().uuid(m.getUuid()).gunEntityList(null).typeName(m.getTypeName()).build())
                 .sorted(Comparator.comparing(GunStoreEntity::getTypeName)).collect(Collectors.toList());
     }
 
@@ -255,10 +260,19 @@ public class ArmoryService {
         List<GunStoreEntity> all = gunStoreRepository.findAll();
         all.sort(Comparator.comparing(GunStoreEntity::getTypeName));
         List<GunStoreDTO> all1 = new ArrayList<>();
-        all.forEach(e->{
+        all.forEach(e -> {
             GunStoreDTO dto = new GunStoreDTO();
             dto.setTypeName(e.getTypeName());
-            List<Gun> collect = e.getGunEntityList().stream().map(Mapping::map).collect(Collectors.toList());
+            List<Gun> collect = e.getGunEntityList()
+                    .stream()
+                    .map(Mapping::map)
+                    .sorted(Comparator.comparing(Gun::getModelName).reversed()
+                            .thenComparing((o1, o2) -> {
+                                int a = Integer.parseInt(o1.getRecordInEvidenceBook().replaceAll("/", ""));
+                                int b = Integer.parseInt(o2.getRecordInEvidenceBook().replaceAll("/", ""));
+                                return b-a;
+                            }).reversed())
+                    .collect(Collectors.toList());
             dto.setGunEntityList(collect);
             all1.add(dto);
         });
@@ -306,6 +320,9 @@ public class ArmoryService {
         if (gun.getBarcode() != null && !gun.getBarcode().isEmpty()) {
             gunEntity.setBarcode(gun.getBarcode());
         }
+        if (gun.getAddedDate() != null && gunEntity.getAddedDate() != gun.getAddedDate()) {
+            gunEntity.setAddedDate(gun.getAddedDate());
+        }
         gunRepository.save(gunEntity);
         return ResponseEntity.ok("Zaktualizowano broń");
     }
@@ -347,10 +364,10 @@ public class ArmoryService {
                     .build();
             LOG.info("dodaję nowy rodzaj broni");
             gunStoreRepository.save(build);
-            return ResponseEntity.ok("\"dodaję nowy rodzaj broni\"");
+            return ResponseEntity.ok("dodaję nowy rodzaj broni");
         } else {
             LOG.info("nie dodaję nowego rodzaju broni");
-            return ResponseEntity.badRequest().body("\"nie dodaję nowego rodzaju broni\"");
+            return ResponseEntity.badRequest().body("nie dodaję nowego rodzaju broni");
         }
     }
 
@@ -366,7 +383,7 @@ public class ArmoryService {
     public ResponseEntity<?> findGunByBarcode(String barcode) {
 
         if (gunRepository.findByBarcode(barcode).isEmpty()) {
-            return ResponseEntity.badRequest().body("\"Nie znaleziono broni\"");
+            return ResponseEntity.badRequest().body("Nie znaleziono broni");
         }
 
         GunEntity gunEntity = gunRepository.findByBarcode(barcode).orElseThrow(EntityNotFoundException::new);
@@ -378,21 +395,21 @@ public class ArmoryService {
         return ResponseEntity.ok(usedHistoryRepository.findAll().stream().filter(f -> LocalDate.from(f.getDateTime()).equals(date)).collect(Collectors.toList()));
     }
 
-    public String addUseToGun(String barcode, String evidenceUUID, String userName, String memberUUID, String usedType) {
-        AmmoEvidenceEntity ammoEvidenceEntity = evidenceUUID!=null?ammoEvidenceRepository.getOne(evidenceUUID):null;
-        GunEntity gunEntity = gunRepository.getByBarcode(barcode);
+    public String addUseToGun(String gunUUID, String evidenceUUID, String userName, String memberUUID, String usedType) {
+        AmmoEvidenceEntity ammoEvidenceEntity = evidenceUUID != null ? ammoEvidenceRepository.getOne(evidenceUUID) : null;
+        GunEntity gunEntity = gunRepository.getOne(gunUUID);
         String response;
         if (gunEntity == null) {
             response = "Nie znaleziono broni";
             return response;
         }
         List<UsedHistoryEntity> usedHistoryEntityList = gunEntity.getUsedHistoryEntityList();
-        boolean anyMatch = usedHistoryEntityList.stream().filter(f -> f.getEvidenceUUID() != null).anyMatch(f -> f.getEvidenceUUID().equals(evidenceUUID)&&!f.isReturnToStore());
+        boolean anyMatch = usedHistoryEntityList.stream().filter(f -> f.getEvidenceUUID() != null).anyMatch(f -> f.getEvidenceUUID().equals(evidenceUUID) && !f.isReturnToStore());
         if (anyMatch) {
             response = "Broń w użyciu";
         } else {
             UsedHistoryEntity build = UsedHistoryEntity.builder()
-                    .dateTime(ammoEvidenceEntity!= null? LocalDateTime.from(ammoEvidenceEntity.getDate()) : LocalDateTime.now())
+                    .dateTime(ammoEvidenceEntity != null ? LocalDateTime.from(ammoEvidenceEntity.getDate()) : LocalDateTime.now())
                     .gunSerialNumber(gunEntity.getSerialNumber())
                     .gunUUID(gunEntity.getUuid())
                     .evidenceUUID(evidenceUUID)
@@ -408,7 +425,7 @@ public class ArmoryService {
             gunEntity.setAvailable(false);
             gunEntity.setInUseStatus(usedType);
             gunRepository.save(gunEntity);
-            response = usedType.equals(UsedType.TRAINING.getName())?"Dodano Broń":usedType.equals(UsedType.REPAIR.getName())?"Wydano do Naprawy": "odpowiedź";
+            response = usedType.equals(UsedType.TRAINING.getName()) ? "Dodano Broń" : usedType.equals(UsedType.REPAIR.getName()) ? "Wydano do Naprawy" : "odpowiedź";
         }
         return response;
     }
@@ -422,14 +439,14 @@ public class ArmoryService {
     public ResponseEntity<?> addUsedHistoryToGun(String barcode) {
         GunEntity gunEntity = gunRepository.findByBarcode(barcode).orElse(null);
         if (gunEntity == null) {
-            return ResponseEntity.badRequest().body("\"Nie znaleziono broni\"");
+            return ResponseEntity.badRequest().body("Nie znaleziono broni");
         } else {
             List<UsedHistoryEntity> usedHistoryEntityList1 = gunEntity.getUsedHistoryEntityList();
             if (usedHistoryEntityList1.stream().anyMatch(f -> LocalDate.from(f.getDateTime()).equals(LocalDate.now()))) {
                 UsedHistoryEntity usedHistoryEntity = usedHistoryEntityList1.stream().filter(f -> LocalDate.from(f.getDateTime()).equals(LocalDate.now())).findFirst().orElse(null);
                 if (usedHistoryEntity != null && usedHistoryEntity.getUsedType().equals(UsedType.CLEANING.getName()))
                     LOG.info("Broń była już dzisiaj czyszczona");
-                return ResponseEntity.badRequest().body("\"Broń była już dzisiaj czyszczona\"");
+                return ResponseEntity.badRequest().body("Broń była już dzisiaj czyszczona");
             }
             List<UsedHistoryEntity> usedHistoryEntityList = gunEntity.getUsedHistoryEntityList();
             UsedHistoryEntity build = UsedHistoryEntity.builder()
@@ -526,6 +543,7 @@ public class ArmoryService {
         });
         return ResponseEntity.ok(responseList);
     }
+
     public ResponseEntity<?> addGunToList(String evidenceUUID, String barcode, String legitimationNumber, String IDNumber) {
         if (!gunRepository.getByBarcode(barcode).isAvailable()) {
             return ResponseEntity.ok("Broń niedostępna");
@@ -539,7 +557,7 @@ public class ArmoryService {
         MemberEntity member = memberRepository.findByLegitimationNumber(Integer.valueOf(legitimationNumber)).orElse(null);
         OtherPersonEntity other = otherPersonRepository.findById(Integer.parseInt(IDNumber)).orElse(null);
         String userName = member != null ? member.getFullName() : other != null ? other.getSecondName() + " " + other.getFirstName() : null;
-        String s = addUseToGun(barcode, evidenceUUID, userName, member != null ? member.getUuid() : null, UsedType.TRAINING.getName());
+        String s = addUseToGun(gunRepository.getByBarcode(barcode).getUuid(), evidenceUUID, userName, member != null ? member.getUuid() : null, UsedType.TRAINING.getName());
         return ResponseEntity.ok(s);
     }
 
@@ -550,8 +568,7 @@ public class ArmoryService {
     }
 
     public ResponseEntity<?> addGunToRepair(String gunUUID) {
-        GunEntity one = gunRepository.getOne(gunUUID);
-        String s = addUseToGun(one.getBarcode(), null, null, null,UsedType.REPAIR.getName());
+        String s = addUseToGun(gunUUID, null, null, null, UsedType.REPAIR.getName());
         return ResponseEntity.ok(s);
     }
 
@@ -562,19 +579,20 @@ public class ArmoryService {
     public ResponseEntity<?> changeCaliberQuantity(String caliberUUID, Integer quantity, String pinCode) {
         CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
         caliberEntity.setQuantity(quantity);
-        return getStringResponseEntity(pinCode, null, HttpStatus.OK,"changeCaliberQuantity" + caliberEntity.getName(),"zmieniono ilość amunicji");
+        return getStringResponseEntity(pinCode, null, HttpStatus.OK, "changeCaliberQuantity" + caliberEntity.getName(), "zmieniono ilość amunicji");
     }
 
     public ResponseEntity<?> changeCaliberUnitPrice(String caliberUUID, Float price, String pinCode) {
         CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
         caliberEntity.setUnitPrice(price);
-        return getStringResponseEntity(pinCode, null, HttpStatus.OK,"changeCaliberUnitPrice" + caliberEntity.getName(),"zmieniono cenę amunicji");
+        return getStringResponseEntity(pinCode, null, HttpStatus.OK, "changeCaliberUnitPrice" + caliberEntity.getName(), "zmieniono cenę amunicji");
 
     }
+
     public ResponseEntity<?> changeCaliberUnitPriceForNotMember(String caliberUUID, Float price, String pinCode) {
         CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
         caliberEntity.setUnitPriceForNotMember(price);
-        return getStringResponseEntity(pinCode, null, HttpStatus.OK,"changeCaliberUnitPriceForNotMember" + caliberEntity.getName(),"zmieniono cenę amunicji dla pozostałych");
+        return getStringResponseEntity(pinCode, null, HttpStatus.OK, "changeCaliberUnitPriceForNotMember" + caliberEntity.getName(), "zmieniono cenę amunicji dla pozostałych");
 
     }
 

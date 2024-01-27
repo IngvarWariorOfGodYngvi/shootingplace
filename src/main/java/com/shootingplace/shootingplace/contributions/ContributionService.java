@@ -1,11 +1,13 @@
 package com.shootingplace.shootingplace.contributions;
 
 
+import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.configurations.ProfilesEnum;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
+import com.shootingplace.shootingplace.users.UserRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,15 +31,17 @@ public class ContributionService {
     private final HistoryService historyService;
     private final ChangeHistoryService changeHistoryService;
     private final Environment environment;
+    private final UserRepository userRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public ContributionService(ContributionRepository contributionRepository, MemberRepository memberRepository, HistoryService historyService, ChangeHistoryService changeHistoryService, Environment environment) {
+    public ContributionService(ContributionRepository contributionRepository, MemberRepository memberRepository, HistoryService historyService, ChangeHistoryService changeHistoryService, Environment environment, UserRepository userRepository) {
         this.contributionRepository = contributionRepository;
         this.memberRepository = memberRepository;
         this.historyService = historyService;
         this.changeHistoryService = changeHistoryService;
         this.environment = environment;
+        this.userRepository = userRepository;
     }
 
     public ResponseEntity<?> addContribution(String memberUUID, LocalDate contributionPaymentDay, String pinCode) {
@@ -46,9 +51,12 @@ public class ContributionService {
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         List<ContributionEntity> contributionEntityList = memberEntity.getHistory().getContributionList();
 
+        String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
+
         ContributionEntity contributionEntity = ContributionEntity.builder()
                 .paymentDay(null)
                 .validThru(null)
+                .acceptedBy(userRepository.findByPinCode(pin).getFullName())
                 .build();
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
             contributionEntity.setPaymentDay(contributionPaymentDay);
@@ -95,12 +103,14 @@ public class ContributionService {
         }
 
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
 
         LocalDate validThru = getDate(paymentDate);
 
         ContributionEntity contributionEntity = ContributionEntity.builder()
                 .paymentDay(paymentDate)
                 .validThru(validThru)
+                .acceptedBy(userRepository.findByPinCode(pin).getFullName())
                 .build();
         ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Dodano składkę " + memberEntity.getFullName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
@@ -114,53 +124,28 @@ public class ContributionService {
     }
 
 
-    public ContributionEntity addFirstContribution(String memberUUID, LocalDate contributionPaymentDay) {
+    public ContributionEntity addFirstContribution(LocalDate contributionPaymentDay, String pinCode) {
 
-        ContributionEntity contributionEntity = getContributionEntity(memberUUID, contributionPaymentDay);
+        ContributionEntity contributionEntity = getContributionEntity(contributionPaymentDay, pinCode);
         LOG.info("utworzono pierwszą składkę");
         return contributionRepository.save(contributionEntity);
     }
 
-    private ContributionEntity getContributionEntity(String memberUUID, LocalDate contributionPaymentDay) {
+    private ContributionEntity getContributionEntity(LocalDate contributionPaymentDay, String pinCode) {
 
         LocalDate validThru = contributionPaymentDay;
-//  Dla potomności - pierwsza składka w trybie półrocznym
-//        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-//        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
-//            if (memberEntity.getAdult()) {
-//                if (validThru.isBefore(LocalDate.of(contributionPaymentDay.getYear(), 6, 30))) {
-//                    validThru = LocalDate.of(contributionPaymentDay.getYear(), 6, 30);
-//                } else {
-//                    validThru = LocalDate.of(contributionPaymentDay.getYear(), 12, 31);
-//                }
-//                if (memberEntity.getHistory().getContributionList() != null) {
-//                    if (!memberEntity.getHistory().getContributionList().isEmpty()) {
-//                        validThru = memberEntity.getHistory().getContributionList().get(0).getValidThru();
-//                    }
-//                }
-//            }
-//            if (!memberEntity.getAdult()) {
-//                if (validThru.isBefore(LocalDate.of(contributionPaymentDay.getYear(), 2, 28))) {
-//                    validThru = LocalDate.of(contributionPaymentDay.getYear(), 2, 28);
-//                } else {
-//                    validThru = LocalDate.of(contributionPaymentDay.getYear(), 8, 31);
-//                }
-//                if (memberEntity.getHistory().getContributionList() != null) {
-//                    if (!memberEntity.getHistory().getContributionList().isEmpty()) {
-//                        validThru = memberEntity.getHistory().getContributionList().get(0).getValidThru();
-//                    }
-//                }
-//            }
-//        }
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
             validThru = contributionPaymentDay.plusMonths(6);
         }
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
             validThru = contributionPaymentDay.plusYears(1);
         }
+        String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
+
         return ContributionEntity.builder()
                 .paymentDay(contributionPaymentDay)
                 .validThru(validThru)
+                .acceptedBy(userRepository.findByPinCode(pin).getFullName())
                 .build();
 
 
@@ -197,6 +182,7 @@ public class ContributionService {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
+        String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
 
         ContributionEntity contributionEntity = contributionRepository.getOne(contributionUUID);
 
@@ -207,7 +193,8 @@ public class ContributionService {
         if (validThru != null) {
             contributionEntity.setValidThru(validThru);
         }
-
+        contributionEntity.setAcceptedBy(userRepository.findByPinCode(pin).getFullName());
+        contributionEntity.setEdited(true);
         ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Edytowano składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             contributionRepository.save(contributionEntity);

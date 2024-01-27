@@ -25,6 +25,7 @@ import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonService;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
 import com.shootingplace.shootingplace.tournament.ScoreEntity;
@@ -34,6 +35,7 @@ import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
+import com.shootingplace.shootingplace.wrappers.ImageOtherPersonWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -81,10 +83,11 @@ public class FilesService {
     private final Environment environment;
     private final ArmoryService armoryService;
     private final RegistrationRecordRepository registrationRepo;
+    private final OtherPersonService otherPersonService;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ, Environment environment, ArmoryService armoryService, RegistrationRecordRepository registrationRepo) {
+    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ, Environment environment, ArmoryService armoryService, RegistrationRecordRepository registrationRepo, OtherPersonService otherPersonService) {
         this.memberRepository = memberRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.filesRepository = filesRepository;
@@ -100,6 +103,7 @@ public class FilesService {
         this.environment = environment;
         this.armoryService = armoryService;
         this.registrationRepo = registrationRepo;
+        this.otherPersonService = otherPersonService;
     }
 
     private FilesEntity createFileEntity(FilesModel filesModel) {
@@ -122,14 +126,21 @@ public class FilesService {
         createFileEntity(build);
     }
 
-    public String storeImageEvidenceBook(String imageString, String pesel_or_phone) {
+    public String storeImageEvidenceBook(ImageOtherPersonWrapper other, String imageString, String pesel_or_phone) {
         String s = imageString.split(",")[1];
-        MemberEntity memberEntity = memberRepository.findByPesel(pesel_or_phone).orElse(null);
+        MemberEntity memberEntity = memberRepository.findByPesel(pesel_or_phone.replaceAll(" ","")).orElse(null);
         String fullName;
         if (memberEntity != null) {
             fullName = memberEntity.getFullName();
         } else {
-            fullName = otherPersonRepository.findByPhoneNumber(pesel_or_phone).get().getFullName();
+            OtherPersonEntity otherPerson = otherPersonRepository.findAllByPhoneNumber(pesel_or_phone.replaceAll(" ", "")).stream().filter(OtherPersonEntity::isActive).findFirst().orElse(null);
+//            OtherPersonEntity otherPerson = otherPersonRepository.findByPhoneNumber(pesel_or_phone.replaceAll(" ","")).orElse(null);
+            if (otherPerson == null) {
+                OtherPersonEntity otherPerson1 = otherPersonService.addPerson(String.valueOf(other.getOther().getClub().getName()), other.getOther());
+                fullName = otherPerson1.getFullName();
+            }else {
+                fullName = otherPerson.getFullName();
+            }
         }
 
 
@@ -145,6 +156,7 @@ public class FilesService {
         return fileEntity.getUuid();
     }
 
+    // potwierdzenie składki
     public FilesEntity contributionConfirm(String memberUUID, String contributionUUID, Boolean a5rotate) throws DocumentException, IOException {
         ClubEntity club = clubRepository.getOne(1);
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
@@ -158,24 +170,18 @@ public class FilesService {
         LocalDate validThru = contributionEntity.getValidThru();
         String fileName = "Składka_" + memberEntity.getFullName() + "_" + LocalDate.now().format(dateFormat()) + ".pdf";
 
+//        TLSEmail.sendMail();
+
+
         String clubFullName = club.getFullName().toUpperCase();
 
         // tutaj powinien być text z ustawień o składki
 
-        String contributionText = "Składki uiszczane w trybie półrocznym muszą zostać opłacone najpóźniej do końca pierwszego " +
-                "kwartału za pierwsze półrocze i analogicznie za drugie półrocze do końca trzeciego kwartału. W przypadku " +
-                "niedotrzymania terminu wpłaty (raty), wysokość (raty) składki ulega powiększeniu o karę w wysokości 50%" +
-                " zaległości. (Regulamin Opłacania Składek Członkowskich Klubu Strzeleckiego „Dziesiątka” LOK w Łodzi)";
+//        String contributionText = "Składki uiszczane w trybie półrocznym muszą zostać opłacone najpóźniej do końca pierwszego " +
+//                "kwartału za pierwsze półrocze i analogicznie za drugie półrocze do końca trzeciego kwartału. W przypadku " +
+//                "niedotrzymania terminu wpłaty (raty), wysokość (raty) składki ulega powiększeniu o karę w wysokości 50%" +
+//                " zaległości. (Regulamin Opłacania Składek Członkowskich Klubu Strzeleckiego „Dziesiątka” LOK w Łodzi)";
 
-        LocalDate nextContribution = null;
-
-        // tutaj musi być odpowiednie przeliczanie według ważności składek z ustawień
-        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-            nextContribution = validThru.plusMonths(6);
-        }
-        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
-            nextContribution = validThru.plusYears(1);
-        }
         a5rotate = a5rotate != null && a5rotate;
         Document document = new Document(a5rotate ? PageSize.A5.rotate() : PageSize.A4);
         document.setMargins(35F, 35F, 50F, 50F);
@@ -223,11 +229,10 @@ public class FilesService {
         Phrase p9 = new Phrase(String.valueOf(validThru), font(11, 1));
         Paragraph p10 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFullName() + " dnia : " + contribution + " " + status + " półroczną składkę członkowską w wysokości " + contributionLevel + " PLN.", font(11, 0));
 
-        Paragraph p12 = new Paragraph("Termin opłacenia kolejnej składki : " + (nextContribution), font(11, 0));
 //        Paragraph p13 = new Paragraph("\n", font(11, 1));
         Paragraph p14 = new Paragraph("", font(11, 0));
 
-        Phrase p15 = new Phrase(contributionText, font(11, 2));
+//        Phrase p15 = new Phrase(contributionText, font(11, 2));
 
         Paragraph p16 = new Paragraph("\n\n", font(11, 0));
         Paragraph p19 = new Paragraph("pieczęć klubu", font(11, 0));
@@ -244,9 +249,9 @@ public class FilesService {
         p211.add(p5);
         p6.add(p7);
         p8.add(p9);
-        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-            p14.add(p15);
-        }
+//        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+//            p14.add(p15);
+//        }
 
         p20.add(p21);
         p19.add(p20);
@@ -264,7 +269,6 @@ public class FilesService {
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
             document.add(p10);
         }
-        document.add(p12);
 //        document.add(p13);
         document.add(p14);
         document.add(p16);
@@ -290,6 +294,7 @@ public class FilesService {
         return filesEntity;
     }
 
+    // karta Klubowicza
     public FilesEntity personalCardFile(String memberUUID) throws IOException, DocumentException {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         ClubEntity club = clubRepository.getOne(1);
@@ -483,6 +488,7 @@ public class FilesService {
 
     }
 
+    // lista Amunicyjna
     public FilesEntity createAmmunitionListDocument(String ammoEvidenceUUID) throws IOException, DocumentException {
         AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository.findById(ammoEvidenceUUID).orElseThrow(EntityNotFoundException::new);
         ClubEntity club = clubRepository.getOne(1);
@@ -1322,6 +1328,7 @@ public class FilesService {
         return filesEntity;
     }
 
+    // wniosek o pozwolenie na broń
     public FilesEntity ApplicationForFirearmsLicense(String memberUUID, String thirdName, String birthPlace, String fatherName, String motherName, String motherMaidenName, String issuingAuthority, LocalDate parseIDDate, LocalDate parselicenseDate, String city) throws DocumentException, IOException {
 
         MemberEntity member = memberRepository.getOne(memberUUID);
@@ -1719,7 +1726,9 @@ public class FilesService {
         Paragraph police = new Paragraph(policeAddress, font(12, 0));
         police.setAlignment(2);
         document.add(date);
-        document.add(police);
+        if (!reason.equals(choice[0])) {
+            document.add(police);
+        }
 
         Paragraph title = new Paragraph("\n\nZaświadczenie\n\n", font(14, 1));
         title.setAlignment(1);
@@ -1773,8 +1782,10 @@ public class FilesService {
         par7.setIndentationLeft(40);
         document.add(title);
         document.add(par1);
-        document.add(par2);
-        if (memberEntity.getLicense().getNumber() != null && memberEntity.getMemberPermissions().getArbiterNumber() != null) {
+        if (!reason.equals(choice[0])) {
+            document.add(par2);
+        }
+        if (memberEntity.getLicense().getNumber() != null && memberEntity.getMemberPermissions().getArbiterNumber() != null && !reason.equals(choice[0])) {
             document.add(par3);
         }
         if (!reason.equals(choice[0])) {
@@ -1810,6 +1821,7 @@ public class FilesService {
         return filesEntity;
     }
 
+    // plik ,csv klubowiczas
     public FilesEntity getMemberCSVFile(String memberUUID) throws IOException {
         MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
         String fileName = memberEntity.getFirstName().stripTrailing() + memberEntity.getSecondName().toUpperCase().stripTrailing() + ".csv";
@@ -1861,6 +1873,7 @@ public class FilesService {
         return filesEntity;
     }
 
+    // metryczka
     public FilesEntity getStartsMetric(String memberUUID, String otherID, String tournamentUUID, List<String> competitions, String startNumber, Boolean a5rotate) throws IOException, DocumentException {
         String name;
         String club;
@@ -2670,7 +2683,7 @@ public class FilesService {
 
     public FilesEntity generateAllMembersToErasedList() throws IOException, DocumentException {
 
-        String fileName = "Lista_osób_do_skreślenia_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
+        String fileName = "Lista osób do skreślenia na dzień " + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
         document.setMargins(35F, 35F, 50F, 50F);
@@ -2682,25 +2695,23 @@ public class FilesService {
         } else {
             minute = String.valueOf(LocalTime.now().getMinute());
         }
-        String now = LocalTime.now().getHour() + ":" + minute;
-        Paragraph title = new Paragraph("Lista osób do skreślenia na dzień " + LocalDate.now().format(dateFormat()) + " " + now, font(14, 1));
+        Paragraph title = new Paragraph("Lista osób do skreślenia na dzień " + LocalDate.now().format(dateFormat()), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
 
         document.add(title);
         document.add(newLine);
-        LocalDate notValidContributionAdult = LocalDate.now().minusYears(1).minusMonths(6);
-        LocalDate notValidContributionNoAdult = LocalDate.now().minusYears(1).minusMonths(6);
+        LocalDate notValidDate = LocalDate.now().minusYears(1).minusMonths(6);
         List<MemberEntity> memberEntityListAdult = memberRepository.findAllByErasedFalse().stream()
                 .filter(MemberEntity::getAdult)
                 .filter(f -> !f.getActive())
-                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContributionAdult))
+                .filter(f -> f.getHistory() !=null && f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
                 .collect(Collectors.toList());
 
         memberEntityListAdult.addAll(memberRepository.findAllByErasedFalse().stream()
                 .filter(f -> !f.getAdult())
-                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContributionNoAdult))
+                .filter(f -> f.getHistory() !=null && f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
                 .collect(Collectors.toList()));
         float[] pointColumnWidths = {4F, 42F, 14F, 14F, 14F, 14F};
@@ -3439,7 +3450,7 @@ public class FilesService {
         String fileName = "Książka pobytu na strzelnicy od " + firstDate + " do " + secondDate + ".pdf";
         Document document = new Document(PageSize.A4);
         setAttToDoc(fileName, document, false);
-        List<RegistrationRecordEntity> collect = registrationRepo.findAll().stream().filter(f -> f.getDate().toLocalDate().isAfter(firstDate.minusDays(1)) && f.getDate().toLocalDate().isBefore(secondDate.plusDays(1))).sorted(Comparator.comparing(RegistrationRecordEntity::getDate).reversed()).collect(Collectors.toList());
+        List<RegistrationRecordEntity> collect = registrationRepo.findAll().stream().filter(f -> f.getDateTime().toLocalDate().isAfter(firstDate.minusDays(1)) && f.getDateTime().toLocalDate().isBefore(secondDate.plusDays(1))).sorted(Comparator.comparing(RegistrationRecordEntity::getDateTime).reversed()).collect(Collectors.toList());
 
 
         Paragraph title = new Paragraph("Książka pobytu na strzelnicy od " + firstDate + " do " + secondDate, font(13, 1));
@@ -3447,7 +3458,7 @@ public class FilesService {
         document.add(title);
         document.add(new Phrase("\n"));
 
-        float col[] = new float[]{10,40,20,20,30,30} ;
+        float[] col = new float[]{10, 40, 20, 20, 30, 30};
         PdfPTable table = new PdfPTable(col);
         Phrase index = new Phrase("lp", font(10, 0));
         Phrase name = new Phrase("Nazwisko i Imię", font(10, 0));

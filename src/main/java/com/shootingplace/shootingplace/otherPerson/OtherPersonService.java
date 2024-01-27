@@ -284,7 +284,8 @@ public class OtherPersonService {
     }
 
     public ResponseEntity<?> getOhterByPhone(String phone) {
-        OtherPersonEntity otherPerson = otherPersonRepository.findByPhoneNumber(phone.replaceAll(" ", "")).orElse(null);
+//        OtherPersonEntity otherPerson = otherPersonRepository.findByPhoneNumber(phone.replaceAll(" ", "")).orElse(null);
+        OtherPersonEntity otherPerson = otherPersonRepository.findAllByPhoneNumber(phone.replaceAll(" ", "")).stream().filter(OtherPersonEntity::isActive).findFirst().orElse(null);
         if (otherPerson != null && otherPerson.isActive()) {
             return ResponseEntity.ok(otherPerson);
         } else {

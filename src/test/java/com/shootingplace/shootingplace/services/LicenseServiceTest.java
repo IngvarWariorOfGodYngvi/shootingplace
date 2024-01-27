@@ -217,7 +217,7 @@ public class LicenseServiceTest {
                 .validThru(LocalDate.of(2022, 12, 31))
                 .build();
         //when
-        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
+        when(memberRepository.getOne(any(String.class))).thenReturn(getOne(uuid));
         ResponseEntity<?> responseEntity = licenseService.renewLicenseValid(uuid, license);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
@@ -259,7 +259,7 @@ public class LicenseServiceTest {
                 .validThru(LocalDate.now().plusDays(1))
                 .build();
         //when
-        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
+        when(memberRepository.getOne(any(String.class))).thenReturn(getOne(uuid));
         ResponseEntity<?> responseEntity = licenseService.renewLicenseValid(uuid, license);
         //then
         Assert.assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
@@ -274,7 +274,7 @@ public class LicenseServiceTest {
         String paymentUUID = memberEntity.getHistory().getLicensePaymentHistory().get(0).getUuid();
         LocalDate now = LocalDate.now();
         //when
-        when(memberRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findMemberByID(uuid)));
+        when(memberRepository.getOne(any(String.class))).thenReturn(getOne(uuid));
         ResponseEntity<?> responseEntity = licenseService.updateLicensePayment(uuid, paymentUUID, now, 2022, "0125");
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
@@ -282,7 +282,7 @@ public class LicenseServiceTest {
 
     }
 
-    private MemberEntity findMemberByID(String uuid) {
+    private MemberEntity getOne(String uuid) {
         return membersList.stream().filter(f -> f.getUuid().equals(uuid)).findFirst().orElseThrow(EntityNotFoundException::new);
     }
 

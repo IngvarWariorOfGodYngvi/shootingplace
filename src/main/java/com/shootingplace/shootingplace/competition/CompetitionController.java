@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.competition;
 import com.shootingplace.shootingplace.tournament.ScoreService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public class CompetitionController {
         }
         return competitionService.createNewCompetition(competition);
     }
-
+    @Transactional
     @PutMapping("/update")
     public ResponseEntity<?> updateCompetition(@RequestParam String uuid, @RequestBody Competition competition,@RequestParam String pinCode) {
 

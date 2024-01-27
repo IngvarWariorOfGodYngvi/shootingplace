@@ -94,22 +94,22 @@ public class CompetitionMembersListService {
         String failed = null;
         String success = "Dodano Osobę do";
         String scoreUUID = "";
-        returnList.add(0,failed);
-        returnList.add(1,success);
-        returnList.add(2,scoreUUID);
+        returnList.add(0, failed);
+        returnList.add(1, success);
+        returnList.add(2, scoreUUID);
         if (legitimationNumber > 0) {
             MemberEntity member = memberRepository.findAll().stream().filter(f -> f.getLegitimationNumber().equals(legitimationNumber)).findFirst().orElse(null);
             boolean match = scoreList.stream().anyMatch(f -> f.getMember() == member);
             if (match) {
                 LOG.info("Nie można dodać bo osoba już się znajduje na liście");
-                returnList.set(0,"Nie można dodać bo osoba już się znajduje na liście " + list.getName());
+                returnList.set(0, "Nie można dodać bo osoba już się znajduje na liście " + list.getName());
             } else {
                 ScoreEntity score = scoreService.createScore(0, 0, 0, 0, competitionUUID, member, null);
                 scoreList.add(score);
                 scoreList.sort(Comparator.comparing(ScoreEntity::getScore)
                         .reversed().thenComparing(ScoreEntity::getInnerTen)
-                        .reversed().thenComparing(ScoreEntity::getOuterTen)
-                        .reversed().thenComparing(ScoreEntity::isDnf)
+                        .thenComparing(ScoreEntity::getOuterTen)
+                        .thenComparing(ScoreEntity::isDnf)
                         .thenComparing(ScoreEntity::isDsq)
                         .thenComparing(ScoreEntity::isPk));
                 competitionMembersListRepository.save(list);
@@ -117,8 +117,8 @@ public class CompetitionMembersListService {
                 if (member != null) {
                     historyService.addCompetitionRecord(member.getUuid(), list);
                 }
-                returnList.set(1,success.concat(" " + list.getName()));
-                returnList.set(2,score.getUuid());
+                returnList.set(1, success.concat(" " + list.getName()));
+                returnList.set(2, score.getUuid());
             }
             return returnList;
         }
@@ -128,28 +128,28 @@ public class CompetitionMembersListService {
                 boolean match1 = scoreList.stream().anyMatch(a -> a.getOtherPersonEntity() == otherPersonEntity);
                 if (match1) {
                     LOG.info("Nie można dodać bo osoba już się znajduje na liście");
-                    returnList.set(0,"Nie można dodać bo osoba już się znajduje na liście " + list.getName());
+                    returnList.set(0, "Nie można dodać bo osoba już się znajduje na liście " + list.getName());
                 } else {
                     ScoreEntity score = scoreService.createScore(0, 0, 0, 0, competitionUUID, null, otherPersonEntity);
                     scoreList.add(score);
                     scoreList.sort(Comparator.comparing(ScoreEntity::getScore)
                             .reversed().thenComparing(ScoreEntity::getInnerTen)
-                            .reversed().thenComparing(ScoreEntity::getOuterTen)
-                            .reversed().thenComparing(ScoreEntity::isDnf)
+                            .thenComparing(ScoreEntity::getOuterTen)
+                            .thenComparing(ScoreEntity::isDnf)
                             .thenComparing(ScoreEntity::isDsq)
                             .thenComparing(ScoreEntity::isPk));
                     LOG.info("Dodano Obcego Zawodnika do Listy");
                     competitionMembersListRepository.save(list);
-                    returnList.set(1,success.concat(" " + list.getName()));
-                    returnList.set(2,score.getUuid());
+                    returnList.set(1, success.concat(" " + list.getName()));
+                    returnList.set(2, score.getUuid());
                 }
                 return returnList;
             }
         } else {
-            returnList.set(0,"coś poszło nie tak");
+            returnList.set(0, "coś poszło nie tak");
             return returnList;
         }
-        returnList.set(0,"coś poszło nie tak");
+        returnList.set(0, "coś poszło nie tak");
         return returnList;
     }
 
@@ -206,7 +206,7 @@ public class CompetitionMembersListService {
 
             tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(f -> f.getOtherPersonEntity() != null).forEach(g -> {
                 if (g.getOtherPersonEntity().getId().equals(otherPersonEntity.getId())) {
-                    list.add(e.getName()+";" + e.getCompetitionUUID());
+                    list.add(e.getName() + ";" + e.getCompetitionUUID());
                 }
             }));
         } else {
@@ -214,7 +214,7 @@ public class CompetitionMembersListService {
 
             tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(f -> f.getMember() != null).forEach(g -> {
                 if (g.getMember().getUuid().equals(memberEntity.getUuid())) {
-                    list.add(e.getName()+";" + e.getCompetitionUUID());
+                    list.add(e.getName() + ";" + e.getCompetitionUUID());
                 }
             }));
         }
@@ -303,7 +303,10 @@ public class CompetitionMembersListService {
     }
 
     public CompetitionMembersList getCompetitionListByID(String uuid) {
-        return Mapping.map(competitionMembersListRepository.findById(uuid).orElseThrow(EntityNotFoundException::new));
+        if (uuid.equals(""))
+            return null;
+        else
+            return Mapping.map(competitionMembersListRepository.getOne(uuid));
     }
 
     public ResponseEntity<?> getMemberScoresFromComtetitionMemberListUUID(String competitionMemberListUUID) {

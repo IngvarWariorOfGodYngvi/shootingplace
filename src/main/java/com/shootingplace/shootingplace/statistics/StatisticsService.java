@@ -92,7 +92,7 @@ public class StatisticsService {
 
     }
 
-    public List<?> getContributionSum(LocalDate firstDate, LocalDate secondDate) {
+    public List<MemberWithContributionWrapper> getContributionSum(LocalDate firstDate, LocalDate secondDate) {
         List<MemberWithContributionWrapper> collect1 = new ArrayList<>();
         List<ContributionEntity> allPaymentDayBetween = contributionRepository.getAllPaymentDayBetween(firstDate, secondDate);
         allPaymentDayBetween.forEach(e -> {
@@ -104,6 +104,7 @@ public class StatisticsService {
                         .build());
 
         });
+        allPaymentDayBetween.sort(Comparator.comparing(ContributionEntity::getPaymentDay).reversed());
         return collect1;
 
     }

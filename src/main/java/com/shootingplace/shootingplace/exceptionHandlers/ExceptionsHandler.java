@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.exceptionHandlers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -28,12 +29,12 @@ public class ExceptionsHandler {
         return " Wprowadzono nieprawidłowe dane";
     }
 
-//    @ExceptionHandler(value = IllegalArgumentException.class)
-//    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
-//    public String handleIllegalArgumentException(IllegalArgumentException ex) {
-//        LOG.info(ex.getMessage() + " " + ex.getCause());
-//        return "Wprowadzono błędne dane";
-//    }
+    @ExceptionHandler(value = IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException ex) {
+        LOG.info(ex.getMessage() + " " + ex.getCause());
+        return ResponseEntity.badRequest().body("Wprowadź osobę by wydać amunicję.");
+    }
 //
 //    @ExceptionHandler(value = EntityNotFoundException.class)
 //    @ResponseStatus(HttpStatus.BAD_REQUEST)

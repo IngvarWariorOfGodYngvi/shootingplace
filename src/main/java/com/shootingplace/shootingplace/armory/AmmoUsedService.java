@@ -103,6 +103,7 @@ public class AmmoUsedService {
                             .build();
                     validateAmmo(ammoUsedPersonal);
                     if (starEvidence(ammoUsedEvidence)) {
+                        recountAmmo();
                         return ResponseEntity.ok("Dodano do listy " + name + " " + caliberName + " " + quantity);
                     }
 
@@ -123,8 +124,8 @@ public class AmmoUsedService {
                             .caliberUUID(caliberUUID)
                             .date(LocalDate.now())
                             .build();
-                    boolean b = starEvidence(ammoUsedEvidence);
-                    if (b) {
+                    if (starEvidence(ammoUsedEvidence)) {
+                        recountAmmo();
                         return ResponseEntity.ok("Dodano do listy " + name + " " + caliberName + "");
                     }
                 }
@@ -157,6 +158,7 @@ public class AmmoUsedService {
                         .build();
                 validateAmmo(ammoUsedPersonal);
                 if (starEvidence(ammoUsedEvidence)) {
+                    recountAmmo();
                     return ResponseEntity.ok("Zwrócono do magazynu " + name + " " + caliberName + "");
                 }
             } else {
@@ -176,6 +178,7 @@ public class AmmoUsedService {
                         .date(LocalDate.now())
                         .build();
                 if (starEvidence(ammoUsedEvidence)) {
+                    recountAmmo();
                     return ResponseEntity.ok("Zwrócono do magazynu " + name + " " + caliberName);
                 }
             }
@@ -185,7 +188,7 @@ public class AmmoUsedService {
     }
 
     @Transactional
-    public ResponseEntity<?> addListOfAmmoToEvidence(Map<String, String> caliberUUIDAmmoQuantityMap, Integer legitimationNumber, int otherID) {
+    public ResponseEntity<?> addListOfAmmoToEvidence(Map<String, String> caliberUUIDAmmoQuantityMap, Integer legitimationNumber, Integer otherID) {
         if (!workingTimeEvidenceRepository.existsByIsCloseFalse()) {
             return ResponseEntity.badRequest().body("Najpierw zarejestruj pobyt");
         }
@@ -216,7 +219,9 @@ public class AmmoUsedService {
             return ResponseEntity.badRequest().body("Coś poszło nie tak - Sprawdź stany magazynowe ");
         }
         List<String> returnList = new ArrayList<>();
-        caliberUUIDAmmoQuantityMap.forEach((key, value) -> {
+        for (Map.Entry<String, String> entry : caliberUUIDAmmoQuantityMap.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
             CaliberEntity one = caliberRepository.getOne(key);
             boolean substrat = Integer.parseInt(value) > 0;
 
@@ -242,11 +247,13 @@ public class AmmoUsedService {
                         .build();
                 validateAmmo(ammoUsedPersonal);
             } else {
-                otherPersonEntity = otherPersonRepository
-                        .findById(otherID)
-                        .orElseThrow(EntityNotFoundException::new);
-                LOG.info("not member " + otherPersonEntity.getFullName());
-
+                if (otherID != null) {
+                    otherPersonEntity = otherPersonRepository
+                            .getOne(otherID);
+                    LOG.info("not member " + otherPersonEntity.getFullName());
+                } else {
+                   throw new IllegalArgumentException();
+                }
             }
             AmmoUsedEvidence ammoUsedEvidence = AmmoUsedEvidence.builder()
                     .caliberName(one.getName())
@@ -259,13 +266,9 @@ public class AmmoUsedService {
                     .time(LocalTime.now())
                     .build();
             if (starEvidence(ammoUsedEvidence)) {
-                if (substrat) {
-                    returnList.add("Dodano do listy " + (memberEntity != null ? memberEntity.getFullName() : otherPersonEntity.getFullName()) + " " + one.getName() + " " + value);
-                } else {
-                    returnList.add("Zwrócono do magazynu " + (memberEntity != null ? memberEntity.getFullName() : otherPersonEntity.getFullName()) + " " + one.getName() + " " + value);
-                }
+                returnList.add((substrat ? "Dodano do listy " : "Zwrócono do magazynu ") + (memberEntity != null ? memberEntity.getFullName() : otherPersonEntity.getFullName()) + " " + one.getName() + " " + value);
             }
-        });
+        }
         return ResponseEntity.ok(returnList);
 
 
@@ -273,8 +276,7 @@ public class AmmoUsedService {
 
     private void validateAmmo(AmmoUsedPersonal ammoUsedpersonal) {
         PersonalEvidenceEntity personalEvidence = memberRepository
-                .findById(ammoUsedpersonal.getMemberUUID())
-                .orElseThrow(EntityNotFoundException::new)
+                .getOne(ammoUsedpersonal.getMemberUUID())
                 .getPersonalEvidence();
 
         boolean match = personalEvidence
@@ -331,9 +333,10 @@ public class AmmoUsedService {
     }
 
     public void recountAmmo() {
+        LOG.info("Przeliczam amunicję");
         List<AmmoUsedToEvidenceEntity> all2 = ammoUsedToEvidenceEntityRepository.findAll();
-        List<AmmoInEvidenceEntity> ail = ammoInEvidenceRepository.findAll();
-        ail.forEach(e -> e.getAmmoUsedToEvidenceEntityList().forEach(all2::remove));
+        List<AmmoInEvidenceEntity> all1 = ammoInEvidenceRepository.findAll();
+        all1.forEach(e -> e.getAmmoUsedToEvidenceEntityList().forEach(all2::remove));
         List<AmmoUsedToEvidenceEntity> all3 = ammoUsedToEvidenceEntityRepository.findAll();
         all3.removeAll(all2);
         Set<String> set1 = new HashSet<>();
@@ -343,7 +346,7 @@ public class AmmoUsedService {
             }
         });
         set1.forEach(e -> {
-            MemberEntity id = memberRepository.findById(e).orElseThrow();
+            MemberEntity id = memberRepository.getOne(e);
             List<AmmoUsedToEvidenceEntity> collect = all3.stream().filter(f -> f.getMemberEntity() != null).filter(f -> f.getMemberEntity().getUuid().equals(e)).collect(Collectors.toList());
             Map<String, Integer> map =
                     collect
@@ -368,37 +371,21 @@ public class AmmoUsedService {
         AmmoEvidenceEntity one = ammoEvidenceRepository.getOne(evidenceID);
         List<AmmoUsedToEvidenceDTO> collect = new ArrayList<>();
         if (legitimationNumber != null) {
-
             String finalLegitimationNumber = legitimationNumber;
             one.getAmmoInEvidenceEntityList().stream().map(Mapping::map)
-                    .forEach(e -> {
-                                List<AmmoUsedToEvidenceDTO> collect1 = e.getAmmoUsedToEvidenceDTOList()
-
-                                        .stream()
-                                        .filter(f -> f.getLegitimationNumber() != null)
-                                        .filter(f -> f.getLegitimationNumber().equals(Integer.valueOf(finalLegitimationNumber)))
-                                        .collect(Collectors.toList());
-                                collect.addAll(collect1);
-                            }
-                    );
+                    .forEach(e -> collect.addAll(e.getAmmoUsedToEvidenceDTOList()
+                            .stream()
+                            .filter(f -> f.getLegitimationNumber() != null && f.getLegitimationNumber().equals(Integer.valueOf(finalLegitimationNumber)))
+                            .collect(Collectors.toList())));
         }
         if (idNumber != null) {
-
             String finalIdNumber = idNumber;
             one.getAmmoInEvidenceEntityList().stream().map(Mapping::map)
-                    .forEach(e -> {
-                                List<AmmoUsedToEvidenceDTO> collect1 = e.getAmmoUsedToEvidenceDTOList()
-
-                                        .stream()
-                                        .filter(f -> f.getIDNumber() != null)
-                                        .filter(f -> f.getIDNumber().equals(Integer.valueOf(finalIdNumber)))
-                                        .collect(Collectors.toList());
-                                collect.addAll(collect1);
-                            }
-                    );
+                    .forEach(e -> collect.addAll(e.getAmmoUsedToEvidenceDTOList()
+                            .stream()
+                            .filter(f -> f.getIDNumber() != null && f.getIDNumber().equals(Integer.valueOf(finalIdNumber)))
+                            .collect(Collectors.toList())));
         }
-
-
         return collect;
     }
 }
