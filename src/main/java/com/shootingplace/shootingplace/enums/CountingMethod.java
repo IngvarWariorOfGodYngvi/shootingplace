@@ -2,7 +2,10 @@ package com.shootingplace.shootingplace.enums;
 
 public enum CountingMethod {
     NORMAL("NORMAL"),
-    COMSTOCK("COMSTOCK");
+    COMSTOCK("COMSTOCK"),
+    TIME("CZAS"),
+    IPSC("IPSC"),
+    DYNAMIKADZIESIATKA("Dynamika Dziesiątka");
 
     private final String name;
 

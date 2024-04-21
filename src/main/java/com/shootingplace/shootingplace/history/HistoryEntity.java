@@ -34,7 +34,7 @@ public class HistoryEntity {
     private Integer pistolCounter;
     private Integer rifleCounter;
     private Integer shotgunCounter;
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @OrderBy("date DESC")
     private List<CompetitionHistoryEntity> competitionHistory;
 

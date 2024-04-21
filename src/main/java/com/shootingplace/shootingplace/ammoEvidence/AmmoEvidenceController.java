@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.ammoEvidence;
 
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
+import com.shootingplace.shootingplace.exceptionHandlers.Exceptions.NoPersonToAmmunitionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -30,16 +31,20 @@ public class AmmoEvidenceController {
 
     @Transactional
     @PostMapping("/ammo")
-    public ResponseEntity<?> createAmmoUsed(@RequestParam String caliberUUID, @RequestParam Integer legitimationNumber, @RequestParam int otherID, @RequestParam Integer counter) {
+    public ResponseEntity<?> createAmmoUsed(@RequestParam String caliberUUID, @RequestParam Integer legitimationNumber, @RequestParam int otherID, @RequestParam Integer counter) throws NoPersonToAmmunitionException {
         if (counter != 0) {
             return ammoUsedService.addAmmoUsedEntity(caliberUUID, legitimationNumber, otherID, counter);
         } else {
             return ResponseEntity.badRequest().build();
         }
     }
+    @GetMapping("/isEvidenceIsClosed")
+    public ResponseEntity<?> isEvidenceIsClosedOrEqual(@RequestParam(required = false) int quantity){
+        return ResponseEntity.ok(ammoUsedService.isEvidenceIsClosedOrEqual(quantity));
+    }
     @Transactional
     @PostMapping("/listOfAmmo")
-    public ResponseEntity<?> createAmmoUsed(@RequestBody Map<String,String> caliberUUIDAmmoQuantityMap, @RequestParam Integer legitimationNumber, @RequestParam Integer otherID) {
+    public ResponseEntity<?> createAmmoUsed(@RequestBody Map<String,String> caliberUUIDAmmoQuantityMap, @RequestParam Integer legitimationNumber, @RequestParam Integer otherID) throws NoPersonToAmmunitionException {
         boolean[] caliberAmmocheck = new boolean[caliberUUIDAmmoQuantityMap.size()];
         final int[] iterator = {0};
         caliberUUIDAmmoQuantityMap.forEach((key, value) -> {

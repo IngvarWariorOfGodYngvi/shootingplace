@@ -1,7 +1,6 @@
 package com.shootingplace.shootingplace.workingTimeEvidence;
 
 import com.google.common.hash.Hashing;
-import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordsService;
 import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
@@ -13,6 +12,7 @@ import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -35,28 +35,26 @@ public class WorkingTimeEvidenceService {
     private final WorkingTimeEvidenceRepository workRepo;
     private final BarCodeCardRepository barCodeCardRepo;
     private final FilesRepository filesRepo;
-    private final RegistrationRecordsService recordsService;
 
     private static final Logger log = LoggerFactory.getLogger(WorkingTimeEvidenceService.class);
 
-    public WorkingTimeEvidenceService(UserRepository userRepository, WorkingTimeEvidenceRepository workRepo, BarCodeCardRepository barCodeCardRepo, FilesRepository filesRepo, RegistrationRecordsService recordsService) {
+    public WorkingTimeEvidenceService(UserRepository userRepository, WorkingTimeEvidenceRepository workRepo, BarCodeCardRepository barCodeCardRepo, FilesRepository filesRepo) {
         this.userRepository = userRepository;
         this.workRepo = workRepo;
         this.barCodeCardRepo = barCodeCardRepo;
         this.filesRepo = filesRepo;
-        this.recordsService = recordsService;
     }
 
-    public String createNewWTE(String number) {
+    public ResponseEntity<?> createNewWTE(String number) {
         String msg;
         if (!barCodeCardRepo.existsByBarCode(number)) {
-            return "Brak takiego numeru";
+            return ResponseEntity.badRequest().body("Brak takiego numeru");
         }
         BarCodeCardEntity barCode = barCodeCardRepo.findByBarCode(number);
         if (!barCode.isActive()) {
             msg = "Karta jest nieaktywna i nie można jej użyć ponownie";
             log.info(msg);
-            return msg;
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(msg);
         }
         String belongsTo = barCode.getBelongsTo();
 
@@ -84,15 +82,15 @@ public class WorkingTimeEvidenceService {
             if (!barCode.getSubType().equals(entity1.getWorkType())) {
                 msg = closeWTE(entity1, false, barCode);
                 String msg1 = openWTE(barCode, number);
-                return msg + " " + msg1;
+                return ResponseEntity.ok(msg + " " + msg1);
             } else {
 
-                return closeWTE(entity1, false, barCode);
+                return ResponseEntity.ok(closeWTE(entity1, false, barCode));
             }
 
         } else {
             msg = openWTE(barCode, number);
-            return msg;
+            return ResponseEntity.ok(msg);
         }
     }
 
@@ -164,7 +162,7 @@ public class WorkingTimeEvidenceService {
         entity.setWorkTime(s);
         entity.closeWTE();
         workRepo.save(entity);
-        msg = entity.getUser().getFirstName() + " " + entity.getUser().getSecondName() + " Opuścił Pracę";
+        msg = entity.getUser().getFullName() + " Opuścił Pracę";
         log.info(msg);
         return msg;
     }
@@ -255,7 +253,13 @@ public class WorkingTimeEvidenceService {
                 temp = LocalTime.of(time.getHour(), 45);
             }
             if (time.getMinute() > 53) {
-                temp = LocalTime.of(time.getHour() + 1, 0);
+                if (time.getHour() + 1 > 23) {
+                    temp = LocalTime.of(22 + 1, 0);
+
+                } else {
+                    temp = LocalTime.of(time.getHour() + 1, 0);
+
+                }
             }
 
         } else {

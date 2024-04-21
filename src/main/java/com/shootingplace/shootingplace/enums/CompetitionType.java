@@ -2,7 +2,10 @@ package com.shootingplace.shootingplace.enums;
 
 public enum CompetitionType {
     OPEN("OPEN"),
-    YOUTH("Młodzieżowa");
+    STANDARD("STANDARD"),
+    YOUTH("Młodzieżowa"),
+    MINOR("MINOR"),
+    MAJOR("MAJOR");
 
     private final String name;
 

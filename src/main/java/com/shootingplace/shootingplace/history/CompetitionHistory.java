@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -17,6 +19,8 @@ public class CompetitionHistory {
     private UUID attachedToList;
 
     private String discipline;
+
+    private String disciplineList;
 
     private LocalDate date;
 
@@ -42,6 +46,24 @@ public class CompetitionHistory {
 
     public void setDiscipline(String discipline) {
         this.discipline = discipline;
+    }
+
+    public List<String> getDisciplineList() {
+        List<String> vals = new ArrayList<>();
+        if (disciplineList != null) {
+            for (String s : disciplineList.split(";")) {
+                vals.add(String.valueOf(s));
+            }
+        }
+        return vals;
+    }
+
+    public void setDisciplineList(List<String> disciplineList) {
+        String value = "";
+        for (String f : disciplineList) {
+            value = value.concat(f + ";");
+        }
+        this.disciplineList = value;
     }
 
     public LocalDate getDate() {

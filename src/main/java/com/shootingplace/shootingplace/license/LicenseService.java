@@ -206,9 +206,7 @@ public class LicenseService {
                 }
                 licenseEntity.setCanProlong(false);
                 licenseEntity.setPaid(false);
-                memberEntity.getHistory().setPistolCounter(0);
-                memberEntity.getHistory().setRifleCounter(0);
-                memberEntity.getHistory().setShotgunCounter(0);
+                historyService.checkStarts(memberUUID);
                 licenseRepository.save(licenseEntity);
                 LOG.info("Przedłużono licencję");
                 return ResponseEntity.ok().body("Przedłużono licencję");

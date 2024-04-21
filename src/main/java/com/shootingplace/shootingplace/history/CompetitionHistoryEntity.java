@@ -9,6 +9,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
@@ -27,6 +29,8 @@ public class CompetitionHistoryEntity {
     private String discipline;
 
     private String[] disciplines;
+
+    private String disciplineList;
 
     private LocalDate date;
 
@@ -58,6 +62,23 @@ public class CompetitionHistoryEntity {
 
     public void setDiscipline(String discipline) {
         this.discipline = discipline;
+    }
+    public List<String> getDisciplineList() {
+        List<String> vals = new ArrayList<>();
+        if (disciplineList != null) {
+            for (String s : disciplineList.split(";")) {
+                vals.add(String.valueOf(s));
+            }
+        }
+        return vals;
+    }
+
+    public void setDisciplineList(List<String> disciplineList) {
+        String value = "";
+        for (String f : disciplineList) {
+            value = value.concat(f + ";");
+        }
+        this.disciplineList = value;
     }
 
     public LocalDate getDate() {

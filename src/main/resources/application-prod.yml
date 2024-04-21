@@ -9,3 +9,4 @@ spring:
       ddl-auto: update
   jooq:
     sql-dialect: org.hibernate.dialect.MySQL8Dialect
+licenseDate: "2026-08-09"

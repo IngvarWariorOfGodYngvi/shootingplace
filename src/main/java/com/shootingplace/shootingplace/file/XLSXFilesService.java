@@ -184,7 +184,7 @@ public class XLSXFilesService {
                 XSSFCell cell33 = row3.createCell(cc++);
                 XSSFCell cell34 = row3.createCell(cc++); // klub
                 List<XSSFCell> series = new ArrayList<>();
-                if (competitionMembersListEntity.getScoreList().get(0).getSeries().size() > 1) {
+                if (competitionMembersListEntity.getScoreList().get(0).getSeries().size() > 1 && competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                     for (int k = 0; k < competitionMembersListEntity.getScoreList().get(0).getSeries().size(); k++) {
                         series.add(row3.createCell(cc++));
                     }
@@ -197,15 +197,18 @@ public class XLSXFilesService {
                 cell32.setCellValue("Nazwisko i Imię");
                 cell33.setCellValue("");
                 cell34.setCellValue("Klub");
-                if (competitionMembersListEntity.getScoreList().get(0).getSeries().size() > 1) {
+                if (competitionMembersListEntity.getScoreList().get(0).getSeries().size() > 1 && competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                     for (int k = 0; k < series.size(); k++) {
                         series.get(k).setCellValue("Seria " + arabicToRomanNumberConverter(k + 1));
                         series.get(k).setCellStyle(cellStyleCompetitionSubTitle);
                     }
                 }
-//                if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
-                cell35.setCellValue("Wynik");
-//                }
+                if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
+                    cell35.setCellValue("Wynik");
+                }
+                if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.TIME.getName())) {
+                    cell35.setCellValue("Czas");
+                }
                 cell31.setCellStyle(cellStyleCompetitionSubTitle);
                 cell32.setCellStyle(cellStyleCompetitionSubTitle);
                 cell33.setCellStyle(cellStyleCompetitionSubTitle);
@@ -219,8 +222,24 @@ public class XLSXFilesService {
                 if (competitionMembersListEntity.getCountingMethod() != null) {
                     if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
                         cell36.setCellValue("czas");
-                        cell37.setCellValue("");
-                    } else {
+                        cell37.setCellValue("procedury");
+                    }
+                    if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.IPSC.getName())) {
+                        cell36.setCellValue("czas");
+                        cell37.setCellValue("procedury");
+                    }
+                    if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.DYNAMIKADZIESIATKA.getName())) {
+                        cell36.setCellValue("czas");
+                        cell37.setCellValue("procedury");
+                    }
+                    if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.TIME.getName())) {
+                        cell36.setCellValue("");
+                        cell37.setCellValue("procedury");
+                    }
+                    if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
+                        cell36.setCellValue("");
+                        cell37.setCellValue("procedury");
+
                         if (competitionMembersListEntity.getName().toLowerCase(Locale.ROOT).contains("karabin") && competitionMembersListEntity.getName().toLowerCase(Locale.ROOT).contains("pneumatyczny")) {
                             cell36.setCellValue("");
                             cell37.setCellValue("10 /");
@@ -248,15 +267,22 @@ public class XLSXFilesService {
 
                     }
                     float score = scoreList.get(j).getScore();
-                    String scoreOuterTen = String.valueOf(scoreList.get(j).getOuterTen());
+                    String countingMethod = competitionMembersListEntity.getCountingMethod();
+                    String scoreOuterTen;
+                    if (countingMethod.equals(CountingMethod.COMSTOCK.getName()) || countingMethod.equals(CountingMethod.IPSC.getName()) || countingMethod.equals(CountingMethod.DYNAMIKADZIESIATKA.getName())) {
+                        scoreOuterTen = String.format("%.4f", scoreList.get(j).getOuterTen());
+                    } else {
+                        scoreOuterTen = String.format("%.0f", scoreList.get(j).getOuterTen());
+                    }
                     String scoreInnerTen = String.valueOf(scoreList.get(j).getInnerTen());
+                    String procedures = String.valueOf(scoreList.get(j).getProcedures());
                     if (scoreOuterTen.startsWith("0")) {
                         scoreOuterTen = "";
                     }
                     if (scoreInnerTen.startsWith("0")) {
                         scoreInnerTen = "";
                     }
-                    String o1 = scoreInnerTen,o2 = scoreOuterTen;
+                    String o1 = scoreInnerTen, o2 = scoreOuterTen;
 //                            scoreInnerTen.replace(".0", ""), o2 = scoreOuterTen.replace(".0", "");
                     if (scoreList.get(j).getInnerTen() == 0) {
                         o1 = scoreInnerTen = "";
@@ -265,9 +291,11 @@ public class XLSXFilesService {
                         o2 = scoreOuterTen = "";
                     }
                     DecimalFormat myFormatter = new DecimalFormat("###.####");
-                    String result = myFormatter.format(score);
-                    if (score == 100 && competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-                        result = "100,0000";
+                    String result;
+                    if (countingMethod.equals(CountingMethod.COMSTOCK.getName()) || countingMethod.equals(CountingMethod.IPSC.getName()) || countingMethod.equals(CountingMethod.DYNAMIKADZIESIATKA.getName())) {
+                        result = String.format("%.4f", score);
+                    } else {
+                        result = String.format("%.0f", score);
                     }
                     if (scoreList.get(j).isDnf()) {
                         result = "DNF";
@@ -281,13 +309,26 @@ public class XLSXFilesService {
                     if (competitionMembersListEntity.getCountingMethod() != null) {
 
                         if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-//                            o1 = "";
-//                            o2 = "";
-
-                        } else {
+//                            o1 = scoreInnerTen.replace(".0", "");
+                            o2 = procedures.replace(".0", "");
+                        }
+                        if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.IPSC.getName())) {
+//                            o1 = scoreInnerTen.replace(".0", "");
+                            o2 = procedures.replace(".0", "");
+                        }
+                        if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.DYNAMIKADZIESIATKA.getName())) {
+//                            if (o1.startsWith("0")) {
+//                                o1 = scoreInnerTen.replace(".0", "");
+//                            }
+                            o2 = procedures.replace(".0", "");
+                        }
+                        if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.TIME.getName())) {
+//                            o1 = scoreInnerTen.replace(".0", "");
+                            o2 = procedures.replace(".0", "");
+                        }
+                        if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                             o1 = scoreInnerTen.replace(".0", "");
                             o2 = scoreOuterTen.replace(".0", "");
-
                         }
                     }
 
@@ -298,7 +339,7 @@ public class XLSXFilesService {
                     XSSFCell cell43 = row4.createCell(cc++); //Imię i nazwisko
                     XSSFCell cell44 = row4.createCell(cc++); //Klub
                     List<XSSFCell> series1 = new ArrayList<>();
-                    if (scoreList.get(j).getSeries().size() > 1) {
+                    if (scoreList.get(j).getSeries().size() > 1 && competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                         for (int k = 0; k < competitionMembersListEntity.getScoreList().get(0).getSeries().size(); k++) {
                             series1.add(row4.createCell(cc++));
                         }
@@ -312,7 +353,7 @@ public class XLSXFilesService {
                     cell42.setCellValue(secondName + " " + firstName);
                     cell43.setCellValue("");
                     cell44.setCellValue(club);
-                    if (scoreList.get(j).getSeries().size() > 1) {
+                    if (scoreList.get(j).getSeries().size() > 1 && competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                         for (int k = 0; k < series1.size(); k++) {
                             series1.get(k).setCellValue(scoreList.get(j).getSeries().get(k));
                             series1.get(k).setCellStyle(cellStyleNormalCenterAlignment);

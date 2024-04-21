@@ -34,11 +34,11 @@ public class ContributionController {
 
     @Transactional
     @PatchMapping("/{memberUUID}")
-    public ResponseEntity<?> addContribution(@PathVariable String memberUUID, @RequestParam String pinCode) {
+    public ResponseEntity<?> addContribution(@PathVariable String memberUUID, @RequestParam String pinCode, @RequestParam Integer contributionCount) {
 
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
-            return contributionService.addContribution(memberUUID, LocalDate.now(), pinCode);
+            return contributionService.addContribution(memberUUID, LocalDate.now(), pinCode, contributionCount);
         } else {
             return code;
         }

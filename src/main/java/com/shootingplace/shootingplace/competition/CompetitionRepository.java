@@ -13,4 +13,7 @@ public interface CompetitionRepository{
     CompetitionEntity getOne(String uuid);
 
     Optional<CompetitionEntity> findById(String uuid);
+
+    long count();
+
 }

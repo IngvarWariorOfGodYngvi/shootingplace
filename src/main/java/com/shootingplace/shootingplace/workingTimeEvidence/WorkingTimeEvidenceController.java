@@ -23,8 +23,7 @@ public class WorkingTimeEvidenceController {
     @PostMapping("/")
     public ResponseEntity<?> startStopWork(@RequestParam String number) {
 
-        String newWTE = workService.createNewWTE(number);
-        return ResponseEntity.ok(newWTE);
+        return workService.createNewWTE(number);
     }
 
     @GetMapping("/")

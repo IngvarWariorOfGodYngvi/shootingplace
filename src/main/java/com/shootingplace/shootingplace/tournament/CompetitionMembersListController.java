@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.tournament;
 
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
-import com.shootingplace.shootingplace.armory.CaliberRepository;
+import com.shootingplace.shootingplace.exceptionHandlers.Exceptions.NoPersonToAmmunitionException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,15 +16,13 @@ import java.util.List;
 public class CompetitionMembersListController {
 
     private final CompetitionMembersListService competitionMembersListService;
-    private final CaliberRepository caliberRepository;
     private final AmmoUsedService ammoUsedService;
     private final ScoreService scoreService;
     private final CompetitionMembersListRepository competitionMembersListRepository;
 
 
-    public CompetitionMembersListController(CompetitionMembersListService competitionMembersListService, AmmoUsedService ammoUsedService, CaliberRepository caliberRepository, ScoreService scoreService, CompetitionMembersListRepository competitionMembersListRepository) {
+    public CompetitionMembersListController(CompetitionMembersListService competitionMembersListService, AmmoUsedService ammoUsedService,ScoreService scoreService, CompetitionMembersListRepository competitionMembersListRepository) {
         this.competitionMembersListService = competitionMembersListService;
-        this.caliberRepository = caliberRepository;
         this.ammoUsedService = ammoUsedService;
         this.scoreService = scoreService;
         this.competitionMembersListRepository = competitionMembersListRepository;
@@ -78,13 +76,18 @@ public class CompetitionMembersListController {
         addAmmoList.forEach(e -> {
             CompetitionMembersListEntity one = competitionMembersListRepository.getOne(e);
             one.setPracticeShots(one.getPracticeShots() != null ? one.getPracticeShots() : 0);
-            ammoUsedService.addAmmoUsedEntity(one.getCaliberUUID(), legitimationNumber, otherPerson, one.getNumberOfShots() + one.getPracticeShots());
+            try {
+                ammoUsedService.addAmmoUsedEntity(one.getCaliberUUID(), legitimationNumber, otherPerson, one.getNumberOfShots() + one.getPracticeShots());
+            } catch (NoPersonToAmmunitionException ex) {
+                ex.printStackTrace();
+            }
             String uuid;
             if (legitimationNumber > 0) {
                 uuid = one.getScoreList().stream().filter(f -> f.getMember() != null && f.getMember().getLegitimationNumber().equals(legitimationNumber)).findFirst().get().getUuid();
             } else {
                 uuid = one.getScoreList().stream().filter(f -> f.getOtherPersonEntity() != null && f.getOtherPersonEntity().getId().equals(otherPerson)).findFirst().get().getUuid();
             }
+
             scoreService.toggleAmmunitionInScore(uuid);
         });
         if (!list.isEmpty()) {

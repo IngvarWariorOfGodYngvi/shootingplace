@@ -128,7 +128,7 @@ public class FilesService {
 
     public String storeImageEvidenceBook(ImageOtherPersonWrapper other, String imageString, String pesel_or_phone) {
         String s = imageString.split(",")[1];
-        MemberEntity memberEntity = memberRepository.findByPesel(pesel_or_phone.replaceAll(" ","")).orElse(null);
+        MemberEntity memberEntity = memberRepository.findByPesel(pesel_or_phone.replaceAll(" ", "")).orElse(null);
         String fullName;
         if (memberEntity != null) {
             fullName = memberEntity.getFullName();
@@ -138,7 +138,7 @@ public class FilesService {
             if (otherPerson == null) {
                 OtherPersonEntity otherPerson1 = otherPersonService.addPerson(String.valueOf(other.getOther().getClub().getName()), other.getOther());
                 fullName = otherPerson1.getFullName();
-            }else {
+            } else {
                 fullName = otherPerson.getFullName();
             }
         }
@@ -166,6 +166,7 @@ public class FilesService {
         } else {
             contributionEntity = contributionRepository.getOne(contributionUUID);
         }
+        int count = (int) memberEntity.getHistory().getContributionList().stream().filter(f -> f.getPaymentDay().equals(contributionEntity.getPaymentDay())).count();
         LocalDate contribution = contributionEntity.getPaymentDay();
         LocalDate validThru = contributionEntity.getValidThru();
         String fileName = "Składka_" + memberEntity.getFullName() + "_" + LocalDate.now().format(dateFormat()) + ".pdf";
@@ -177,11 +178,6 @@ public class FilesService {
 
         // tutaj powinien być text z ustawień o składki
 
-//        String contributionText = "Składki uiszczane w trybie półrocznym muszą zostać opłacone najpóźniej do końca pierwszego " +
-//                "kwartału za pierwsze półrocze i analogicznie za drugie półrocze do końca trzeciego kwartału. W przypadku " +
-//                "niedotrzymania terminu wpłaty (raty), wysokość (raty) składki ulega powiększeniu o karę w wysokości 50%" +
-//                " zaległości. (Regulamin Opłacania Składek Członkowskich Klubu Strzeleckiego „Dziesiątka” LOK w Łodzi)";
-
         a5rotate = a5rotate != null && a5rotate;
         Document document = new Document(a5rotate ? PageSize.A5.rotate() : PageSize.A4);
         document.setMargins(35F, 35F, 50F, 50F);
@@ -189,7 +185,7 @@ public class FilesService {
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-            writer.setPageEvent(new PageStamper(environment));
+            writer.setPageEvent(new PageStamper(environment, false));
         }
         document.open();
         document.addTitle(fileName);
@@ -208,12 +204,44 @@ public class FilesService {
         } else {
             status = "opłacił";
         }
-        String contributionLevel;
-        if (memberEntity.getAdult()) {
-            contributionLevel = "120";
-        } else {
-            contributionLevel = "60";
+        String contributionLevel = String.valueOf(90 * count);
+        String counter = "";
+        switch (count) {
+            case 1:
+                counter = "jedną kwartalną składkę członkowską";
+                break;
+            case 2:
+                counter = "dwie kwartalne składki członkowskie";
+                break;
+            case 3:
+                counter = "trzy kwartalne składki członkowskie";
+                break;
+            case 4:
+                counter = "cztery kwartalne składki członkowskie";
+                break;
+            case 5:
+                counter = "pięć kwartalnych składkek członkowskich";
+                break;
+            case 6:
+                counter = "sześć kwartalnych składkek członkowskich";
+                break;
+            case 7:
+                counter = "siedem kwartalnych składkek członkowskich";
+                break;
+            case 8:
+                counter = "osiem kwartalnych składkek członkowskich";
+                break;
+            case 9:
+                counter = "dziewięć kwartalnych składkek członkowskich";
+                break;
+            case 10:
+                counter = "dziesięć kwartalnych składkek członkowskich";
+                break;
+            default:
+                counter = count + " kwartalnych składkek członkowskich";
+                break;
         }
+
 
         Paragraph p = new Paragraph(clubFullName + "\n", font(14, 1));
         Paragraph p1 = new Paragraph("Potwierdzenie opłacenia składki członkowskiej", font(11, 2));
@@ -227,12 +255,9 @@ public class FilesService {
         Phrase p7 = new Phrase(String.valueOf(contribution), font(11, 1));
         Paragraph p8 = new Paragraph("Składka ważna do : ", font(11, 0));
         Phrase p9 = new Phrase(String.valueOf(validThru), font(11, 1));
-        Paragraph p10 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFullName() + " dnia : " + contribution + " " + status + " półroczną składkę członkowską w wysokości " + contributionLevel + " PLN.", font(11, 0));
+        Paragraph p10 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFullName() + " dnia : " + contribution + " " + status + " " + counter + " w wysokości " + contributionLevel + "zł.", font(11, 0));
 
-//        Paragraph p13 = new Paragraph("\n", font(11, 1));
         Paragraph p14 = new Paragraph("", font(11, 0));
-
-//        Phrase p15 = new Phrase(contributionText, font(11, 2));
 
         Paragraph p16 = new Paragraph("\n\n", font(11, 0));
         Paragraph p19 = new Paragraph("pieczęć klubu", font(11, 0));
@@ -307,7 +332,7 @@ public class FilesService {
                 new FileOutputStream(fileName));
         String s = "", s1 = "", s2 = "", s3 = "", s4 = "", s5 = "";
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-            writer.setPageEvent(new PageStamper(environment));
+            writer.setPageEvent(new PageStamper(environment, false));
             s = "Klubu Strzeleckiego „Dziesiątka” Ligi Obrony Kraju w Łodzi";
             s1 = "Klub Strzelecki „Dziesiątka”";
             s2 = "biuro@ksdziesiatka.pl";
@@ -552,7 +577,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment));
+        writer.setPageEvent(new PageStamper(environment, true));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -960,7 +985,7 @@ public class FilesService {
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-            writer.setPageEvent(new PageStamper(environment));
+            writer.setPageEvent(new PageStamper(environment, true));
         }
         document.open();
         document.addTitle(fileName);
@@ -1252,7 +1277,7 @@ public class FilesService {
         String fileName = reason + " " + member.getFullName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
-        setAttToDoc(fileName, document, true);
+        setAttToDoc(fileName, document, true, false);
 
         Paragraph newLine = new Paragraph("\n", font(12, 0));
 
@@ -1387,7 +1412,7 @@ public class FilesService {
         }
 
         Document document = new Document(PageSize.A4);
-        setAttToDoc(fileName, document, false);
+        setAttToDoc(fileName, document, false, true);
         Paragraph newLine = new Paragraph("\n", font(10, 0));
 
         Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "") + ", " + LocalDate.now().format(dateFormat()), font(10, 0));
@@ -1592,7 +1617,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment));
+        writer.setPageEvent(new PageStamper(environment, false));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2227,7 +2252,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment));
+        writer.setPageEvent(new PageStamper(environment, true));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2346,7 +2371,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment));
+        writer.setPageEvent(new PageStamper(environment, true));
 
         document.open();
         document.setMarginMirroringTopBottom(true);
@@ -2443,7 +2468,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment));
+        writer.setPageEvent(new PageStamper(environment, false));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2590,7 +2615,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment));
+        writer.setPageEvent(new PageStamper(environment, true));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2688,30 +2713,25 @@ public class FilesService {
         Document document = new Document(PageSize.A4.rotate());
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
-        setAttToDoc(fileName, document, false);
-        String minute;
-        if (LocalTime.now().getMinute() < 10) {
-            minute = "0" + LocalTime.now().getMinute();
-        } else {
-            minute = String.valueOf(LocalTime.now().getMinute());
-        }
+        setAttToDoc(fileName, document, true, true);
+
         Paragraph title = new Paragraph("Lista osób do skreślenia na dzień " + LocalDate.now().format(dateFormat()), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
 
         document.add(title);
         document.add(newLine);
-        LocalDate notValidDate = LocalDate.now().minusYears(1).minusMonths(6);
+        LocalDate notValidDate = LocalDate.now().minusYears(1);
         List<MemberEntity> memberEntityListAdult = memberRepository.findAllByErasedFalse().stream()
                 .filter(MemberEntity::getAdult)
                 .filter(f -> !f.getActive())
-                .filter(f -> f.getHistory() !=null && f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
+                .filter(f -> f.getHistory() != null && f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
                 .collect(Collectors.toList());
 
         memberEntityListAdult.addAll(memberRepository.findAllByErasedFalse().stream()
                 .filter(f -> !f.getAdult())
-                .filter(f -> f.getHistory() !=null && f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
+                .filter(f -> f.getHistory() != null && f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
                 .collect(Collectors.toList()));
         float[] pointColumnWidths = {4F, 42F, 14F, 14F, 14F, 14F};
@@ -2810,7 +2830,7 @@ public class FilesService {
         Document document = new Document(PageSize.A4.rotate());
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
-        setAttToDoc(fileName, document, false);
+        setAttToDoc(fileName, document, false, false);
         String minute;
         if (LocalTime.now().getMinute() < 10) {
             minute = "0" + LocalTime.now().getMinute();
@@ -2921,7 +2941,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment));
+        writer.setPageEvent(new PageStamper(environment, true));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -3101,7 +3121,7 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment));
+        writer.setPageEvent(new PageStamper(environment, false));
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -3259,7 +3279,7 @@ public class FilesService {
         Document document = new Document(PageSize.A4.rotate());
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
-        setAttToDoc(fileName, document, false);
+        setAttToDoc(fileName, document, false, true);
         String minute;
         if (LocalTime.now().getMinute() < 10) {
             minute = "0" + LocalTime.now().getMinute();
@@ -3278,28 +3298,24 @@ public class FilesService {
                 .filter(MemberEntity::getErased)
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
                 .collect(Collectors.toList());
-        float[] pointColumnWidths = {4F, 28F, 10F, 10F, 14F, 14F, 36F};
+        float[] pointColumnWidths = {4F, 28F, 10F, 14F, 14F, 36F};
 
 
         PdfPTable titleTable = new PdfPTable(pointColumnWidths);
-
         PdfPCell lp = new PdfPCell(new Paragraph("lp", font(12, 0)));
         PdfPCell name = new PdfPCell(new Paragraph("Nazwisko Imię", font(12, 0)));
         PdfPCell legitimation = new PdfPCell(new Paragraph("legitymacja", font(12, 0)));
-        PdfPCell licenceNumber = new PdfPCell(new Paragraph("numer licencji", font(12, 0)));
-        PdfPCell licenceDate = new PdfPCell(new Paragraph("licencja ważna do", font(12, 0)));
-        PdfPCell contributionDate = new PdfPCell(new Paragraph("Składka ważna do", font(12, 0)));
+        PdfPCell PESEL = new PdfPCell(new Paragraph("PESEL", font(12, 0)));
         PdfPCell erasedReason = new PdfPCell(new Paragraph("Przyczyna skreślenia", font(12, 0)));
+        PdfPCell erasedAdditionalDescription = new PdfPCell(new Paragraph("Informacje dodatkowe", font(12, 0)));
 
         titleTable.setWidthPercentage(100);
-
         titleTable.addCell(lp);
         titleTable.addCell(name);
         titleTable.addCell(legitimation);
-        titleTable.addCell(licenceNumber);
-        titleTable.addCell(licenceDate);
-        titleTable.addCell(contributionDate);
+        titleTable.addCell(PESEL);
         titleTable.addCell(erasedReason);
+        titleTable.addCell(erasedAdditionalDescription);
 
         document.add(titleTable);
 
@@ -3316,37 +3332,25 @@ public class FilesService {
             PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(12, 0)));
             PdfPCell nameCell = new PdfPCell(new Paragraph(memberEntityName, font(12, 0)));
             PdfPCell legitimationCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getLegitimationNumber()), font(12, 0)));
-            PdfPCell licenceNumberCell;
-            if (memberEntity.getLicense().getNumber() != null) {
-                licenceNumberCell = new PdfPCell(new Paragraph(memberEntity.getLicense().getNumber(), font(12, 0)));
-            } else {
-                licenceNumberCell = new PdfPCell(new Paragraph("", font(12, 0)));
-            }
-            PdfPCell licenceDateCell;
-            if (memberEntity.getLicense().getValidThru() != null) {
-                licenceDateCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getLicense().getValidThru()), font(12, 0)));
-            } else {
-                licenceDateCell = new PdfPCell(new Paragraph("", font(12, 0)));
-            }
-            PdfPCell contributionDateCell;
-            if (memberEntity.getHistory().getContributionList().size() > 0) {
-                contributionDateCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getHistory().getContributionList().get(0).getValidThru()), font(12, 0)));
-            } else {
-                contributionDateCell = new PdfPCell(new Paragraph("BRAK SKŁADEK", font(12, 0)));
-            }
+            PdfPCell PESELCell = new PdfPCell(new Paragraph(memberEntity.getPesel(), font(12, 0)));
             PdfPCell erasedReasonCell = null;
             if (memberEntity.getErasedEntity() != null) {
                 erasedReasonCell = new PdfPCell(new Paragraph(memberEntity.getErasedEntity().getErasedType() + " " + memberEntity.getErasedEntity().getDate().format(dateFormat()), font(12, 0)));
+            }
+            PdfPCell erasedAdditionalDescriptionCell;
+            if (memberEntity.getErasedEntity() != null && memberEntity.getErasedEntity().getAdditionalDescription() != null) {
+                erasedAdditionalDescriptionCell = new PdfPCell(new Paragraph(memberEntity.getErasedEntity().getAdditionalDescription(), font(12, 0)));
+            } else {
+                erasedAdditionalDescriptionCell = new PdfPCell(new Paragraph(""));
             }
             memberTable.setWidthPercentage(100);
 
             memberTable.addCell(lpCell);
             memberTable.addCell(nameCell);
             memberTable.addCell(legitimationCell);
-            memberTable.addCell(licenceNumberCell);
-            memberTable.addCell(licenceDateCell);
-            memberTable.addCell(contributionDateCell);
+            memberTable.addCell(PESELCell);
             memberTable.addCell(erasedReasonCell);
+            memberTable.addCell(erasedAdditionalDescriptionCell);
 
             document.add(memberTable);
 
@@ -3449,7 +3453,7 @@ public class FilesService {
     public FilesEntity getEvidenceBookInChosenTime(LocalDate firstDate, LocalDate secondDate) throws IOException, DocumentException {
         String fileName = "Książka pobytu na strzelnicy od " + firstDate + " do " + secondDate + ".pdf";
         Document document = new Document(PageSize.A4);
-        setAttToDoc(fileName, document, false);
+        setAttToDoc(fileName, document, false, true);
         List<RegistrationRecordEntity> collect = registrationRepo.findAll().stream().filter(f -> f.getDateTime().toLocalDate().isAfter(firstDate.minusDays(1)) && f.getDateTime().toLocalDate().isBefore(secondDate.plusDays(1))).sorted(Comparator.comparing(RegistrationRecordEntity::getDateTime).reversed()).collect(Collectors.toList());
 
 
@@ -3539,7 +3543,7 @@ public class FilesService {
 
         String fileName = "raport_pracy_" + month.toLowerCase() + "_" + reportNumber + "_" + year + "_" + workType + ".pdf";
         Document document = new Document(PageSize.A4);
-        setAttToDoc(fileName, document, true);
+        setAttToDoc(fileName, document, true, true);
 
         String finalMonth = month.toLowerCase(Locale.ROOT);
         int pl = number(finalMonth);
@@ -3724,7 +3728,7 @@ public class FilesService {
 
         String fileName = "Lista osób z licencjami.pdf";
         Document document = new Document(PageSize.A4);
-        setAttToDoc(fileName, document, false);
+        setAttToDoc(fileName, document, false, true);
 
         List<MemberEntity> collect = memberRepository.findAllByErasedFalse()
                 .stream()
@@ -3856,7 +3860,7 @@ public class FilesService {
         int fs = 10;
         int ls = 11;
         Document document = new Document(PageSize.A4);
-        setAttToDoc(fileName, document, true);
+        setAttToDoc(fileName, document, true, true);
 
         Paragraph newLine = new Paragraph("\n", font(fs, 0));
         Paragraph page = new Paragraph("1/3", font(fs, 0));
@@ -4459,14 +4463,14 @@ public class FilesService {
         return Collator.getInstance(Locale.forLanguageTag("pl"));
     }
 
-    private void setAttToDoc(String fileName, Document document, boolean pageEvents) throws DocumentException, FileNotFoundException {
+    private void setAttToDoc(String fileName, Document document, boolean pageEvents, boolean isPageNumberStamp) throws DocumentException, FileNotFoundException {
         document.setMargins(35F, 35F, 50F, 50F);
         // to musi zostać by spowolnić program bo inaczej nie robi tego co powinien
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         if (pageEvents) {
-            writer.setPageEvent(new PageStamper(environment));
+            writer.setPageEvent(new PageStamper(environment, isPageNumberStamp));
         }
         document.open();
         document.addTitle(fileName);
@@ -4780,18 +4784,30 @@ public class FilesService {
 
     static class PageStamper extends PdfPageEventHelper {
         private final Environment environment;
+        private final Boolean isPageNumberStamp;
+        int pages;
 
-        PageStamper(Environment environment) {
+        PageStamper(Environment environment, Boolean isPageNumberStamp) {
             this.environment = environment;
+            this.isPageNumberStamp = isPageNumberStamp;
         }
 
         @Override
-        public void onEndPage(PdfWriter writer, Document document) {
+        public void onOpenDocument(PdfWriter writer, Document document) {
+//            pages = writer.getDirectContent().createTemplate(30, 12);
+        }
 
+        @Override
+        public void onCloseDocument(PdfWriter writer, Document document) {
+            pages = writer.getPageNumber();
         }
 
         @Override
         public void onStartPage(PdfWriter writer, Document document) {
+        }
+
+        @Override
+        public void onEndPage(PdfWriter writer, Document document) {
             try {
                 document.setMargins(35F, 35F, 50F, 50F);
                 System.out.println(document.bottomMargin());
@@ -4820,9 +4836,11 @@ public class FilesService {
 
                     directContent.setColorFill(BaseColor.BLACK);
                     directContent.setFontAndSize(BaseFont.createFont(), 10);
-                    PdfTextArray pdfTextArray = new PdfTextArray(String.valueOf(currentPageNumber));
-                    directContent.setTextMatrix(pageSize.getRight(40), pageSize.getBottom(25));
-                    directContent.showText(pdfTextArray);
+                    if (isPageNumberStamp) {
+                        PdfTextArray pdfTextArray = new PdfTextArray(String.valueOf(currentPageNumber));
+                        directContent.setTextMatrix(pageSize.getRight(40), pageSize.getBottom(25));
+                        directContent.showText(pdfTextArray);
+                    }
                 }
                 if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
                     String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/logo-panaszew.jpg";
@@ -4850,8 +4868,5 @@ public class FilesService {
                 e.printStackTrace();
             }
         }
-
     }
-
-
 }

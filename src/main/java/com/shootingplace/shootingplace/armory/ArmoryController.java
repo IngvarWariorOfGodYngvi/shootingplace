@@ -42,6 +42,12 @@ public class ArmoryController {
         return ResponseEntity.ok(caliberService.getCalibersList());
     }
 
+    @GetMapping("/caliberQuantity")
+    public ResponseEntity<?> getcalibersQuantity(@RequestParam String uuid, @RequestParam String date) {
+        LocalDate parseDate = LocalDate.parse(date);
+        return ResponseEntity.ok(caliberService.getCalibersQuantity(uuid, parseDate));
+    }
+
     @GetMapping("/calibersList")
     public ResponseEntity<List<String>> getCalibersNamesList() {
         return ResponseEntity.ok(caliberService.getCalibersNamesList());
@@ -96,14 +102,16 @@ public class ArmoryController {
     public ResponseEntity<?> getGunUsedHistory(@RequestParam String gunUUID) {
         return ResponseEntity.ok(armoryService.getGunUsedHistory(gunUUID));
     }
+
     @GetMapping("/getAllShootingPacket")
-    public ResponseEntity<?> getAllShootingPacket(){
+    public ResponseEntity<?> getAllShootingPacket() {
         return ResponseEntity.ok(shootingPacketService.getAllShootingPacket());
     }
+
     @Transactional
     @PostMapping("/addShootingPacket")
-    public ResponseEntity<?> addShootingPacket(@RequestParam String name, @RequestParam float price, @RequestBody Map<String,Integer> map,@RequestParam String pinCode) {
-        return shootingPacketService.addShootingPacket(name,price,map,pinCode);
+    public ResponseEntity<?> addShootingPacket(@RequestParam String name, @RequestParam float price, @RequestBody Map<String, Integer> map, @RequestParam String pinCode) {
+        return shootingPacketService.addShootingPacket(name, price, map, pinCode);
     }
 
     @PutMapping("/addAmmo")

@@ -24,6 +24,18 @@ public class CompetitionController {
     public ResponseEntity<List<CompetitionEntity>> getAllCompetitions() {
         return ResponseEntity.ok(competitionService.getAllCompetitions());
     }
+    @GetMapping("/getCountingMethods")
+    public ResponseEntity<?> getCountingMethods() {
+     return ResponseEntity.ok(competitionService.getCountingMethods());
+    }
+    @GetMapping("/getDisciplines")
+    public ResponseEntity<?> getDisciplines() {
+     return ResponseEntity.ok(competitionService.getDisciplines());
+    }
+    @GetMapping("/getCompetitionTypes")
+    public ResponseEntity<?> getCompetitionTypes() {
+     return ResponseEntity.ok(competitionService.getCompetitionTypes());
+    }
     @GetMapping("/competitionMemberListUUID")
     public ResponseEntity<?> getCompetitionMemberList(@RequestParam String competitionMembersListUUID) {
         return competitionService.getCompetitionMemberList(competitionMembersListUUID);
@@ -32,7 +44,7 @@ public class CompetitionController {
     @PostMapping("")
     public ResponseEntity<?> createCompetition(@RequestBody Competition competition) {
         if (competition.getName().isEmpty()) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("Wymyśl jakąś nazwę");
         }
         return competitionService.createNewCompetition(competition);
     }
@@ -44,8 +56,8 @@ public class CompetitionController {
     }
 
     @PutMapping("/score/set")
-    public ResponseEntity<?> setScore(@RequestParam String scoreUUID, @RequestParam float score, @RequestParam float innerTen, @RequestParam float outerTen, @RequestParam int procedures, @RequestParam float alfa, @RequestParam float charlie, @RequestParam float delta,@Nullable @RequestParam List<Float> series) {
-        return scoreService.setScore(scoreUUID, score, innerTen, outerTen, alfa, charlie, delta, procedures,series);
+    public ResponseEntity<?> setScore(@RequestParam String scoreUUID, @RequestParam float score, @RequestParam float innerTen, @RequestParam float outerTen, @RequestParam int procedures,@RequestParam float miss, @RequestParam float alfa, @RequestParam float charlie, @RequestParam float delta,@Nullable @RequestParam List<Float> series) {
+        return scoreService.setScore(scoreUUID, score, innerTen, outerTen, alfa, charlie, delta, procedures,miss,series);
     }
     @PutMapping("/score/forceSetScore")
     public ResponseEntity<?> forceSetScore(@RequestParam String scoreUUID, @RequestParam float score){

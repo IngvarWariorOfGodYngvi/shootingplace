@@ -44,43 +44,47 @@ public class ContributionService {
         this.userRepository = userRepository;
     }
 
-    public ResponseEntity<?> addContribution(String memberUUID, LocalDate contributionPaymentDay, String pinCode) {
+    public ResponseEntity<?> addContribution(String memberUUID, LocalDate contributionPaymentDay, String pinCode, Integer contributionCount) {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
-        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
-        List<ContributionEntity> contributionEntityList = memberEntity.getHistory().getContributionList();
 
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
-
-        ContributionEntity contributionEntity = ContributionEntity.builder()
-                .paymentDay(null)
-                .validThru(null)
-                .acceptedBy(userRepository.findByPinCode(pin).getFullName())
-                .build();
-        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-            contributionEntity.setPaymentDay(contributionPaymentDay);
-            if (contributionEntityList.size() < 1) {
-                contributionEntity.setValidThru(contributionPaymentDay.plusMonths(6));
-            } else {
-                contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusMonths(6));
+        ResponseEntity<?> response = null;
+        contributionCount = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? contributionCount : 1;
+        for (int i = 0; i < contributionCount; i++) {
+            System.out.println(contributionCount);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
+        List<ContributionEntity> contributionEntityList = memberEntity.getHistory().getContributionList();
+            ContributionEntity contributionEntity = ContributionEntity.builder()
+                    .paymentDay(null)
+                    .validThru(null)
+                    .acceptedBy(userRepository.findByPinCode(pin).getFullName())
+                    .build();
+            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+                contributionEntity.setPaymentDay(contributionPaymentDay);
+                if (contributionEntityList.size() < 1) {
+                    contributionEntity.setValidThru(contributionPaymentDay.plusMonths(3));
+                } else {
+                    contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusMonths(3));
+                }
             }
-        }
-        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
-            contributionEntity.setPaymentDay(contributionPaymentDay);
-            if (contributionEntityList.size() < 1) {
-                contributionEntity.setValidThru(contributionPaymentDay.plusYears(1));
-            } else {
-                contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusYears(1));
+            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
+                contributionEntity.setPaymentDay(contributionPaymentDay);
+                if (contributionEntityList.size() < 1) {
+                    contributionEntity.setValidThru(contributionPaymentDay.plusYears(1));
+                } else {
+                    contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusYears(1));
+                }
             }
-        }
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Przedłużono składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
-        if (response.getStatusCode().equals(HttpStatus.OK)) {
-            contributionRepository.save(contributionEntity);
-            historyService.addContribution(memberUUID, contributionEntity);
-            LOG.info("zmieniono " + memberEntity.getSecondName());
-            memberEntity.setActive(contributionEntity.getValidThru().isAfter(LocalDate.now()));
-            memberRepository.save(memberEntity);
+            response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Przedłużono składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
+            if (response.getStatusCode().equals(HttpStatus.OK)) {
+                contributionRepository.save(contributionEntity);
+                historyService.addContribution(memberUUID, contributionEntity);
+                LOG.info("zmieniono " + memberEntity.getSecondName());
+                memberEntity.setActive(contributionEntity.getValidThru().isAfter(LocalDate.now()));
+                memberRepository.save(memberEntity);
+            }
         }
         return response;
     }
@@ -135,7 +139,7 @@ public class ContributionService {
 
         LocalDate validThru = contributionPaymentDay;
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-            validThru = contributionPaymentDay.plusMonths(6);
+            validThru = contributionPaymentDay.plusMonths(3);
         }
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
             validThru = contributionPaymentDay.plusYears(1);

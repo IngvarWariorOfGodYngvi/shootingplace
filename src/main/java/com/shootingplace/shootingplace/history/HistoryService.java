@@ -22,11 +22,7 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -83,13 +79,13 @@ public class HistoryService {
                 .getContributionList();
         if (contributionList != null) {
             contributionList
-                    .sort(Comparator.comparing(ContributionEntity::getPaymentDay));
+                    .sort(Comparator.comparing(ContributionEntity::getPaymentDay).thenComparing(ContributionEntity::getValidThru));
         } else {
             contributionList = new ArrayList<>();
         }
         contributionList.add(contribution);
         contributionList
-                .sort(Comparator.comparing(ContributionEntity::getPaymentDay).reversed());
+                .sort(Comparator.comparing(ContributionEntity::getPaymentDay).thenComparing(ContributionEntity::getValidThru).reversed());
         historyEntity.setContributionsList(contributionList);
 
         LOG.info("Dodano rekord w historii składek");
@@ -228,35 +224,34 @@ public class HistoryService {
         LicensePaymentHistoryEntity licensePaymentHistoryEntity = licensePaymentHistoryRepository.findById(paymentUUID).orElseThrow(EntityNotFoundException::new);
         licensePaymentHistoryEntity.setPayInPZSSPortal(condition);
         licensePaymentHistoryRepository.save(licensePaymentHistoryEntity);
-        return getStringResponseEntityMenagement(pinCode,memberRepository.getOne(licensePaymentHistoryEntity.getMemberUUID()),HttpStatus.OK,"toggleLicencePaymentInPZSS","Oznaczono jako " + (condition ? "" : "nie") + "opłacone w Portalu PZSS");
+        return getStringResponseEntityMenagement(pinCode, memberRepository.getOne(licensePaymentHistoryEntity.getMemberUUID()), HttpStatus.OK, "toggleLicencePaymentInPZSS", "Oznaczono jako " + (condition ? "" : "nie") + "opłacone w Portalu PZSS");
 //        return ResponseEntity.ok("Oznaczono jako " + (condition ? "" : "nie") + "opłacone w Portalu PZSS");
     }
 
     //  Tournament
-    private CompetitionHistoryEntity createCompetitionHistoryEntity(String tournamentUUID, LocalDate date, String discipline, String[] disciplines, String attachedTo) {
+    private CompetitionHistoryEntity createCompetitionHistoryEntity(String tournamentUUID, LocalDate date, String discipline, List<String> disciplineList, String attachedTo) {
         TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
         String name = tournamentEntity.getName();
-        return CompetitionHistoryEntity.builder()
+        CompetitionHistoryEntity build = CompetitionHistoryEntity.builder()
                 .name(name)
                 .WZSS(tournamentEntity.isWZSS())
                 .date(date)
                 .discipline(discipline)
-                .disciplines(disciplines)
                 .attachedToList(attachedTo)
                 .build();
-
+        build.setDisciplineList(disciplineList);
+        return build;
     }
 
     public void addCompetitionRecord(String memberUUID, CompetitionMembersListEntity list) {
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
-        CompetitionHistoryEntity competitionHistoryEntity = createCompetitionHistoryEntity(list.getAttachedToTournament(), list.getDate(), list.getDiscipline(), list.getDisciplines(), list.getUuid());
+        CompetitionHistoryEntity competitionHistoryEntity = createCompetitionHistoryEntity(list.getAttachedToTournament(), list.getDate(), list.getDiscipline(), list.getDisciplineList(), list.getUuid());
         competitionHistoryRepository.save(competitionHistoryEntity);
 
         List<CompetitionHistoryEntity> competitionHistoryEntityList = memberEntity
                 .getHistory()
                 .getCompetitionHistory();
-
 
         competitionHistoryEntityList.add(competitionHistoryEntity);
         competitionHistoryEntityList.sort(Comparator.comparing(CompetitionHistoryEntity::getDate).reversed());
@@ -264,110 +259,97 @@ public class HistoryService {
         HistoryEntity historyEntity = memberEntity
                 .getHistory();
         historyEntity.setCompetitionHistory(competitionHistoryEntityList);
-
-        int year = memberEntity.getLicense().getNumber() != null ? memberEntity.getLicense().getValidThru().getYear() : LocalDate.now().getYear();
-
-        List<CompetitionHistoryEntity> collect1 = competitionHistoryEntityList
-                .stream()
-                .filter(f -> f.getDate().getYear() == year)
-                .collect(Collectors.toList());
-
-        long countPistol = collect1.stream()
-                .filter(f -> f.getDiscipline() != null && f.getDiscipline().equals(Discipline.PISTOL.getName()))
-                .count();
-        long countRifle = collect1.stream()
-                .filter(f -> f.getDiscipline() != null && f.getDiscipline().equals(Discipline.RIFLE.getName()))
-                .count();
-        long countShotgun = collect1.stream()
-                .filter(f -> f.getDiscipline() != null && f.getDiscipline().equals(Discipline.SHOTGUN.getName()))
-                .count();
-
-        AtomicInteger pistolC = new AtomicInteger(), rifleC = new AtomicInteger(), shotgunC = new AtomicInteger();
-        collect1.stream()
-                .filter(f -> f.getDisciplines() != null)
-                .forEach(e -> {
-                    if (Arrays.toString(e.getDisciplines()).contains(Discipline.PISTOL.getName())) {
-                        pistolC.getAndIncrement();
-                    }
-                    if (Arrays.toString(e.getDisciplines()).contains(Discipline.RIFLE.getName())) {
-                        rifleC.getAndIncrement();
-                    }
-                    if (Arrays.toString(e.getDisciplines()).contains(Discipline.SHOTGUN.getName())) {
-                        shotgunC.getAndIncrement();
-                    }
-                });
-
-        historyEntity.setPistolCounter((int) countPistol + pistolC.get());
-        historyEntity.setRifleCounter((int) countRifle + rifleC.get());
-        historyEntity.setShotgunCounter((int) countShotgun + shotgunC.get());
-
-        LOG.info("Dodano wpis w historii startów.");
         historyRepository.save(historyEntity);
+        LOG.info("Dodano wpis w historii startów.");
+        checkStarts(memberUUID);
+        checkProlongLicense(memberUUID);
+    }
 
-// do poprawy
-        if (historyEntity.getPistolCounter() >= 4 || historyEntity.getRifleCounter() >= 4 || historyEntity.getShotgunCounter() >= 4) {
-            if (historyEntity.getPistolCounter() >= 4 && (historyEntity.getRifleCounter() >= 2 || historyEntity.getShotgunCounter() >= 2)) {
-                memberEntity.getLicense().setCanProlong(true);
-                licenseRepository.save(memberEntity.getLicense());
-            }
-            if (historyEntity.getRifleCounter() >= 4 && (historyEntity.getPistolCounter() >= 2 || historyEntity.getShotgunCounter() >= 2)) {
-                memberEntity.getLicense().setCanProlong(true);
-                licenseRepository.save(memberEntity.getLicense());
+    private void checkProlongLicense(String memberUUID) {
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
+        HistoryEntity historyEntity = memberEntity.getHistory();
+        Integer[] arr = {
+                memberEntity.getLicense().isPistolPermission() ? historyEntity.getPistolCounter() : -1,
+                memberEntity.getLicense().isRiflePermission() ? historyEntity.getRifleCounter() : -1,
+                memberEntity.getLicense().isShotgunPermission() ? historyEntity.getShotgunCounter() : -1
+        };
+        Arrays.sort(arr, Collections.reverseOrder());
+        memberEntity.getLicense().setCanProlong(arr[0] != -1 && arr[0] >= 4 && arr[1] == -1 && arr[2] == -1 || arr[0] != -1 && arr[0] >= 4 && arr[1] != -1 && arr[1] >= 2 && arr[2] == -1 || arr[0] != -1 && arr[0] >= 4 && arr[1] != -1 && arr[1] >= 2 && arr[2] >= 2);
+        licenseRepository.save(memberEntity.getLicense());
+    }
 
-            }
-            if (historyEntity.getShotgunCounter() >= 4 && (historyEntity.getRifleCounter() >= 2 || historyEntity.getPistolCounter() >= 2)) {
-                memberEntity.getLicense().setCanProlong(true);
-                licenseRepository.save(memberEntity.getLicense());
+    public void rewriteDisciplinesToDisciplineList() {
+        List<MemberEntity> all = memberRepository.findAll();
+        for (MemberEntity m : all) {
+            HistoryEntity history = m.getHistory();
+            if (history != null) {
+                if (history.getCompetitionHistory() != null && history.getCompetitionHistory().size() > 0) {
+                    List<CompetitionHistoryEntity> competitionHistory = history.getCompetitionHistory();
+                    competitionHistory.forEach(c -> {
+                        List<String> disciplines = c.getDisciplines() != null ? List.of(c.getDisciplines()) : new ArrayList<>();
+                        List<String> disciplineList = c.getDisciplineList();
+                        if (disciplines.size() > 0)
+                            c.setDisciplineList(disciplines);
+                        else c.setDisciplineList(disciplineList);
+                        System.out.println("przepisuję zawody " + c.getName());
+                        System.out.println(disciplines.toString());
+                        System.out.println(disciplineList.toString());
+                        competitionHistoryRepository.save(c);
+                    });
+                }
             }
         }
     }
 
     public void checkStarts() {
+//        rewriteDisciplinesToDisciplineList();
         List<MemberEntity> collect = memberRepository.findAllByErasedFalse();
-        collect.forEach(e -> {
-            int year = e.getLicense().getNumber() != null ? e.getLicense().getValidThru().getYear() : LocalDate.now().getYear();
-            List<CompetitionHistoryEntity> collect1 = e.getHistory()
-                    .getCompetitionHistory()
-                    .stream()
-                    .filter(f -> f.getDate().getYear() == year)
+        collect.forEach(e -> checkStarts(e.getUuid()));
+    }
+
+    public void checkStarts(String memberUUID) {
+        MemberEntity e = memberRepository.getOne(memberUUID);
+        int year = e.getLicense().getNumber() != null ? e.getLicense().getValidThru().getYear() : LocalDate.now().getYear();
+        List<CompetitionHistoryEntity> collect1 = e.getHistory()
+                .getCompetitionHistory()
+                .stream()
+                .filter(f -> f.getDate().getYear() == year)
+                .collect(Collectors.toList());
+        if (!collect1.isEmpty()) {
+            long countPistol = collect1.stream()
+                    .filter(f -> f.getDiscipline() != null && f.getDiscipline().equals(Discipline.PISTOL.getName()))
+                    .count();
+            long countRifle = collect1.stream()
+                    .filter(f -> f.getDiscipline() != null && f.getDiscipline().equals(Discipline.RIFLE.getName()))
+                    .count();
+            long countShotgun = collect1.stream()
+                    .filter(f -> f.getDiscipline() != null && f.getDiscipline().equals(Discipline.SHOTGUN.getName()))
+                    .count();
+
+            int pistolC = 0, rifleC = 0, shotgunC = 0;
+            List<CompetitionHistoryEntity> collect2 = collect1.stream()
+                    .filter(f -> f.getDisciplineList() != null)
                     .collect(Collectors.toList());
-            if (!collect1.isEmpty()) {
-
-                long countPistol = collect1.stream()
-                        .filter(f -> f.getDiscipline() != null && f.getDiscipline().equals(Discipline.PISTOL.getName()))
-                        .count();
-                long countRifle = collect1.stream()
-                        .filter(f -> f.getDiscipline() != null && f.getDiscipline().equals(Discipline.RIFLE.getName()))
-                        .count();
-                long countShotgun = collect1.stream()
-                        .filter(f -> f.getDiscipline() != null && f.getDiscipline().equals(Discipline.SHOTGUN.getName()))
-                        .count();
-
-                int pistolC = 0, rifleC = 0, shotgunC = 0;
-                List<CompetitionHistoryEntity> collect2 = collect1.stream()
-                        .filter(f -> f.getDisciplines() != null)
-                        .collect(Collectors.toList());
-                for (CompetitionHistoryEntity entity : collect2) {
-                    String[] disciplines = entity.getDisciplines();
-                    for (String s : disciplines) {
-                        if (s.contains(Discipline.PISTOL.getName())) {
-                            pistolC++;
-                        }
-                        if (s.contains(Discipline.RIFLE.getName())) {
-                            rifleC++;
-                        }
-                        if (s.contains(Discipline.SHOTGUN.getName())) {
-                            shotgunC++;
-                        }
+            for (CompetitionHistoryEntity entity : collect2) {
+                List<String> disciplineList = entity.getDisciplineList();
+                for (String s : disciplineList) {
+                    if (s.contains(Discipline.PISTOL.getName())) {
+                        pistolC++;
+                    }
+                    if (s.contains(Discipline.RIFLE.getName())) {
+                        rifleC++;
+                    }
+                    if (s.contains(Discipline.SHOTGUN.getName())) {
+                        shotgunC++;
                     }
                 }
-                HistoryEntity history = e.getHistory();
-                history.setPistolCounter((int) (countPistol + pistolC));
-                history.setRifleCounter((int) countRifle + rifleC);
-                history.setShotgunCounter((int) countShotgun + shotgunC);
-                historyRepository.save(history);
             }
-        });
+            HistoryEntity history = e.getHistory();
+            history.setPistolCounter((int) (countPistol + pistolC));
+            history.setRifleCounter((int) countRifle + rifleC);
+            history.setShotgunCounter((int) countShotgun + shotgunC);
+            historyRepository.save(history);
+        }
     }
 
     public void removeCompetitionRecord(String memberUUID, CompetitionMembersListEntity list) {
@@ -383,31 +365,11 @@ public class HistoryService {
         }
         historyEntity.getCompetitionHistory().remove(competitionHistoryEntity);
 
-        List<String> list1 = new ArrayList<>();
-        if (competitionHistoryEntity.getDisciplines() != null) {
-            for (int i = 0; i < competitionHistoryEntity.getDisciplines().length; i++) {
-                String[] disciplines = competitionHistoryEntity.getDisciplines();
-                String s = disciplines[i];
-                list1.add(s);
-            }
-        }
-
-        if ((list.getDiscipline() != null && list.getDiscipline().equals(Discipline.PISTOL.getName())) || list1.contains(Discipline.PISTOL.getName())) {
-            Integer pistolCounter = historyEntity.getPistolCounter() - 1;
-            historyEntity.setPistolCounter(pistolCounter);
-        }
-        if ((list.getDiscipline() != null && list.getDiscipline().equals(Discipline.RIFLE.getName())) || list1.contains(Discipline.RIFLE.getName())) {
-            Integer rifleCounter = historyEntity.getRifleCounter() - 1;
-            historyEntity.setRifleCounter(rifleCounter);
-        }
-        if ((list.getDiscipline() != null && list.getDiscipline().equals(Discipline.SHOTGUN.getName())) || list1.contains(Discipline.SHOTGUN.getName())) {
-            Integer shotgunCounter = historyEntity.getShotgunCounter() - 1;
-            historyEntity.setShotgunCounter(shotgunCounter);
-        }
-
         LOG.info("Zaktualizowano wpis w historii startów");
         historyRepository.save(historyEntity);
+        checkStarts(memberUUID);
         competitionHistoryRepository.delete(competitionHistoryEntity);
+        checkProlongLicense(memberUUID);
     }
 
     public void addJudgingRecord(String memberUUID, String tournamentUUID, String function) {
@@ -550,6 +512,7 @@ public class HistoryService {
         }
         return response;
     }
+
     public ResponseEntity<?> getStringResponseEntityMenagement(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, Object body) {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistoryMenagement(pinCode, memberEntity != null ? memberEntity.getClass().getSimpleName() + " " + methodName + " " : methodName, memberEntity != null ? memberEntity.getUuid() : "nie dotyczy");

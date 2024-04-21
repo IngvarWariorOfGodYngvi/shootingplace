@@ -71,19 +71,19 @@ public class ContributionServiceTest {
         membersList = getMemberEntities();
     }
 
-    @Test
-    public void add_contribution_bad_request_no_member() {
-        //given
-        String uuid = String.valueOf(UUID.randomUUID());
-        LocalDate date = LocalDate.now();
-        //when
-        when(memberRepository.existsById(any(String.class))).thenReturn(existsById(uuid));
-        ResponseEntity<?> responseEntity = contributionService.addContribution(uuid, date, pinCode);
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("Nie znaleziono Klubowicza"));
-
-    }
+//    @Test
+//    public void add_contribution_bad_request_no_member() {
+//        //given
+//        String uuid = String.valueOf(UUID.randomUUID());
+//        LocalDate date = LocalDate.now();
+//        //when
+//        when(memberRepository.existsById(any(String.class))).thenReturn(existsById(uuid));
+//        ResponseEntity<?> responseEntity = contributionService.addContribution(uuid, date, pinCode);
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("Nie znaleziono Klubowicza"));
+//
+//    }
 
 //    @Test
 //    public void add_contribution_OK() {

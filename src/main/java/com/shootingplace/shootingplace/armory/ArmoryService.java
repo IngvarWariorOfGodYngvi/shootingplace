@@ -64,14 +64,12 @@ public class ArmoryService {
         this.otherPersonRepository = otherPersonRepository;
     }
 
-
     public List<Caliber> getSumFromAllAmmoList(LocalDate firstDate, LocalDate secondDate) {
         List<Caliber> list = new ArrayList<>();
         List<CaliberEntity> calibersList = caliberService.getCalibersEntityList();
         calibersList.forEach(e ->
                 list.add(Mapping.map(e))
         );
-
         List<Caliber> list1 = new ArrayList<>();
         list.forEach(e -> ammoEvidenceRepository.findAll().stream()
                 .filter(f -> f.getDate().isAfter(firstDate.minusDays(1)))
@@ -88,33 +86,28 @@ public class ArmoryService {
                                 Caliber caliber1 = list1.stream().filter(f -> f.getName().equals(caliber.getName())).findFirst().orElseThrow(EntityNotFoundException::new);
                                 caliber.setQuantity(caliber1.getQuantity() + h.getQuantity());
                             } else {
-
                                 caliber.setQuantity(h.getQuantity());
                                 list1.add(caliber);
                             }
-
                         })
                 ));
-
         return list1;
-
-
     }
 
     public void updateAmmo(String caliberUUID, Integer count, LocalDate date, String description) {
-        CaliberEntity caliberEntity = caliberRepository.findById(caliberUUID).orElseThrow(EntityNotFoundException::new);
+        CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
         if (caliberEntity.getQuantity() == null) {
             caliberEntity.setQuantity(0);
         }
-
+        int caliberAmmoInStore = caliberService.getCaliberAmmoInStore(caliberUUID);
         CalibersAddedEntity calibersAddedEntity = CalibersAddedEntity.builder()
                 .ammoAdded(count)
                 .belongTo(caliberUUID)
                 .caliberName(caliberEntity.getName())
                 .date(date)
                 .description(description)
-                .stateForAddedDay(caliberEntity.getQuantity())
-                .finalStateForAddedDay(caliberEntity.getQuantity() + count)
+                .stateForAddedDay(caliberAmmoInStore)
+                .finalStateForAddedDay(caliberAmmoInStore + count)
                 .build();
         calibersAddedRepository.save(calibersAddedEntity);
 
@@ -124,17 +117,11 @@ public class ArmoryService {
             caliberEntity.setQuantity(0);
         }
         caliberEntity.setQuantity(caliberEntity.getQuantity() + calibersAddedEntity.getAmmoAdded());
-
         caliberRepository.save(caliberEntity);
-
     }
 
-    public boolean substratAmmo(String caliberUUID, Integer quantity) {
-
-        CaliberEntity caliberEntity = caliberRepository.findById(caliberUUID).orElseThrow(EntityNotFoundException::new);
-        if (caliberEntity.getQuantity() - quantity < 0) {
-            return false;
-        }
+    public void substratAmmo(String caliberUUID, Integer quantity) {
+        CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
         CaliberUsedEntity caliberUsedEntity = CaliberUsedEntity.builder()
                 .date(LocalDate.now())
                 .time(LocalTime.now())
@@ -143,14 +130,10 @@ public class ArmoryService {
                 .unitPrice(caliberEntity.getUnitPrice())
                 .build();
         caliberUsedRepository.save(caliberUsedEntity);
-
         List<CaliberUsedEntity> ammoUsed = caliberEntity.getAmmoUsed();
-
         ammoUsed.add(caliberUsedEntity);
-        caliberEntity.setQuantity(caliberEntity.getQuantity() - caliberUsedEntity.getAmmoUsed());
+        caliberEntity.setAmmoUsed(ammoUsed);
         caliberRepository.save(caliberEntity);
-
-        return true;
     }
 
     public List<CalibersAddedEntity> getHistoryOfCaliber(String caliberUUID) {
@@ -270,7 +253,7 @@ public class ArmoryService {
                             .thenComparing((o1, o2) -> {
                                 int a = Integer.parseInt(o1.getRecordInEvidenceBook().replaceAll("/", ""));
                                 int b = Integer.parseInt(o2.getRecordInEvidenceBook().replaceAll("/", ""));
-                                return b-a;
+                                return b - a;
                             }).reversed())
                     .collect(Collectors.toList());
             dto.setGunEntityList(collect);
@@ -528,7 +511,6 @@ public class ArmoryService {
         return response;
     }
 
-
     public ResponseEntity<?> returnToStore(List<String> gunsUUID) {
         List<String> responseList = new ArrayList<>();
         gunsUUID.forEach(e -> {
@@ -563,8 +545,6 @@ public class ArmoryService {
 
     public List<?> getGunInAmmoEvidenceList() {
         return usedHistoryRepository.findAllByUsedTypeAndReturnToStoreFalse(UsedType.TRAINING.getName());
-
-
     }
 
     public ResponseEntity<?> addGunToRepair(String gunUUID) {

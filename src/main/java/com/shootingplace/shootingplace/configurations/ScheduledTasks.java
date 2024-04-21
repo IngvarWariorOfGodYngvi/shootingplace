@@ -5,6 +5,7 @@ import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceService;
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardService;
 import com.shootingplace.shootingplace.enums.UserSubType;
+import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberService;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,24 +17,28 @@ public class ScheduledTasks {
 
     private final WorkingTimeEvidenceService workServ;
     private final MemberService memberServ;
+    private final HistoryService historyServ;
     private final BarCodeCardService barCodeCardServ;
     private final AmmoEvidenceService ammoEvidenceService;
     private final AmmoUsedService ammoUsedService;
     private final RegistrationRecordsService registrationRecordsService;
 
-    public ScheduledTasks(WorkingTimeEvidenceService workRepo, MemberService memberServ, BarCodeCardService barCodeCardServ, AmmoEvidenceService ammoEvidenceService, AmmoUsedService ammoUsedService, RegistrationRecordsService registrationRecordsService) {
+    public ScheduledTasks(WorkingTimeEvidenceService workRepo, MemberService memberServ, HistoryService historyServ, BarCodeCardService barCodeCardServ, AmmoEvidenceService ammoEvidenceService, AmmoUsedService ammoUsedService, RegistrationRecordsService registrationRecordsService) {
         this.workServ = workRepo;
         this.memberServ = memberServ;
+        this.historyServ = historyServ;
         this.barCodeCardServ = barCodeCardServ;
         this.ammoEvidenceService = ammoEvidenceService;
         this.ammoUsedService = ammoUsedService;
         this.registrationRecordsService = registrationRecordsService;
     }
+
     @Transactional
     @Scheduled(cron = "0 0 0 * * *")
     public void recountAmmo() {
         ammoUsedService.recountAmmo();
     }
+
     @Scheduled(cron = "0 1 23 * * *")
     public void closeOpenedAmmoList() {
         ammoEvidenceService.automationCloseEvidence();
@@ -49,10 +54,16 @@ public class ScheduledTasks {
         workServ.closeAllActiveWorkTime(UserSubType.MANAGEMENT.getName());
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 0 20 * * *")
     @Transactional
     public void checkMembers() {
         memberServ.checkMembers();
+    }
+
+    @Scheduled(cron = "0 0 20 * * *")
+    @Transactional
+    public void checkStarts() {
+        historyServ.checkStarts();
     }
 
     @Scheduled(cron = "0 0 21-23 ? * *")
@@ -60,6 +71,7 @@ public class ScheduledTasks {
     public void deactivateCard() {
         barCodeCardServ.deactivateNotMasterCard();
     }
+
     @Scheduled(cron = "0 30 11 ? * *")
     @Transactional
     public void setEndTimeToAllRegistrationRecordEntity() {
@@ -69,4 +81,5 @@ public class ScheduledTasks {
 //    public void checkAdult() {
 //        memberServ.automateChangeAdult();
 //    }
+
 }

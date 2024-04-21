@@ -30,10 +30,8 @@ public class CompetitionMembersListEntity {
 
     private String discipline;
     private Integer numberOfShots;
-
     private String[] disciplines;
     private String disciplineList;
-
     private Integer[] numberOfManyShots;
     private String numberOfManyShotsList;
 
@@ -71,6 +69,7 @@ public class CompetitionMembersListEntity {
         }
         this.disciplineList = value;
     }
+
     public List<String> getNumberOfManyShotsList() {
         List<String> vals = new ArrayList<>();
         if (numberOfManyShotsList != null) {

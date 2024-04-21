@@ -1,14 +1,19 @@
 package com.shootingplace.shootingplace.armory;
 
-import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceEntity;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceRepository;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -16,10 +21,16 @@ public class CaliberService {
 
     private final CaliberRepository caliberRepository;
     private final ChangeHistoryService changeHistoryService;
+    private final CalibersAddedRepository calibersAddedRepository;
+    private final AmmoInEvidenceRepository ammoInEvidenceRepository;
+    private final AmmoEvidenceRepository ammoEvidenceRepository;
 
-    public CaliberService(CaliberRepository caliberRepository, ChangeHistoryService changeHistoryService) {
+    public CaliberService(CaliberRepository caliberRepository, ChangeHistoryService changeHistoryService, CalibersAddedRepository calibersAddedRepository, AmmoInEvidenceRepository ammoInEvidenceRepository, AmmoEvidenceRepository ammoEvidenceRepository) {
         this.caliberRepository = caliberRepository;
         this.changeHistoryService = changeHistoryService;
+        this.calibersAddedRepository = calibersAddedRepository;
+        this.ammoInEvidenceRepository = ammoInEvidenceRepository;
+        this.ammoEvidenceRepository = ammoEvidenceRepository;
     }
 
     public List<CaliberEntity> getCalibersEntityList() {
@@ -33,16 +44,81 @@ public class CaliberService {
         return getCaliberSortedEntityList(caliberEntityList);
 
     }
+
     public List<Caliber> getCalibersList() {
         List<Caliber> caliberList;
         if (caliberRepository.findAll().isEmpty()) {
-            caliberList = createAllCalibersEntities().stream().map(Mapping::map).collect(Collectors.toList());
+            caliberList = createAllCalibersEntities().stream().map(this::map).collect(Collectors.toList());
         } else {
-            caliberList = caliberRepository.findAll().stream().map(Mapping::map).collect(Collectors.toList());
+            caliberList = caliberRepository.findAll().stream().map(this::map).collect(Collectors.toList());
         }
 
         return getCaliberSortedList(caliberList);
 
+    }
+
+    public int getCalibersQuantity(String uuid, LocalDate date) {
+        List<CalibersAddedEntity> collect = calibersAddedRepository.findAll()
+                .stream()
+                .filter(f -> f.getBelongTo().equals(uuid))
+                .filter(f -> f.getDate().isBefore(date.plusDays(1)))
+                .collect(Collectors.toList());
+        AtomicReference<Integer> count = new AtomicReference<>(0);
+        if (collect.size() > 0) {
+            collect.forEach(f -> {
+                count.updateAndGet(v -> v + f.getAmmoAdded());
+            });
+        }
+        List<AmmoInEvidenceEntity> collect1 = new ArrayList<>();
+        ammoEvidenceRepository.findAll()
+                .stream()
+                .filter(f -> f.getDate().isBefore(date.plusDays(1)))
+                .forEach(e -> {
+                    List<AmmoInEvidenceEntity> collect2 = e.getAmmoInEvidenceEntityList()
+                            .stream()
+                            .filter(f -> f.getCaliberUUID().equals(uuid))
+                            .collect(Collectors.toList());
+                    collect1.addAll(collect2);
+                });
+        AtomicReference<Integer> count1 = new AtomicReference<>(0);
+        if (collect1.size() > 0) {
+            collect1.forEach(g -> {
+                count1.updateAndGet(v -> v + g.getQuantity());
+            });
+        }
+        Integer opaque = count.getOpaque();
+        Integer opaque1 = count1.getOpaque();
+        return opaque - opaque1;
+    }
+
+    private Caliber map(CaliberEntity c) {
+        return Optional.ofNullable(c).map(e -> Caliber.builder()
+                .name(e.getName())
+                .uuid(e.getUuid())
+                .quantity(getCaliberAmmoInStore(c.getUuid()))
+                .unitPrice(e.getUnitPrice())
+                .unitPriceForNotMember(e.getUnitPriceForNotMember())
+                .build()).orElse(null);
+    }
+
+    public int getCaliberAmmoInStore(String uuid) {
+        List<CalibersAddedEntity> collect = calibersAddedRepository.findAll()
+                .stream()
+                .filter(f -> f.getBelongTo().equals(uuid))
+                .collect(Collectors.toList());
+        AtomicReference<Integer> count = new AtomicReference<>(0);
+        collect.forEach(f -> {
+            count.updateAndGet(v -> v + f.getAmmoAdded());
+        });
+        List<AmmoInEvidenceEntity> collect1 = ammoInEvidenceRepository.findAll()
+                .stream()
+                .filter(f -> f.getCaliberUUID().equals(uuid))
+                .collect(Collectors.toList());
+        AtomicReference<Integer> count1 = new AtomicReference<>(0);
+        collect1.forEach(g -> {
+            count1.updateAndGet(v -> v + g.getQuantity());
+        });
+        return count.getOpaque() - count1.getOpaque();
     }
 
     private List<CaliberEntity> getCaliberSortedEntityList(List<CaliberEntity> caliberEntityList) {
@@ -71,6 +147,7 @@ public class CaliberService {
         caliberEntityList2.addAll(collect);
         return caliberEntityList2;
     }
+
     private List<Caliber> getCaliberSortedList(List<Caliber> caliberList) {
         String[] sort = {"5,6mm", "9x19mm", "12/76", ".357", ".38", "7,62x39mm"};
         List<Caliber> collect = caliberList.stream().filter(f -> !f.getName().equals(sort[0])

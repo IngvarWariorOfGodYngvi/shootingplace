@@ -43,6 +43,7 @@ public class CompetitionEntity {
     private Integer practiceShots;
 
     private String caliberUUID;
+
     public List<String> getDisciplineList() {
         List<String> vals = new ArrayList<>();
         if (disciplineList != null) {
@@ -55,11 +56,16 @@ public class CompetitionEntity {
 
     public void setDisciplineList(List<String> disciplineList) {
         String value = "";
-        for (String f : disciplineList) {
-            value = value.concat(f + ";");
+        if (disciplineList.isEmpty()) {
+            this.disciplineList = null;
+        } else {
+            for (String f : disciplineList) {
+                value = value.concat(f + ";");
+            }
+            this.disciplineList = value;
         }
-        this.disciplineList = value;
     }
+
     public List<String> getNumberOfManyShotsList() {
         List<String> vals = new ArrayList<>();
         if (numberOfManyShotsList != null) {
@@ -69,6 +75,7 @@ public class CompetitionEntity {
         }
         return vals;
     }
+
     public void setNumberOfManyShotsList(List<String> numberOfManyShotsList) {
         String value = "";
         for (String f : numberOfManyShotsList) {

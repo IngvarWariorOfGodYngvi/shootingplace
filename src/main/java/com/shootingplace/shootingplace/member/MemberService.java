@@ -5,6 +5,7 @@ import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
+import com.shootingplace.shootingplace.configurations.ProfilesEnum;
 import com.shootingplace.shootingplace.contributions.ContributionService;
 import com.shootingplace.shootingplace.enums.ErasedType;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
@@ -20,6 +21,7 @@ import com.shootingplace.shootingplace.users.UserRepository;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -53,6 +55,8 @@ public class MemberService {
     private final ChangeHistoryService changeHistoryService;
     private final ErasedRepository erasedRepository;
     private final LicensePaymentHistoryRepository licensePaymentHistoryRepository;
+    private final Environment environment;
+
 
     private final UserRepository userRepository;
 
@@ -70,7 +74,7 @@ public class MemberService {
                          ErasedRepository erasedRepository,
                          LicensePaymentHistoryRepository licensePaymentHistoryRepository,
                          ChangeHistoryService changeHistoryService,
-                         UserRepository userRepository) {
+                         Environment environment, UserRepository userRepository) {
         this.memberRepository = memberRepository;
         this.licenseService = licenseService;
         this.licenseRepository = licenseRepository;
@@ -83,6 +87,7 @@ public class MemberService {
         this.erasedRepository = erasedRepository;
         this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
         this.changeHistoryService = changeHistoryService;
+        this.environment = environment;
         this.userRepository = userRepository;
     }
 
@@ -181,9 +186,9 @@ public class MemberService {
             if (member.getEmail() == null || member.getEmail().isEmpty()) {
                 email = "";
             }
-            LocalDate joinDate = member.getJoinDate( )== null?LocalDate.now():member.getJoinDate();
+            LocalDate joinDate = member.getJoinDate() == null ? LocalDate.now() : member.getJoinDate();
             int legitimationNumber;
-            LOG.info("ustawiono " + (member.getJoinDate() == null?"domyślną ":"") + "datę zapisu na" + joinDate);
+            LOG.info("ustawiono " + (member.getJoinDate() == null ? "domyślną " : "") + "datę zapisu na" + joinDate);
 
             if (member.getLegitimationNumber() == null) {
                 int number = 1;
@@ -238,7 +243,10 @@ public class MemberService {
                 memberEntity.setSignBy(user.getFullName());
                 memberRepository.save(memberEntity);
                 historyService.addContribution(memberEntity.getUuid(),
-                        contributionService.addFirstContribution(LocalDate.now(),pinCode));
+                        contributionService.addFirstContribution(LocalDate.now(), pinCode));
+                if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+                    contributionService.addContribution(memberEntity.getUuid(), LocalDate.now(), pinCode, 1);
+                }
                 response = ResponseEntity.status(201).body(memberEntity.getUuid());
             }
             return response;
@@ -643,7 +651,7 @@ public class MemberService {
     }
 
     public List<Member> getMembersToErase() {
-        LocalDate notValidContribution = LocalDate.now().minusYears(1).minusMonths(6);
+        LocalDate notValidContribution = LocalDate.now().minusYears(1);
         return memberRepository.findAllByErasedFalseAndActiveFalse().stream()
                 .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))).map(Mapping::map).collect(Collectors.toList());

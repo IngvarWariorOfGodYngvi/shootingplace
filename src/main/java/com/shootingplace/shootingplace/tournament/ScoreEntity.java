@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,10 +29,12 @@ public class ScoreEntity {
     private float alfa;
     private float charlie;
     private float delta;
+    private float miss;
 
     private float innerTen;
     private float outerTen;
     private float hf;
+
     private int procedures;
 
     private String name;
@@ -45,6 +48,7 @@ public class ScoreEntity {
     private boolean dsq;
     private boolean pk;
     private boolean edited;
+    private LocalDateTime createDate;
 
     private String competitionMembersListEntityUUID;
     @OneToOne(orphanRemoval = true)
@@ -58,7 +62,7 @@ public class ScoreEntity {
 
     public List<Float> getSeries() {
         List<Float> vals = new ArrayList<>();
-        if (series != null) {
+        if (series != null && !series.isEmpty()) {
             for (String s : series.split(";")) {
                 vals.add(Float.valueOf(s));
             }
@@ -236,5 +240,21 @@ public class ScoreEntity {
 
     public void setEdited(boolean edited) {
         this.edited = edited;
+    }
+
+    public float getMiss() {
+        return miss;
+    }
+
+    public void setMiss(float miss) {
+        this.miss = miss;
+    }
+
+    public LocalDateTime getCreateDate() {
+        return createDate;
+    }
+
+    public void setCreateDate(LocalDateTime createDate) {
+        this.createDate = createDate;
     }
 }

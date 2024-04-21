@@ -21,7 +21,10 @@ public class CompetitionMembersList {
 
     private String discipline;
     private String[] disciplines;
+    private String disciplineList;
     private Integer numberOfShots;
+    private String numberOfManyShotsList;
+
 
     private String type;
 
@@ -154,5 +157,31 @@ public class CompetitionMembersList {
 
     public void setDisciplines(String[] disciplines) {
         this.disciplines = disciplines;
+    }
+
+    public void setDisciplineList(List<String> disciplineList) {
+        String value = "";
+        for (String f : disciplineList) {
+            value = value.concat(f + ";");
+        }
+        this.disciplineList = value;
+    }
+
+    public List<String> getNumberOfManyShotsList() {
+        List<String> vals = new ArrayList<>();
+        if (numberOfManyShotsList != null) {
+            for (String s : numberOfManyShotsList.split(";")) {
+                vals.add(String.valueOf(s));
+            }
+        }
+        return vals;
+    }
+
+    public void setNumberOfManyShotsList(List<String> numberOfManyShotsList) {
+        String value = "";
+        for (String f : numberOfManyShotsList) {
+            value = value.concat(f + ";");
+        }
+        this.numberOfManyShotsList = value;
     }
 }

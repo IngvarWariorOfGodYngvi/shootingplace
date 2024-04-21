@@ -2,11 +2,15 @@ package com.shootingplace.shootingplace.settings;
 
 import com.shootingplace.shootingplace.club.Club;
 import com.shootingplace.shootingplace.club.ClubService;
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/settings")
@@ -14,9 +18,11 @@ import java.time.LocalDate;
 public class SettingsController {
 
     private final ClubService clubService;
+    private final Environment environment;
 
-    public SettingsController(ClubService clubService) {
+    public SettingsController(ClubService clubService, Environment environment) {
         this.clubService = clubService;
+        this.environment = environment;
     }
 
     @Transactional
@@ -31,11 +37,16 @@ public class SettingsController {
 
     @GetMapping("/termsAndLicense")
     public ResponseEntity<?> termsAndLicense() {
-        LocalDate endLicense = LocalDate.of(2026, 8, 30);
-        if (LocalDate.now().isBefore(endLicense)) {
-            return ResponseEntity.ok("Licencja na program jest ważna do: " + endLicense);
+        LocalDate endLicense = LocalDate.parse(Objects.requireNonNull(environment.getProperty("licenseDate")));
+        boolean isEnd = LocalDate.now().isAfter(endLicense);
+        Map<String,String> map = new HashMap<>();
+        map.put("message", !isEnd?"Licencja na program jest ważna do: " + endLicense:"licencja skończyła się: " + endLicense);
+        map.put("isEnd", String.valueOf(isEnd));
+        map.put("endDate", String.valueOf(endLicense));
+        if (!isEnd) {
+            return ResponseEntity.ok(map);
         } else {
-            return ResponseEntity.status(403).body("licencja skończyła się: " + endLicense);
+            return ResponseEntity.badRequest().body(map);
         }
     }
 

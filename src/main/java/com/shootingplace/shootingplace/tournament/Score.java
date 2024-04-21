@@ -22,6 +22,8 @@ public class Score {
     private float outerTen;
     private float hf;
     private int procedures;
+    private float miss;
+
 
     private float alfa;
     private float charlie;
@@ -213,5 +215,13 @@ public class Score {
 
     public void setEdited(boolean edited) {
         this.edited = edited;
+    }
+
+    public float getMiss() {
+        return miss;
+    }
+
+    public void setMiss(float miss) {
+        this.miss = miss;
     }
 }

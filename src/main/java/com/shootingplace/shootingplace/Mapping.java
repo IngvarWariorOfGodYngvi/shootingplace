@@ -31,11 +31,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Mapping {
-    public final CaliberRepository caliberRepository;
-
-    public Mapping(CaliberRepository caliberRepository) {
-        this.caliberRepository = caliberRepository;
-    }
 
     public static Member map(MemberEntity e) {
         return Member.builder()
@@ -255,11 +250,13 @@ public class Mapping {
     }
 
     private static CompetitionHistory map(CompetitionHistoryEntity e) {
-        return CompetitionHistory.builder()
+        CompetitionHistory build = CompetitionHistory.builder()
                 .date(e.getDate())
                 .discipline(e.getDiscipline())
                 .name(e.getName())
                 .build();
+        build.setDisciplineList(e.getDisciplineList());
+        return build;
     }
 
     public static Contribution map(ContributionEntity e) {
@@ -331,7 +328,7 @@ public class Mapping {
     }
 
     public static CompetitionMembersList map(CompetitionMembersListEntity c) {
-        return CompetitionMembersList.builder()
+        CompetitionMembersList build = CompetitionMembersList.builder()
                 .uuid(c.getUuid())
                 .name(c.getName())
                 .date(c.getDate())
@@ -348,6 +345,9 @@ public class Mapping {
                 .caliberUUID(c.getCaliberUUID())
                 .practiceShots(c.getPracticeShots())
                 .build();
+        build.setDisciplineList(c.getDisciplineList());
+        build.setNumberOfManyShotsList(c.getNumberOfManyShotsList());
+        return build;
     }
 
     public static CompetitionMembersList map1(CompetitionMembersListEntity c) {
@@ -386,6 +386,7 @@ public class Mapping {
                 .pk(s.isPk())
                 .hf(s.getHf())
                 .edited(s.isEdited())
+                .miss(s.getMiss())
                 .series(s.getSeries() != null ? s.getSeries() : null)
                 .procedures(s.getProcedures())
                 .otherPersonEntity(s.getOtherPersonEntity())
