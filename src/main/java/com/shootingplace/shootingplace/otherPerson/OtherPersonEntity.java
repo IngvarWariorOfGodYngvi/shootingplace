@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @AllArgsConstructor
@@ -25,12 +26,14 @@ public class OtherPersonEntity {
     private String email;
     private String weaponPermissionNumber;
     private boolean active;
-    @OneToOne
+    @OneToOne(orphanRemoval = true)
     private AddressEntity address;
     @ManyToOne
     private ClubEntity club;
     @OneToOne(orphanRemoval = true)
     private MemberPermissionsEntity permissionsEntity;
+
+    private LocalDateTime creationDate;
 
     public Integer getId() {
         return id;
@@ -98,6 +101,14 @@ public class OtherPersonEntity {
 
     public void setWeaponPermissionNumber(String weaponPermissionNumber) {
         this.weaponPermissionNumber = weaponPermissionNumber;
+    }
+
+    public LocalDateTime getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(LocalDateTime creationDate) {
+        this.creationDate = creationDate;
     }
 
     public AddressEntity getAddress() {

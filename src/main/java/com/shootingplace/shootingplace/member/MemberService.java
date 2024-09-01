@@ -8,10 +8,9 @@ import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.configurations.ProfilesEnum;
 import com.shootingplace.shootingplace.contributions.ContributionService;
 import com.shootingplace.shootingplace.enums.ErasedType;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
-import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
-import com.shootingplace.shootingplace.history.LicensePaymentHistoryRepository;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.license.LicenseService;
@@ -54,7 +53,6 @@ public class MemberService {
     private final ClubRepository clubRepository;
     private final ChangeHistoryService changeHistoryService;
     private final ErasedRepository erasedRepository;
-    private final LicensePaymentHistoryRepository licensePaymentHistoryRepository;
     private final Environment environment;
 
 
@@ -72,7 +70,6 @@ public class MemberService {
                          MemberPermissionsService memberPermissionsService,
                          ClubRepository clubRepository,
                          ErasedRepository erasedRepository,
-                         LicensePaymentHistoryRepository licensePaymentHistoryRepository,
                          ChangeHistoryService changeHistoryService,
                          Environment environment, UserRepository userRepository) {
         this.memberRepository = memberRepository;
@@ -85,7 +82,6 @@ public class MemberService {
         this.memberPermissionsService = memberPermissionsService;
         this.clubRepository = clubRepository;
         this.erasedRepository = erasedRepository;
-        this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
         this.changeHistoryService = changeHistoryService;
         this.environment = environment;
         this.userRepository = userRepository;
@@ -133,7 +129,7 @@ public class MemberService {
 
 
     //--------------------------------------------------------------------------
-    public ResponseEntity<?> addNewMember(Member member, Address address, boolean returningToClub, String pinCode) {
+    public ResponseEntity<?> addNewMember(Member member, Address address, boolean returningToClub, String pinCode) throws NoUserPermissionException {
         MemberEntity memberEntity;
 
         List<MemberEntity> memberEntityList = memberRepository.findAll();
@@ -257,7 +253,7 @@ public class MemberService {
 
 
     //--------------------------------------------------------------------------
-    public ResponseEntity<?> activateOrDeactivateMember(String memberUUID, String pinCode) {
+    public ResponseEntity<?> activateOrDeactivateMember(String memberUUID, String pinCode) throws NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
@@ -285,7 +281,7 @@ public class MemberService {
         });
     }
 
-    public ResponseEntity<?> changeAdult(String memberUUID, String pinCode) {
+    public ResponseEntity<?> changeAdult(String memberUUID, String pinCode) throws NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
@@ -308,7 +304,7 @@ public class MemberService {
         return response;
     }
 
-    public ResponseEntity<?> eraseMember(String memberUUID, String erasedType, LocalDate erasedDate, String additionalDescription, String pinCode) {
+    public ResponseEntity<?> eraseMember(String memberUUID, String erasedType, LocalDate erasedDate, String additionalDescription, String pinCode) throws NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
@@ -319,7 +315,7 @@ public class MemberService {
                     .erasedType(erasedType)
                     .date(erasedDate)
                     .additionalDescription(additionalDescription)
-                    .date(LocalDate.now())
+                    .inputDate(LocalDate.now())
                     .build();
             erasedRepository.save(build);
             memberEntity.setErasedEntity(build);
@@ -335,7 +331,7 @@ public class MemberService {
     }
 
     //--------------------------------------------------------------------------
-    public ResponseEntity<?> updateMember(String memberUUID, Member member, String pinCode) {
+    public ResponseEntity<?> updateMember(String memberUUID, Member member, String pinCode) throws NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.badRequest().build();
@@ -413,9 +409,9 @@ public class MemberService {
 
     public ResponseEntity<?> getMember(int number) {
         if (memberRepository.existsByLegitimationNumber(number)) {
-            MemberEntity memberEntity = memberRepository.findByLegitimationNumber(number).orElse(null);
-            assert memberEntity != null;
-            LOG.info("Wywołano Klubowicza " + memberEntity.getFirstName() + " " + memberEntity.getSecondName());
+            MemberEntity memberEntity = memberRepository.findByLegitimationNumber(number).orElseThrow(EntityNotFoundException::new);
+            historyService.checkStarts(memberEntity.getUuid());
+            LOG.info("Wywołano Klubowicza " + memberEntity.getFullName());
             return ResponseEntity.ok(memberEntity);
         } else {
             return ResponseEntity.badRequest().body("Klubowicz o podanym numerze legitymacji nie istnieje");
@@ -446,98 +442,10 @@ public class MemberService {
     public List<MemberInfo> getAllNames() {
         return memberRepository.findAllByErasedFalse().stream()
                 .map(Mapping::map1)
-                .sorted(Comparator.comparing(MemberInfo::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberInfo::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .sorted(Comparator.comparing(MemberInfo::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))
+                        .thenComparing(MemberInfo::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
 
-    }
-
-    public List<Long> getMembersQuantity() {
-        List<Long> list = new ArrayList<>();
-//      whole adult
-        List<MemberEntity> all = memberRepository.findAll();
-        long count = all.stream()
-                .filter(f -> !f.getErased())
-                .filter(MemberEntity::getAdult)
-                .count();
-//      license valid
-        long count1 = all.stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> f.getClub().getId().equals(1))
-                .filter(f -> f.getLicense().getNumber() != null)
-                .filter(MemberEntity::getPzss)
-                .filter(f -> f.getLicense().isValid())
-                .count();
-
-//      license not valid
-        long count2 = all.stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> f.getClub().getId().equals(1))
-                .filter(f -> f.getLicense().getNumber() != null)
-                .filter(MemberEntity::getPzss)
-                .filter(f -> !f.getLicense().isValid())
-                .count();
-
-//      whole not adult
-        long count3 = all.stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> !f.getAdult())
-                .count();
-//      not adult active
-        long count4 = all.stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> !f.getAdult())
-                .filter(MemberEntity::getActive)
-                .count();
-//      not adult not active
-        long count5 = all.stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> !f.getAdult())
-                .filter(f -> !f.getActive())
-                .count();
-
-//      adult erased
-        long count6 = all.stream()
-                .filter(MemberEntity::getErased)
-                .filter(MemberEntity::getAdult)
-                .count();
-//      not adult erased
-        long count7 = all.stream()
-                .filter(MemberEntity::getErased)
-                .filter(f -> !f.getAdult())
-                .count();
-        List<LicensePaymentHistoryEntity> allLicensePayment = licensePaymentHistoryRepository.findAll();
-        long count8 = allLicensePayment.stream()
-                .filter(f -> !f.isPayInPZSSPortal())
-                .count();
-        long count9 = allLicensePayment.stream()
-                .filter(f -> f.getDate().getYear() == LocalDate.now().getYear())
-                .filter(LicensePaymentHistoryEntity::isNew)
-                .count();
-        long count10 = all.stream()
-                .filter(f -> !f.getErased())
-                .filter(MemberEntity::getAdult)
-                .filter(MemberEntity::getActive)
-                .count();
-        long count11 = all.stream()
-                .filter(f -> !f.getErased())
-                .filter(MemberEntity::getAdult)
-                .filter(f -> !f.getActive())
-                .count();
-        list.add(count);
-        list.add(count1);
-        list.add(count2);
-        list.add(count3);
-        list.add(count4);
-        list.add(count5);
-        list.add(count6);
-        list.add(count7);
-        list.add(count8);
-        list.add(count9);
-        list.add(count10);
-        list.add(count11);
-
-
-        return list;
     }
 
     public List<MemberDTO> getAllMemberDTO() {
@@ -657,14 +565,17 @@ public class MemberService {
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))).map(Mapping::map).collect(Collectors.toList());
     }
 
-    public List<Member> getMembersErased() {
+    public List<Member> getMembersErased(LocalDate firstDate, LocalDate secondDate) {
         return memberRepository.findAllByErasedTrue().stream()
+                .filter(f -> f.getErasedEntity() != null)
+                .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1)))
+                .filter(f -> f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .map(Mapping::map)
                 .collect(Collectors.toList());
     }
 
-    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, String body) {
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, String body) throws NoUserPermissionException {
         ResponseEntity<String> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         if (memberEntity.getUuid() == null) {
             memberEntity.setUuid("nowy");
@@ -736,14 +647,17 @@ public class MemberService {
         boolean b = one.toggleDeclaration(isSigned);
         boolean sex = one.getSex();
         memberRepository.save(one);
-        return ResponseEntity.ok("Oznaczono, że " + one.getFullName() + " " + (b ? "" : "nie ") + "podpisał" + (sex ? "" : "a") + " Deklaracj" + (b ? "ę" : "i") + " LOK");
+        return ResponseEntity.ok("Oznaczono, że " + one.getFullName() + " " + (b ? "" : "nie ") + "podpisał" + (sex ? "a" : "") + " Deklaracj" + (b ? "ę" : "i") + " LOK");
     }
 
     public ResponseEntity<?> togglePzss(String uuid, boolean isSignedTo) {
         MemberEntity one = memberRepository.getOne(uuid);
         boolean b = one.togglePzss(isSignedTo);
         boolean sex = one.getSex();
+        System.out.println(
+                sex
+        );
         memberRepository.save(one);
-        return ResponseEntity.ok("Oznaczono, że " + one.getFullName() + " " + (b ? "" : "nie ") + "jest wpisan" + (sex ? "y" : "a") + " do portalu PZSS");
+        return ResponseEntity.ok("Oznaczono, że " + one.getFullName() + " " + (b ? "" : "nie ") + "jest wpisan" + (sex ? "a" : "y") + " do portalu PZSS");
     }
 }

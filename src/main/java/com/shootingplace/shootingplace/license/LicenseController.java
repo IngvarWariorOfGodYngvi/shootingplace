@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.license;
 
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
@@ -52,6 +53,11 @@ public class LicenseController {
         return ResponseEntity.ok(licenseService.getAllLicencePayment());
     }
 
+    @GetMapping("/allNoLicenseWithPayment")
+    public ResponseEntity<?> allNoLicenseWithPayment() {
+        return ResponseEntity.ok(licenseService.allNoLicenseWithPayment());
+    }
+@Transactional
     @PutMapping("/{memberUUID}")
     public ResponseEntity<?> updateLicense(@PathVariable String memberUUID, @RequestBody License license) {
         return licenseService.updateLicense(memberUUID, license);
@@ -59,7 +65,7 @@ public class LicenseController {
 
     @Transactional
     @PutMapping("/forceUpdate")
-    public ResponseEntity<?> updateLicense(@RequestParam String memberUUID, @RequestParam String number, @RequestParam String date, @RequestParam String pinCode, @Nullable @RequestParam String isPaid) {
+    public ResponseEntity<?> updateLicense(@RequestParam String memberUUID, @RequestParam String number, @RequestParam String date, @RequestParam String pinCode, @Nullable @RequestParam String isPaid) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             String parseNumber = (number != null && !number.isEmpty() && !number.equals("null")) ? number : null;
@@ -78,7 +84,7 @@ public class LicenseController {
 
     @Transactional
     @PatchMapping("/prolongAll")
-    public ResponseEntity<?> prolongAllLicenseWherePaidInPZSSIsTrue(@RequestParam List<String> licenseList, @RequestParam String pinCode) {
+    public ResponseEntity<?> prolongAllLicenseWherePaidInPZSSIsTrue(@RequestParam List<String> licenseList, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return licenseService.prolongAllLicense(licenseList, pinCode);
@@ -89,7 +95,7 @@ public class LicenseController {
 
     @Transactional
     @PutMapping("/history/{memberUUID}")
-    public ResponseEntity<?> addLicensePaymentHistory(@PathVariable String memberUUID, @RequestParam String pinCode) {
+    public ResponseEntity<?> addLicensePaymentHistory(@PathVariable String memberUUID, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return historyService.addLicenseHistoryPayment(memberUUID, pinCode);
@@ -99,7 +105,7 @@ public class LicenseController {
     }
 
     @PatchMapping("/paymentChange")
-    public ResponseEntity<?> paymentChange(@RequestParam String paymentUUID, @RequestParam String pinCode, @RequestParam boolean condition) {
+    public ResponseEntity<?> paymentChange(@RequestParam String paymentUUID, @RequestParam String pinCode, @RequestParam boolean condition) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return historyService.toggleLicencePaymentInPZSS(paymentUUID, condition, pinCode);
@@ -110,7 +116,7 @@ public class LicenseController {
 
     @Transactional
     @PatchMapping("/paymentToggleArray")
-    public ResponseEntity<?> toggleLicencePaymentInPZSSArray(@RequestParam List<String> paymentUUIDs, @RequestParam String pinCode, @RequestParam boolean condition) {
+    public ResponseEntity<?> toggleLicencePaymentInPZSSArray(@RequestParam List<String> paymentUUIDs, @RequestParam String pinCode, @RequestParam boolean condition) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             ResponseEntity<?> result = null;
@@ -124,7 +130,7 @@ public class LicenseController {
     }
 
     @PutMapping("/editPayment")
-    public ResponseEntity<?> editLicensePaymentHistory(@RequestParam String memberUUID, @RequestParam String paymentUUID, @RequestParam String paymentDate, @RequestParam Integer year, @RequestParam String pinCode) {
+    public ResponseEntity<?> editLicensePaymentHistory(@RequestParam String memberUUID, @RequestParam String paymentUUID, @RequestParam String paymentDate, @RequestParam Integer year, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             LocalDate parseDate = null;
@@ -138,7 +144,7 @@ public class LicenseController {
     }
 
     @DeleteMapping("/removePayment")
-    public ResponseEntity<?> removeLicensePaymentRecord(@RequestParam String paymentUUID, @RequestParam String pinCode) {
+    public ResponseEntity<?> removeLicensePaymentRecord(@RequestParam String paymentUUID, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return licenseService.removeLicensePaymentRecord(paymentUUID, pinCode);

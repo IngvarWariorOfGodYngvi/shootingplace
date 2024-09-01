@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.statistics;
 
-import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
+import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
 import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
@@ -11,11 +11,9 @@ import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.history.CompetitionHistoryEntity;
 import com.shootingplace.shootingplace.history.LicensePaymentHistoryDTO;
+import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
 import com.shootingplace.shootingplace.history.LicensePaymentHistoryRepository;
-import com.shootingplace.shootingplace.member.IMemberDTO;
-import com.shootingplace.shootingplace.member.MemberDTO;
-import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.member.MemberRepository;
+import com.shootingplace.shootingplace.member.*;
 import com.shootingplace.shootingplace.tournament.*;
 import com.shootingplace.shootingplace.wrappers.MemberWithContributionWrapper;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +23,7 @@ import javax.persistence.EntityNotFoundException;
 import java.text.Collator;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -401,5 +400,136 @@ public class StatisticsService {
         }
 
         return ResponseEntity.ok(result);
+    }
+
+    public List<Long> getMembersQuantity() {
+        List<Long> list = new ArrayList<>();
+//      whole adult
+        List<MemberEntity> all = memberRepository.findAll();
+        long count = all.stream()
+                .filter(f -> !f.getErased())
+                .filter(MemberEntity::getAdult)
+                .count();
+//      license valid
+        long count1 = all.stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> f.getClub().getId().equals(1))
+                .filter(f -> f.getLicense().getNumber() != null)
+                .filter(MemberEntity::getPzss)
+                .filter(f -> f.getLicense().isValid())
+                .count();
+
+//      license not valid
+        long count2 = all.stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> f.getClub().getId().equals(1))
+                .filter(f -> f.getLicense().getNumber() != null)
+                .filter(MemberEntity::getPzss)
+                .filter(f -> !f.getLicense().isValid())
+                .count();
+
+//      whole not adult
+        long count3 = all.stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> !f.getAdult())
+                .count();
+//      not adult active
+        long count4 = all.stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> !f.getAdult())
+                .filter(MemberEntity::getActive)
+                .count();
+//      not adult not active
+        long count5 = all.stream()
+                .filter(f -> !f.getErased())
+                .filter(f -> !f.getAdult())
+                .filter(f -> !f.getActive())
+                .count();
+
+//      adult erased
+        long count6 = all.stream()
+                .filter(MemberEntity::getErased)
+                .filter(MemberEntity::getAdult)
+                .count();
+//      not adult erased
+        long count7 = all.stream()
+                .filter(MemberEntity::getErased)
+                .filter(f -> !f.getAdult())
+                .count();
+        List<LicensePaymentHistoryEntity> allLicensePayment = licensePaymentHistoryRepository.findAll();
+        long count8 = allLicensePayment.stream()
+                .filter(f -> !f.isPayInPZSSPortal())
+                .count();
+        long count9 = allLicensePayment.stream()
+                .filter(f -> f.getDate().getYear() == LocalDate.now().getYear())
+                .filter(LicensePaymentHistoryEntity::isNew)
+                .count();
+        long count10 = all.stream()
+                .filter(f -> !f.getErased())
+                .filter(MemberEntity::getAdult)
+                .filter(MemberEntity::getActive)
+                .count();
+        long count11 = all.stream()
+                .filter(f -> !f.getErased())
+                .filter(MemberEntity::getAdult)
+                .filter(f -> !f.getActive())
+                .count();
+        list.add(count);
+        list.add(count1);
+        list.add(count2);
+        list.add(count3);
+        list.add(count4);
+        list.add(count5);
+        list.add(count6);
+        list.add(count7);
+        list.add(count8);
+        list.add(count9);
+        list.add(count10);
+        list.add(count11);
+
+
+        return list;
+    }
+
+    public List<MemberInfo> getWeekBirthdayList() {
+        List<MemberEntity> allByErasedFalse = memberRepository.findAllByErasedFalse();
+        int pl = LocalDate.now().get(WeekFields.of(Locale.forLanguageTag("pl")).weekOfYear());
+        return allByErasedFalse.stream()
+                .filter(f -> {
+                    LocalDate date = birthDay(f.getPesel());
+                    LocalDate of = LocalDate.of(LocalDate.now().getYear(), date.getMonthValue(), date.getDayOfMonth());
+                    int pl2 = of.get(WeekFields.of(Locale.forLanguageTag("pl")).weekOfYear());
+                    return pl2 == pl;
+                })
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .map(Mapping::map2).collect(Collectors.toList());
+    }
+
+    private LocalDate birthDay(String pesel) {
+
+        int year;
+        int month;
+        year = 10 * Integer.parseInt(pesel.substring(0, 1));
+        year += Integer.parseInt(pesel.substring(1, 2));
+        month = 10 * Integer.parseInt(pesel.substring(2, 3));
+        month += Integer.parseInt(pesel.substring(3, 4));
+        if (month > 80 && month < 93) {
+            year += 1800;
+        } else if (month > 0 && month < 13) {
+            year += 1900;
+        } else if (month > 20 && month < 33) {
+            year += 2000;
+        } else if (month > 40 && month < 53) {
+            year += 2100;
+        } else if (month > 60 && month < 73) {
+            year += 2200;
+        }
+
+        if (month > 12 && month < 33) {
+            month -= 20;
+        }
+        int day = Integer.parseInt(pesel.substring(4, 6));
+
+        return LocalDate.of(year, month, day);
     }
 }

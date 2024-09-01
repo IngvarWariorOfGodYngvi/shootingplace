@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace;
+package com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -22,6 +22,7 @@ public class ErasedEntity {
     private String uuid;
 
     private LocalDate date;
+    private LocalDate inputDate;
     private String erasedType;
     private String additionalDescription;
 
@@ -51,5 +52,15 @@ public class ErasedEntity {
 
     public void setAdditionalDescription(String additionalDescription) {
         this.additionalDescription = additionalDescription;
+    }
+
+    public LocalDate getInputDate() {
+        return inputDate;
+    }
+
+    public void setInputDate(LocalDate inputDate) {
+        if (this.inputDate != null) {
+            System.out.println("nie można zmienić tej daty");
+        }else this.inputDate = inputDate;
     }
 }

@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.contributions;
 
 import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.configurations.ProfilesEnum;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
@@ -17,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import javax.naming.NoPermissionException;
 import javax.persistence.EntityNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -44,7 +46,7 @@ public class ContributionService {
         this.userRepository = userRepository;
     }
 
-    public ResponseEntity<?> addContribution(String memberUUID, LocalDate contributionPaymentDay, String pinCode, Integer contributionCount) {
+    public ResponseEntity<?> addContribution(String memberUUID, LocalDate contributionPaymentDay, String pinCode, Integer contributionCount) throws NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
@@ -101,7 +103,7 @@ public class ContributionService {
     }
 
 
-    public ResponseEntity<?> addContributionRecord(String memberUUID, LocalDate paymentDate, String pinCode) {
+    public ResponseEntity<?> addContributionRecord(String memberUUID, LocalDate paymentDate, String pinCode) throws NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
@@ -155,7 +157,7 @@ public class ContributionService {
 
     }
 
-    public ResponseEntity<?> removeContribution(String memberUUID, String contributionUUID, String pinCode) {
+    public ResponseEntity<?> removeContribution(String memberUUID, String contributionUUID, String pinCode) throws NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
@@ -181,7 +183,7 @@ public class ContributionService {
         return response;
     }
 
-    public ResponseEntity<?> updateContribution(String memberUUID, String contributionUUID, LocalDate paymentDay, LocalDate validThru, String pinCode) {
+    public ResponseEntity<?> updateContribution(String memberUUID, String contributionUUID, LocalDate paymentDay, LocalDate validThru, String pinCode) throws NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
@@ -208,7 +210,7 @@ public class ContributionService {
         return response;
     }
 
-    ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, Object body) {
+    ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         ResponseEntity<?> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " " + methodName + " ", memberEntity.getUuid());
         if (stringResponseEntity != null) {

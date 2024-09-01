@@ -2,8 +2,8 @@ package com.shootingplace.shootingplace.file;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
-import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordEntity;
-import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
+import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordEntity;
+import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
 import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
@@ -3271,32 +3271,25 @@ public class FilesService {
         return filesEntity;
     }
 
-    public FilesEntity getAllErasedMembers() throws IOException, DocumentException {
+    public FilesEntity getAllErasedMembers(LocalDate firstDate, LocalDate secondDate) throws IOException, DocumentException {
 
 
-        String fileName = "Lista_osób_skreślonych_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
+        String fileName = "Lista osób skreślonych od " + firstDate + " do" + secondDate + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
         document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         setAttToDoc(fileName, document, false, true);
-        String minute;
-        if (LocalTime.now().getMinute() < 10) {
-            minute = "0" + LocalTime.now().getMinute();
-        } else {
-            minute = String.valueOf(LocalTime.now().getMinute());
-        }
-        String now = LocalTime.now().getHour() + ":" + minute;
-        Paragraph title = new Paragraph("Lista osób skreślonych na dzień " + LocalDate.now().format(dateFormat()) + " " + now, font(14, 1));
+        Paragraph title = new Paragraph("Lista osób skreślonych od " + firstDate.format(dateFormat()) + " do " + secondDate.format(dateFormat()), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
 
         document.add(title);
         document.add(newLine);
-
-        List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
-                .filter(MemberEntity::getErased)
-                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
+        List<MemberEntity> memberEntityList = memberRepository.findAllByErasedTrue().stream()
+                .filter(f -> f.getErasedEntity() != null)
+                .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1))&&f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
         float[] pointColumnWidths = {4F, 28F, 10F, 14F, 14F, 36F};
 

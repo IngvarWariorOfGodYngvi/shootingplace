@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.armory;
 
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -7,6 +8,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import javax.naming.NoPermissionException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +112,7 @@ public class ArmoryController {
 
     @Transactional
     @PostMapping("/addShootingPacket")
-    public ResponseEntity<?> addShootingPacket(@RequestParam String name, @RequestParam float price, @RequestBody Map<String, Integer> map, @RequestParam String pinCode) {
+    public ResponseEntity<?> addShootingPacket(@RequestParam String name, @RequestParam float price, @RequestBody Map<String, Integer> map, @RequestParam String pinCode) throws NoPermissionException, NoUserPermissionException {
         return shootingPacketService.addShootingPacket(name, price, map, pinCode);
     }
 
@@ -140,12 +142,12 @@ public class ArmoryController {
 
     @Transactional
     @PutMapping("/remove")
-    public ResponseEntity<?> removeGun(@RequestParam String gunUUID, @RequestParam String pinCode) {
+    public ResponseEntity<?> removeGun(@RequestParam String gunUUID, @RequestParam String pinCode) throws NoUserPermissionException {
         return armoryService.removeGun(gunUUID, pinCode);
     }
 
     @PostMapping("/calibers")
-    public ResponseEntity<?> createNewCaliber(@RequestParam String caliber, @RequestParam String pinCode) {
+    public ResponseEntity<?> createNewCaliber(@RequestParam String caliber, @RequestParam String pinCode) throws NoUserPermissionException {
         if (caliber.isEmpty()) {
             return ResponseEntity.badRequest().body("Wprowadź dane");
         }
@@ -153,7 +155,7 @@ public class ArmoryController {
     }
 
     @PatchMapping("/changeCaliberQuantity")
-    public ResponseEntity<?> changeCaliberQuantity(@RequestParam String caliberUUID, @RequestParam Integer quantity, @RequestParam String pinCode) {
+    public ResponseEntity<?> changeCaliberQuantity(@RequestParam String caliberUUID, @RequestParam Integer quantity, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return armoryService.changeCaliberQuantity(caliberUUID, quantity, pinCode);
@@ -163,7 +165,7 @@ public class ArmoryController {
     }
 
     @PatchMapping("/changeCaliberUnitPrice")
-    public ResponseEntity<?> changeCaliberUnitPrice(@RequestParam String caliberUUID, @RequestParam Float price, @RequestParam String pinCode) {
+    public ResponseEntity<?> changeCaliberUnitPrice(@RequestParam String caliberUUID, @RequestParam Float price, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return armoryService.changeCaliberUnitPrice(caliberUUID, price, pinCode);
@@ -173,7 +175,7 @@ public class ArmoryController {
     }
 
     @PatchMapping("/changeCaliberUnitPriceForNotMember")
-    public ResponseEntity<?> changeCaliberUnitPriceForNotMember(@RequestParam String caliberUUID, @RequestParam Float price, @RequestParam String pinCode) {
+    public ResponseEntity<?> changeCaliberUnitPriceForNotMember(@RequestParam String caliberUUID, @RequestParam Float price, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return armoryService.changeCaliberUnitPriceForNotMember(caliberUUID, price, pinCode);

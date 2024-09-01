@@ -1,7 +1,6 @@
 package com.shootingplace.shootingplace.enums;
 
 public enum ArbiterClass {
-    NONE("Brak"),
     CLASS_3("Klasa 3"),
     CLASS_2("Klasa 2"),
     CLASS_1("Klasa 1"),

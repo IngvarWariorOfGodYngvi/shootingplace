@@ -15,6 +15,7 @@ import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
+import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.PageRequest;
@@ -150,6 +151,8 @@ public class TournamentService {
                 .forEach(e ->
                 {
                     if (e.getOrdering() == null) {
+                        System.out.println(e.getName());
+                        System.out.println(e.getCompetitionUUID());
                         CompetitionEntity competitionEntity = competitionRepository.getOne(e.getCompetitionUUID());
                         e.setOrdering(competitionEntity.getOrdering());
                         competitionMembersListRepository.save(e);
@@ -862,6 +865,7 @@ public class TournamentService {
         return usedHistoryRepository.findAll().stream().filter(f -> f.getEvidenceUUID().equals(tournamentUUID)).collect(Collectors.toList());
     }
 
+    @SneakyThrows
     public ResponseEntity<?> getStringResponseEntity(String pinCode, TournamentEntity tournamentEntity, HttpStatus status, String methodName, Object body) {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, tournamentEntity.getClass().getSimpleName() + " " + methodName + " ", tournamentEntity.getUuid());

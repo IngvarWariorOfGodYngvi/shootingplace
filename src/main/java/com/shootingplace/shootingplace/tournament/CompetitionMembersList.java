@@ -167,6 +167,14 @@ public class CompetitionMembersList {
         this.disciplineList = value;
     }
 
+    public String getDisciplineList() {
+        return disciplineList;
+    }
+
+    public void setDisciplineList(String disciplineList) {
+        this.disciplineList = disciplineList;
+    }
+
     public List<String> getNumberOfManyShotsList() {
         List<String> vals = new ArrayList<>();
         if (numberOfManyShotsList != null) {

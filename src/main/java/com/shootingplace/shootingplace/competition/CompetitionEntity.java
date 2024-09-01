@@ -24,6 +24,7 @@ public class CompetitionEntity {
     private String uuid;
 
     private String name;
+    private String abbreviation;
 
     private String discipline;
     private Integer numberOfShots;
@@ -56,7 +57,7 @@ public class CompetitionEntity {
 
     public void setDisciplineList(List<String> disciplineList) {
         String value = "";
-        if (disciplineList.isEmpty()) {
+        if (disciplineList == null || disciplineList.isEmpty()) {
             this.disciplineList = null;
         } else {
             for (String f : disciplineList) {
@@ -167,6 +168,14 @@ public class CompetitionEntity {
 
     public void setNumberOfManyShots(Integer[] numberOfManyShots) {
         this.numberOfManyShots = numberOfManyShots;
+    }
+
+    public String getAbbreviation() {
+        return abbreviation;
+    }
+
+    public void setAbbreviation(String abbreviation) {
+        this.abbreviation = abbreviation;
     }
 
     @Override

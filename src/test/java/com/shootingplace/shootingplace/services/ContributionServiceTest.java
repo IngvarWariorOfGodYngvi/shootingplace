@@ -45,7 +45,6 @@ public class ContributionServiceTest {
     @Mock
     Clock clock;
 
-    private Clock fixedClock;
     private final static LocalDate LOCAL_DATE = LocalDate.of(2021, 11, 2);
 
     @InjectMocks
@@ -60,7 +59,7 @@ public class ContributionServiceTest {
     @Before
     public void init() {
 
-        fixedClock = Clock.fixed(LOCAL_DATE.atStartOfDay(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
+        Clock fixedClock = Clock.fixed(LOCAL_DATE.atStartOfDay(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
 //        doReturn(fixedClock.instant()).when(clock).instant();
 //        doReturn(fixedClock.getZone()).when(clock).getZone();
 //        when(memberRepository.findAll()).thenReturn(membersList);

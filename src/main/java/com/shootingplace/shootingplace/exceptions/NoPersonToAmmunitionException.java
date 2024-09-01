@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.exceptionHandlers.Exceptions;
+package com.shootingplace.shootingplace.exceptions;
 
 public class NoPersonToAmmunitionException extends Exception {
     public NoPersonToAmmunitionException(String errorMessage, Throwable err) {

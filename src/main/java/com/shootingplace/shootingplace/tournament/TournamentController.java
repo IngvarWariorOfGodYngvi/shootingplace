@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.tournament;
 
 import com.shootingplace.shootingplace.armory.ArmoryService;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -111,7 +112,7 @@ public class TournamentController {
 
     @Transactional
     @PatchMapping("/open/{tournamentUUID}")
-    public ResponseEntity<?> openTournament(@PathVariable String tournamentUUID, @RequestParam String pinCode) {
+    public ResponseEntity<?> openTournament(@PathVariable String tournamentUUID, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return tournamentService.openTournament(tournamentUUID, pinCode);

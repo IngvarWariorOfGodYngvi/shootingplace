@@ -55,6 +55,7 @@ public class Mapping {
                 .personalEvidence(map(e.getPersonalEvidence()))
                 .pzss(checkBool(e.getPzss()))
                 .erasedEntity(e.getErasedEntity())
+                .image(e.getImageUUID())
                 .build();
     }
 
@@ -100,8 +101,10 @@ public class Mapping {
                 .isActive(e.getActive())
                 .legitimationNumber(e.getLegitimationNumber())
                 .isAdult(e.getAdult())
+                .image(e.getImageUUID())
                 .declarationLOK(e.getDeclarationLOK()).build();
     }
+
     public static MemberInfo map2(MemberEntity e) {
         return MemberInfo.builder()
                 .uuid(e.getUuid())
@@ -114,7 +117,6 @@ public class Mapping {
                 .arbiterClass(e.getMemberPermissions()!=null?e.getMemberPermissions().getArbiterClass():null)
                 .declarationLOK(e.getDeclarationLOK()).build();
     }
-
     public static MemberDTO map2DTO(MemberEntity e) {
         return MemberDTO.builder()
                 .uuid(e.getUuid())
@@ -174,7 +176,7 @@ public class Mapping {
 
     }
 
-    static AddressEntity map(Address a) {
+    public static AddressEntity map(Address a) {
         return Optional.ofNullable(a)
                 .map(e -> AddressEntity.builder()
                         .zipCode(e.getZipCode())
@@ -333,6 +335,7 @@ public class Mapping {
                 .name(c.getName())
                 .date(c.getDate())
                 .WZSS(c.isWZSS())
+                .disciplineList(null)
                 .attachedToTournament(c.getAttachedToTournament())
                 .scoreList(c.getScoreList().stream().map(Mapping::map).collect(Collectors.toList()))
                 .scoreListSize(c.getScoreList().size())
@@ -351,7 +354,7 @@ public class Mapping {
     }
 
     public static CompetitionMembersList map1(CompetitionMembersListEntity c) {
-        return CompetitionMembersList.builder()
+        CompetitionMembersList build = CompetitionMembersList.builder()
                 .uuid(c.getUuid())
                 .name(c.getName())
                 .date(c.getDate())
@@ -367,6 +370,9 @@ public class Mapping {
                 .caliberUUID(c.getCaliberUUID())
                 .practiceShots(c.getPracticeShots())
                 .build();
+        build.setDisciplineList(c.getDisciplineList());
+        build.setNumberOfManyShotsList(c.getNumberOfManyShotsList());
+        return build;
     }
 
     public static Score map(ScoreEntity s) {

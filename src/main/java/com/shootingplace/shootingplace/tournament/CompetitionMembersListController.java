@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.tournament;
 
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
-import com.shootingplace.shootingplace.exceptionHandlers.Exceptions.NoPersonToAmmunitionException;
+import com.shootingplace.shootingplace.exceptions.NoPersonToAmmunitionException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +36,10 @@ public class CompetitionMembersListController {
     @GetMapping("/memberScores")
     public ResponseEntity<?> getMemberScoresFromCompetitionMemberListUUID(@RequestParam String competitionMemberListUUID) {
         return competitionMembersListService.getMemberScoresFromComtetitionMemberListUUID(competitionMemberListUUID);
+    }
+    @GetMapping("/tournamentScores")
+    public ResponseEntity<?> getTournamentScoresFromUUID(@RequestParam String tournamentUUID) {
+        return competitionMembersListService.getTournamentScoresFromUUID(tournamentUUID);
     }
 
     @GetMapping("/getID")

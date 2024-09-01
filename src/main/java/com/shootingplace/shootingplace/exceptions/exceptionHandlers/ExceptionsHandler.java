@@ -1,6 +1,7 @@
-package com.shootingplace.shootingplace.exceptionHandlers;
+package com.shootingplace.shootingplace.exceptions.exceptionHandlers;
 
-import com.shootingplace.shootingplace.exceptionHandlers.Exceptions.NoPersonToAmmunitionException;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
+import com.shootingplace.shootingplace.exceptions.NoPersonToAmmunitionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -34,11 +35,11 @@ public class ExceptionsHandler {
         LOG.error(ex.getMessage());
         return "Wprowadź osobę by wydać amunicję.";
     }
-//    @ExceptionHandler(value = IllegalArgumentException.class)
-//    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
-//    public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException ex) {
-//        LOG.info(ex.getMessage() + " " + ex.getCause());
-//        return ResponseEntity.badRequest().body("Sprawdź wysyłane warunki");
-//    }
+    @ExceptionHandler(value = NoUserPermissionException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public String handleNoPermissionException(NoUserPermissionException ex) {
+        LOG.error(ex.getMessage());
+        return "Brak uprawnień.";
+    }
 
 }

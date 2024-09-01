@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.otherPerson;
 
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.address.AddressRepository;
 import com.shootingplace.shootingplace.club.ClubEntity;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.text.Collator;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -93,7 +95,7 @@ public class OtherPersonService {
                 .active(true)
                 .email(person.getEmail())
                 .permissionsEntity(permissionsEntity)
-                .weaponPermissionNumber(person.getWeaponPermissionNumber()!=null?person.getWeaponPermissionNumber().toUpperCase(Locale.ROOT):null)
+                .weaponPermissionNumber(person.getWeaponPermissionNumber() != null ? person.getWeaponPermissionNumber().toUpperCase(Locale.ROOT) : null)
                 .club(clubEntity)
                 .address(addressEntity)
                 .build();
@@ -148,9 +150,10 @@ public class OtherPersonService {
                 .active(true)
                 .email(person.getEmail())
                 .permissionsEntity(null)
-                .weaponPermissionNumber(person.getWeaponPermissionNumber()!=null?person.getWeaponPermissionNumber().toUpperCase(Locale.ROOT):null)
+                .weaponPermissionNumber(person.getWeaponPermissionNumber() != null ? person.getWeaponPermissionNumber().toUpperCase(Locale.ROOT) : null)
                 .address(addressEntity)
                 .club(clubEntity)
+                .creationDate(LocalDateTime.now())
                 .build();
         LOG.info("Zapisano nową osobę " + otherPersonEntity.getFirstName() + " " + otherPersonEntity.getSecondName());
         return otherPersonRepository.save(otherPersonEntity);
@@ -169,8 +172,8 @@ public class OtherPersonService {
     public List<MemberInfo> getAllOthersArbiters() {
         return otherPersonRepository.findAll()
                 .stream()
-                .filter(f->f.getPermissionsEntity()!=null && f.getPermissionsEntity().getArbiterNumber()!=null)
-                .map(m-> MemberInfo.builder()
+                .filter(f -> f.getPermissionsEntity() != null && f.getPermissionsEntity().getArbiterNumber() != null)
+                .map(m -> MemberInfo.builder()
                         .id(m.getId())
                         .arbiterClass(m.getPermissionsEntity().getArbiterClass())
                         .firstName(m.getFirstName())
@@ -178,16 +181,15 @@ public class OtherPersonService {
                         .name(m.getFullName())
                         .build()
                 ).collect(Collectors.toList());
-//        List<String> list = new ArrayList<>();
-//        otherPersonRepository.findAll().stream().filter(f -> f.getPermissionsEntity() != null).filter(OtherPersonEntity::isActive)
-//                .forEach(e -> list.add(e.getSecondName().concat(" " + e.getFirstName() + " Klub " + e.getClub().getName() + " Klasa " + e.getPermissionsEntity().getArbiterClass() + " ID: " + e.getId())));
-//        list.sort(Comparator.comparing(String::new));
-//        return list;
     }
 
     public List<?> getAll() {
-        LOG.info("Wywołano wszystkich Nie-Klubowiczów");
-        return otherPersonRepository.findAll().stream().filter(OtherPersonEntity::isActive).sorted(Comparator.comparing(OtherPersonEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(OtherPersonEntity::getFirstName)).collect(Collectors.toList());
+        return otherPersonRepository.findAll()
+                .stream()
+                .filter(OtherPersonEntity::isActive)
+                .sorted(Comparator.comparing(OtherPersonEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))
+                        .thenComparing(OtherPersonEntity::getFirstName))
+                .collect(Collectors.toList());
     }
 
     public List<OtherPersonEntity> getOthersWithPermissions() {
@@ -231,38 +233,16 @@ public class OtherPersonService {
             LOG.info("Zmieniono numer Pozwolenia na broń");
             one.setWeaponPermissionNumber(otherPerson.getWeaponPermissionNumber());
         }
-        if (otherPerson.getAddress() != null) {
-            AddressEntity address;
-            if (one.getAddress() == null) {
-                address = AddressEntity.builder()
-                        .postOfficeCity(otherPerson.getAddress().getPostOfficeCity())
-                        .zipCode(otherPerson.getAddress().getZipCode())
-                        .street(otherPerson.getAddress().getStreet())
-                        .streetNumber(otherPerson.getAddress().getStreetNumber())
-                        .flatNumber(otherPerson.getAddress().getFlatNumber())
-                        .build();
-                one.setAddress(address);
-            } else {
-                address = one.getAddress();
-                if (otherPerson.getAddress().getZipCode() != null && !otherPerson.getAddress().getZipCode().isEmpty()) {
-                    address.setZipCode(otherPerson.getAddress().getZipCode());
-                }
-                if (otherPerson.getAddress().getZipCode() != null && !otherPerson.getAddress().getPostOfficeCity().isEmpty()) {
-                    address.setPostOfficeCity(otherPerson.getAddress().getPostOfficeCity());
-                }
-                if (otherPerson.getAddress().getStreet() != null && !otherPerson.getAddress().getStreet().isEmpty()) {
-                    address.setStreet(otherPerson.getAddress().getStreet());
-                }
-                if (otherPerson.getAddress().getStreetNumber() != null && !otherPerson.getAddress().getStreetNumber().isEmpty()) {
-                    address.setStreetNumber(otherPerson.getAddress().getStreetNumber());
-                }
-                if (otherPerson.getAddress().getFlatNumber() != null && !otherPerson.getAddress().getFlatNumber().isEmpty()) {
-                    address.setFlatNumber(otherPerson.getAddress().getFlatNumber());
-                }
-            }
-            LOG.info("Zmieniono adres");
-            addressRepository.save(address);
-        }
+        Address a1 = otherPerson.getAddress();
+        AddressEntity a2 = one.getAddress() != null ? one.getAddress() : new AddressEntity();
+
+        a2.setPostOfficeCity(a1.getPostOfficeCity() != null ? a1.getPostOfficeCity() : a2.getPostOfficeCity());
+        a2.setZipCode(a1.getZipCode() != null ? a1.getZipCode() : a2.getZipCode());
+        a2.setStreet(a1.getStreet() != null ? a1.getStreet() : a2.getStreet());
+        a2.setStreetNumber(a1.getStreetNumber() != null ? a1.getStreetNumber() : a2.getStreetNumber());
+        a2.setFlatNumber(a1.getFlatNumber() != null ? a1.getFlatNumber() : a2.getFlatNumber());
+        AddressEntity save1 = addressRepository.save(a2);
+        one.setAddress(save1);
         if (!one.getClub().getName().equals(clubName)) {
             ClubEntity clubEntity = clubRepository.findAll().stream().filter(f -> f.getName().equals(clubName)).findFirst().orElse(null);
             if (clubEntity == null) {
@@ -279,12 +259,19 @@ public class OtherPersonService {
             LOG.info("Zmieniono Klub");
             one.setClub(clubEntity);
         }
+        MemberPermissions m1 = otherPerson.getMemberPermissions();
+        MemberPermissionsEntity m2 = one.getPermissionsEntity() != null ? one.getPermissionsEntity() : new MemberPermissionsEntity();
+
+        m2.setArbiterClass(m1.getArbiterClass() != null ? m1.getArbiterClass() : m2.getArbiterClass() != null ? m2.getArbiterClass() : null);
+        m2.setArbiterNumber(m1.getArbiterNumber() != null ? m1.getArbiterNumber() : m2.getArbiterNumber() != null ? m2.getArbiterNumber() : null);
+        m2.setArbiterPermissionValidThru(m1.getArbiterPermissionValidThru() != null ? m1.getArbiterPermissionValidThru() : m2.getArbiterPermissionValidThru() != null ? m2.getArbiterPermissionValidThru() : null);
+        MemberPermissionsEntity save2 = memberPermissionsRepository.save(m2);
+        one.setPermissionsEntity(save2);
         otherPersonRepository.save(one);
         return ResponseEntity.ok("Zaktualizowano");
     }
 
-    public ResponseEntity<?> getOhterByPhone(String phone) {
-//        OtherPersonEntity otherPerson = otherPersonRepository.findByPhoneNumber(phone.replaceAll(" ", "")).orElse(null);
+    public ResponseEntity<?> getOtherByPhone(String phone) {
         OtherPersonEntity otherPerson = otherPersonRepository.findAllByPhoneNumber(phone.replaceAll(" ", "")).stream().filter(OtherPersonEntity::isActive).findFirst().orElse(null);
         if (otherPerson != null && otherPerson.isActive()) {
             return ResponseEntity.ok(otherPerson);

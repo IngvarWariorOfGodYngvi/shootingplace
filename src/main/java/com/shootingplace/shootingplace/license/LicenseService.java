@@ -1,7 +1,9 @@
 package com.shootingplace.shootingplace.license;
 
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.*;
+import com.shootingplace.shootingplace.member.Member;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
@@ -123,7 +125,7 @@ public class LicenseService {
         return ResponseEntity.ok("Zaktualizowano licencję");
     }
 
-    public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date, Boolean isPaid, String pinCode) {
+    public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date, Boolean isPaid, String pinCode) throws NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
@@ -153,8 +155,12 @@ public class LicenseService {
         if (isPaid != null && !isPaid.equals("null")) {
             license.setPaid(isPaid);
         }
-        licenseRepository.save(license);
-        return getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "updateLicense", "Poprawiono Licencję");
+        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "updateLicense", "Poprawiono Licencję");
+
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            licenseRepository.save(license);
+        }
+        return response;
 
     }
 
@@ -221,7 +227,7 @@ public class LicenseService {
         }
     }
 
-    public ResponseEntity<?> updateLicensePayment(String memberUUID, String paymentUUID, LocalDate date, Integer year, String pinCode) {
+    public ResponseEntity<?> updateLicensePayment(String memberUUID, String paymentUUID, LocalDate date, Integer year, String pinCode) throws NoUserPermissionException {
 
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         LicensePaymentHistoryEntity licensePaymentHistoryEntity = memberEntity.getHistory().getLicensePaymentHistory().stream().filter(f -> f.getUuid().equals(paymentUUID)).findFirst().orElseThrow(EntityNotFoundException::new);
@@ -252,7 +258,7 @@ public class LicenseService {
                 .build();
     }
 
-    public ResponseEntity<?> prolongAllLicense(List<String> licenseList, String pinCode) {
+    public ResponseEntity<?> prolongAllLicense(List<String> licenseList, String pinCode) throws NoUserPermissionException {
         List<String> responseList = new ArrayList<>();
         String s1 = "";
 
@@ -307,7 +313,7 @@ public class LicenseService {
                 .sorted(Comparator.comparing(LicensePaymentHistoryDTO::getSecondName, pl()).thenComparing(LicensePaymentHistoryDTO::getFirstName, pl())).collect(Collectors.toList());
     }
 
-    public ResponseEntity<?> removeLicensePaymentRecord(String paymentUUID, String pinCode) {
+    public ResponseEntity<?> removeLicensePaymentRecord(String paymentUUID, String pinCode) throws NoUserPermissionException {
 
         LicensePaymentHistoryEntity licensePaymentHistoryEntity = licensePaymentHistoryRepository.findById(paymentUUID).orElseThrow(EntityNotFoundException::new);
 
@@ -325,7 +331,7 @@ public class LicenseService {
         return response;
     }
 
-    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, Object body) {
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity != null ? memberEntity.getClass().getSimpleName() + " " + methodName + " " : methodName, memberEntity != null ? memberEntity.getUuid() : "nie dotyczy");
         if (stringResponseEntity != null) {
@@ -340,5 +346,17 @@ public class LicenseService {
 
     public List<LicensePaymentHistoryEntity> getLicensePaymentHistory(String MemberUUID) {
         return memberRepository.getOne(MemberUUID).getHistory().getLicensePaymentHistory();
+    }
+
+    public List<?> allNoLicenseWithPayment() {
+
+        return memberRepository.findAllByErasedFalse()
+                .stream()
+                .filter(f -> f.getLicense().getNumber() == null && f.getHistory()
+                        .getLicensePaymentHistory().size() > 0 &&
+                        f.getHistory().getLicensePaymentHistory().get(0).isPayInPZSSPortal())
+                .map(Mapping::map)
+                .sorted(Comparator.comparing(Member::getSecondName, pl()).thenComparing(Member::getFirstName, pl()))
+                .collect(Collectors.toList());
     }
 }

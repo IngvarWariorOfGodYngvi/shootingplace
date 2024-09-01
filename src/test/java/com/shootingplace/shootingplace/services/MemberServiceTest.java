@@ -9,6 +9,7 @@ import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionService;
 import com.shootingplace.shootingplace.enums.ArbiterClass;
 import com.shootingplace.shootingplace.enums.ErasedType;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.*;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseRepository;
@@ -404,7 +405,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void add_new_member_bad_request_pesel_exist() {
+    public void add_new_member_bad_request_pesel_exist() throws NoUserPermissionException {
         //given
         Member member = Member.builder()
                 .firstName("John7")
@@ -425,7 +426,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void add_new_member_bad_request_email_exist() {
+    public void add_new_member_bad_request_email_exist() throws NoUserPermissionException {
         //given
         Member member = Member.builder()
                 .firstName("John7")
@@ -445,7 +446,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void add_new_member_bad_request_idCard_exist() {
+    public void add_new_member_bad_request_idCard_exist() throws NoUserPermissionException {
         //given
         Member member = Member.builder()
                 .firstName("John7")
@@ -465,7 +466,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void add_new_member_bad_request_legitimation_number_exist_in_erased_member() {
+    public void add_new_member_bad_request_legitimation_number_exist_in_erased_member() throws NoUserPermissionException {
         //given
         Member member = Member.builder()
                 .firstName("John7")
@@ -487,7 +488,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void add_new_member_bad_request_legitimation_number_exist() {
+    public void add_new_member_bad_request_legitimation_number_exist() throws NoUserPermissionException {
         //given
         Member member = Member.builder()
                 .firstName("John7")
@@ -674,7 +675,7 @@ public class MemberServiceTest {
 //    }
 
     @Test
-    public void change_adult_not_found() {
+    public void change_adult_not_found() throws NoUserPermissionException {
         //given
         String uuid = String.valueOf(UUID.randomUUID());
         //when
@@ -685,7 +686,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void change_adult_bad_request_member_already_adult() {
+    public void change_adult_bad_request_member_already_adult() throws NoUserPermissionException {
         //given
         String uuid = membersList.get(0).getUuid();
         //when
@@ -698,7 +699,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void change_adult_bad_request_too_short_probation() {
+    public void change_adult_bad_request_too_short_probation() throws NoUserPermissionException {
         //given
         String uuid = membersList.get(1).getUuid();
         //when
@@ -711,7 +712,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void change_adult_success() {
+    public void change_adult_success() throws NoUserPermissionException {
         //given
         String uuid = membersList.get(6).getUuid();
         //when
@@ -735,7 +736,7 @@ public class MemberServiceTest {
 //    }
 
     @Test
-    public void activate_or_deactivate_member_not_found() {
+    public void activate_or_deactivate_member_not_found() throws NoUserPermissionException {
         //given
         String uuid = String.valueOf(UUID.randomUUID());
         //when
@@ -746,7 +747,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void activate_or_deactivate_success() {
+    public void activate_or_deactivate_success() throws NoUserPermissionException {
         //given
         String uuid = membersList.get(6).getUuid();
         //when
@@ -758,7 +759,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void erase_member_bad_request() {
+    public void erase_member_bad_request() throws NoUserPermissionException {
         //given
         String uuid = String.valueOf(UUID.randomUUID());
         String erasedType = ErasedType.CLUB_DECISION.getName();
@@ -772,7 +773,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    public void erase_member_success() {
+    public void erase_member_success() throws NoUserPermissionException {
         //given
         String uuid = membersList.get(6).getUuid();
         String erasedType = ErasedType.CLUB_DECISION.getName();

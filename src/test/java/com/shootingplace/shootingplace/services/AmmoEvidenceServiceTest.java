@@ -1,6 +1,9 @@
 package com.shootingplace.shootingplace.services;
 
-import com.shootingplace.shootingplace.ammoEvidence.*;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceService;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -120,7 +123,7 @@ public class AmmoEvidenceServiceTest {
 //    }
 
     @Test
-    public void open_evidence_return_false() {
+    public void open_evidence_return_false() throws NoUserPermissionException {
         //given
         String uuid = ammoEvidenceEntities.get(5).getUuid();
         //when
@@ -131,7 +134,7 @@ public class AmmoEvidenceServiceTest {
     }
 
     @Test
-    public void open_evidence_return_true() {
+    public void open_evidence_return_true() throws NoUserPermissionException {
         //given
         List<AmmoEvidenceEntity> list = ammoEvidenceEntities;
         AmmoEvidenceEntity ammoEvidenceEntity = list.get(1);
@@ -204,10 +207,7 @@ public class AmmoEvidenceServiceTest {
     }
 
     private AmmoEvidenceEntity getAmmoEvidenceEntity() {
-        boolean open = false;
-        if (i == 1) {
-            open = true;
-        }
+        boolean open = i == 1;
         AmmoEvidenceEntity build = AmmoEvidenceEntity.builder()
                 .uuid(String.valueOf(UUID.randomUUID()))
                 .ammoInEvidenceEntityList(new ArrayList<>())

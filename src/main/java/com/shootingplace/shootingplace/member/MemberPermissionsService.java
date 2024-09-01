@@ -145,9 +145,13 @@ public class MemberPermissionsService {
         return MemberPermissions.builder()
                 .instructorNumber(null)
                 .shootingLeaderNumber(null)
-                .arbiterClass(ArbiterClass.NONE.getName())
+                .arbiterClass(null)
                 .arbiterNumber(null)
                 .arbiterPermissionValidThru(null)
                 .build();
+    }
+
+    public List<String> getArbiterClasses() {
+        return Arrays.stream(ArbiterClass.values()).map(ArbiterClass::getName).collect(Collectors.toList());
     }
 }

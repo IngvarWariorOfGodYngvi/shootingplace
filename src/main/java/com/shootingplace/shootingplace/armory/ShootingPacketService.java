@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.armory;
 
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
 import org.springframework.http.HttpStatus;
@@ -8,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import javax.naming.NoPermissionException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -35,7 +37,7 @@ public class ShootingPacketService {
         return shootingPacketRepository.findAll().stream().map(Mapping::map).sorted(Comparator.comparing(ShootingPacketDTO::getPrice)).collect(Collectors.toList());
     }
 
-    public ResponseEntity<?> addShootingPacket(String name, float price, Map<String, Integer> map,String pinCode) {
+    public ResponseEntity<?> addShootingPacket(String name, float price, Map<String, Integer> map,String pinCode) throws NoPermissionException, NoUserPermissionException {
         if (!workingTimeEvidenceRepository.existsByIsCloseFalse()) {
             return ResponseEntity.badRequest().body("Najpierw zarejestruj pobyt");
         }
@@ -44,7 +46,7 @@ public class ShootingPacketService {
         return getStringResponseEntity(pinCode,shootingPacketRepository.save(ShootingPacketEntity.builder().name(name.toUpperCase()).price(price).calibers(entities).build()),HttpStatus.OK,"addShootingPacket","utworzono pakiet strzelecki " + name.toUpperCase());
     }
 
-    public ResponseEntity<?> getStringResponseEntity(String pinCode, ShootingPacketEntity shootingPacketEntity, HttpStatus status, String methodName, Object body) {
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, ShootingPacketEntity shootingPacketEntity, HttpStatus status, String methodName, Object body) throws NoPermissionException, NoUserPermissionException {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         ResponseEntity<String> stringResponseEntity;
         stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, methodName, shootingPacketEntity.getUuid() + " " + shootingPacketEntity.getName());

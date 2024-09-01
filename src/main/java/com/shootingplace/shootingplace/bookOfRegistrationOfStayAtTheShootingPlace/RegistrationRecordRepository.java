@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace;
+package com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

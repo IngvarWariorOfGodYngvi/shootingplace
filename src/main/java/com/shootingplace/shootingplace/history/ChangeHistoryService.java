@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.history;
 
 import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.enums.UserSubType;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
@@ -38,9 +39,12 @@ public class ChangeHistoryService {
                 .build());
     }
 
-    public ResponseEntity<?> comparePinCode(String pinCode) {
+    public ResponseEntity<?> comparePinCode(String pinCode) throws NoUserPermissionException {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity userEntity = userRepository.findAll().stream().filter(f -> f.getPinCode().equals(pin)).findFirst().orElse(null);
+        if (userEntity != null && userEntity.getSubType().equals("Admin")) {
+            throw new NoUserPermissionException();
+        }
         boolean inWork;
         if (userEntity != null) {
             inWork = workServ.isInWork(userEntity);
@@ -51,7 +55,7 @@ public class ChangeHistoryService {
 
     }
 
-    public ResponseEntity<String> addRecordToChangeHistory(String pinCode, String classNamePlusMethod, String uuid) {
+    public ResponseEntity<String> addRecordToChangeHistory(String pinCode, String classNamePlusMethod, String uuid) throws NoUserPermissionException {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity userEntity = userRepository.findByPinCode(pin);
         // user is found
@@ -65,7 +69,8 @@ public class ChangeHistoryService {
                 userRepository.save(userEntity);
                 return null;
             } else {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Brak uprawnień");
+                throw new NoUserPermissionException();
+//                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Brak uprawnień");
             }
         }
         //user not found

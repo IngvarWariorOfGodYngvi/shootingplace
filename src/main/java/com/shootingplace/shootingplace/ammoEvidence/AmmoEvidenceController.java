@@ -1,7 +1,8 @@
 package com.shootingplace.shootingplace.ammoEvidence;
 
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
-import com.shootingplace.shootingplace.exceptionHandlers.Exceptions.NoPersonToAmmunitionException;
+import com.shootingplace.shootingplace.exceptions.NoPersonToAmmunitionException;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -58,7 +59,7 @@ public class AmmoEvidenceController {
                 break;
             }
         }
-        if (otherID == 0 ) {
+        if (otherID == null || otherID == 0 ) {
             otherID = null;
         }
         if (check) {
@@ -101,7 +102,7 @@ public class AmmoEvidenceController {
 
     @Transactional
     @PatchMapping("/ammoOpen")
-    public ResponseEntity<?> openEvidence(@RequestParam String pinCode, @RequestParam String evidenceUUID) {
+    public ResponseEntity<?> openEvidence(@RequestParam String pinCode, @RequestParam String evidenceUUID) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return ammoEvidenceService.openEvidence(evidenceUUID, pinCode);

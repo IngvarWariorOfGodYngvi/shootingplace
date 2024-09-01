@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/statistics")
@@ -22,6 +23,10 @@ public class StatisticsController {
         LocalDate parseFirstDate = LocalDate.parse(firstDate);
         LocalDate parseSecondDate = LocalDate.parse(secondDate);
         return ResponseEntity.ok(statisticsService.getContributionSum(parseFirstDate, parseSecondDate));
+    }
+    @GetMapping("/weekBirthdayList")
+    public ResponseEntity<?> getWeekBirthdayList() {
+        return ResponseEntity.ok(statisticsService.getWeekBirthdayList());
     }
 
     @GetMapping("/joinDateSum")
@@ -76,6 +81,11 @@ public class StatisticsController {
     @GetMapping("/highStarts")
     public ResponseEntity<?> getHighStatisticsCompetitions() {
         return statisticsService.getHighStatisticsCompetitions();
+    }
+
+    @GetMapping("/membersQuantity" )
+    public List<Long> getMembersQuantity() {
+        return statisticsService.getMembersQuantity();
     }
 
     @GetMapping("/highStartsCompetitors")

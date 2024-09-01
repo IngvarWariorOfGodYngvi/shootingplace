@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.otherPerson;
 
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.club.Club;
+import com.shootingplace.shootingplace.member.MemberPermissions;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ public class OtherPerson {
     private String phoneNumber;
     private String email;
     private Address address;
+    private MemberPermissions memberPermissions;
 
     private Club club;
     private String weaponPermissionNumber;
@@ -74,5 +76,13 @@ public class OtherPerson {
 
     public void setWeaponPermissionNumber(String weaponPermissionNumber) {
         this.weaponPermissionNumber = weaponPermissionNumber;
+    }
+
+    public MemberPermissions getMemberPermissions() {
+        return memberPermissions;
+    }
+
+    public void setMemberPermissions(MemberPermissions memberPermissions) {
+        this.memberPermissions = memberPermissions;
     }
 }

@@ -313,8 +313,8 @@ public class MemberEntity extends Person {
     }
     /**
     * Return member Sex
-     * if false -> woman
-     * if true -> man
+     * if false -> man
+     * if true -> woman
     */
     public boolean getSex() {
         return Integer.parseInt(String.valueOf(this.pesel.toCharArray()[10])) % 2 == 0;

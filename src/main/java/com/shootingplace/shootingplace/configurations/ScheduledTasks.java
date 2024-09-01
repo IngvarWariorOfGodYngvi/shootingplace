@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.configurations;
 
-import com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordsService;
+import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordsService;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceService;
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardService;

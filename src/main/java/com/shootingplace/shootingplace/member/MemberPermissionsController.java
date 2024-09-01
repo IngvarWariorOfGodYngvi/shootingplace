@@ -29,6 +29,11 @@ public class MemberPermissionsController {
         return otherPersonService.getOthersWithPermissions();
     }
 
+    @GetMapping("/getArbiterClasses")
+    public ResponseEntity<?> getArbiterClasses() {
+        return ResponseEntity.ok(memberPermissionsService.getArbiterClasses());
+    }
+
     @GetMapping("/checkArbiter")
     public ResponseEntity<?> checkArbiterByCode(@RequestParam String code) {
         return userService.checkArbiterByCode(code);

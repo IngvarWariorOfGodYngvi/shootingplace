@@ -4,6 +4,7 @@ import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.enums.UsedType;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.file.FilesEntity;
 import com.shootingplace.shootingplace.file.FilesRepository;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
@@ -220,10 +221,6 @@ public class ArmoryService {
 
         gunRepository.save(gunEntity);
         GunStoreEntity gunStoreEntity = gunStoreRepository.findByTypeName(gunEntity.getGunType());
-//        GunStoreEntity gunStoreEntity = gunStoreRepository.findAll()
-//                .stream()
-//                .filter(f -> f.getTypeName().equals(gun.getGunType()))
-//                .findFirst().orElseThrow(EntityNotFoundException::new);
         List<GunEntity> gunEntityList = gunStoreEntity.getGunEntityList();
         gunEntityList.add(gunEntity);
 
@@ -310,7 +307,7 @@ public class ArmoryService {
         return ResponseEntity.ok("Zaktualizowano broń");
     }
 
-    public ResponseEntity<?> removeGun(String gunUUID, String pinCode) {
+    public ResponseEntity<?> removeGun(String gunUUID, String pinCode) throws NoUserPermissionException {
 
         GunEntity gunEntity = gunRepository.findById(gunUUID).orElse(null);
         if (gunEntity == null) {
@@ -497,7 +494,7 @@ public class ArmoryService {
                 .collect(Collectors.toList());
     }
 
-    public ResponseEntity<?> getStringResponseEntity(String pinCode, GunEntity gunEntity, HttpStatus status, String methodName, Object body) {
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, GunEntity gunEntity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         ResponseEntity<String> stringResponseEntity;
         if (gunEntity != null) {
@@ -556,20 +553,20 @@ public class ArmoryService {
         return ResponseEntity.ok(gunRepository.getOne(gunUUID));
     }
 
-    public ResponseEntity<?> changeCaliberQuantity(String caliberUUID, Integer quantity, String pinCode) {
+    public ResponseEntity<?> changeCaliberQuantity(String caliberUUID, Integer quantity, String pinCode) throws NoUserPermissionException {
         CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
         caliberEntity.setQuantity(quantity);
         return getStringResponseEntity(pinCode, null, HttpStatus.OK, "changeCaliberQuantity" + caliberEntity.getName(), "zmieniono ilość amunicji");
     }
 
-    public ResponseEntity<?> changeCaliberUnitPrice(String caliberUUID, Float price, String pinCode) {
+    public ResponseEntity<?> changeCaliberUnitPrice(String caliberUUID, Float price, String pinCode) throws NoUserPermissionException {
         CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
         caliberEntity.setUnitPrice(price);
         return getStringResponseEntity(pinCode, null, HttpStatus.OK, "changeCaliberUnitPrice" + caliberEntity.getName(), "zmieniono cenę amunicji");
 
     }
 
-    public ResponseEntity<?> changeCaliberUnitPriceForNotMember(String caliberUUID, Float price, String pinCode) {
+    public ResponseEntity<?> changeCaliberUnitPriceForNotMember(String caliberUUID, Float price, String pinCode) throws NoUserPermissionException {
         CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
         caliberEntity.setUnitPriceForNotMember(price);
         return getStringResponseEntity(pinCode, null, HttpStatus.OK, "changeCaliberUnitPriceForNotMember" + caliberEntity.getName(), "zmieniono cenę amunicji dla pozostałych");

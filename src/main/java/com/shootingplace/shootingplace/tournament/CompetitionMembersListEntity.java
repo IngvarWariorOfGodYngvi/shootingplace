@@ -25,6 +25,8 @@ public class CompetitionMembersListEntity {
     private String uuid;
 
     private String name;
+    private String abbreviation;
+
     private String attachedToTournament;
     private LocalDate date;
 
@@ -210,5 +212,13 @@ public class CompetitionMembersListEntity {
 
     public void setPracticeShots(Integer practiceShots) {
         this.practiceShots = practiceShots;
+    }
+
+    public String getAbbreviation() {
+        return abbreviation;
+    }
+
+    public void setAbbreviation(String abbreviation) {
+        this.abbreviation = abbreviation;
     }
 }

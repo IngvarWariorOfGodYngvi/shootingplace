@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.competition;
 import com.shootingplace.shootingplace.enums.CompetitionType;
 import com.shootingplace.shootingplace.enums.CountingMethod;
 import com.shootingplace.shootingplace.enums.Discipline;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.tournament.CompetitionMembersListRepository;
 import org.apache.logging.log4j.LogManager;
@@ -121,9 +122,6 @@ public class CompetitionService {
     public ResponseEntity<?> createNewCompetition(Competition competition) {
         List<String> list = competitionRepository.findAll().stream().map(CompetitionEntity::getName).collect(Collectors.toList());
         int size = (int) competitionRepository.count() + 1;
-//        if (list.isEmpty()) {
-//            createCompetitions();
-//        }
         LOG.info(competition.getName().trim().toLowerCase(Locale.ROOT));
         if (list.stream().anyMatch(a -> a.trim().toLowerCase(Locale.ROOT).equals(competition.getName().trim().toLowerCase(Locale.ROOT)))) {
             LOG.info("Taka konkurencja już istnieje");
@@ -132,6 +130,7 @@ public class CompetitionService {
         List<String> disciplines = List.of(competition.getDisciplines());
         CompetitionEntity c = CompetitionEntity.builder()
                 .name(competition.getName())
+                .abbreviation(competition.getAbbreviation())
                 .discipline(competition.getDiscipline())
                 .ordering(size)
                 .type(competition.getType())
@@ -143,71 +142,14 @@ public class CompetitionService {
         c.setDisciplineList(disciplines);
         competitionRepository.save(c);
         return ResponseEntity.status(201).body("utworzono konkurencję " + c.getName());
-//        if (!competition.getDiscipline().equals("")) {
-//            if (competition.getDiscipline().equals(Discipline.PISTOL.getName()) || competition.getDiscipline().equals(Discipline.RIFLE.getName()) || competition.getDiscipline().equals(Discipline.SHOTGUN.getName())) {
-//                CompetitionEntity competitionEntity = CompetitionEntity.builder()
-//                        .name(competition.getName())
-//                        .numberOfShots(competition.getNumberOfShots())
-//                        .numberOfManyShots(competition.getNumberOfManyShots())
-//                        .discipline(competition.getDiscipline())
-//                        .type(competition.getType())
-//                        .ordering(size)
-//                        .caliberUUID(competition.getCaliberUUID())
-//                        .practiceShots(competition.getPracticeShots())
-//                        .build();
-//                if (competition.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
-//                    competitionEntity.setCountingMethod(CountingMethod.NORMAL.getName());
-//                    LOG.info("Ustawiono metodę liczenia " + CountingMethod.NORMAL.getName());
-//                }
-//                if (competition.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-//                    LOG.info("Ustawiono metodę liczenia " + CountingMethod.COMSTOCK.getName());
-//                    competitionEntity.setCountingMethod(CountingMethod.COMSTOCK.getName());
-//                }
-//                competitionRepository.save(competitionEntity);
-//                LOG.info("00000Utworzono nową konkurencję " + competition.getName());
-//                return ResponseEntity.status(201).body("Utworzono nową konkurencję " + competition.getName());
-//            } else {
-//                LOG.info("Po prostu się nie udało");
-//                return ResponseEntity.badRequest().body("Po prostu się nie udało");
-//            }
-//        } else {
-//            CompetitionEntity competitionEntity = CompetitionEntity.builder()
-//                    .name(competition.getName())
-//                    .discipline(null)
-//                    .numberOfShots(competition.getNumberOfShots())
-//                    .disciplines(competition.getDisciplines())
-//                    .numberOfManyShots(competition.getNumberOfManyShots())
-//                    .type(competition.getType())
-//                    .ordering(size)
-//                    .caliberUUID(competition.getCaliberUUID())
-//                    .practiceShots(competition.getPracticeShots())
-//                    .build();
-////            if (competition.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
-////                competitionEntity.setCountingMethod(CountingMethod.NORMAL.getName());
-////            }
-////            if (competition.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-////                LOG.info("Ustawiono metodę liczenia " + CountingMethod.COMSTOCK.getName());
-////            }
-//            LOG.info("11111Ustawiono metodę liczenia " + competition.getCountingMethod());
-//            competitionRepository.save(competitionEntity);
-//            LOG.info("Utworzono nową konkurencję " + competition.getName());
-//            return ResponseEntity.status(201).body("Utworzono nową konkurencję " + competition.getName());
-
-
     }
 
-    public ResponseEntity<?> updateCompetition(String uuid, Competition competition, String pinCode) {
+    public ResponseEntity<?> updateCompetition(String uuid, Competition competition, String pinCode) throws NoUserPermissionException {
 
         CompetitionEntity one = competitionRepository.getOne(uuid);
-        if (competition.getOrdering() != null) {
-            one.setOrdering(competition.getOrdering());
-        }
-        if (competition.getPracticeShots() != null) {
-            one.setPracticeShots(competition.getPracticeShots());
-        }
-        if (competition.getCaliberUUID() != null && !competition.getNumberOfShots().equals("null")) {
-            one.setCaliberUUID(competition.getCaliberUUID());
-        }
+        one.setOrdering(competition.getOrdering() != null ? competition.getOrdering() : one.getOrdering());
+        one.setPracticeShots(competition.getPracticeShots() != null ? competition.getPracticeShots() : one.getPracticeShots());
+        one.setCaliberUUID(competition.getCaliberUUID() != null ? competition.getCaliberUUID() : one.getCaliberUUID());
         if (competition.getName() != null && !competition.getName().equals("null")) {
             if (competitionRepository.findByNameEquals(competition.getName()).isEmpty()) {
                 one.setName(competition.getName());
@@ -215,12 +157,17 @@ public class CompetitionService {
                 return ResponseEntity.badRequest().body("taka nazwa już istnieje i nie można zaktualizować konkurencji");
             }
         }
-        if (competition.getNumberOfShots() != null && !competition.getNumberOfShots().equals("null")) {
-            one.setNumberOfShots(competition.getNumberOfShots());
+        one.setNumberOfShots(competition.getNumberOfShots() != null ? competition.getNumberOfShots() : one.getNumberOfShots());
+        one.setCountingMethod(competition.getCountingMethod() != null ? competition.getCountingMethod() : one.getCountingMethod());
+        one.setType(competition.getType() != null ? competition.getType() : one.getType());
+
+        if (competition.getDiscipline() != null) {
+            competition.setDiscipline(competition.getDiscipline().equals("") ? null : competition.getDiscipline());
+            one.setDiscipline(competition.getDiscipline());
         }
-        if (competition.getCountingMethod() != null && !competition.getCountingMethod().equals("null")) {
-            one.setCountingMethod(competition.getCountingMethod());
-        }
+        competition.setDisciplineList(competition.getDisciplineList().size() > 1 ? competition.getDisciplineList() : null);
+        one.setDisciplineList(competition.getDisciplineList() != null ? competition.getDisciplineList() : one.getDisciplineList());
+        competitionRepository.save(one);
         ResponseEntity<?> response = getStringResponseEntity(pinCode, one, HttpStatus.OK, "update Competition", "Zaktualizowano konkurencję");
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             competitionRepository.save(one);
@@ -228,13 +175,15 @@ public class CompetitionService {
                     .stream()
                     .filter(f -> f.getCompetitionUUID() != null && f.getCompetitionUUID().equals(one.getUuid()))
                     .forEach(e -> {
-                        e.setOrdering(
-                                competition.getOrdering());
+                        e.setOrdering(competition.getOrdering());
                         e.setPracticeShots(competition.getPracticeShots() != null ? competition.getPracticeShots() : e.getPracticeShots());
                         e.setCaliberUUID(competition.getCaliberUUID() != null ? competition.getCaliberUUID() : e.getCaliberUUID());
                         e.setName(competition.getName() != null ? competition.getName() : e.getName());
                         e.setNumberOfShots(competition.getNumberOfShots() != null ? competition.getNumberOfShots() : e.getNumberOfShots());
                         e.setCountingMethod(competition.getCountingMethod() != null ? competition.getCountingMethod() : e.getCountingMethod());
+                        e.setType(competition.getType() != null ? competition.getType() : e.getType());
+                        e.setDiscipline(competition.getDiscipline() != null ? competition.getDiscipline() : e.getDiscipline());
+                        e.setDisciplineList(competition.getDisciplineList() != null ? competition.getDisciplineList() : e.getDisciplineList());
                         competitionMembersListRepository.save(e);
                     });
         }
@@ -250,7 +199,7 @@ public class CompetitionService {
         }
     }
 
-    public ResponseEntity<?> getStringResponseEntity(String pinCode, CompetitionEntity entity, HttpStatus status, String methodName, Object body) {
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, CompetitionEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, entity != null ? entity.getClass().getSimpleName() + " " + methodName + " " : methodName, entity != null ? entity.getUuid() : "nie dotyczy");
         if (stringResponseEntity != null) {

@@ -267,8 +267,20 @@ public class FilesController {
 
     // lista osób usuniętych
     @GetMapping("/downloadAllErasedMembers")
-    public ResponseEntity<byte[]> getAllErasedMembers() throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.getAllErasedMembers();
+    public ResponseEntity<byte[]> getAllErasedMembers(@RequestParam String firstDate, @RequestParam String secondDate) throws DocumentException, IOException {
+        LocalDate parseFirstDate = LocalDate.parse(firstDate);
+        LocalDate parseSecondDate = LocalDate.parse(secondDate);
+        FilesEntity filesEntity = filesService.getAllErasedMembers(parseFirstDate,parseSecondDate);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
+    }
+    @GetMapping("/downloadAllErasedMembersXlsx")
+    public ResponseEntity<byte[]> getAllErasedMembersXlsx(@RequestParam String firstDate, @RequestParam String secondDate) throws DocumentException, IOException {
+        LocalDate parseFirstDate = LocalDate.parse(firstDate);
+        LocalDate parseSecondDate = LocalDate.parse(secondDate);
+        FilesEntity filesEntity = xlsxFiles.getAllErasedMembersXlsx(parseFirstDate,parseSecondDate);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")

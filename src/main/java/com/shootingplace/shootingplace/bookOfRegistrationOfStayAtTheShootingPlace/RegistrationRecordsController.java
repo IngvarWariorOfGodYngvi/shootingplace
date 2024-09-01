@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace;
+package com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace;
 
 import com.shootingplace.shootingplace.file.FilesService;
 import com.shootingplace.shootingplace.wrappers.ImageOtherPersonWrapper;

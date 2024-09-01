@@ -130,7 +130,6 @@ public class ScoreService {
         if (!scoreRepository.existsById(scoreUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono wyniku. Sprawdź identyfikator rekordu");
         }
-        System.out.println("Start");
         ScoreEntity scoreEntity = scoreRepository.getOne(scoreUUID);
         String competitionMembersListEntityUUID = scoreEntity.getCompetitionMembersListEntityUUID();
         CompetitionMembersListEntity competitionMembersListEntity = competitionMembersListRepository.findById(competitionMembersListEntityUUID).orElseThrow(EntityNotFoundException::new);

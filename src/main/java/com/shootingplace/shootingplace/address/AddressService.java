@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.address;
 
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
@@ -10,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import javax.naming.NoPermissionException;
 import javax.persistence.EntityNotFoundException;
 
 @Service
@@ -25,7 +27,7 @@ public class AddressService {
         this.changeHistoryService = changeHistoryService;
     }
 
-    public ResponseEntity<?> updateAddress(String memberUUID, Address address, String pinCode) {
+    public ResponseEntity<?> updateAddress(String memberUUID, Address address, String pinCode) throws NoPermissionException, NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).body("Nie znaleziono Klubowicza");
@@ -84,7 +86,7 @@ public class AddressService {
 
     }
 
-    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, String body) {
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, String body) throws NoPermissionException, NoUserPermissionException {
         ResponseEntity<String> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         if (memberEntity.getUuid() == null) {
             memberEntity.setUuid("nowy");

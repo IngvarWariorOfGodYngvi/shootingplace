@@ -4,6 +4,7 @@ import com.github.javafaker.Faker;
 import com.github.javafaker.Name;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.*;
 import com.shootingplace.shootingplace.license.License;
 import com.shootingplace.shootingplace.license.LicenseEntity;
@@ -61,8 +62,6 @@ public class LicenseServiceTest {
     private List<MemberEntity> membersList = getMemberEntities();
 
     private int i = 1;
-
-    private final String pinCodeOK = "0127";
 
     @Before
     public void init() {
@@ -192,12 +191,13 @@ public class LicenseServiceTest {
 //    }
 
     @Test
-    public void update_license_return_false() {
+    public void update_license_return_false() throws NoUserPermissionException {
         //given
         String uuid = membersList.get(0).getUuid();
         String licenceNumber = String.valueOf(3);
         LocalDate date = LocalDate.of(2022, 12, 31);
         //when
+        String pinCodeOK = "0127";
         ResponseEntity<?> responseEntity = licenseService.updateLicense(uuid, licenceNumber, date,true, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
@@ -267,7 +267,7 @@ public class LicenseServiceTest {
     }
 
     @Test
-    public void update_license_payment() {
+    public void update_license_payment() throws NoUserPermissionException {
         //given
         MemberEntity memberEntity = membersList.get(0);
         String uuid = memberEntity.getUuid();

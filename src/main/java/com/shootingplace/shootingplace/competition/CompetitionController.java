@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.competition;
 
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.tournament.ScoreService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
@@ -50,7 +51,7 @@ public class CompetitionController {
     }
     @Transactional
     @PutMapping("/update")
-    public ResponseEntity<?> updateCompetition(@RequestParam String uuid, @RequestBody Competition competition,@RequestParam String pinCode) {
+    public ResponseEntity<?> updateCompetition(@RequestParam String uuid, @RequestBody Competition competition,@RequestParam String pinCode) throws NoUserPermissionException {
 
         return competitionService.updateCompetition(uuid, competition,pinCode);
     }

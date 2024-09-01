@@ -4,6 +4,7 @@ import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
@@ -17,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityNotFoundException;
 import java.nio.charset.StandardCharsets;
@@ -170,7 +172,7 @@ public class UserService {
 
     }
 
-    public ResponseEntity<?> createUser(String firstName, String secondName, String subType, String pinCode, String superPinCode, String memberUUID, Integer otherID) {
+    public ResponseEntity<?> createUser(String firstName, String secondName, String subType, String pinCode, String superPinCode, String memberUUID, Integer otherID) throws NoUserPermissionException {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         String superPin = Hashing.sha256().hashString(superPinCode, StandardCharsets.UTF_8).toString();
         if (userRepository.findAll().stream().filter(f -> f.getPinCode().equals(superPin)).anyMatch(UserEntity::isSuperUser)) {
@@ -385,7 +387,7 @@ public class UserService {
 
     }
 
-    public ResponseEntity<?> getAccess(String pinCode) {
+    public ResponseEntity<?> getAccess(String pinCode) throws NoUserPermissionException {
         ResponseEntity response;
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         if (userRepository.existsByPinCode(pin)) {

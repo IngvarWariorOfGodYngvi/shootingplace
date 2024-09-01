@@ -34,6 +34,7 @@ public class Member extends Person {
     private ClubEntity club;
     private Address address;
     private String phoneNumber;
+    private String image;
     private WeaponPermission weaponPermission;
 
     private Boolean active = true;
@@ -228,5 +229,13 @@ public class Member extends Person {
 
     public void setBarCodeCardList(List<BarCodeCardDTO> barCodeCardList) {
         this.barCodeCardList = barCodeCardList;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 }

@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.ammoEvidence;
 
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,7 +66,7 @@ public class AmmoEvidenceService {
         return ammoEvidenceRepository.findAllByOpenFalse(page).map(Mapping::map1).toList();
     }
 
-    public ResponseEntity<?> openEvidence(String evidenceUUID, String pinCode) {
+    public ResponseEntity<?> openEvidence(String evidenceUUID, String pinCode) throws NoUserPermissionException {
         if (ammoEvidenceRepository.findAll().stream().anyMatch(AmmoEvidenceEntity::isOpen)) {
             return ResponseEntity.badRequest().body("Nie można otworzyć listy bo inna jest otwarta");
 
@@ -103,7 +104,7 @@ public class AmmoEvidenceService {
         return message;
     }
 
-    ResponseEntity<?> getStringResponseEntity(String pinCode, AmmoEvidenceEntity ammoEvidenceEntity, HttpStatus status, String methodName, Object body) {
+    ResponseEntity<?> getStringResponseEntity(String pinCode, AmmoEvidenceEntity ammoEvidenceEntity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         ResponseEntity<?> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, ammoEvidenceEntity.getClass().getSimpleName() + " " + methodName + " ", ammoEvidenceEntity.getUuid());
         if (stringResponseEntity != null) {

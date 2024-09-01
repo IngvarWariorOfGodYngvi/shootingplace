@@ -2,8 +2,9 @@ package com.shootingplace.shootingplace.member;
 
 
 import com.shootingplace.shootingplace.address.Address;
-import com.shootingplace.shootingplace.wrappers.MemberWithAddressWrapper;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.wrappers.MemberWithAddressWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
@@ -49,8 +50,10 @@ public class MemberController {
     }
 
     @GetMapping("/erased" )
-    public ResponseEntity<?> getErasedMembers() {
-        return ResponseEntity.ok(memberService.getMembersErased());
+    public ResponseEntity<?> getErasedMembers(@RequestParam String firstDate, @RequestParam String secondDate) {
+        LocalDate parseFirstDate = LocalDate.parse(firstDate);
+        LocalDate parseSecondDate = LocalDate.parse(secondDate);
+        return ResponseEntity.ok(memberService.getMembersErased(parseFirstDate, parseSecondDate));
     }
 
     @GetMapping("/getAllNames" )
@@ -86,11 +89,6 @@ public class MemberController {
         return ResponseEntity.ok(memberService.getAllMemberDTO(adult1, active1, erase1));
     }
 
-    @GetMapping("/membersQuantity" )
-    public List<Long> getMembersQuantity() {
-        return memberService.getMembersQuantity();
-    }
-
     @GetMapping("/getArbiters" )
     public List<MemberInfo> getArbiters() {
         return memberService.getArbiters();
@@ -123,7 +121,7 @@ public class MemberController {
 
     @Transactional
     @PostMapping("/" )
-    public ResponseEntity<?> addMember(@RequestBody @Valid MemberWithAddressWrapper memberWithAddressWrapper, @RequestParam boolean returningToClub, @RequestParam String pinCode) {
+    public ResponseEntity<?> addMember(@RequestBody @Valid MemberWithAddressWrapper memberWithAddressWrapper, @RequestParam boolean returningToClub, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             ResponseEntity<?> result;
@@ -145,7 +143,7 @@ public class MemberController {
     }
 
     @PutMapping("/{uuid}" )
-    public ResponseEntity<?> updateMember(@PathVariable String uuid, @RequestBody @Valid Member member, @RequestParam String pinCode) {
+    public ResponseEntity<?> updateMember(@PathVariable String uuid, @RequestBody @Valid Member member, @RequestParam String pinCode) throws NoUserPermissionException {
         return memberService.updateMember(uuid, member, pinCode);
     }
 
@@ -166,7 +164,7 @@ public class MemberController {
 
     @Transactional
     @PatchMapping("/adult/{uuid}" )
-    public ResponseEntity<?> changeAdult(@PathVariable String uuid, @RequestParam String pinCode) {
+    public ResponseEntity<?> changeAdult(@PathVariable String uuid, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return memberService.changeAdult(uuid, pinCode);
@@ -181,7 +179,7 @@ public class MemberController {
     }
 
     @PatchMapping("/{uuid}" )
-    public ResponseEntity<?> activateOrDeactivateMember(@PathVariable String uuid, @RequestParam String pinCode) {
+    public ResponseEntity<?> activateOrDeactivateMember(@PathVariable String uuid, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return memberService.activateOrDeactivateMember(uuid, pinCode);
@@ -191,7 +189,7 @@ public class MemberController {
     }
 
     @PatchMapping("/erase/{uuid}" )
-    public ResponseEntity<?> eraseMember(@PathVariable String uuid, @RequestParam String additionalDescription, @RequestParam String erasedDate, @RequestParam String erasedType, @RequestParam String pinCode) {
+    public ResponseEntity<?> eraseMember(@PathVariable String uuid, @RequestParam String additionalDescription, @RequestParam String erasedDate, @RequestParam String erasedType, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             if (additionalDescription.trim().isEmpty() || additionalDescription.trim().isBlank() || additionalDescription.trim().equals("null" )) {

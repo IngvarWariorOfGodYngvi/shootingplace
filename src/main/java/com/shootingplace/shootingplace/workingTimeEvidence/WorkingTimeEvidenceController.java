@@ -26,6 +26,31 @@ public class WorkingTimeEvidenceController {
         return workService.createNewWTE(number);
     }
 
+//    @GetMapping("/stream-sse-mvc")
+//    public SseEmitter streamSseMvc() {
+//        SseEmitter emitter = new SseEmitter();
+//        ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+//
+//        sseMvcExecutor.execute(() -> {
+//            try {
+//                int i = 0;
+//                while (true) {
+//                    SseEmitter.SseEventBuilder event = SseEmitter.event()
+//                            .data("SSE MVC - " + LocalTime.now()
+//                                    .toString())
+//                            .id(String.valueOf(i))
+//                            .name("sse event - mvc");
+//                    emitter.send(event);
+//                    Thread.sleep(1000);
+//                    i++;
+//                }
+//            } catch (Exception ex) {
+//                emitter.completeWithError(ex);
+//            }
+//        });
+//        return emitter;
+//    }
+
     @GetMapping("/")
     public ResponseEntity<?> getAllActiveUsers() {
 

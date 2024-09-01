@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.users;
 
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,7 @@ public class UserController {
     }
 
     @GetMapping("/getAccess")
-    public ResponseEntity<?> getAccess(@RequestParam String pinCode){
+    public ResponseEntity<?> getAccess(@RequestParam String pinCode) throws NoUserPermissionException {
         return userService.getAccess(pinCode);
     }
     @GetMapping("/superUserList")
@@ -44,7 +45,7 @@ public class UserController {
     }
 
     @PostMapping("/createUser")
-    public ResponseEntity<?> createUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode,@RequestParam @Nullable String memberUUID, @RequestParam @Nullable Integer otherID) {
+    public ResponseEntity<?> createUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode,@RequestParam @Nullable String memberUUID, @RequestParam @Nullable Integer otherID) throws NoUserPermissionException {
         return userService.createUser(firstName, secondName, subType, pinCode, superPinCode, memberUUID, otherID);
     }
     @PostMapping("/editUser")

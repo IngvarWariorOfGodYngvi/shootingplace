@@ -314,4 +314,9 @@ public class CompetitionMembersListService {
 
         return ResponseEntity.ok(allByAttachedToTournament);
     }
+    public ResponseEntity<?> getTournamentScoresFromUUID(String tournamentUUID) {
+        List<CompetitionMembersListEntity> allByAttachedToTournament = competitionMembersListRepository.findAllByAttachedToTournament(tournamentUUID);
+
+        return ResponseEntity.ok(allByAttachedToTournament);
+    }
 }

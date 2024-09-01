@@ -4,16 +4,21 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class Competition {
 
     private String name;
+    private String abbreviation;
 
     private String discipline;
 
     private String[] disciplines;
+    private String disciplineList;
 
     private Integer numberOfShots;
     private Integer[] numberOfManyShots;
@@ -27,6 +32,28 @@ public class Competition {
     private Integer practiceShots;
 
     private String caliberUUID;
+
+    public List<String> getDisciplineList() {
+        List<String> vals = new ArrayList<>();
+        if (disciplineList != null) {
+            for (String s : disciplineList.split(";")) {
+                vals.add(String.valueOf(s));
+            }
+        }
+        return vals;
+    }
+
+    public void setDisciplineList(List<String> disciplineList) {
+        String value = "";
+        if (disciplineList == null || disciplineList.isEmpty()) {
+            this.disciplineList = null;
+        } else {
+            for (String f : disciplineList) {
+                value = value.concat(f + ";");
+            }
+            this.disciplineList = value;
+        }
+    }
 
     public Integer getPracticeShots() {
         return practiceShots;
@@ -108,4 +135,11 @@ public class Competition {
         this.numberOfManyShots = numberOfManyShots;
     }
 
+    public String getAbbreviation() {
+        return abbreviation;
+    }
+
+    public void setAbbreviation(String abbreviation) {
+        this.abbreviation = abbreviation;
+    }
 }

@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.BookOfRegistrationOfStayAtTheShootingPlace;
+package com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace;
 
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;

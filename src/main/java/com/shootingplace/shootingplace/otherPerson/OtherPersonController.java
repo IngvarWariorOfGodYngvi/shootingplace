@@ -76,7 +76,7 @@ public class OtherPersonController {
     }
     @GetMapping("/getOhterByPhone/{phone}")
     public ResponseEntity<?> getOhterByPhone(@PathVariable String phone) {
-        return otherPersonService.getOhterByPhone(phone);
+        return otherPersonService.getOtherByPhone(phone);
     }
 
     @GetMapping("/all")

@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.armory;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceRepository;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -240,7 +241,7 @@ public class CaliberService {
         return list;
     }
 
-    public ResponseEntity<?> createNewCaliber(String caliber, String pinCode) {
+    public ResponseEntity<?> createNewCaliber(String caliber, String pinCode) throws NoUserPermissionException {
 
         boolean match = caliberRepository.findAll().stream().anyMatch(a -> a.getName().equals(caliber.trim().toLowerCase()));
         if (!match) {
@@ -260,7 +261,7 @@ public class CaliberService {
         }
     }
 
-    public ResponseEntity<?> getStringResponseEntity(String pinCode, CaliberEntity caliberEntity, HttpStatus status, String methodName, Object body) {
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, CaliberEntity caliberEntity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, caliberEntity.getClass().getSimpleName() + " " + methodName + " ", caliberEntity.getUuid());
         if (stringResponseEntity != null) {
