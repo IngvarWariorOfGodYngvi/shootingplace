@@ -549,9 +549,10 @@ public class MemberService {
     }
 
     public List<Member> getMembersToReportToThePolice() {
-        LocalDate notValidLicense = LocalDate.now().minusYears(1);
+        LocalDate notValidLicense = LocalDate.now().minusMonths(6);
         return memberRepository.findAllByErasedFalse().stream()
                 .filter(f -> f.getLicense().getNumber() != null)
+                .filter(f -> f.getClub().getId()==1)
                 .filter(f -> !f.getLicense().isValid())
                 .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
@@ -559,7 +560,7 @@ public class MemberService {
     }
 
     public List<Member> getMembersToErase() {
-        LocalDate notValidContribution = LocalDate.now().minusYears(1);
+        LocalDate notValidContribution = LocalDate.now().minusMonths(6);
         return memberRepository.findAllByErasedFalseAndActiveFalse().stream()
                 .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidContribution))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))).map(Mapping::map).collect(Collectors.toList());

@@ -68,14 +68,8 @@ public class TournamentService {
         if (tournamentRepository.findAll().stream().anyMatch(TournamentEntity::isOpen)){
             return ResponseEntity.badRequest().body("Nie można otworzyć kolejnych zawodów bo inne są otwarte");
         }
-        String[] s1 = tournament.getName().split(" ");
-        StringBuilder name = new StringBuilder();
-        for (String value : s1) {
-            String splinted = value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase() + " ";
-            name.append(splinted);
-        }
         TournamentEntity tournamentEntity = TournamentEntity.builder()
-                .name(name.toString())
+                .name(tournament.getName())
                 .date(tournament.getDate())
                 .open(tournament.isOpen())
                 .WZSS(tournament.isWzss())

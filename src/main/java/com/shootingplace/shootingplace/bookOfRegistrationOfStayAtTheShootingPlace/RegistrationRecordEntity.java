@@ -132,4 +132,22 @@ public class RegistrationRecordEntity {
     public String getNameOnRecord() {
         return this.secondName + " " + this.firstName;
     }
+
+    @Override
+    public String toString() {
+        return "RegistrationRecordEntity{" +
+                "uuid='" + uuid + '\'' +
+                ", dateTime=" + dateTime +
+                ", endDateTime=" + endDateTime +
+                ", dayIndex=" + dayIndex +
+                ", firstName='" + firstName + '\'' +
+                ", secondName='" + secondName + '\'' +
+                ", peselOrID='" + peselOrID + '\'' +
+                ", address='" + address + '\'' +
+                ", weaponPermission='" + weaponPermission + '\'' +
+                ", statementOnReadingTheShootingPlaceRegulations=" + statementOnReadingTheShootingPlaceRegulations +
+                ", dataProcessingAgreement=" + dataProcessingAgreement +
+                ", imageUUID='" + imageUUID + '\'' +
+                '}';
+    }
 }

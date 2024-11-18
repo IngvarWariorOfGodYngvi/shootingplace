@@ -273,12 +273,17 @@ public class XLSXFilesService {
 
                     }
                     float score = scoreList.get(j).getScore();
+                    boolean afterComa = scoreList.stream().anyMatch(f -> {
+                        String s = String.format("%.1f", f.getScore());
+                        return Integer.parseInt(s.substring(s.indexOf(",") + 1)) > 0;
+                    });
                     String countingMethod = competitionMembersListEntity.getCountingMethod();
                     String scoreOuterTen;
                     String scoreInnerTen = String.format("%.2f", scoreList.get(j).getInnerTen());
                     if (countingMethod.equals(CountingMethod.COMSTOCK.getName()) || countingMethod.equals(CountingMethod.IPSC.getName()) || countingMethod.equals(CountingMethod.DYNAMIKADZIESIATKA.getName())) {
                         scoreOuterTen = String.format("%.4f", scoreList.get(j).getOuterTen());
                     } else {
+                        scoreInnerTen = String.format("%.0f", scoreList.get(j).getInnerTen());
                         scoreOuterTen = String.format("%.0f", scoreList.get(j).getOuterTen());
                     }
                     String procedures = String.valueOf(scoreList.get(j).getProcedures());
@@ -298,9 +303,17 @@ public class XLSXFilesService {
                     }
                     String result;
                     if (countingMethod.equals(CountingMethod.COMSTOCK.getName()) || countingMethod.equals(CountingMethod.IPSC.getName()) || countingMethod.equals(CountingMethod.DYNAMIKADZIESIATKA.getName())) {
-                        result = String.format("%.4f", score);
+                        if (countingMethod.equals(CountingMethod.TIME.getName())) {
+                            result = String.format("%.2f", score);
+                        } else {
+                            result = String.format("%.4f", score);
+                        }
                     } else {
-                        result = String.format("%.1f", score);
+                        if (afterComa && countingMethod.equals(CountingMethod.NORMAL.getName())) {
+                            result = String.format("%.1f", score);
+                        } else {
+                            result = String.valueOf(Math.round(score));
+                        }
                     }
                     if (scoreList.get(j).isDnf()) {
                         result = "DNF";
@@ -1007,7 +1020,7 @@ public class XLSXFilesService {
         String fileName = "Lista osób skreślonych od " + firstDate + " do" + secondDate + ".pdf";
         List<MemberEntity> list = memberRepository.findAllByErasedTrue().stream()
                 .filter(f -> f.getErasedEntity() != null)
-                .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1))&&f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
+                .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1)) && f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
         int rc = 0;
@@ -1108,6 +1121,7 @@ public class XLSXFilesService {
 
         return filesEntity;
     }
+
     private byte[] convertToByteArray(String path) throws IOException {
         File file = new File(path);
         return Files.readAllBytes(file.toPath());

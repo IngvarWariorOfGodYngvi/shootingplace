@@ -205,7 +205,7 @@ public class FilesService {
             status = "opłacił";
         }
         String contributionLevel = String.valueOf(90 * count);
-        String counter = "";
+        String counter;
         switch (count) {
             case 1:
                 counter = "jedną kwartalną składkę członkowską";
@@ -703,36 +703,35 @@ public class FilesService {
         String date = memberEntity.getLicense().getValidThru().toString().substring(2, 4);
 
         // brać uprawnienia z patentu
-        int pistol = 0;
         int licenceYear = memberEntity.getLicense().getValidThru().getYear();
+
         List<CompetitionHistoryEntity> collectPistol = memberEntity.getHistory().getCompetitionHistory()
                 .stream()
-                .filter(f -> f.getDisciplines() == null)
-                .filter(CompetitionHistoryEntity::isWZSS)
                 .filter(f -> f.getDate().getYear() == licenceYear)
+                .filter(CompetitionHistoryEntity::isWZSS)
+                .filter(f -> f.getDiscipline() != null)
                 .filter(f -> f.getDiscipline().equals(Discipline.values()[0].getName()))
                 .collect(Collectors.toList());
         List<CompetitionHistoryEntity> collectRifle = memberEntity.getHistory().getCompetitionHistory()
                 .stream()
-                .filter(f -> f.getDisciplines() == null)
-                .filter(CompetitionHistoryEntity::isWZSS)
                 .filter(f -> f.getDate().getYear() == licenceYear)
+                .filter(CompetitionHistoryEntity::isWZSS)
+                .filter(f -> f.getDiscipline() != null)
                 .filter(f -> f.getDiscipline().equals(Discipline.values()[1].getName()))
                 .collect(Collectors.toList());
         List<CompetitionHistoryEntity> collectShotgun = memberEntity.getHistory().getCompetitionHistory()
                 .stream()
-                .filter(f -> f.getDisciplines() == null)
-                .filter(CompetitionHistoryEntity::isWZSS)
                 .filter(f -> f.getDate().getYear() == licenceYear)
+                .filter(CompetitionHistoryEntity::isWZSS)
+                .filter(f -> f.getDiscipline() != null)
                 .filter(f -> f.getDiscipline().equals(Discipline.values()[2].getName()))
                 .collect(Collectors.toList());
 
         List<CompetitionHistoryEntity> competitionHistory = memberEntity.getHistory().getCompetitionHistory();
         for (CompetitionHistoryEntity entity : competitionHistory) {
-            if (entity.getDisciplines() != null) {
+            if (entity.getDisciplineList() != null) {
                 if (entity.getDate().getYear() == licenceYear) {
-                    String[] disciplines = entity.getDisciplines();
-                    for (String s : disciplines) {
+                    for (String s : entity.getDisciplineList()) {
                         if (s.equals(Discipline.PISTOL.getName())) {
                             collectPistol.add(entity);
                         }
@@ -747,7 +746,7 @@ public class FilesService {
             }
         }
 
-
+        int pistol = 0;
         if (memberEntity.getShootingPatent().getPistolPermission()) {
             pistol = collectPistol.size();
         }
@@ -829,18 +828,19 @@ public class FilesService {
 
             document.add(newLine);
         }
-        ClubEntity club = clubRepository.findById(1).orElseThrow(EntityNotFoundException::new);
+        ClubEntity club = clubRepository.getOne(1);
         int fontSize = 10;
         float fixedHeight = 27F;
         document.add(new Phrase("\n", font(7, 0)));
         int counter = 0;
+        String activeProfile = environment.getActiveProfiles()[0];
         for (int i = 0; i < pistol; i++) {
             float[] pointColumnWidths = {50, 20, 20, 5, 10, 2, 28};
             PdfPTable table = new PdfPTable(pointColumnWidths);
             counter++;
             PdfPCell cell = new PdfPCell(new Paragraph(collectPistol.get(i).getName() + "\n" + club.getName(), font(fontSize, 0)));
             PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectPistol.get(i).getDate().toString(), font(fontSize, 0)));
-            PdfPCell cell2 = new PdfPCell(new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
+            PdfPCell cell2 = new PdfPCell(new Paragraph(activeProfile.equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : activeProfile.equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
             PdfPCell cell3 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
             PdfPCell cell4 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
             PdfPCell cell5 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
@@ -879,7 +879,7 @@ public class FilesService {
 
             PdfPCell cell = new PdfPCell(new Paragraph(collectRifle.get(i).getName() + "\n" + club.getName(), font(fontSize, 0)));
             PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectRifle.get(i).getDate().toString(), font(fontSize, 0)));
-            PdfPCell cell2 = new PdfPCell(new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
+            PdfPCell cell2 = new PdfPCell(new Paragraph(activeProfile.equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : activeProfile.equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
             PdfPCell cell3 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
             PdfPCell cell4 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
             PdfPCell cell5 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
@@ -918,7 +918,7 @@ public class FilesService {
 
             PdfPCell cell = new PdfPCell(new Paragraph(collectShotgun.get(i).getName() + "\n" + club.getName(), font(fontSize, 0)));
             PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectShotgun.get(i).getDate().toString(), font(fontSize, 0)));
-            PdfPCell cell2 = new PdfPCell(new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
+            PdfPCell cell2 = new PdfPCell(new Paragraph(activeProfile.equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : activeProfile.equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
             PdfPCell cell3 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
             PdfPCell cell4 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
             PdfPCell cell5 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
@@ -2474,7 +2474,9 @@ public class FilesService {
         document.addCreationDate();
 
         Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase(), font(13, 1));
-        Paragraph date = new Paragraph(environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "" + ", " + monthFormat(tournamentEntity.getDate()), font(10, 2));
+        Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ?
+                "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ?
+                "Panaszew" : "") + ", " + monthFormat(tournamentEntity.getDate()), font(10, 2));
 
         Paragraph listTitle = new Paragraph("WYKAZ SĘDZIÓW", font(13, 0));
         Paragraph newLine = new Paragraph("\n", font(13, 0));
@@ -2632,11 +2634,12 @@ public class FilesService {
 
         document.add(title);
         document.add(newLine);
-        LocalDate notValidLicense = LocalDate.now().minusYears(1);
+        LocalDate notValidLicense = LocalDate.now().minusMonths(6);
         List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
                 .filter(f -> !f.getErased())
                 .filter(f -> f.getLicense().getNumber() != null)
                 .filter(f -> !f.getLicense().isValid())
+                .filter(f -> f.getClub().getId() == 1)
                 .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
                 .collect(Collectors.toList());
@@ -2721,7 +2724,7 @@ public class FilesService {
 
         document.add(title);
         document.add(newLine);
-        LocalDate notValidDate = LocalDate.now().minusYears(1);
+        LocalDate notValidDate = LocalDate.now().minusMonths(6);
         List<MemberEntity> memberEntityListAdult = memberRepository.findAllByErasedFalse().stream()
                 .filter(MemberEntity::getAdult)
                 .filter(f -> !f.getActive())
@@ -3288,7 +3291,7 @@ public class FilesService {
         document.add(newLine);
         List<MemberEntity> memberEntityList = memberRepository.findAllByErasedTrue().stream()
                 .filter(f -> f.getErasedEntity() != null)
-                .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1))&&f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
+                .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1)) && f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
         float[] pointColumnWidths = {4F, 28F, 10F, 14F, 14F, 36F};
@@ -3455,51 +3458,49 @@ public class FilesService {
         document.add(title);
         document.add(new Phrase("\n"));
 
-        float[] col = new float[]{10, 40, 20, 20, 30, 30};
+        float[] col = new float[]{10, 30, 20, 30, 30};
         PdfPTable table = new PdfPTable(col);
         Phrase index = new Phrase("lp", font(10, 0));
         Phrase name = new Phrase("Nazwisko i Imię", font(10, 0));
         Phrase dateTime = new Phrase("Data i godzina wejścia", font(10, 0));
-        Phrase endDateTime = new Phrase("Data i godzina wyjścia", font(10, 0));
         Phrase addressOrWeaponPermissionNumber = new Phrase("Adres lub pozwolenie na broń", font(10, 0));
         Phrase sign = new Phrase("podpis", font(10, 0));
         PdfPCell cell0 = new PdfPCell(index);
         cell0.setHorizontalAlignment(1);
         PdfPCell cell1 = new PdfPCell(name);
         PdfPCell cell2 = new PdfPCell(dateTime);
-        PdfPCell cell3 = new PdfPCell(endDateTime);
-        PdfPCell cell4 = new PdfPCell(addressOrWeaponPermissionNumber);
-        PdfPCell cell5 = new PdfPCell(sign);
+        PdfPCell cell3 = new PdfPCell(addressOrWeaponPermissionNumber);
+        PdfPCell cell4 = new PdfPCell(sign);
         table.addCell(cell0);
         table.addCell(cell1);
         table.addCell(cell2);
         table.addCell(cell3);
         table.addCell(cell4);
-        table.addCell(cell5);
         // dla każdego rekordu
         for (int i = 0; i < collect.size(); i++) {
             RegistrationRecordEntity record = collect.get(i);
-
             table.setWidthPercentage(100);
             Phrase recordIndex = new Phrase((i + 1) + " ", font(8, 0));
             Phrase recordName = new Phrase(record.getNameOnRecord() + " ", font(8, 0));
             Phrase recordDateTime = new Phrase(record.getDateTime().toString().replace("T", " ").substring(0, 16) + " ", font(8, 0));
-            Phrase recordEndDateTime = new Phrase(record.getEndDateTime() != null ? record.getEndDateTime().toString().replace("T", " ").substring(0, 16) + " " : "", font(8, 0));
             Phrase recordAddressOrWeaponPermissionNumber = new Phrase(record.getWeaponPermission() != null ? record.getWeaponPermission() + " " : record.getAddress(), font(8, 0));
-            Phrase recordDataProcessingAgreement = new Phrase(record.isDataProcessingAgreement() ? "tak " : "nie ", font(8, 0));
-            Image image = Image.getInstance(getFile(record.getImageUUID()).getData());
             cell0 = new PdfPCell(recordIndex);
             cell0.setHorizontalAlignment(1);
             cell1 = new PdfPCell(recordName);
             cell2 = new PdfPCell(recordDateTime);
-            cell3 = new PdfPCell(recordEndDateTime);
-            cell4 = new PdfPCell(recordAddressOrWeaponPermissionNumber);
+            cell3 = new PdfPCell(recordAddressOrWeaponPermissionNumber);
             table.addCell(cell0);
             table.addCell(cell1);
             table.addCell(cell2);
             table.addCell(cell3);
-            table.addCell(cell4);
-            table.addCell(image);
+            Image image;
+            if (record.getImageUUID() != null) {
+                image = Image.getInstance(getFile(record.getImageUUID()).getData());
+                table.addCell(image);
+            } else {
+                table.addCell("");
+
+            }
 
 
         }
