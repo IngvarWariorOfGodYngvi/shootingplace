@@ -60,6 +60,14 @@ public class MemberController {
     public List<MemberInfo> getAllNames() {
         return memberService.getAllNames();
     }
+    @GetMapping("/getAdvancedSearch")
+    public List<MemberDTO> getAdvancedSearch(@RequestParam boolean isErased, @RequestParam int searchType, @RequestParam String inputText) {
+        return memberService.getAdvancedSearch(isErased,searchType,inputText);
+    }
+    @GetMapping("/getAllNamesErased" )
+    public List<MemberInfo> getAllNamesErased() {
+        return memberService.getAllNamesErased();
+    }
 
     @GetMapping("/getAllMemberDTO" )
     public ResponseEntity<List<MemberDTO>> getAllMemberDTO() {

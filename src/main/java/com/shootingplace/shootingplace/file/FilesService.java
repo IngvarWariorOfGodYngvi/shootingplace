@@ -2,13 +2,13 @@ package com.shootingplace.shootingplace.file;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
-import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordEntity;
-import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
 import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceEntity;
 import com.shootingplace.shootingplace.armory.*;
+import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordEntity;
+import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
@@ -1920,10 +1920,11 @@ public class FilesService {
         Document document;
         if (a5rotate) {
             document = new Document(PageSize.A5.rotate());
+            document.setMargins(35F, 35F, 60F, 60F);
         } else {
             document = new Document(PageSize.A4);
+            document.setMargins(35F, 35F, 20F, 20F);
         }
-        document.setMargins(35F, 35F, 50F, 50F);
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
@@ -1954,7 +1955,6 @@ public class FilesService {
                     .findFirst().orElseThrow(EntityNotFoundException::new);
 
             CompetitionEntity competitionEntity = competitionRepository.findByNameEquals(comp.get(finalJ)).orElseThrow(EntityNotFoundException::new);
-            int compShots = competitionEntity.getNumberOfShots();
             int numberOfShots;
             if (competitionEntity.getNumberOfShots() > 10) {
                 numberOfShots = 10;
@@ -1964,8 +1964,6 @@ public class FilesService {
             //  nazwa zawodów i tytuł
             Paragraph par1 = new Paragraph(tournamentEntity.getName().toUpperCase() + "    " + clubEntity.getName(), font(11, 1));
             par1.setAlignment(1);
-            Paragraph par2 = new Paragraph(name.toUpperCase(), font(12, 1));
-            par2.setAlignment(1);
             String a = "";
             String b = "";
             if (score.isAmmunition()) {
@@ -1975,11 +1973,10 @@ public class FilesService {
             if (!score.isAmmunition() && score.isGun()) {
                 b = "B";
             }
-            Chunk clubChunk = new Chunk(" " + club, font(10, 0));
-            par2.add(clubChunk);
             // nazwisko klub i numer startowy
-            Chunk chunk = new Chunk("                            " + a + " " + b + "  Nr. " + startNumber, font(13, 1));
-            par2.add(chunk);
+            Chunk nameChunk = new Chunk(name.toUpperCase(), font(11, 1));
+            Chunk clubChunk = new Chunk(" " + club, font(11, 1));
+            Chunk numberChunk = new Chunk(a + " " + b + "  Nr. " + startNumber, font(13, 1));
             // nazwa konkurencji
             Paragraph par3 = new Paragraph(comp.get(j), font(11, 1));
             par3.setAlignment(1);
@@ -2008,20 +2005,90 @@ public class FilesService {
                 Arrays.fill(pointColumnWidths, 25F);
             }
             PdfPTable table = new PdfPTable(pointColumnWidths);
-            PdfPTable table11 = new PdfPTable(pointColumnWidths);
             PdfPTable table1 = new PdfPTable(pointColumnWidths);
-            PdfPTable table2 = new PdfPTable(pointColumnWidths);
+            PdfPTable table11 = new PdfPTable(pointColumnWidths);
+
+            float[] t2points = new float[5];
+
+            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
+                t2points = new float[]{25F, 25F, 10F, 10F, 10F};
+            }
+            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+                t2points = new float[]{33F, 33F, 33F, 0F, 0F};
+            }
+            PdfPTable table2 = new PdfPTable(t2points);
 
             table.setWidthPercentage(100F);
             table1.setWidthPercentage(100F);
             table11.setWidthPercentage(100F);
-            table2.setWidthPercentage(100F);
+
+            table2.setWidthPercentage(80F);
+
+            Paragraph p0t2 = new Paragraph(nameChunk);
+            Paragraph p1t2 = new Paragraph(clubChunk);
+            Paragraph p2t2 = new Paragraph(numberChunk);
+            Paragraph p3t2 = new Paragraph("BW", font(12, 0));
+            Paragraph p4t2 = new Paragraph("BK", font(12, 0));
+            Paragraph p5t2 = new Paragraph(" ", font(12, 0));
+            Paragraph p6t2 = new Paragraph(" ", font(12, 0));
+            Paragraph p7t2 = new Paragraph(" ", font(12, 0));
+            Paragraph p8t2 = new Paragraph(" ", font(12, 0));
+            Paragraph p9t2 = new Paragraph(" ", font(12, 0));
+
+            p0t2.setAlignment(0);
+            p1t2.setAlignment(0);
+            p2t2.setAlignment(0);
+            p3t2.setAlignment(0);
+            p4t2.setAlignment(0);
+
+            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+                p3t2 = new Paragraph(" ", font(12, 0));
+                p4t2 = new Paragraph(" ", font(12, 0));
+            }
+
+            PdfPCell cell0t2 = new PdfPCell(p0t2);
+            PdfPCell cell1t2 = new PdfPCell(p1t2);
+            PdfPCell cell2t2 = new PdfPCell(p2t2);
+            PdfPCell cell3t2 = new PdfPCell(p3t2);
+            PdfPCell cell4t2 = new PdfPCell(p4t2);
+            PdfPCell cell5t2 = new PdfPCell(p5t2);
+            PdfPCell cell6t2 = new PdfPCell(p6t2);
+            PdfPCell cell7t2 = new PdfPCell(p7t2);
+            PdfPCell cell8t2 = new PdfPCell(p8t2);
+            PdfPCell cell9t2 = new PdfPCell(p9t2);
+
+            cell0t2.setBorderWidth(0);
+            cell1t2.setBorderWidth(0);
+            cell2t2.setBorderWidth(0);
+
+            cell5t2.setBorderWidth(0);
+            cell6t2.setBorderWidth(0);
+            cell7t2.setBorderWidth(0);
+
+            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+                cell3t2.setBorderWidth(0);
+                cell4t2.setBorderWidth(0);
+                cell8t2.setBorderWidth(0);
+                cell9t2.setBorderWidth(0);
+            }
+
+            table2.addCell(cell0t2);
+            table2.addCell(cell1t2);
+            table2.addCell(cell2t2);
+            table2.addCell(cell3t2);
+            table2.addCell(cell4t2);
+            table2.addCell(cell5t2);
+            table2.addCell(cell6t2);
+            table2.addCell(cell7t2);
+            table2.addCell(cell8t2);
+            table2.addCell(cell9t2);
 
             document.add(par1); //  nazwa zawodów i tytuł
-            document.add(par2); // nazwisko klub i numer startowy
-//            document.add(newLine); // nazwisko klub i numer startowy jako nowa linia
+            document.add(new Paragraph("\n", font(4, 0))); // nowa linia
+            document.add(table2); // nazwisko klub i numer startowy
             document.add(par3); // nazwa konkurencji
-            document.add(newLine); // nowa linia
+
+            document.add(new Paragraph("\n", font(4, 0))); // nowa linia
             if (competitionEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                 for (int i = 0; i < numberOfColumns; i++) {
                     Paragraph p = new Paragraph(String.valueOf(i), font(12, 0));
@@ -2099,19 +2166,6 @@ public class FilesService {
                     }
                 }
                 document.add(table1);
-                if (compShots > 10) {
-                    for (int i = 0; i <= 10; i++) {
-                        String s = "t2";
-
-                        Chunk c = new Chunk(s, font(26, 0));
-                        Paragraph p = new Paragraph(c);
-                        PdfPCell cell = new PdfPCell(p);
-
-                        table2.addCell(cell);
-                    }
-//                    document.add(table2);
-
-                }
             } else {
                 for (int i = 0; i < pointColumnWidths.length; i++) {
                     Paragraph p = new Paragraph();
@@ -2168,9 +2222,9 @@ public class FilesService {
 
             document.add(newLine);
             document.add(par4);
-            if (j < 7) {
-                document.add(par5);
-                document.add(newLine);
+            document.add(par5);
+            if ((j + 1) % 4 == 0) {
+                document.newPage();
             }
             if (comp.size() > 1 && a5rotate) {
                 if (j < comp.size() - 1) {
@@ -2725,18 +2779,22 @@ public class FilesService {
         document.add(title);
         document.add(newLine);
         LocalDate notValidDate = LocalDate.now().minusMonths(6);
-        List<MemberEntity> memberEntityListAdult = memberRepository.findAllByErasedFalse().stream()
-                .filter(MemberEntity::getAdult)
-                .filter(f -> !f.getActive())
-                .filter(f -> f.getHistory() != null && f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
-                .collect(Collectors.toList());
+//        List<MemberEntity> memberEntityListAdult = memberRepository.findAllByErasedFalse().stream()
+//                .filter(MemberEntity::getAdult)
+//                .filter(f -> !f.getActive())
+//                .filter(f -> f.getHistory() != null && f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
+//                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+//                .collect(Collectors.toList());
+//
+//        memberEntityListAdult.addAll(memberRepository.findAllByErasedFalse().stream()
+//                .filter(f -> !f.getAdult())
+//                .filter(f -> f.getHistory() != null && f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
+//                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+//                .collect(Collectors.toList()));
 
-        memberEntityListAdult.addAll(memberRepository.findAllByErasedFalse().stream()
-                .filter(f -> !f.getAdult())
-                .filter(f -> f.getHistory() != null && f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
-                .collect(Collectors.toList()));
+        List<MemberEntity> members = memberRepository.findAllByErasedFalseAndActiveFalse().stream()
+                .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))).collect(Collectors.toList());
         float[] pointColumnWidths = {4F, 42F, 14F, 14F, 14F, 14F};
 
 
@@ -2762,9 +2820,9 @@ public class FilesService {
 
         document.add(newLine);
 
-        for (int i = 0; i < memberEntityListAdult.size(); i++) {
+        for (int i = 0; i < members.size(); i++) {
 
-            MemberEntity memberEntity = memberEntityListAdult.get(i);
+            MemberEntity memberEntity = members.get(i);
 
             String memberEntityName = memberEntity.getSecondName().concat(" " + memberEntity.getFirstName());
 

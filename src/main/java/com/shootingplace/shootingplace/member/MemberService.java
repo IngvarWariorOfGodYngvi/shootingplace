@@ -38,6 +38,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class MemberService {
@@ -448,6 +449,53 @@ public class MemberService {
 
     }
 
+    public List<MemberDTO> getAdvancedSearch(boolean isErased, int searchType, String inputText) {
+
+        List<MemberEntity> all = isErased ? memberRepository.findAllByErasedTrue() : memberRepository.findAllByErasedFalse();
+
+        // 1 numer telefonu
+        // 2 numer licencji
+        // 3 e-mail
+        // 4 PESEL
+        // 5 numer dokumentu
+        Stream<MemberEntity> memberEntityStream;
+        switch (searchType) {
+            case 1:
+                memberEntityStream = all.stream().filter(f -> f.getPhoneNumber().contains(inputText));
+                break;
+            case 2:
+                memberEntityStream = all.stream()
+                        .filter(f -> f.getLicense() != null && f.getLicense().getNumber() != null)
+                        .filter(f -> f.getLicense().getNumber().contains(inputText));
+                break;
+            case 3:
+                memberEntityStream = all.stream().filter(f -> f.getEmail().toLowerCase().contains(inputText.toLowerCase()));
+                break;
+            case 4:
+                memberEntityStream = all.stream().filter(f -> f.getPesel().contains(inputText));
+                break;
+            case 5:
+                memberEntityStream = all.stream().filter(f -> f.getIDCard().toLowerCase().contains(inputText.toLowerCase()));
+                break;
+            default:
+                memberEntityStream = all.stream();
+        }
+        return memberEntityStream.map(Mapping::map2DTO)
+                .sorted(Comparator.comparing(MemberDTO::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))
+                        .thenComparing(MemberDTO::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .collect(Collectors.toList());
+
+    }
+
+    public List<MemberInfo> getAllNamesErased() {
+        return memberRepository.findAllByErasedTrue().stream()
+                .map(Mapping::map1)
+                .sorted(Comparator.comparing(MemberInfo::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))
+                        .thenComparing(MemberInfo::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .collect(Collectors.toList());
+
+    }
+
     public List<MemberDTO> getAllMemberDTO() {
         Pageable page = PageRequest.of(0, memberRepository.findAll().size(), Sort.by("secondName").descending());
         return memberRepository.findAllByErasedFalse(page)
@@ -552,7 +600,7 @@ public class MemberService {
         LocalDate notValidLicense = LocalDate.now().minusMonths(6);
         return memberRepository.findAllByErasedFalse().stream()
                 .filter(f -> f.getLicense().getNumber() != null)
-                .filter(f -> f.getClub().getId()==1)
+                .filter(f -> f.getClub().getId() == 1)
                 .filter(f -> !f.getLicense().isValid())
                 .filter(f -> f.getLicense().getValidThru().isBefore(notValidLicense))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))

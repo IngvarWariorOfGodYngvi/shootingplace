@@ -27,6 +27,8 @@ public class LicensePaymentHistoryEntity {
 
     private Integer validForYear;
 
+    private String acceptedBy;
+
     private boolean isPayInPZSSPortal;
 
     private boolean isNew;
@@ -65,6 +67,14 @@ public class LicensePaymentHistoryEntity {
 
     public void setValidForYear(Integer validForYear) {
         this.validForYear = validForYear;
+    }
+
+    public String getAcceptedBy() {
+        return acceptedBy;
+    }
+
+    public void setAcceptedBy(String acceptedBy) {
+        this.acceptedBy = acceptedBy;
     }
 
     public boolean isPayInPZSSPortal() {

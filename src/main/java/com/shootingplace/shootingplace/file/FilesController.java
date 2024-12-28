@@ -306,6 +306,14 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+    @GetMapping("/downloadAllMembersToErasedXlsx")
+    public ResponseEntity<byte[]> getAllMembersToErasedXlsx() throws IOException, DocumentException {
+        FilesEntity filesEntity = xlsxFiles.generateAllMembersToErasedListXlsx();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
+    }
 
     // spis broni
     @GetMapping("/downloadGunRegistry")

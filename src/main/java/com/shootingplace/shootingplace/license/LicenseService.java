@@ -353,10 +353,21 @@ public class LicenseService {
         return memberRepository.findAllByErasedFalse()
                 .stream()
                 .filter(f -> f.getLicense().getNumber() == null && f.getHistory()
-                        .getLicensePaymentHistory().size() > 0 &&
-                        f.getHistory().getLicensePaymentHistory().get(0).isPayInPZSSPortal())
+                        .getLicensePaymentHistory().size() > 0)
                 .map(Mapping::map)
                 .sorted(Comparator.comparing(Member::getSecondName, pl()).thenComparing(Member::getFirstName, pl()))
+                .collect(Collectors.toList());
+    }
+
+    public List<MemberDTO> allLicensesQualifyingToProlong() {
+        return memberRepository.findAllWhereCLubEquals1ErasedFalsePzssTrueLicenseValidTrue().stream()
+                .filter(f ->
+                        (f.getHistory().getPistolCounter() >= 4 && f.getHistory().getRifleCounter() >= 2 && f.getHistory().getShotgunCounter() >= 2) ||
+                                (f.getHistory().getPistolCounter() >= 2 && f.getHistory().getRifleCounter() >= 4 && f.getHistory().getShotgunCounter() >= 2) ||
+                                (f.getHistory().getPistolCounter() >= 2 && f.getHistory().getRifleCounter() >= 2 && f.getHistory().getShotgunCounter() >= 4)
+                )
+                .map(Mapping::map2DTO)
+                .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()))
                 .collect(Collectors.toList());
     }
 }

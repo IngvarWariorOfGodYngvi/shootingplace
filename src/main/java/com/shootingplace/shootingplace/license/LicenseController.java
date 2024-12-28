@@ -57,7 +57,13 @@ public class LicenseController {
     public ResponseEntity<?> allNoLicenseWithPayment() {
         return ResponseEntity.ok(licenseService.allNoLicenseWithPayment());
     }
-@Transactional
+
+    @GetMapping("/LicensesQualifyingToProlong")
+    public ResponseEntity<?> getLicensesQualifyingToProlong() {
+        return ResponseEntity.ok(licenseService.allLicensesQualifyingToProlong());
+    }
+
+    @Transactional
     @PutMapping("/{memberUUID}")
     public ResponseEntity<?> updateLicense(@PathVariable String memberUUID, @RequestBody License license) {
         return licenseService.updateLicense(memberUUID, license);

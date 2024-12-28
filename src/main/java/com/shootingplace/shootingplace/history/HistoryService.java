@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.history;
 
+import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.enums.Discipline;
@@ -13,6 +14,7 @@ import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
+import com.shootingplace.shootingplace.users.UserRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
@@ -38,10 +41,11 @@ public class HistoryService {
     private final ContributionRepository contributionRepository;
     private final LicensePaymentHistoryRepository licensePaymentHistoryRepository;
     private final ChangeHistoryService changeHistoryService;
+    private final UserRepository userRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public HistoryService(HistoryRepository historyRepository, MemberRepository memberRepository, LicenseRepository licenseRepository, CompetitionHistoryRepository competitionHistoryRepository, TournamentRepository tournamentRepository, JudgingHistoryRepository judgingHistoryRepository, ContributionRepository contributionRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, ChangeHistoryService changeHistoryService) {
+    public HistoryService(HistoryRepository historyRepository, MemberRepository memberRepository, LicenseRepository licenseRepository, CompetitionHistoryRepository competitionHistoryRepository, TournamentRepository tournamentRepository, JudgingHistoryRepository judgingHistoryRepository, ContributionRepository contributionRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, ChangeHistoryService changeHistoryService, UserRepository userRepository) {
         this.historyRepository = historyRepository;
         this.memberRepository = memberRepository;
         this.licenseRepository = licenseRepository;
@@ -51,6 +55,7 @@ public class HistoryService {
         this.contributionRepository = contributionRepository;
         this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
         this.changeHistoryService = changeHistoryService;
+        this.userRepository = userRepository;
     }
 
     //  Basic
@@ -193,12 +198,14 @@ public class HistoryService {
             }
             int dateYear = memberEntity.getLicense().getValidThru() != null ? memberEntity.getLicense().getValidThru().getYear() + 1 : LocalDate.now().getYear();
             List<LicensePaymentHistoryEntity> licensePaymentHistory = historyEntity.getLicensePaymentHistory();
+            String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
             LicensePaymentHistoryEntity build = LicensePaymentHistoryEntity.builder()
                     .date(LocalDate.now())
                     .validForYear(dateYear)
                     .memberUUID(memberUUID)
                     .isPayInPZSSPortal(false)
                     .isNew(licenseEntity.getNumber() == null)
+                    .acceptedBy(userRepository.findByPinCode(pin).getFullName())
                     .build();
             licensePaymentHistoryRepository.save(build);
             licensePaymentHistory.add(build);
