@@ -79,7 +79,11 @@ public class AddressEntity {
     }
 
     public String fullAddress() {
-        String flatNumber = this.flatNumber != null ? this.flatNumber : "";
-        return street + " " + streetNumber + " " + flatNumber + " " + zipCode + " " + postOfficeCity;
+        String zipCode = this.zipCode != null ? this.zipCode : "";
+        String postOfficeCity = this.postOfficeCity != null ? this.postOfficeCity : "";
+        String street = this.street != null ? this.street : "";
+        String streetNumber = this.streetNumber != null ? this.streetNumber : "";
+        String flatNumber = this.flatNumber != null ? "m." + this.flatNumber : "";
+        return zipCode + " " + postOfficeCity + " " + street + " " + streetNumber + " " + flatNumber;
     }
 }

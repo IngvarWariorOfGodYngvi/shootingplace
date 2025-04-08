@@ -125,7 +125,7 @@ public class LicenseService {
         return ResponseEntity.ok("Zaktualizowano licencję");
     }
 
-    public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date, Boolean isPaid, String pinCode) throws NoUserPermissionException {
+    public ResponseEntity<?> updateLicense(String memberUUID, String number, LocalDate date, Boolean isPaid, Boolean pistol, Boolean rifle, Boolean shotgun, String pinCode) throws NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
@@ -154,6 +154,15 @@ public class LicenseService {
         }
         if (isPaid != null && !isPaid.equals("null")) {
             license.setPaid(isPaid);
+        }
+        if (pistol != null) {
+            license.setPistolPermission(pistol);
+        }
+        if (rifle != null) {
+            license.setRiflePermission(rifle);
+        }
+        if (shotgun != null) {
+            license.setShotgunPermission(shotgun);
         }
         ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "updateLicense", "Poprawiono Licencję");
 
@@ -365,6 +374,19 @@ public class LicenseService {
                         (f.getHistory().getPistolCounter() >= 4 && f.getHistory().getRifleCounter() >= 2 && f.getHistory().getShotgunCounter() >= 2) ||
                                 (f.getHistory().getPistolCounter() >= 2 && f.getHistory().getRifleCounter() >= 4 && f.getHistory().getShotgunCounter() >= 2) ||
                                 (f.getHistory().getPistolCounter() >= 2 && f.getHistory().getRifleCounter() >= 2 && f.getHistory().getShotgunCounter() >= 4)
+                )
+                .map(Mapping::map2DTO)
+                .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()))
+                .collect(Collectors.toList());
+    }
+
+    public List<MemberDTO> allLicensesNotQualifyingToProlong() {
+        return memberRepository.findAllWhereCLubEquals1ErasedFalsePzssTrueLicenseValidTrue().stream()
+                .filter(f -> !f.getLicense().isPaid())
+                .filter(f ->
+                        (f.getHistory().getPistolCounter() < 4 && f.getHistory().getRifleCounter() < 2 && f.getHistory().getShotgunCounter() < 2) ||
+                                (f.getHistory().getPistolCounter() < 2 && f.getHistory().getRifleCounter() < 4 && f.getHistory().getShotgunCounter() < 2) ||
+                                (f.getHistory().getPistolCounter() < 2 && f.getHistory().getRifleCounter() < 2 && f.getHistory().getShotgunCounter() < 4)
                 )
                 .map(Mapping::map2DTO)
                 .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()))

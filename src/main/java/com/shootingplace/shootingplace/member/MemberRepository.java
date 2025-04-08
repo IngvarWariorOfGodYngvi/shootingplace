@@ -62,6 +62,8 @@ public interface MemberRepository {
 
     @Query(nativeQuery = true, value = "SELECT max(legitimation_number) from shootingplace.member_entity")
     int getMaxLegitimationNumber();
-@Query(nativeQuery = true, value = "SELECT * from shootingplace.member_entity where adult = false and erased = false")
+    @Query(nativeQuery = true, value = "SELECT * from shootingplace.member_entity where adult = false and erased = false")
     List<MemberEntity> findAllByAdultFalseAndErasedFalse();
+    @Query(nativeQuery = true, value = "SELECT * from shootingplace.member_entity where club_id = '1' and !member_entity.erased and member_entity.pzss")
+    List<MemberEntity> findAllWhereClubEquals1ErasedFalsePzssTrue();
 }

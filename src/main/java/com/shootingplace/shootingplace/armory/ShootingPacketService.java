@@ -36,14 +36,17 @@ public class ShootingPacketService {
     public List<ShootingPacketDTO> getAllShootingPacket() {
         return shootingPacketRepository.findAll().stream().map(Mapping::map).sorted(Comparator.comparing(ShootingPacketDTO::getPrice)).collect(Collectors.toList());
     }
+    public List<ShootingPacketEntity> getAllShootingPacketEntities() {
+        return shootingPacketRepository.findAll().stream().sorted(Comparator.comparing(ShootingPacketEntity::getPrice)).collect(Collectors.toList());
+    }
 
-    public ResponseEntity<?> addShootingPacket(String name, float price, Map<String, Integer> map,String pinCode) throws NoPermissionException, NoUserPermissionException {
+    public ResponseEntity<?> addShootingPacket(String name, float price, Map<String, Integer> map, String pinCode) throws NoPermissionException, NoUserPermissionException {
         if (!workingTimeEvidenceRepository.existsByIsCloseFalse()) {
             return ResponseEntity.badRequest().body("Najpierw zarejestruj pobyt");
         }
         List<CaliberForShootingPacketEntity> entities = new ArrayList<>();
         map.forEach((k, v) -> entities.add(caliberForShootingPacketRepository.save(CaliberForShootingPacketEntity.builder().caliberUUID(k).caliberName(caliberRepository.getOne(k).getName()).quantity(v).build())));
-        return getStringResponseEntity(pinCode,shootingPacketRepository.save(ShootingPacketEntity.builder().name(name.toUpperCase()).price(price).calibers(entities).build()),HttpStatus.OK,"addShootingPacket","utworzono pakiet strzelecki " + name.toUpperCase());
+        return getStringResponseEntity(pinCode, shootingPacketRepository.save(ShootingPacketEntity.builder().name(name.toUpperCase()).price(price).calibers(entities).build()), HttpStatus.OK, "addShootingPacket", "utworzono pakiet strzelecki " + name.toUpperCase());
     }
 
     public ResponseEntity<?> getStringResponseEntity(String pinCode, ShootingPacketEntity shootingPacketEntity, HttpStatus status, String methodName, Object body) throws NoPermissionException, NoUserPermissionException {
@@ -55,5 +58,9 @@ public class ShootingPacketService {
             response = stringResponseEntity;
         }
         return response;
+    }
+
+    public List<CaliberForShootingPacketEntity> getAllCalibersFromShootingPacket(String shootingPacketUUID) {
+        return shootingPacketRepository.getOne(shootingPacketUUID).getCalibers();
     }
 }

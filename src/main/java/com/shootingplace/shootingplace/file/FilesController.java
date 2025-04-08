@@ -244,6 +244,15 @@ public class FilesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
                 .body(filesEntity.getData());
     }
+    // zgłoszenie do katowic
+    @GetMapping("/downloadAllMembersWithLicenseXlsx")
+    public ResponseEntity<byte[]> getAllMembersWithLicenseXlsx() throws IOException, DocumentException {
+        FilesEntity filesEntity = xlsxFiles.getAllMembersWithLicenseXlsx();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
+    }
 
     // lista obecności na wybory
     @GetMapping("/downloadAllMembersToElection")

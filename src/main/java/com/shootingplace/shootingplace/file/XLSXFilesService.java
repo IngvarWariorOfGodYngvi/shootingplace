@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityNotFoundException;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.Collator;
@@ -145,7 +146,7 @@ public class XLSXFilesService {
         for (int i = 4; i < 13; i++) {
             sheet.setColumnWidth(i, 18 * 128);
         }
-        cell.setCellValue(tournamentEntity.getName().toUpperCase() + c.getName());
+        cell.setCellValue(tournamentEntity.getName().toUpperCase() + " " + c.getName());
         cell1.setCellValue((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź, " : "Panaszew, ") + dateFormat(tournamentEntity.getDate()));
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
         sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 6));
@@ -333,13 +334,9 @@ public class XLSXFilesService {
                             o2 = procedures.replace(".0", "");
                         }
                         if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.DYNAMIKADZIESIATKA.getName())) {
-//                            if (o1.startsWith("0")) {
-//                                o1 = scoreInnerTen.replace(".0", "");
-//                            }
                             o2 = procedures.replace(".0", "");
                         }
                         if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.TIME.getName())) {
-//                            o1 = scoreInnerTen.replace(".0", "");
                             o2 = procedures.replace(".0", "");
                         }
                         if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
@@ -376,12 +373,10 @@ public class XLSXFilesService {
                         }
                     }
                     cell45.setCellValue(result);
-//                    if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                     cell46.setCellValue(o1);
                     cell47.setCellValue(o2);
                     cell46.setCellStyle(cellStyleNormalCenterAlignment);
                     cell47.setCellStyle(cellStyleNormalCenterAlignment);
-//                    }
                     cell41.setCellStyle(cellStyleNormalCenterAlignment);
                     cell45.setCellStyle(cellStyleCompetitionSubTitle);
 
@@ -484,15 +479,8 @@ public class XLSXFilesService {
         workbook.close();
 
         byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.TEXT_XML))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesModel filesModel = getFilesModel(fileName, data);
+        FilesEntity filesEntity = createFileEntity(filesModel);
         File file = new File(fileName);
         file.delete();
         LOG.info("Pobrano plik " + fileName);
@@ -586,15 +574,8 @@ public class XLSXFilesService {
         workbook.close();
 
         byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.TEXT_XML))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesModel filesModel = getFilesModel(fileName, data);
+        FilesEntity filesEntity = createFileEntity(filesModel);
         File file = new File(fileName);
         file.delete();
         LOG.info("Pobrano plik " + fileName);
@@ -669,15 +650,8 @@ public class XLSXFilesService {
         workbook.close();
 
         byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.TEXT_XML))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesModel filesModel = getFilesModel(fileName, data);
+        FilesEntity filesEntity = createFileEntity(filesModel);
         File file = new File(fileName);
         file.delete();
         LOG.info("Pobrano plik " + fileName);
@@ -703,26 +677,22 @@ public class XLSXFilesService {
 
         XSSFRow row = sheet.createRow(rc++);
 
-        sheet.setColumnWidth(0, 11 * 128); //lp
-        sheet.setColumnWidth(1, 30 * 256); //Imię i nazwisko
-        sheet.setColumnWidth(2, 25 * 256); //legitymacja
-        sheet.setColumnWidth(3, 18 * 128); //data zapisu
-        sheet.setColumnWidth(4, 10 * 128); //data opłacenia składki
-        sheet.setColumnWidth(5, 10 * 128); //Składka ważna do
-
         XSSFCell cell = row.createCell(0);
         XSSFCell cell1 = row.createCell(1);
         XSSFCell cell2 = row.createCell(2);
         XSSFCell cell3 = row.createCell(3);
         XSSFCell cell4 = row.createCell(4);
         XSSFCell cell5 = row.createCell(5);
+        XSSFCell cell6 = row.createCell(6);
+
 
         cell.setCellValue("lp");
         cell1.setCellValue("Nazwisko i Imię");
-        cell2.setCellValue("nr. legitymacji");
-        cell3.setCellValue("data zapisu");
-        cell4.setCellValue("data opłacenia składki");
-        cell5.setCellValue("składka ważna do");
+        cell2.setCellValue("Nr. legitymacji");
+        cell3.setCellValue("Data urodzenia");
+        cell4.setCellValue("Data zapisu");
+        cell5.setCellValue("Data opłacenia składki");
+        cell6.setCellValue("Składka ważna do");
         sheet.createRow(rc++);
 
         for (int i = 0; i < collect.size(); i++) {
@@ -733,45 +703,158 @@ public class XLSXFilesService {
             cell3 = row1.createCell(3);
             cell4 = row1.createCell(4);
             cell5 = row1.createCell(5);
+            cell6 = row1.createCell(6);
 
             cell.setCellValue(i + 1);
-            cell1.setCellValue(collect.get(i).getFullName() + (!collect.get(i).getActive() ? " - Nieaktywny" : ""));
+            cell1.setCellValue(collect.get(i).getFullName());
             cell2.setCellValue(collect.get(i).getLegitimationNumber());
-            cell3.setCellValue(collect.get(i).getJoinDate().toString());
+            cell3.setCellValue(collect.get(i).getBirthDate().format(dateFormat()));
+            cell4.setCellValue(collect.get(i).getJoinDate().toString());
 
             if (collect.get(i).getHistory().getContributionList().size() > 0) {
 
-                cell4.setCellValue(collect.get(i).getHistory().getContributionList().get(0).getPaymentDay().toString());
-                cell5.setCellValue(collect.get(i).getHistory().getContributionList().get(0).getValidThru().toString());
+                cell5.setCellValue(collect.get(i).getHistory().getContributionList().get(0).getPaymentDay().toString());
+                cell6.setCellValue(collect.get(i).getHistory().getContributionList().get(0).getValidThru().toString());
 
             } else {
 
-                cell4.setCellValue("BRAK SKŁADEK");
                 cell5.setCellValue("BRAK SKŁADEK");
+                cell6.setCellValue("BRAK SKŁADEK");
 
             }
         }
-
+        sheet.autoSizeColumn(0);
+        sheet.autoSizeColumn(1);
+        sheet.autoSizeColumn(2);
+        sheet.autoSizeColumn(3);
+        sheet.autoSizeColumn(4);
+        sheet.autoSizeColumn(5);
+        sheet.autoSizeColumn(6);
         try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
             workbook.write(outputStream);
         }
         workbook.close();
 
         byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.TEXT_XML))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesModel filesModel = getFilesModel(fileName, data);
+        FilesEntity filesEntity = createFileEntity(filesModel);
         File file = new File(fileName);
         file.delete();
         LOG.info("Pobrano plik " + fileName);
 
         return filesEntity;
+    }
+
+    public FilesEntity getAllMembersWithLicenseXlsx() throws IOException {
+        String fileName = "Lista_klubowiczów_na_dzień_z_licencją_do_Katowic " + LocalDate.now().format(dateFormat()) + ".xlsx";
+        List<MemberEntity> collect = memberRepository.findAllByErasedFalse()
+                .stream()
+                .filter(f -> f.getClub().getId() == 1)
+                .filter(f -> f.getLicense() != null && f.getLicense().getNumber() != null)
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()).thenComparing(MemberEntity::getFirstName, pl()))
+                .collect(Collectors.toList());
+
+
+        int rc = 0;
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        XSSFSheet sheet = workbook.createSheet("Lista osób z licencją");
+
+        XSSFRow row = sheet.createRow(rc++);
+
+        XSSFCell cell0 = row.createCell(0);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 1));
+
+        cell0.setCellValue("Załącznik nr 1");
+        XSSFRow row1 = sheet.createRow(rc++);
+
+        XSSFCell cell01 = row1.createCell(0);
+        XSSFCell cell11 = row1.createCell(1);
+        XSSFCell cell21 = row1.createCell(2);
+        XSSFCell cell31 = row1.createCell(3);
+        XSSFCell cell41 = row1.createCell(4);
+        XSSFCell cell51 = row1.createCell(5);
+
+        sheet.addMergedRegion(new CellRangeAddress(rc - 1, rc - 1, 0, 5));
+        cell01.setCellValue("Wykaz członków Ligi Obrony Kraju Klubu: " + collect.get(0).getClub().getFullName());
+        XSSFCellStyle cellStyle = workbook.createCellStyle();
+        XSSFFont fontTitle = workbook.createFont();
+        fontTitle.setBold(true);
+        fontTitle.setFontHeightInPoints((short) 14);
+        fontTitle.setFontName("Calibri");
+        cellStyle.setAlignment(HorizontalAlignment.CENTER);
+        cellStyle.setFont(fontTitle);
+        cell01.setCellStyle(cellStyle);
+        XSSFRow row2 = sheet.createRow(rc++);
+
+        XSSFCell cell02 = row2.createCell(0);
+        XSSFCell cell12 = row2.createCell(1);
+        XSSFCell cell22 = row2.createCell(2);
+        XSSFCell cell32 = row2.createCell(3);
+        XSSFCell cell42 = row2.createCell(4);
+        XSSFCell cell52 = row2.createCell(5);
+
+        cell02.setCellValue("lp.");
+        cell12.setCellValue("Nazwisko i Imię");
+        cell22.setCellValue("PESEL");
+        cell32.setCellValue("Adres zamieszkania");
+        cell42.setCellValue("Klub");
+        cell52.setCellValue("Numer Licencji");
+
+        for (int i = 0; i < collect.size(); i++) {
+
+            XSSFRow row3 = sheet.createRow(rc++);
+            cell01 = row3.createCell(0);
+            cell11 = row3.createCell(1);
+            cell21 = row3.createCell(2);
+            cell31 = row3.createCell(3);
+            cell41 = row3.createCell(4);
+            cell51 = row3.createCell(5);
+
+            cell01.setCellValue(i + 1);
+            XSSFCellStyle cellStyle1 = workbook.createCellStyle();
+            cellStyle1.setAlignment(HorizontalAlignment.LEFT);
+            cell01.setCellStyle(cellStyle1);
+            cell11.setCellValue(collect.get(i).getFullName());
+            cell21.setCellValue(collect.get(i).getPesel());
+            cell31.setCellValue(collect.get(i).getAddress().fullAddress());
+            cell41.setCellValue(collect.get(i).getClub().getName());
+            cell51.setCellValue(collect.get(i).getLicense().getNumber());
+            XSSFCellStyle cellStyle2 = workbook.createCellStyle();
+            cellStyle2.setAlignment(HorizontalAlignment.CENTER);
+            cell51.setCellStyle(cellStyle2);
+
+        }
+        sheet.autoSizeColumn(0);    // lp
+        sheet.autoSizeColumn(1);    // Imię i nazwisko
+        sheet.autoSizeColumn(2);    // PESEL
+        sheet.autoSizeColumn(3);    // Adres zamieszkania
+        sheet.autoSizeColumn(4);    // Klub (KS DZIESIĄTKA)
+        sheet.autoSizeColumn(5);    // Numer Licencji
+
+        try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
+            workbook.write(outputStream);
+        }
+        workbook.close();
+
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = getFilesModel(fileName, data);
+        FilesEntity filesEntity = createFileEntity(filesModel);
+        File file = new File(fileName);
+        file.delete();
+        LOG.info("Pobrano plik " + fileName);
+
+        return filesEntity;
+    }
+
+    private FilesModel getFilesModel(String fileName, byte[] data) {
+        return FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.TEXT_XML))
+                .size(data.length)
+                .build();
     }
 
     public FilesEntity getGunRegistryXlsx(List<String> guns) throws IOException {
@@ -808,14 +891,6 @@ public class XLSXFilesService {
         cellStyleTitle.setVerticalAlignment(VerticalAlignment.CENTER);
 
         XSSFRow row = sheet.createRow(rc++);
-
-//        sheet.setColumnWidth(0, 8 * 128); //lp
-//        sheet.setColumnWidth(1, 10 * 128); //Marka i Model
-//        sheet.setColumnWidth(2, 10 * 128); //Kaliber i rok produkcji
-//        sheet.setColumnWidth(3, 10 * 128); //Numer i seria
-//        sheet.setColumnWidth(4, 10 * 128); //Poz. z książki ewidencji
-//        sheet.setColumnWidth(5, 10 * 128); //Magazynki
-//        sheet.setColumnWidth(5, 10 * 128); //Numer świadectwa
 
         XSSFCell cell = row.createCell(0);
         XSSFCell cell1 = row.createCell(1);
@@ -902,12 +977,7 @@ public class XLSXFilesService {
         workbook.close();
 
         byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.TEXT_XML))
-                .size(data.length)
-                .build();
+        FilesModel filesModel = getFilesModel(fileName, data);
 
         FilesEntity filesEntity =
                 createFileEntity(filesModel);
@@ -999,12 +1069,7 @@ public class XLSXFilesService {
         workbook.close();
 
         byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.TEXT_XML))
-                .size(data.length)
-                .build();
+        FilesModel filesModel = getFilesModel(fileName, data);
 
         FilesEntity filesEntity =
                 createFileEntity(filesModel);
@@ -1106,12 +1171,7 @@ public class XLSXFilesService {
         workbook.close();
 
         byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.TEXT_XML))
-                .size(data.length)
-                .build();
+        FilesModel filesModel = getFilesModel(fileName, data);
 
         FilesEntity filesEntity =
                 createFileEntity(filesModel);
@@ -1121,6 +1181,7 @@ public class XLSXFilesService {
 
         return filesEntity;
     }
+
     public FilesEntity generateAllMembersToErasedListXlsx() throws IOException {
 
         String fileName = "Lista osób do skreślelnia.xlsx";
@@ -1211,12 +1272,46 @@ public class XLSXFilesService {
         workbook.close();
 
         byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.TEXT_XML))
-                .size(data.length)
-                .build();
+        FilesModel filesModel = getFilesModel(fileName, data);
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+        File file = new File(fileName);
+        file.delete();
+        LOG.info("Pobrano plik " + fileName);
+
+        return filesEntity;
+    }
+
+    public FilesEntity getCSV() throws IOException {
+        String fileName = "database.csv";
+
+        String CSV_HEADER = "numer legitymacji,imię i nazwisko,numer licencji,data składki,P,K,S\n";
+
+        List<MemberEntity> all = memberRepository.findAllByErasedFalse();
+        StringBuilder csvContent = new StringBuilder();
+        csvContent.append(CSV_HEADER);
+
+        all.forEach(e -> csvContent.append(e.getLegitimationNumber()).append(",")
+                .append(e.getFullName()).append(",")
+                .append(e.getLicense().getNumber()).append(",")
+                .append(e.getHistory().getContributionList().get(0).getValidThru()).append(",")
+                .append(e.getHistory().getPistolCounter()).append(",")
+                .append(e.getHistory().getRifleCounter()).append(",")
+                .append(e.getHistory().getShotgunCounter()).append("\n"));
+        FileWriter fw = new FileWriter(fileName);
+        try {
+            fw.write(String.valueOf(csvContent));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+
+        fw.close();
+
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = getFilesModel(fileName, data);
 
         FilesEntity filesEntity =
                 createFileEntity(filesModel);

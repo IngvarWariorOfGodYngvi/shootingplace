@@ -324,7 +324,7 @@ public class MemberEntity extends Person {
         return this.pzss = isSignedTo;
     }
 
-    LocalDate getBirthDate(){
+    public LocalDate getBirthDate(){
        return LocalDate.of(getBirthYear(),getBirthMonth(),getBirthDay());
     }
 

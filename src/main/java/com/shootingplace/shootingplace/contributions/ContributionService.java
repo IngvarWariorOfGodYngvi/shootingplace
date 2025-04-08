@@ -18,7 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import javax.naming.NoPermissionException;
 import javax.persistence.EntityNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -72,6 +71,14 @@ public class ContributionService {
                 }
             }
             if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
+                contributionEntity.setPaymentDay(contributionPaymentDay);
+                if (contributionEntityList.size() < 1) {
+                    contributionEntity.setValidThru(contributionPaymentDay.plusYears(1));
+                } else {
+                    contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusYears(1));
+                }
+            }
+            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.RPARMS.getName())) {
                 contributionEntity.setPaymentDay(contributionPaymentDay);
                 if (contributionEntityList.size() < 1) {
                     contributionEntity.setValidThru(contributionPaymentDay.plusYears(1));

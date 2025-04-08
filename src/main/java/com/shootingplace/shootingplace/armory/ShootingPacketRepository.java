@@ -6,4 +6,6 @@ public interface ShootingPacketRepository {
     List<ShootingPacketEntity> findAll();
 
     ShootingPacketEntity save(ShootingPacketEntity entity);
+
+    ShootingPacketEntity getOne(String uuid);
 }

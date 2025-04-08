@@ -73,4 +73,16 @@ public class ShootingPatentEntity {
     public void setDateOfPosting(LocalDate dateOfPosting) {
         this.dateOfPosting = dateOfPosting;
     }
+
+    @Override
+    public String toString() {
+        return "ShootingPatentEntity{" +
+                "uuid='" + uuid + '\'' +
+                ", patentNumber='" + patentNumber + '\'' +
+                ", pistolPermission=" + pistolPermission +
+                ", riflePermission=" + riflePermission +
+                ", shotgunPermission=" + shotgunPermission +
+                ", dateOfPosting=" + dateOfPosting +
+                '}';
+    }
 }

@@ -1,12 +1,20 @@
 package com.shootingplace.shootingplace.shootingPatent;
 
+import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.history.HistoryService;
+import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.text.Collator;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 @Service
 public class ShootingPatentService {
@@ -82,5 +90,17 @@ public class ShootingPatentService {
                 .riflePermission(false)
                 .shotgunPermission(false)
                 .build();
+    }
+
+    public List<MemberDTO> getMembersWithNoShootingPatent() {
+        return memberRepository.findAllWhereClubEquals1ErasedFalsePzssTrue().stream()
+                .filter(f -> f.getShootingPatent() != null && f.getShootingPatent().getPatentNumber() == null)
+                .map(Mapping::map2DTO)
+                .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()))
+                .collect(Collectors.toList());
+    }
+
+    private static Collator pl() {
+        return Collator.getInstance(Locale.forLanguageTag("pl"));
     }
 }

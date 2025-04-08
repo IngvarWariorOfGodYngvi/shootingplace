@@ -617,6 +617,17 @@ public class MemberService {
     public List<Member> getMembersErased(LocalDate firstDate, LocalDate secondDate) {
         return memberRepository.findAllByErasedTrue().stream()
                 .filter(f -> f.getErasedEntity() != null)
+                .filter(f -> f.getLicense() != null)
+                .filter(f -> !f.getLicense().isValid())
+                .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1)))
+                .filter(f -> f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .map(Mapping::map)
+                .collect(Collectors.toList());
+    }
+    public List<Member> getMembersToReportToPoliceView(LocalDate firstDate, LocalDate secondDate) {
+        return memberRepository.findAllByErasedTrue().stream()
+                .filter(f -> f.getErasedEntity() != null)
                 .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1)))
                 .filter(f -> f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))

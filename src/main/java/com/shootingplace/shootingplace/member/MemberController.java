@@ -55,6 +55,12 @@ public class MemberController {
         LocalDate parseSecondDate = LocalDate.parse(secondDate);
         return ResponseEntity.ok(memberService.getMembersErased(parseFirstDate, parseSecondDate));
     }
+    @GetMapping("/reportView" )
+    public ResponseEntity<?> getMembersToReportToPoliceView(@RequestParam String firstDate, @RequestParam String secondDate) {
+        LocalDate parseFirstDate = LocalDate.parse(firstDate);
+        LocalDate parseSecondDate = LocalDate.parse(secondDate);
+        return ResponseEntity.ok(memberService.getMembersToReportToPoliceView(parseFirstDate, parseSecondDate));
+    }
 
     @GetMapping("/getAllNames" )
     public List<MemberInfo> getAllNames() {

@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.configurations;
 
 public enum ProfilesEnum {
     DZIESIATKA("prod"),
+    RPARMS("rp"),
     PANASZEW("rcs");
 
     private final String name;

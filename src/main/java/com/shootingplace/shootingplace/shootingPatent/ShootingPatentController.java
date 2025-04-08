@@ -14,6 +14,11 @@ public class ShootingPatentController {
         this.shootingPatentService = shootingPatentService;
     }
 
+    @GetMapping("/")
+    public ResponseEntity<?> getMembersWithNoShootingPatent(){
+        return ResponseEntity.ok(shootingPatentService.getMembersWithNoShootingPatent());
+    }
+
     @PutMapping("/{memberUUID}")
     public ResponseEntity<?> updatePatent(@PathVariable String memberUUID, @RequestBody ShootingPatent shootingPatent) {
         return shootingPatentService.updatePatent(memberUUID, shootingPatent);

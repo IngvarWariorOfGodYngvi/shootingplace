@@ -1,6 +1,9 @@
 package com.shootingplace.shootingplace.tournament;
 
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
+import com.shootingplace.shootingplace.armory.CaliberRepository;
+import com.shootingplace.shootingplace.armory.ShootingPacketEntity;
+import com.shootingplace.shootingplace.armory.ShootingPacketService;
 import com.shootingplace.shootingplace.exceptions.NoPersonToAmmunitionException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
@@ -9,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/competitionMembersList")
@@ -19,13 +23,17 @@ public class CompetitionMembersListController {
     private final AmmoUsedService ammoUsedService;
     private final ScoreService scoreService;
     private final CompetitionMembersListRepository competitionMembersListRepository;
+    private final CaliberRepository caliberRepository;
 
+    private final ShootingPacketService shootingPacketService;
 
-    public CompetitionMembersListController(CompetitionMembersListService competitionMembersListService, AmmoUsedService ammoUsedService,ScoreService scoreService, CompetitionMembersListRepository competitionMembersListRepository) {
+    public CompetitionMembersListController(CompetitionMembersListService competitionMembersListService, AmmoUsedService ammoUsedService, ScoreService scoreService, CompetitionMembersListRepository competitionMembersListRepository, CaliberRepository caliberRepository, ShootingPacketService shootingPacketService) {
         this.competitionMembersListService = competitionMembersListService;
         this.ammoUsedService = ammoUsedService;
         this.scoreService = scoreService;
         this.competitionMembersListRepository = competitionMembersListRepository;
+        this.caliberRepository = caliberRepository;
+        this.shootingPacketService = shootingPacketService;
     }
 
     @PatchMapping("/setCompetitionUUIDToCompetitionMemberList")
@@ -37,6 +45,7 @@ public class CompetitionMembersListController {
     public ResponseEntity<?> getMemberScoresFromCompetitionMemberListUUID(@RequestParam String competitionMemberListUUID) {
         return competitionMembersListService.getMemberScoresFromComtetitionMemberListUUID(competitionMemberListUUID);
     }
+
     @GetMapping("/tournamentScores")
     public ResponseEntity<?> getTournamentScoresFromUUID(@RequestParam String tournamentUUID) {
         return competitionMembersListService.getTournamentScoresFromUUID(tournamentUUID);
@@ -81,7 +90,19 @@ public class CompetitionMembersListController {
             CompetitionMembersListEntity one = competitionMembersListRepository.getOne(e);
             one.setPracticeShots(one.getPracticeShots() != null ? one.getPracticeShots() : 0);
             try {
-                ammoUsedService.addAmmoUsedEntity(one.getCaliberUUID(), legitimationNumber, otherPerson, one.getNumberOfShots() + one.getPracticeShots());
+                if (shootingPacketService.getAllShootingPacketEntities().stream().map(ShootingPacketEntity::getUuid).collect(Collectors.toList()).contains(one.getCaliberUUID())) {
+                    shootingPacketService.getAllCalibersFromShootingPacket(one.getCaliberUUID()).forEach(c ->
+                    {
+                        try {
+                            ammoUsedService.addAmmoUsedEntity(c.getCaliberUUID(), legitimationNumber, otherPerson, c.getQuantity());
+                        } catch (NoPersonToAmmunitionException ex) {
+                            ex.printStackTrace();
+                        }
+                    });
+                } else {
+                    ammoUsedService.addAmmoUsedEntity(one.getCaliberUUID(), legitimationNumber, otherPerson, one.getNumberOfShots() + one.getPracticeShots());
+
+                }
             } catch (NoPersonToAmmunitionException ex) {
                 ex.printStackTrace();
             }
