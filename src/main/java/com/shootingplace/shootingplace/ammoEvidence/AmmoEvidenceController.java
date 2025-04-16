@@ -29,44 +29,9 @@ public class AmmoEvidenceController {
         this.changeHistoryService = changeHistoryService;
     }
 
-
-    @Transactional
-    @PostMapping("/ammo")
-    public ResponseEntity<?> createAmmoUsed(@RequestParam String caliberUUID, @RequestParam Integer legitimationNumber, @RequestParam int otherID, @RequestParam Integer counter) throws NoPersonToAmmunitionException {
-        if (counter != 0) {
-            return ammoUsedService.addAmmoUsedEntity(caliberUUID, legitimationNumber, otherID, counter);
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
-    }
     @GetMapping("/isEvidenceIsClosed")
-    public ResponseEntity<?> isEvidenceIsClosedOrEqual(@RequestParam(required = false) int quantity){
+    public ResponseEntity<?> isEvidenceIsClosedOrEqual(@RequestParam(required = false) int quantity) {
         return ResponseEntity.ok(ammoUsedService.isEvidenceIsClosedOrEqual(quantity));
-    }
-    @Transactional
-    @PostMapping("/listOfAmmo")
-    public ResponseEntity<?> createAmmoUsed(@RequestBody Map<String,String> caliberUUIDAmmoQuantityMap, @RequestParam Integer legitimationNumber, @RequestParam Integer otherID) throws NoPersonToAmmunitionException {
-        boolean[] caliberAmmocheck = new boolean[caliberUUIDAmmoQuantityMap.size()];
-        final int[] iterator = {0};
-        caliberUUIDAmmoQuantityMap.forEach((key, value) -> {
-            caliberAmmocheck[iterator[0]] = value != null && Integer.parseInt(value) != 0;
-            iterator[0]++;
-        });
-        boolean check = true;
-        for (boolean b : caliberAmmocheck) {
-            if (!b) {
-                check = false;
-                break;
-            }
-        }
-        if (otherID == null || otherID == 0 ) {
-            otherID = null;
-        }
-        if (check) {
-            return ammoUsedService.addListOfAmmoToEvidence(caliberUUIDAmmoQuantityMap, legitimationNumber, otherID);
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
     }
 
     @GetMapping("/personalAmmoFromList")
@@ -94,6 +59,43 @@ public class AmmoEvidenceController {
     public ResponseEntity<?> checkAnyOpenEvidence() {
         return ResponseEntity.ok().body(ammoEvidenceService.checkAnyOpenEvidence());
     }
+
+    @Transactional
+    @PostMapping("/ammo")
+    public ResponseEntity<?> createAmmoUsed(@RequestParam String caliberUUID, @RequestParam Integer legitimationNumber, @RequestParam int otherID, @RequestParam Integer counter) throws NoPersonToAmmunitionException {
+        if (counter != 0) {
+            return ammoUsedService.addAmmoUsedEntity(caliberUUID, legitimationNumber, otherID, counter);
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @Transactional
+    @PostMapping("/listOfAmmo")
+    public ResponseEntity<?> createAmmoUsed(@RequestBody Map<String, String> caliberUUIDAmmoQuantityMap, @RequestParam Integer legitimationNumber, @RequestParam Integer otherID) throws NoPersonToAmmunitionException {
+        boolean[] caliberAmmocheck = new boolean[caliberUUIDAmmoQuantityMap.size()];
+        final int[] iterator = {0};
+        caliberUUIDAmmoQuantityMap.forEach((key, value) -> {
+            caliberAmmocheck[iterator[0]] = value != null && Integer.parseInt(value) != 0;
+            iterator[0]++;
+        });
+        boolean check = true;
+        for (boolean b : caliberAmmocheck) {
+            if (!b) {
+                check = false;
+                break;
+            }
+        }
+        if (otherID == null || otherID == 0) {
+            otherID = null;
+        }
+        if (check) {
+            return ammoUsedService.addListOfAmmoToEvidence(caliberUUIDAmmoQuantityMap, legitimationNumber, otherID);
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
 
     @PatchMapping("/ammo")
     public ResponseEntity<?> closeEvidence(@RequestParam String evidenceUUID) {

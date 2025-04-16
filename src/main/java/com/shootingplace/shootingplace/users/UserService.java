@@ -2,9 +2,11 @@ package com.shootingplace.shootingplace.users;
 
 import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.enums.UserSubType;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
-
+import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
@@ -18,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityNotFoundException;
 import java.nio.charset.StandardCharsets;
@@ -32,6 +33,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final ChangeHistoryService changeHistoryService;
     private final MemberRepository memberRepository;
+    private final LicenseRepository licenseRepository;
+    private final ContributionRepository contributionRepository;
     private final OtherPersonRepository otherPersonRepository;
     private final TournamentService tournamentService;
     private final TournamentRepository tournamentRepository;
@@ -40,10 +43,12 @@ public class UserService {
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public UserService(UserRepository userRepository, ChangeHistoryService changeHistoryService, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, TournamentService tournamentService, TournamentRepository tournamentRepository, WorkingTimeEvidenceRepository workingTimeEvidenceRepository) {
+    public UserService(UserRepository userRepository, ChangeHistoryService changeHistoryService, MemberRepository memberRepository, LicenseRepository licenseRepository, ContributionRepository contributionRepository, OtherPersonRepository otherPersonRepository, TournamentService tournamentService, TournamentRepository tournamentRepository, WorkingTimeEvidenceRepository workingTimeEvidenceRepository) {
         this.userRepository = userRepository;
         this.changeHistoryService = changeHistoryService;
         this.memberRepository = memberRepository;
+        this.licenseRepository = licenseRepository;
+        this.contributionRepository = contributionRepository;
         this.otherPersonRepository = otherPersonRepository;
         this.tournamentService = tournamentService;
         this.tournamentRepository = tournamentRepository;
@@ -234,7 +239,7 @@ public class UserService {
                     return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                 }
             }
-            if(otherID == null) {
+            if (otherID == null) {
                 otherID = 0;
             }
             UserEntity userEntity = UserEntity.builder()
@@ -307,12 +312,22 @@ public class UserService {
                     int p2 = Integer.parseInt(String.valueOf(pinNumbers[1]));
                     int p3 = Integer.parseInt(String.valueOf(pinNumbers[2]));
                     int p4 = Integer.parseInt(String.valueOf(pinNumbers[3]));
+                    boolean b = p1 == p2 && p2 == p3 && p3 == p4;
+                    for (int i = 0; i < pinNumbers.length; i++) {
+                        if (b) {
+                            LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
+                            return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
+                        }
+                    }
                     if (p4 == 0) {
                         p4 = 10;
                     }
-                    if (p2 == p1 + 1 && p3 == p2 + 1 && p4 == p3 + 1) {
+                    if (p1 + 1 == p2 && p2 + 1 == p3 && p3 + 1 == p4) {
                         LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                         return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
+                    }
+                    if (p4 == 10) {
+                        p4 = 0;
                     }
                     if (p1 == 0) {
                         p1 = 10;
@@ -320,13 +335,6 @@ public class UserService {
                     if (p1 - 1 == p2 && p2 - 1 == p3 && p3 - 1 == p4) {
                         LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                         return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
-                    }
-                    String[] failCode = {"0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999"};
-                    for (int i = 0; i < pinNumbers.length; i++) {
-                        if (trim2.equals(failCode[i])) {
-                            LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
-                            return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
-                        }
                     }
                     entity.setPinCode(pin);
                 }
@@ -375,9 +383,19 @@ public class UserService {
                 .sorted(Comparator.comparing(ChangeHistoryDTO::getDayNow).thenComparing(ChangeHistoryDTO::getTimeNow).reversed())
                 .collect(Collectors.toList());
         all.forEach(e -> {
-                    if (e.getBelongsTo() != null && memberRepository.existsById(e.getBelongsTo())) {
-                        MemberEntity member = memberRepository.getOne(e.getBelongsTo());
-                        e.setBelongsTo(member.getSecondName().concat(" " + member.getFirstName()));
+                    if (e.getBelongsTo() != null) {
+                        if (memberRepository.existsById(e.getBelongsTo())) {
+                            MemberEntity member = memberRepository.getOne(e.getBelongsTo());
+                            e.setBelongsTo(member.getSecondName().concat(" " + member.getFirstName()));                        }
+                        if (contributionRepository.existsById(e.getBelongsTo())) {
+                            MemberEntity member = memberRepository.findByHistoryUuid(contributionRepository.getOne(e.getBelongsTo()).getHistoryUUID());
+                            e.setBelongsTo(member.getSecondName().concat(" " + member.getFirstName()));
+                        }
+                        if (licenseRepository.existsById(e.getBelongsTo())) {
+                            MemberEntity member = memberRepository.findByLicenseUuid(e.getBelongsTo());
+                            e.setBelongsTo(member.getSecondName().concat(" " + member.getFirstName()));
+
+                        }
                     } else {
                         e.setBelongsTo("operacja");
                     }
@@ -386,6 +404,7 @@ public class UserService {
         return ResponseEntity.ok(all);
 
     }
+
 
     public ResponseEntity<?> getAccess(String pinCode) throws NoUserPermissionException {
         ResponseEntity response;
@@ -446,12 +465,11 @@ public class UserService {
                     if (otherPersonRepository.getOne(user.getOtherID()).getPermissionsEntity().getArbiterNumber() != null) {
 
                         return ResponseEntity.ok(tournamentRepository.findByOpenIsTrue().getUuid());
-//                        return ResponseEntity.ok(otherPersonRepository.getOne(user.getOtherID()).getPermissionsEntity().getArbiterNumber());
                     } else {
                         return ResponseEntity.badRequest().body("użytkownik nie posiada licencji sędziowskiej");
                     }
                 }
-            }else {
+            } else {
                 return ResponseEntity.badRequest().body("Żadne zawody nie są otwarte");
             }
         }

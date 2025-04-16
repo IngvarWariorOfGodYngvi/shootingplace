@@ -2,7 +2,6 @@ package com.shootingplace.shootingplace.license;
 
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
-import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,12 +19,12 @@ public class LicenseController {
 
     private final ChangeHistoryService changeHistoryService;
     private final LicenseService licenseService;
-    private final HistoryService historyService;
+    private final LicensePaymentService licensePaymentService;
 
-    public LicenseController(ChangeHistoryService changeHistoryService, LicenseService licenseService, HistoryService historyService) {
+    public LicenseController(ChangeHistoryService changeHistoryService, LicenseService licenseService, LicensePaymentService licensePaymentService) {
         this.changeHistoryService = changeHistoryService;
         this.licenseService = licenseService;
-        this.historyService = historyService;
+        this.licensePaymentService = licensePaymentService;
     }
 
     @GetMapping("/getLicense")
@@ -62,6 +61,7 @@ public class LicenseController {
     public ResponseEntity<?> getLicensesQualifyingToProlong() {
         return ResponseEntity.ok(licenseService.allLicensesQualifyingToProlong());
     }
+
     @GetMapping("/LicensesNotQualifyingToProlong")
     public ResponseEntity<?> LicensesNotQualifyingToProlong() {
         return ResponseEntity.ok(licenseService.allLicensesNotQualifyingToProlong());
@@ -75,18 +75,18 @@ public class LicenseController {
 
     @Transactional
     @PutMapping("/forceUpdate")
-    public ResponseEntity<?> updateLicense(@RequestParam String memberUUID, @RequestParam String number, @RequestParam String date, @RequestParam String pinCode, @Nullable @RequestParam String isPaid, @Nullable @RequestParam Boolean pistol, @Nullable @RequestParam Boolean rifle, @Nullable @RequestParam Boolean shotgun ) throws NoUserPermissionException {
+    public ResponseEntity<?> updateLicense(@RequestParam String memberUUID, @RequestParam String number, @RequestParam String date, @RequestParam String pinCode, @Nullable @RequestParam String isPaid, @Nullable @RequestParam Boolean pistol, @Nullable @RequestParam Boolean rifle, @Nullable @RequestParam Boolean shotgun) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             String parseNumber = (number != null && !number.isEmpty() && !number.equals("null")) ? number : null;
             LocalDate parseDate = (date != null && !date.isEmpty() && !date.equals("null")) ? LocalDate.parse(date) : null;
             Boolean parseIsPaid = (isPaid != null && !isPaid.isEmpty() && !isPaid.equals("null")) ? Boolean.valueOf(isPaid) : null;
-            return parseNumber == null && parseDate == null && parseIsPaid == null && pistol == null && rifle == null && shotgun == null ? ResponseEntity.badRequest().body("Należy podać co najmniej jedną zmienną") : licenseService.updateLicense(memberUUID, parseNumber, parseDate, parseIsPaid, pistol, rifle,shotgun, pinCode);
+            return parseNumber == null && parseDate == null && parseIsPaid == null && pistol == null && rifle == null && shotgun == null ? ResponseEntity.badRequest().body("Należy podać co najmniej jedną zmienną") : licenseService.updateLicense(memberUUID, parseNumber, parseDate, parseIsPaid, pistol, rifle, shotgun, pinCode);
         } else {
             return code;
         }
     }
-
+@Transactional
     @PatchMapping("/{memberUUID}")
     public ResponseEntity<?> renewLicenseValidDate(@PathVariable String memberUUID, @RequestBody License license) {
         return licenseService.renewLicenseValid(memberUUID, license);
@@ -108,17 +108,17 @@ public class LicenseController {
     public ResponseEntity<?> addLicensePaymentHistory(@PathVariable String memberUUID, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
-            return historyService.addLicenseHistoryPayment(memberUUID, pinCode);
+            return licensePaymentService.addLicenseHistoryPayment(memberUUID, pinCode);
         } else {
             return code;
         }
     }
-
+@Transactional
     @PatchMapping("/paymentChange")
     public ResponseEntity<?> paymentChange(@RequestParam String paymentUUID, @RequestParam String pinCode, @RequestParam boolean condition) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
-            return historyService.toggleLicencePaymentInPZSS(paymentUUID, condition, pinCode);
+            return licensePaymentService.toggleLicencePaymentInPZSS(paymentUUID, condition, pinCode);
         } else {
             return code;
         }
@@ -131,7 +131,7 @@ public class LicenseController {
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             ResponseEntity<?> result = null;
             for (String paymentUUID : paymentUUIDs) {
-                result = historyService.toggleLicencePaymentInPZSS(paymentUUID, condition, pinCode);
+                result = licensePaymentService.toggleLicencePaymentInPZSS(paymentUUID, condition, pinCode);
             }
             return result;
         } else {
@@ -139,6 +139,7 @@ public class LicenseController {
         }
     }
 
+    @Transactional
     @PutMapping("/editPayment")
     public ResponseEntity<?> editLicensePaymentHistory(@RequestParam String memberUUID, @RequestParam String paymentUUID, @RequestParam String paymentDate, @RequestParam Integer year, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
@@ -147,7 +148,7 @@ public class LicenseController {
             if (paymentDate != null && !paymentDate.isEmpty() && !paymentDate.equals("null")) {
                 parseDate = LocalDate.parse(paymentDate);
             }
-            return licenseService.updateLicensePayment(memberUUID, paymentUUID, parseDate, year, pinCode);
+            return licensePaymentService.updateLicensePayment(memberUUID, paymentUUID, parseDate, year, pinCode);
         } else {
             return code;
         }
@@ -157,7 +158,7 @@ public class LicenseController {
     public ResponseEntity<?> removeLicensePaymentRecord(@RequestParam String paymentUUID, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
-            return licenseService.removeLicensePaymentRecord(paymentUUID, pinCode);
+            return licensePaymentService.removeLicensePaymentRecord(paymentUUID, pinCode);
         } else {
             return code;
         }

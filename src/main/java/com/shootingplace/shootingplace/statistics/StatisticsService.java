@@ -40,7 +40,7 @@ public class StatisticsService {
     private final CompetitionMembersListRepository competitionMembersListRepository;
     private final LicensePaymentHistoryRepository licensePaymentHistoryRepository;
 
-    public StatisticsService(MemberRepository memberRepository, ContributionRepository contributionRepository, AmmoEvidenceRepository ammoEvidenceRepository, AmmoUsedToEvidenceEntityRepository used, RegistrationRecordRepository rrrepo, TournamentRepository tournamentRepository, ScoreRepository scoreRepository, CompetitionMembersListRepository competitionMembersListRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository) {
+    public StatisticsService(MemberRepository memberRepository, ContributionRepository contributionRepository, AmmoEvidenceRepository ammoEvidenceRepository, AmmoUsedToEvidenceEntityRepository used, RegistrationRecordRepository rrrepo, TournamentRepository tournamentRepository, CompetitionMembersListRepository competitionMembersListRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository) {
         this.memberRepository = memberRepository;
         this.contributionRepository = contributionRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;

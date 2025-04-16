@@ -20,4 +20,6 @@ public interface ContributionRepository{
     ContributionEntity getOne(String contributionUUID);
     @Query(nativeQuery = true, value = "Select * from shootingplace.contribution_entity where (payment_day between (:firstDate) and (:secondDate)) order by payment_day")
     List<ContributionEntity> getAllPaymentDayBetween(@Param("firstDate")LocalDate firstDate, @Param("secondDate") LocalDate secondDate);
+
+    boolean existsById(String uuid);
 }

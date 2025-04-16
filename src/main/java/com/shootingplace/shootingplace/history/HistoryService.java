@@ -1,6 +1,10 @@
 package com.shootingplace.shootingplace.history;
 
-import com.google.common.hash.Hashing;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.armory.CaliberEntity;
+import com.shootingplace.shootingplace.armory.GunEntity;
+import com.shootingplace.shootingplace.armory.ShootingPacketEntity;
+import com.shootingplace.shootingplace.competition.CompetitionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.enums.Discipline;
@@ -14,7 +18,6 @@ import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
-import com.shootingplace.shootingplace.users.UserRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -23,7 +26,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
@@ -39,13 +41,11 @@ public class HistoryService {
     private final TournamentRepository tournamentRepository;
     private final JudgingHistoryRepository judgingHistoryRepository;
     private final ContributionRepository contributionRepository;
-    private final LicensePaymentHistoryRepository licensePaymentHistoryRepository;
     private final ChangeHistoryService changeHistoryService;
-    private final UserRepository userRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public HistoryService(HistoryRepository historyRepository, MemberRepository memberRepository, LicenseRepository licenseRepository, CompetitionHistoryRepository competitionHistoryRepository, TournamentRepository tournamentRepository, JudgingHistoryRepository judgingHistoryRepository, ContributionRepository contributionRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, ChangeHistoryService changeHistoryService, UserRepository userRepository) {
+    public HistoryService(HistoryRepository historyRepository, MemberRepository memberRepository, LicenseRepository licenseRepository, CompetitionHistoryRepository competitionHistoryRepository, TournamentRepository tournamentRepository, JudgingHistoryRepository judgingHistoryRepository, ContributionRepository contributionRepository, ChangeHistoryService changeHistoryService) {
         this.historyRepository = historyRepository;
         this.memberRepository = memberRepository;
         this.licenseRepository = licenseRepository;
@@ -53,9 +53,7 @@ public class HistoryService {
         this.tournamentRepository = tournamentRepository;
         this.judgingHistoryRepository = judgingHistoryRepository;
         this.contributionRepository = contributionRepository;
-        this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
         this.changeHistoryService = changeHistoryService;
-        this.userRepository = userRepository;
     }
 
     //  Basic
@@ -183,63 +181,6 @@ public class HistoryService {
 
     }
 
-    public ResponseEntity<?> addLicenseHistoryPayment(String memberUUID, String pinCode) throws NoUserPermissionException {
-
-        if (!memberRepository.existsById(memberUUID)) {
-            return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
-        }
-        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
-        LicenseEntity licenseEntity = memberEntity.getLicense();
-
-        HistoryEntity historyEntity = memberEntity.getHistory();
-        if (!licenseEntity.isPaid()) {
-            if (historyEntity.getLicensePaymentHistory() == null) {
-                historyEntity.setLicensePaymentHistory(new ArrayList<>());
-            }
-            int dateYear = memberEntity.getLicense().getValidThru() != null ? memberEntity.getLicense().getValidThru().getYear() + 1 : LocalDate.now().getYear();
-            List<LicensePaymentHistoryEntity> licensePaymentHistory = historyEntity.getLicensePaymentHistory();
-            String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
-            LicensePaymentHistoryEntity build = LicensePaymentHistoryEntity.builder()
-                    .date(LocalDate.now())
-                    .validForYear(dateYear)
-                    .memberUUID(memberUUID)
-                    .isPayInPZSSPortal(false)
-                    .isNew(licenseEntity.getNumber() == null)
-                    .acceptedBy(userRepository.findByPinCode(pin).getFullName())
-                    .build();
-            licensePaymentHistoryRepository.save(build);
-            licensePaymentHistory.add(build);
-
-            LOG.info("Dodano wpis o nowej płatności za licencję " + LocalDate.now());
-            historyRepository.save(historyEntity);
-
-        } else {
-            return ResponseEntity.badRequest().body("Licencja na ten moment jest opłacona");
-        }
-
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addLicenseHistoryPayment", "Dodano płatność za Licencję");
-        if (response.getStatusCode().equals(HttpStatus.OK)) {
-            licenseEntity.setPaid(true);
-            licenseRepository.save(licenseEntity);
-        }
-        return response;
-
-
-    }
-
-    public ResponseEntity<?> toggleLicencePaymentInPZSS(String paymentUUID, boolean condition, String pinCode) {
-
-        if (!licensePaymentHistoryRepository.existsById(paymentUUID)) {
-            return ResponseEntity.badRequest().body("Nie znaleziono płatności");
-        }
-
-        LicensePaymentHistoryEntity licensePaymentHistoryEntity = licensePaymentHistoryRepository.findById(paymentUUID).orElseThrow(EntityNotFoundException::new);
-        licensePaymentHistoryEntity.setPayInPZSSPortal(condition);
-        licensePaymentHistoryRepository.save(licensePaymentHistoryEntity);
-        return getStringResponseEntityMenagement(pinCode, memberRepository.getOne(licensePaymentHistoryEntity.getMemberUUID()), HttpStatus.OK, "toggleLicencePaymentInPZSS", "Oznaczono jako " + (condition ? "" : "nie") + "opłacone w Portalu PZSS");
-//        return ResponseEntity.ok("Oznaczono jako " + (condition ? "" : "nie") + "opłacone w Portalu PZSS");
-    }
-
     //  Tournament
     private CompetitionHistoryEntity createCompetitionHistoryEntity(String tournamentUUID, LocalDate date, String discipline, List<String> disciplineList, String attachedTo) {
         TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
@@ -321,7 +262,6 @@ public class HistoryService {
 
     public void checkStarts(String memberUUID) {
         MemberEntity e = memberRepository.getOne(memberUUID);
-        System.out.println("Sprawdzam" + e.getFullName());
         int year = e.getLicense().getNumber() != null ? e.getLicense().getValidThru().getYear() : LocalDate.now().getYear();
         List<CompetitionHistoryEntity> collect1 = e.getHistory()
                 .getCompetitionHistory()
@@ -358,15 +298,11 @@ public class HistoryService {
                 }
             }
             HistoryEntity history = e.getHistory();
-            System.out.println((int) (countPistol + pistolC));
-            System.out.println((int) countRifle + rifleC);
-            System.out.println((int) countShotgun + shotgunC);
             history.setPistolCounter((int) (countPistol + pistolC));
             history.setRifleCounter((int) countRifle + rifleC);
             history.setShotgunCounter((int) countShotgun + shotgunC);
             historyRepository.save(history);
-        }
-        else {
+        } else {
             HistoryEntity history = e.getHistory();
             history.setPistolCounter(0);
             history.setRifleCounter(0);
@@ -526,24 +462,88 @@ public class HistoryService {
             historyRepository.save(historyEntity);
         }
     }
-
-    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
+    // License
+    public ResponseEntity<?> getStringResponseEntityLicense(String pinCode, LicenseEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
-        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity != null ? memberEntity.getClass().getSimpleName() + " " + methodName + " " : methodName, memberEntity != null ? memberEntity.getUuid() : "nie dotyczy");
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "License " + methodName , entity!=null?entity.getUuid(): body.toString());
         if (stringResponseEntity != null) {
             response = stringResponseEntity;
         }
         return response;
     }
-
-    public ResponseEntity<?> getStringResponseEntityMenagement(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, Object body) {
+    // Member
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
-        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistoryMenagement(pinCode, memberEntity != null ? memberEntity.getClass().getSimpleName() + " " + methodName + " " : methodName, memberEntity != null ? memberEntity.getUuid() : "nie dotyczy");
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, entity != null ? "Member " + methodName : methodName, entity != null ? entity.getUuid() : "nie dotyczy");
         if (stringResponseEntity != null) {
             response = stringResponseEntity;
         }
         return response;
     }
+    // Contribution
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, ContributionEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "Contribution " + methodName,  entity.getUuid());
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
+    }
+    // Ammo Evidence
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, AmmoEvidenceEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "AmmoEvidence " + methodName, entity.getUuid());
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
+    }
+    // Shooting Packet
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, ShootingPacketEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "ShootingPacket" + methodName, entity.getUuid());
 
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
+    }
+    // Gun
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, GunEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "GunEntity " + methodName, entity.getUuid());
+
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
+    }
+    // Caliber
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, CaliberEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "CaliberEntity " + methodName , entity.getUuid());
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
+    }
+    // Competition
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, CompetitionEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, entity != null ? "Competition " + methodName : methodName, entity != null ? entity.getUuid() : "nie dotyczy");
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
+    }
+    // Tournament
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, TournamentEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "Tournamet " + methodName, entity.getUuid());
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
+    }
 
 }

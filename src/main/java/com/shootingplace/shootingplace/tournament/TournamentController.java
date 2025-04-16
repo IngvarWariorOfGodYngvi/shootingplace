@@ -204,7 +204,7 @@ public class TournamentController {
 
     @Transactional
     @DeleteMapping("/delete/{tournamentUUID}")
-    public ResponseEntity<?> deleteTournament(@PathVariable String tournamentUUID, @RequestParam String pinCode) {
+    public ResponseEntity<?> deleteTournament(@PathVariable String tournamentUUID, @RequestParam String pinCode) throws NoUserPermissionException {
         return tournamentService.deleteTournament(tournamentUUID, pinCode);
     }
 }

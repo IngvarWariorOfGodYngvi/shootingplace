@@ -1,33 +1,41 @@
 package com.shootingplace.shootingplace.address;
 
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
-import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import javax.naming.NoPermissionException;
 import javax.persistence.EntityNotFoundException;
 
 @Service
 public class AddressService {
     private final AddressRepository addressRepository;
     private final MemberRepository memberRepository;
-    private final ChangeHistoryService changeHistoryService;
+    private final HistoryService historyService;
     private final Logger LOG = LogManager.getLogger(getClass());
 
-    public AddressService(AddressRepository addressRepository, MemberRepository memberRepository, ChangeHistoryService changeHistoryService) {
+    public AddressService(AddressRepository addressRepository, MemberRepository memberRepository, HistoryService historyService) {
         this.addressRepository = addressRepository;
         this.memberRepository = memberRepository;
-        this.changeHistoryService = changeHistoryService;
+        this.historyService = historyService;
     }
 
-    public ResponseEntity<?> updateAddress(String memberUUID, Address address, String pinCode) throws NoPermissionException, NoUserPermissionException {
+    public Address getAddress() {
+        return Address.builder()
+                .zipCode(null)
+                .postOfficeCity(null)
+                .street(null)
+                .streetNumber(null)
+                .flatNumber(null)
+                .build();
+
+    }
+    public ResponseEntity<?> updateAddress(String memberUUID, Address address, String pinCode) throws NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             LOG.info("Nie znaleziono Klubowicza");
             return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).body("Nie znaleziono Klubowicza");
@@ -67,7 +75,7 @@ public class AddressService {
             addressEntity.setFlatNumber(address.getFlatNumber().toUpperCase());
             LOG.info("Dodano Numer mieszkania");
         }
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "update address", "Zaktualizowano adres " + memberEntity.getFullName());
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "update address", "Zaktualizowano adres " + memberEntity.getFullName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             addressRepository.save(addressEntity);
             LOG.info("Zaktualizowano adres");
@@ -75,26 +83,4 @@ public class AddressService {
         return response;
     }
 
-    public Address getAddress() {
-        return Address.builder()
-                .zipCode(null)
-                .postOfficeCity(null)
-                .street(null)
-                .streetNumber(null)
-                .flatNumber(null)
-                .build();
-
-    }
-
-    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, String body) throws NoPermissionException, NoUserPermissionException {
-        ResponseEntity<String> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
-        if (memberEntity.getUuid() == null) {
-            memberEntity.setUuid("nowy");
-        }
-        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " " + methodName + " ", memberEntity.getUuid());
-        if (stringResponseEntity != null) {
-            response = stringResponseEntity;
-        }
-        return response;
-    }
 }

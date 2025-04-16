@@ -9,7 +9,6 @@ import com.shootingplace.shootingplace.configurations.ProfilesEnum;
 import com.shootingplace.shootingplace.contributions.ContributionService;
 import com.shootingplace.shootingplace.enums.ErasedType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
-import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseRepository;
@@ -52,7 +51,6 @@ public class MemberService {
     private final WeaponPermissionService weaponPermissionService;
     private final MemberPermissionsService memberPermissionsService;
     private final ClubRepository clubRepository;
-    private final ChangeHistoryService changeHistoryService;
     private final ErasedRepository erasedRepository;
     private final Environment environment;
 
@@ -71,7 +69,6 @@ public class MemberService {
                          MemberPermissionsService memberPermissionsService,
                          ClubRepository clubRepository,
                          ErasedRepository erasedRepository,
-                         ChangeHistoryService changeHistoryService,
                          Environment environment, UserRepository userRepository) {
         this.memberRepository = memberRepository;
         this.licenseService = licenseService;
@@ -83,7 +80,6 @@ public class MemberService {
         this.memberPermissionsService = memberPermissionsService;
         this.clubRepository = clubRepository;
         this.erasedRepository = erasedRepository;
-        this.changeHistoryService = changeHistoryService;
         this.environment = environment;
         this.userRepository = userRepository;
     }
@@ -131,7 +127,7 @@ public class MemberService {
 
     //--------------------------------------------------------------------------
     public ResponseEntity<?> addNewMember(Member member, Address address, boolean returningToClub, String pinCode) throws NoUserPermissionException {
-        MemberEntity memberEntity;
+        MemberEntity memberEntity = new MemberEntity();
 
         List<MemberEntity> memberEntityList = memberRepository.findAll();
         MemberEntity member1 = memberEntityList.stream().filter(f -> f.getPesel().equals(member.getPesel())).findFirst().orElse(null);
@@ -233,7 +229,7 @@ public class MemberService {
             member.setErasedEntity(null);
             member.setActive(true);
 
-            ResponseEntity<?> response = getStringResponseEntity(pinCode, Mapping.map(member), HttpStatus.CREATED, "addNewMember " + member.getFullName(), "nowy Klubowicz");
+            ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.CREATED, "addNewMember " + member.getFullName(), "nowy Klubowicz");
             if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                 memberEntity = memberRepository.save(Mapping.map(member));
                 UserEntity user = userRepository.findByPinCode(Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString());
@@ -261,7 +257,7 @@ public class MemberService {
         }
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "activateOrDeactivateMember", "Zmieniono status aktywny/nieaktywny");
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "activateOrDeactivateMember", "Zmieniono status aktywny/nieaktywny");
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             memberEntity.toggleActive();
             memberRepository.save(memberEntity);
@@ -296,7 +292,7 @@ public class MemberService {
             LOG.info("Klubowicz ma za krótki staż jako młodzież");
             return ResponseEntity.badRequest().body("Klubowicz ma za krótki staż jako młodzież");
         }
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "changeAdult", "Klubowicz należy od teraz do grupy dorosłej");
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "changeAdult", "Klubowicz należy od teraz do grupy dorosłej");
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             memberEntity.setAdult(true);
             memberRepository.save(memberEntity);
@@ -324,7 +320,7 @@ public class MemberService {
             memberEntity.setPzss(false);
             LOG.info("Klubowicz skreślony : " + LocalDate.now());
         }
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "eraseMember", "Usunięto Klubowicza");
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "eraseMember", "Usunięto Klubowicza");
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             memberRepository.save(memberEntity);
         }
@@ -399,7 +395,7 @@ public class MemberService {
                 LOG.info("Zaktualizowano pomyślnie Numer Dowodu");
             }
         }
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "update member", "Zaktualizowano dane klubowicza " + memberEntity.getFullName());
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "update member", "Zaktualizowano dane klubowicza " + memberEntity.getFullName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             memberRepository.save(memberEntity);
         }
@@ -633,18 +629,6 @@ public class MemberService {
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .map(Mapping::map)
                 .collect(Collectors.toList());
-    }
-
-    public ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, String body) throws NoUserPermissionException {
-        ResponseEntity<String> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
-        if (memberEntity.getUuid() == null) {
-            memberEntity.setUuid("nowy");
-        }
-        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " " + methodName + " ", memberEntity.getUuid());
-        if (stringResponseEntity != null) {
-            response = stringResponseEntity;
-        }
-        return response;
     }
 
     public ResponseEntity<?> getMemberByPESELNumber(String PESELNumber) {

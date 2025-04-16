@@ -2,33 +2,30 @@ package com.shootingplace.shootingplace.tournament;
 
 import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.armory.CaliberRepository;
-import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
-import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
 import com.shootingplace.shootingplace.competition.CompetitionRepository;
 import com.shootingplace.shootingplace.enums.ArbiterWorkClass;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.*;
 import com.shootingplace.shootingplace.member.MemberDTO;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
-import com.shootingplace.shootingplace.users.UserEntity;
-import com.shootingplace.shootingplace.users.UserRepository;
-import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,15 +38,12 @@ public class TournamentService {
     private final CompetitionRepository competitionRepository;
     private final CaliberRepository caliberRepository;
     private final HistoryService historyService;
-    private final ChangeHistoryService changeHistoryService;
     private final UsedHistoryRepository usedHistoryRepository;
-    private final BarCodeCardRepository barCodeCardRepository;
-    private final UserRepository userRepository;
     private final JudgingHistoryRepository judgingHistoryRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public TournamentService(TournamentRepository tournamentRepository, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, CompetitionMembersListRepository competitionMembersListRepository, CompetitionRepository competitionRepository, CaliberRepository caliberRepository, HistoryService historyService, ChangeHistoryService changeHistoryService, UsedHistoryRepository usedHistoryRepository, BarCodeCardRepository barCodeCardRepository, UserRepository userRepository, JudgingHistoryRepository judgingHistoryRepository) {
+    public TournamentService(TournamentRepository tournamentRepository, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, CompetitionMembersListRepository competitionMembersListRepository, CompetitionRepository competitionRepository, CaliberRepository caliberRepository, HistoryService historyService, UsedHistoryRepository usedHistoryRepository, JudgingHistoryRepository judgingHistoryRepository) {
         this.tournamentRepository = tournamentRepository;
         this.memberRepository = memberRepository;
         this.otherPersonRepository = otherPersonRepository;
@@ -57,10 +51,7 @@ public class TournamentService {
         this.competitionRepository = competitionRepository;
         this.caliberRepository = caliberRepository;
         this.historyService = historyService;
-        this.changeHistoryService = changeHistoryService;
         this.usedHistoryRepository = usedHistoryRepository;
-        this.barCodeCardRepository = barCodeCardRepository;
-        this.userRepository = userRepository;
         this.judgingHistoryRepository = judgingHistoryRepository;
     }
 
@@ -564,26 +555,6 @@ public class TournamentService {
         return "Nie udało się dodać konkurencji";
     }
 
-    private MemberEntity getMemberEntityFromBarCode(String barcode) {
-        BarCodeCardEntity barCode = barCodeCardRepository.findByBarCode(barcode);
-        MemberEntity memberEntity;
-        UserEntity user = userRepository.getOne(barCode.getBelongsTo());
-        if (barCode.getSubType().contains("Pracownik") || barCode.getSubType().contains("Zarząd") || barCode.getSubType().contains("Komisja")) {
-            if (user.getMember() != null) {
-                memberEntity = user.getMember();
-            } else {
-                memberEntity = memberRepository.getOne(barCode.getBelongsTo());
-            }
-        } else {
-            memberEntity = memberRepository.getOne(barCode.getBelongsTo());
-        }
-        LOG.info("zapisuję rekord do bazy");
-        user.getList().add(changeHistoryService.addRecord(user, "Sign in as arbiter", memberEntity.getUuid()));
-        userRepository.save(user);
-
-        return memberEntity;
-    }
-
     public List<TournamentDTO> getClosedTournaments(Pageable page) {
         page = PageRequest.of(page.getPageNumber(), page.getPageSize(), Sort.by("date").descending());
         return tournamentRepository.findAllByOpenIsFalse(page)
@@ -593,7 +564,7 @@ public class TournamentService {
                 .collect(Collectors.toList());
     }
 
-    public ResponseEntity<?> deleteTournament(String tournamentUUID, String pinCode) {
+    public ResponseEntity<?> deleteTournament(String tournamentUUID, String pinCode) throws NoUserPermissionException {
         if (!tournamentRepository.existsById(tournamentUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono zawodów z tym identyfikatorem");
         }
@@ -615,7 +586,7 @@ public class TournamentService {
             if (!tournamentEntity.getArbitersList().isEmpty()) {
                 tournamentEntity.getArbitersList().forEach(e -> historyService.removeJudgingRecord(e.getUuid(), tournamentEntity.getUuid()));
             }
-            ResponseEntity<?> response = getStringResponseEntity(pinCode, tournamentEntity, HttpStatus.OK, "deleteTournament", "Zawody zostały usunięte - nie da się już ich przywrócić");
+            ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, tournamentEntity, HttpStatus.OK, "deleteTournament", "Zawody zostały usunięte - nie da się już ich przywrócić");
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 tournamentRepository.delete(tournamentEntity);
             }
@@ -832,14 +803,14 @@ public class TournamentService {
         return list;
     }
 
-    public ResponseEntity<?> openTournament(String tournamentUUID, String pinCode) {
+    public ResponseEntity<?> openTournament(String tournamentUUID, String pinCode) throws NoUserPermissionException {
         if (tournamentRepository.findAll().stream().anyMatch(TournamentEntity::isOpen)) {
             return ResponseEntity.badRequest().body("Nie można otworzyć zawodów gdy inne są otwarte");
         } else {
             TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
 
 
-            ResponseEntity<?> response = getStringResponseEntity(pinCode, tournamentEntity, HttpStatus.OK, "openTournament", "Otwarto zawody z dnia" + tournamentEntity.getDate());
+            ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, tournamentEntity, HttpStatus.OK, "openTournament", "Otwarto zawody z dnia" + tournamentEntity.getDate());
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 tournamentEntity.setOpen(true);
                 tournamentRepository.save(tournamentEntity);
@@ -857,18 +828,6 @@ public class TournamentService {
     public List<UsedHistoryEntity> getListOfGunsOnTournament(String tournamentUUID) {
 
         return usedHistoryRepository.findAll().stream().filter(f -> f.getEvidenceUUID().equals(tournamentUUID)).collect(Collectors.toList());
-    }
-
-    @SneakyThrows
-    public ResponseEntity<?> getStringResponseEntity(String pinCode, TournamentEntity tournamentEntity, HttpStatus status, String methodName, Object body) {
-        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
-        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, tournamentEntity.getClass().getSimpleName() + " " + methodName + " ", tournamentEntity.getUuid());
-        if (stringResponseEntity != null) {
-            response = stringResponseEntity;
-        }
-
-
-        return response;
     }
 
     public ResponseEntity<?> getJudgingList(String firstDate, String secondDate) {

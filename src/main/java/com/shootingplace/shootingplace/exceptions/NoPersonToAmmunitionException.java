@@ -4,9 +4,11 @@ public class NoPersonToAmmunitionException extends Exception {
     public NoPersonToAmmunitionException(String errorMessage, Throwable err) {
         super(errorMessage, err);
     }
-    public NoPersonToAmmunitionException(){
+
+    public NoPersonToAmmunitionException() {
         super();
     }
+
     public NoPersonToAmmunitionException(String message) {
         super(message);
     }

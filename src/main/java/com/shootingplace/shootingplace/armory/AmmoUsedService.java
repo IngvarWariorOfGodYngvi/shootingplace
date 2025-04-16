@@ -123,7 +123,7 @@ public class AmmoUsedService {
                         .getOne(otherID);
                 LOG.info("not member " + otherPersonEntity.getFullName());
             } else {
-                throw new NoPersonToAmmunitionException("Wprowadź osobę by wydać amunicję.");
+                throw new NoPersonToAmmunitionException();
             }
         }
         AmmoUsedEvidence ammoUsedEvidence = AmmoUsedEvidence.builder()
@@ -208,7 +208,7 @@ public class AmmoUsedService {
                             .getOne(otherID);
                     LOG.info("not member " + otherPersonEntity.getFullName());
                 } else {
-                    throw new NoPersonToAmmunitionException("Wprowadź osobę by wydać amunicję.");
+                    throw new NoPersonToAmmunitionException();
                 }
             }
             AmmoUsedEvidence ammoUsedEvidence = AmmoUsedEvidence.builder()

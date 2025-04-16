@@ -5,6 +5,7 @@ import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceService;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.HistoryService;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Assert;
@@ -33,6 +34,8 @@ public class AmmoEvidenceServiceTest {
 
     @Mock
     AmmoEvidenceRepository ammoEvidenceRepository;
+    @Mock
+    HistoryService historyService;
     @Mock
     ChangeHistoryService changeHistoryService;
     @InjectMocks
@@ -143,6 +146,7 @@ public class AmmoEvidenceServiceTest {
         //when
         when(ammoEvidenceRepository.findAll()).thenReturn(list);
         when(ammoEvidenceRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findById(uuid)));
+        when(historyService.getStringResponseEntity(any(String.class),any(AmmoEvidenceEntity.class),any(HttpStatus.class),any(String.class),any(Object.class))).thenReturn(new ResponseEntity("Ręcznie otworzono listę - Pamiętaj by ją zamknąć!",HttpStatus.OK));
         ResponseEntity<?> responseEntity = ammoEvidenceService.openEvidence(uuid, "0125");
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));

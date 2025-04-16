@@ -1,5 +1,8 @@
 package com.shootingplace.shootingplace.workingTimeEvidence;
 
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,9 +18,12 @@ import java.util.List;
 public class WorkingTimeEvidenceController {
 
     private final WorkingTimeEvidenceService workService;
+    private final ChangeHistoryService changeHistoryService;
 
-    public WorkingTimeEvidenceController(WorkingTimeEvidenceService workService) {
+
+    public WorkingTimeEvidenceController(WorkingTimeEvidenceService workService, ChangeHistoryService changeHistoryService) {
         this.workService = workService;
+        this.changeHistoryService = changeHistoryService;
     }
 
     @PostMapping("/")
@@ -25,31 +31,6 @@ public class WorkingTimeEvidenceController {
 
         return workService.createNewWTE(number);
     }
-
-//    @GetMapping("/stream-sse-mvc")
-//    public SseEmitter streamSseMvc() {
-//        SseEmitter emitter = new SseEmitter();
-//        ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
-//
-//        sseMvcExecutor.execute(() -> {
-//            try {
-//                int i = 0;
-//                while (true) {
-//                    SseEmitter.SseEventBuilder event = SseEmitter.event()
-//                            .data("SSE MVC - " + LocalTime.now()
-//                                    .toString())
-//                            .id(String.valueOf(i))
-//                            .name("sse event - mvc");
-//                    emitter.send(event);
-//                    Thread.sleep(1000);
-//                    i++;
-//                }
-//            } catch (Exception ex) {
-//                emitter.completeWithError(ex);
-//            }
-//        });
-//        return emitter;
-//    }
 
     @GetMapping("/")
     public ResponseEntity<?> getAllActiveUsers() {
@@ -80,15 +61,22 @@ public class WorkingTimeEvidenceController {
     public ResponseEntity<?> getAllWorkingMonthInYear(@RequestParam Integer year) {
         return workService.getAllWorkingMonthInYear(year);
     }
+
     @GetMapping("/getAllWorkingTypeInMonthAndYear")
-    public ResponseEntity<?> getAllWorkingTypeInMonthAndYear(@RequestParam String year,@RequestParam String month) {
-        return workService.getAllWorkingTypeInMonthAndYear(year,month);
+    public ResponseEntity<?> getAllWorkingTypeInMonthAndYear(@RequestParam String year, @RequestParam String month) {
+        return workService.getAllWorkingTypeInMonthAndYear(year, month);
     }
 
     @Transactional
     @PatchMapping("/accept")
-    public ResponseEntity<?> acceptWorkingTime(@RequestParam List<String> uuidList, @RequestParam String pinCode) {
-        return workService.acceptWorkingTime(uuidList, pinCode);
+    public ResponseEntity<?> acceptWorkingTime(@RequestParam List<String> uuidList, @RequestParam String pinCode) throws NoUserPermissionException {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return workService.acceptWorkingTime(uuidList, pinCode);
+        } else {
+            return code;
+        }
+
     }
 
     @Transactional

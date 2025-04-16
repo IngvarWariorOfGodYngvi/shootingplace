@@ -90,7 +90,7 @@ public class MemberServiceTest {
     public void init() {
 //        when(memberRepository.findAll(Sort.by("secondaName"))).thenReturn(membersList);
         when(memberRepository.findAll()).thenReturn(membersList);
-        when(memberRepository.findAllByErasedFalse()).thenReturn(membersList.stream().filter(f->!f.getErased()).collect(Collectors.toList()));
+        when(memberRepository.findAllByErasedFalse()).thenReturn(membersList.stream().filter(f -> !f.getErased()).collect(Collectors.toList()));
 //        when(userRepository.findByPinCode(pinCodeOK)).thenReturn(findByPinCode());
     }
 
@@ -419,7 +419,7 @@ public class MemberServiceTest {
         Address address = new Address();
         //when
 //        when(memberRepository.findByPesel(member.getPesel())).thenReturn(Optional.ofNullable(findByPesel(member.getPesel())));
-        ResponseEntity<?> responseEntity = memberService.addNewMember(member, address,returnToClub, pinCodeOK);
+        ResponseEntity<?> responseEntity = memberService.addNewMember(member, address, returnToClub, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
         assertThat(responseEntity.getBody(), Matchers.equalTo("Uwaga! Ktoś już ma taki numer PESEL"));
@@ -439,7 +439,7 @@ public class MemberServiceTest {
                 .build();
         Address address = new Address();
         //when
-        ResponseEntity<?> responseEntity = memberService.addNewMember(member, address,returnToClub, pinCodeOK);
+        ResponseEntity<?> responseEntity = memberService.addNewMember(member, address, returnToClub, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
         assertThat(responseEntity.getBody(), Matchers.equalTo("Uwaga! Ktoś już ma taki e-mail"));
@@ -459,7 +459,7 @@ public class MemberServiceTest {
                 .build();
         Address address = new Address();
         //when
-        ResponseEntity<?> responseEntity = memberService.addNewMember(member, address,returnToClub, pinCodeOK);
+        ResponseEntity<?> responseEntity = memberService.addNewMember(member, address, returnToClub, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
         assertThat(responseEntity.getBody(), Matchers.equalTo("Uwaga! Ktoś już ma taki numer dowodu osobistego"));
@@ -481,7 +481,7 @@ public class MemberServiceTest {
         Address address = new Address();
         //when
         when(memberRepository.findByLegitimationNumber(member.getLegitimationNumber())).thenReturn(Optional.ofNullable(findByLegitimationNumber(member.getLegitimationNumber())));
-        ResponseEntity<?> responseEntity = memberService.addNewMember(member, address,returnToClub, pinCodeOK);
+        ResponseEntity<?> responseEntity = memberService.addNewMember(member, address, returnToClub, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
         assertThat(responseEntity.getBody(), Matchers.equalTo("Uwaga! Ktoś wśród skreślonych już ma taki numer legitymacji"));
@@ -503,7 +503,7 @@ public class MemberServiceTest {
         Address address = new Address();
         //when
         when(memberRepository.findByLegitimationNumber(member.getLegitimationNumber())).thenReturn(Optional.ofNullable(findByLegitimationNumber(member.getLegitimationNumber())));
-        ResponseEntity<?> responseEntity = memberService.addNewMember(member, address,returnToClub, pinCodeOK);
+        ResponseEntity<?> responseEntity = memberService.addNewMember(member, address, returnToClub, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
         assertThat(responseEntity.getBody(), Matchers.equalTo("Uwaga! Ktoś już ma taki numer legitymacji"));
@@ -718,6 +718,7 @@ public class MemberServiceTest {
         //when
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
         when(memberRepository.getOne(uuid)).thenReturn(findByID(uuid));
+        when(historyService.getStringResponseEntity(any(String.class),any(MemberEntity.class),any(HttpStatus.class),any(String.class),any(Object.class))).thenReturn(ResponseEntity.ok().build());
         ResponseEntity<?> responseEntity = memberService.changeAdult(uuid, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
@@ -753,6 +754,7 @@ public class MemberServiceTest {
         //when
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
         when(memberRepository.getOne(uuid)).thenReturn(findByID(uuid));
+        when(historyService.getStringResponseEntity(any(String.class),any(MemberEntity.class),any(HttpStatus.class),any(String.class),any(Object.class))).thenReturn(ResponseEntity.ok().build());
         ResponseEntity<?> responseEntity = memberService.activateOrDeactivateMember(uuid, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
@@ -782,6 +784,7 @@ public class MemberServiceTest {
         //when
         when(memberRepository.existsById(uuid)).thenReturn((existsById(uuid)));
         when(memberRepository.getOne(uuid)).thenReturn(findByID(uuid));
+        when(historyService.getStringResponseEntity(any(String.class),any(MemberEntity.class),any(HttpStatus.class),any(String.class),any(Object.class))).thenReturn(ResponseEntity.ok().build());
         ResponseEntity<?> responseEntity = memberService.eraseMember(uuid, erasedType, date, description, pinCodeOK);
         //then
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
@@ -839,7 +842,7 @@ public class MemberServiceTest {
 //        assertThat(responseEntity.getBody(), Matchers.equalTo(memberEntity.getUuid()));
 //    }
 
-//    @Test
+    //    @Test
 //    public void add_new_member_to_empty_list_success() {
 //        //given
 //        Member member = getMember();
@@ -867,7 +870,7 @@ public class MemberServiceTest {
 //        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.CREATED));
 //        assertThat(responseEntity.getBody(), Matchers.equalTo(memberEntity.getUuid()));
 //    }
-    private Address getAddress(){
+    private Address getAddress() {
         return Address.builder()
                 .postOfficeCity("Łódź")
                 .zipCode("00-000")

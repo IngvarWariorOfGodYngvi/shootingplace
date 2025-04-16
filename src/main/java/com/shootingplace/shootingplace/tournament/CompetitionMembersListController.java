@@ -1,7 +1,6 @@
 package com.shootingplace.shootingplace.tournament;
 
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
-import com.shootingplace.shootingplace.armory.CaliberRepository;
 import com.shootingplace.shootingplace.armory.ShootingPacketEntity;
 import com.shootingplace.shootingplace.armory.ShootingPacketService;
 import com.shootingplace.shootingplace.exceptions.NoPersonToAmmunitionException;
@@ -23,16 +22,14 @@ public class CompetitionMembersListController {
     private final AmmoUsedService ammoUsedService;
     private final ScoreService scoreService;
     private final CompetitionMembersListRepository competitionMembersListRepository;
-    private final CaliberRepository caliberRepository;
 
     private final ShootingPacketService shootingPacketService;
 
-    public CompetitionMembersListController(CompetitionMembersListService competitionMembersListService, AmmoUsedService ammoUsedService, ScoreService scoreService, CompetitionMembersListRepository competitionMembersListRepository, CaliberRepository caliberRepository, ShootingPacketService shootingPacketService) {
+    public CompetitionMembersListController(CompetitionMembersListService competitionMembersListService, AmmoUsedService ammoUsedService, ScoreService scoreService, CompetitionMembersListRepository competitionMembersListRepository, ShootingPacketService shootingPacketService) {
         this.competitionMembersListService = competitionMembersListService;
         this.ammoUsedService = ammoUsedService;
         this.scoreService = scoreService;
         this.competitionMembersListRepository = competitionMembersListRepository;
-        this.caliberRepository = caliberRepository;
         this.shootingPacketService = shootingPacketService;
     }
 
@@ -134,7 +131,7 @@ public class CompetitionMembersListController {
     public ResponseEntity<?> removeMemberFromList(@RequestParam List<String> competitionNameList, @RequestParam int legitimationNumber, @RequestParam @Nullable int otherPerson) {
 
         List<String> list = new ArrayList<>();
-        competitionNameList.forEach(e -> list.add(competitionMembersListService.removeScoreFromList(e.replaceAll("\\.", ","), legitimationNumber, otherPerson) + e));
+        competitionNameList.forEach(e -> list.add(competitionMembersListService.removeScoreFromList(e.replaceAll("\\.", ","), legitimationNumber, otherPerson)));
 
         if (!list.isEmpty()) {
             return ResponseEntity.ok(list);

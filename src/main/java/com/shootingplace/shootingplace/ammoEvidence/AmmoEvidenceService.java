@@ -2,14 +2,13 @@ package com.shootingplace.shootingplace.ammoEvidence;
 
 import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
-import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.HistoryService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -22,13 +21,13 @@ public class AmmoEvidenceService {
 
 
     private final AmmoEvidenceRepository ammoEvidenceRepository;
-    private final ChangeHistoryService changeHistoryService;
+    private final HistoryService historyService;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public AmmoEvidenceService(AmmoEvidenceRepository ammoEvidenceRepository, ChangeHistoryService changeHistoryService) {
+    public AmmoEvidenceService(AmmoEvidenceRepository ammoEvidenceRepository, HistoryService historyService) {
         this.ammoEvidenceRepository = ammoEvidenceRepository;
-        this.changeHistoryService = changeHistoryService;
+        this.historyService = historyService;
     }
 
     public ResponseEntity<?> getOpenEvidence() {
@@ -74,7 +73,7 @@ public class AmmoEvidenceService {
             AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository
                     .findById(evidenceUUID)
                     .orElseThrow(EntityNotFoundException::new);
-            ResponseEntity<?> response = getStringResponseEntity(pinCode, ammoEvidenceEntity, HttpStatus.OK, "openEvidence", "Ręcznie otworzono listę - Pamiętaj by ją zamknąć!");
+            ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, ammoEvidenceEntity, HttpStatus.OK, "openEvidence", "Ręcznie otworzono listę - Pamiętaj by ją zamknąć!");
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 ammoEvidenceEntity.setOpen(true);
                 ammoEvidenceEntity.setForceOpen(true);
@@ -102,15 +101,6 @@ public class AmmoEvidenceService {
             message = "\"red\"";
         }
         return message;
-    }
-
-    ResponseEntity<?> getStringResponseEntity(String pinCode, AmmoEvidenceEntity ammoEvidenceEntity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
-        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
-        ResponseEntity<?> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, ammoEvidenceEntity.getClass().getSimpleName() + " " + methodName + " ", ammoEvidenceEntity.getUuid());
-        if (stringResponseEntity != null) {
-            response = stringResponseEntity;
-        }
-        return response;
     }
 
 }

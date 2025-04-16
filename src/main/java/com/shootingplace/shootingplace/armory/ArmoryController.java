@@ -8,7 +8,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import javax.naming.NoPermissionException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -112,8 +111,13 @@ public class ArmoryController {
 
     @Transactional
     @PostMapping("/addShootingPacket")
-    public ResponseEntity<?> addShootingPacket(@RequestParam String name, @RequestParam float price, @RequestBody Map<String, Integer> map, @RequestParam String pinCode) throws NoPermissionException, NoUserPermissionException {
-        return shootingPacketService.addShootingPacket(name, price, map, pinCode);
+    public ResponseEntity<?> addShootingPacket(@RequestParam String name, @RequestParam float price, @RequestBody Map<String, Integer> map, @RequestParam String pinCode) throws NoUserPermissionException {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return shootingPacketService.addShootingPacket(name, price, map, pinCode);
+        } else {
+            return code;
+        }
     }
 
     @PutMapping("/addAmmo")
@@ -143,17 +147,30 @@ public class ArmoryController {
     @Transactional
     @PutMapping("/remove")
     public ResponseEntity<?> removeGun(@RequestParam String gunUUID, @RequestParam String pinCode) throws NoUserPermissionException {
-        return armoryService.removeGun(gunUUID, pinCode);
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return armoryService.removeGun(gunUUID, pinCode);
+        } else {
+            return code;
+        }
+
     }
 
+    @Transactional
     @PostMapping("/calibers")
     public ResponseEntity<?> createNewCaliber(@RequestParam String caliber, @RequestParam String pinCode) throws NoUserPermissionException {
         if (caliber.isEmpty()) {
             return ResponseEntity.badRequest().body("Wprowadź dane");
         }
-        return caliberService.createNewCaliber(caliber, pinCode);
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return caliberService.createNewCaliber(caliber, pinCode);
+        } else {
+            return code;
+        }
     }
 
+    @Transactional
     @PatchMapping("/changeCaliberQuantity")
     public ResponseEntity<?> changeCaliberQuantity(@RequestParam String caliberUUID, @RequestParam Integer quantity, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
@@ -164,6 +181,7 @@ public class ArmoryController {
         }
     }
 
+    @Transactional
     @PatchMapping("/changeCaliberUnitPrice")
     public ResponseEntity<?> changeCaliberUnitPrice(@RequestParam String caliberUUID, @RequestParam Float price, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
@@ -174,6 +192,7 @@ public class ArmoryController {
         }
     }
 
+    @Transactional
     @PatchMapping("/changeCaliberUnitPriceForNotMember")
     public ResponseEntity<?> changeCaliberUnitPriceForNotMember(@RequestParam String caliberUUID, @RequestParam Float price, @RequestParam String pinCode) throws NoUserPermissionException {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
@@ -184,6 +203,7 @@ public class ArmoryController {
         }
     }
 
+    @Transactional
     @PostMapping("/newGunTypeName")
     public ResponseEntity<?> createNewGunStore(@RequestParam String nameType) {
         if (nameType.isEmpty()) {
@@ -218,6 +238,7 @@ public class ArmoryController {
         return armoryService.returnToStore(gunsUUID);
     }
 
+    @Transactional
     @PatchMapping("/addImageToGun")
     public ResponseEntity<?> addImageToGun(@RequestParam String gunUUID, @RequestParam String fileUUID) {
 

@@ -29,11 +29,11 @@ public class ChangeHistoryService {
     }
 
 
-    public ChangeHistoryEntity addRecord(UserEntity user, String classNamePlusMethod, String memberUUID) {
+    private ChangeHistoryEntity addRecord(UserEntity user, String classNamePlusMethod, String uuid) {
         return changeHistoryRepository.save(ChangeHistoryEntity.builder()
                 .userEntity(user)
                 .classNamePlusMethod(classNamePlusMethod)
-                .belongsTo(memberUUID)
+                .belongsTo(uuid)
                 .dayNow(LocalDate.now())
                 .timeNow(String.valueOf(LocalTime.now()))
                 .build());
@@ -58,7 +58,7 @@ public class ChangeHistoryService {
     public ResponseEntity<String> addRecordToChangeHistory(String pinCode, String classNamePlusMethod, String uuid) throws NoUserPermissionException {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity userEntity = userRepository.findByPinCode(pin);
-        // user is found
+        // user found
         if (userEntity != null) {
             // user isn't in work
             if (!workServ.isInWork(userEntity)) {
@@ -70,7 +70,6 @@ public class ChangeHistoryService {
                 return null;
             } else {
                 throw new NoUserPermissionException();
-//                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Brak uprawnień");
             }
         }
         //user not found
@@ -79,27 +78,5 @@ public class ChangeHistoryService {
         }
     }
 
-    public ResponseEntity<String> addRecordToChangeHistoryMenagement(String pinCode, String classNamePlusMethod, String uuid) {
-        String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
-        UserEntity userEntity = userRepository.findByPinCode(pin);
-        // user is found
-        if (userEntity != null) {
-            // user isn't in work
-            if (!workServ.isInWork(userEntity)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Najpierw zarejestruj pobyt w Klubie");
-            }
-            if (userEntity.getSubType().contains(UserSubType.MANAGEMENT.getName())) {
-                userEntity.getList().add(addRecord(userEntity, classNamePlusMethod, uuid));
-                userRepository.save(userEntity);
-                return null;
-            } else {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Brak uprawnień");
-            }
-        }
-        //user not found
-        else {
-            return ResponseEntity.status(403).body("Brak Użytkownika");
-        }
-    }
 }
 

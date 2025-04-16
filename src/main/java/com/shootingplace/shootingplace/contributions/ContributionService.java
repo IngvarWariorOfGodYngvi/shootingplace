@@ -4,7 +4,6 @@ package com.shootingplace.shootingplace.contributions;
 import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.configurations.ProfilesEnum;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
-import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
@@ -14,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -30,17 +28,15 @@ public class ContributionService {
     private final ContributionRepository contributionRepository;
     private final MemberRepository memberRepository;
     private final HistoryService historyService;
-    private final ChangeHistoryService changeHistoryService;
     private final Environment environment;
     private final UserRepository userRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public ContributionService(ContributionRepository contributionRepository, MemberRepository memberRepository, HistoryService historyService, ChangeHistoryService changeHistoryService, Environment environment, UserRepository userRepository) {
+    public ContributionService(ContributionRepository contributionRepository, MemberRepository memberRepository, HistoryService historyService, Environment environment, UserRepository userRepository) {
         this.contributionRepository = contributionRepository;
         this.memberRepository = memberRepository;
         this.historyService = historyService;
-        this.changeHistoryService = changeHistoryService;
         this.environment = environment;
         this.userRepository = userRepository;
     }
@@ -54,7 +50,6 @@ public class ContributionService {
         ResponseEntity<?> response = null;
         contributionCount = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? contributionCount : 1;
         for (int i = 0; i < contributionCount; i++) {
-            System.out.println(contributionCount);
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         List<ContributionEntity> contributionEntityList = memberEntity.getHistory().getContributionList();
             ContributionEntity contributionEntity = ContributionEntity.builder()
@@ -86,9 +81,9 @@ public class ContributionService {
                     contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusYears(1));
                 }
             }
-            response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Przedłużono składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
-            if (response.getStatusCode().equals(HttpStatus.OK)) {
                 contributionRepository.save(contributionEntity);
+            response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "addContribution", "Przedłużono składkę " + memberEntity.getFullName());
+            if (response.getStatusCode().equals(HttpStatus.OK)) {
                 historyService.addContribution(memberUUID, contributionEntity);
                 LOG.info("zmieniono " + memberEntity.getSecondName());
                 memberEntity.setActive(contributionEntity.getValidThru().isAfter(LocalDate.now()));
@@ -125,7 +120,7 @@ public class ContributionService {
                 .validThru(validThru)
                 .acceptedBy(userRepository.findByPinCode(pin).getFullName())
                 .build();
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Dodano składkę " + memberEntity.getFullName());
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "addContribution ", "Dodano składkę " + memberEntity.getFullName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             contributionRepository.save(contributionEntity);
             historyService.addContribution(memberUUID, contributionEntity);
@@ -179,10 +174,9 @@ public class ContributionService {
                 .filter(f -> f.getUuid().equals(contributionUUID))
                 .collect(Collectors.toList()).get(0);
 
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Usunięto składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "addContribution", "Usunięto składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             historyService.removeContribution(memberUUID, contributionEntity);
-            contributionRepository.delete(contributionEntity);
             LOG.info("zmieniono " + memberEntity.getSecondName());
             memberEntity.setActive(memberEntity.getHistory().getContributionList().get(0).getValidThru().isAfter(LocalDate.now()));
             memberRepository.save(memberEntity);
@@ -208,7 +202,7 @@ public class ContributionService {
         }
         contributionEntity.setAcceptedBy(userRepository.findByPinCode(pin).getFullName());
         contributionEntity.setEdited(true);
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "addContribution", "Edytowano składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "updateContribution", "Edytowano składkę " + memberEntity.getFullName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             contributionRepository.save(contributionEntity);
             memberEntity.setActive(memberEntity.getHistory().getContributionList().get(0).getValidThru().isAfter(LocalDate.now()));
@@ -217,12 +211,4 @@ public class ContributionService {
         return response;
     }
 
-    ResponseEntity<?> getStringResponseEntity(String pinCode, MemberEntity memberEntity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
-        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
-        ResponseEntity<?> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, memberEntity.getClass().getSimpleName() + " " + methodName + " ", memberEntity.getUuid());
-        if (stringResponseEntity != null) {
-            response = stringResponseEntity;
-        }
-        return response;
-    }
 }

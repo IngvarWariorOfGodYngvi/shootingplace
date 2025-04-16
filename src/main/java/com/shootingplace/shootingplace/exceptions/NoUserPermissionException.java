@@ -9,10 +9,11 @@ public class NoUserPermissionException extends Exception {
     public NoUserPermissionException(String errorMessage, Throwable err) {
         super(errorMessage, err);
     }
-    public NoUserPermissionException(){
+
+    public NoUserPermissionException() {
         super();
-        LOG.info("wywołano coś");
     }
+
     public NoUserPermissionException(String message) {
         super(message);
     }

@@ -7,7 +7,7 @@ import com.shootingplace.shootingplace.enums.UsedType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.file.FilesEntity;
 import com.shootingplace.shootingplace.file.FilesRepository;
-import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.history.UsedHistoryEntity;
 import com.shootingplace.shootingplace.history.UsedHistoryRepository;
 import com.shootingplace.shootingplace.member.MemberEntity;
@@ -17,7 +17,6 @@ import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -40,29 +39,29 @@ public class ArmoryService {
     private final CaliberUsedRepository caliberUsedRepository;
     private final CalibersAddedRepository calibersAddedRepository;
     private final GunRepository gunRepository;
-    private final ChangeHistoryService changeHistoryService;
     private final GunStoreRepository gunStoreRepository;
     private final FilesRepository filesRepository;
     private final UsedHistoryRepository usedHistoryRepository;
     private final MemberRepository memberRepository;
     private final OtherPersonRepository otherPersonRepository;
+    private final HistoryService historyService;
 
     private final Logger LOG = LogManager.getLogger();
 
 
-    public ArmoryService(AmmoEvidenceRepository ammoEvidenceRepository, CaliberService caliberService, CaliberRepository caliberRepository, CaliberUsedRepository caliberUsedRepository, CalibersAddedRepository calibersAddedRepository, GunRepository gunRepository, ChangeHistoryService changeHistoryService, GunStoreRepository gunStoreRepository, FilesRepository filesRepository, UsedHistoryRepository usedHistoryRepository, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository) {
+    public ArmoryService(AmmoEvidenceRepository ammoEvidenceRepository, CaliberService caliberService, CaliberRepository caliberRepository, CaliberUsedRepository caliberUsedRepository, CalibersAddedRepository calibersAddedRepository, GunRepository gunRepository, GunStoreRepository gunStoreRepository, FilesRepository filesRepository, UsedHistoryRepository usedHistoryRepository, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository, HistoryService historyService) {
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.caliberService = caliberService;
         this.caliberRepository = caliberRepository;
         this.caliberUsedRepository = caliberUsedRepository;
         this.calibersAddedRepository = calibersAddedRepository;
         this.gunRepository = gunRepository;
-        this.changeHistoryService = changeHistoryService;
         this.gunStoreRepository = gunStoreRepository;
         this.filesRepository = filesRepository;
         this.usedHistoryRepository = usedHistoryRepository;
         this.memberRepository = memberRepository;
         this.otherPersonRepository = otherPersonRepository;
+        this.historyService = historyService;
     }
 
     public List<Caliber> getSumFromAllAmmoList(LocalDate firstDate, LocalDate secondDate) {
@@ -319,7 +318,7 @@ public class ArmoryService {
         List<GunEntity> gunEntityList = gunStoreEntity.getGunEntityList();
         gunEntityList.remove(gunEntity);
 
-        ResponseEntity<?> response = getStringResponseEntity(pinCode, gunEntity, HttpStatus.OK, "removeGun", "Usunięto broń ze stanu magazynu");
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, gunEntity, HttpStatus.OK, "removeGun", "Usunięto broń ze stanu magazynu");
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             gunStoreRepository.save(gunStoreEntity);
         }
@@ -494,20 +493,6 @@ public class ArmoryService {
                 .collect(Collectors.toList());
     }
 
-    public ResponseEntity<?> getStringResponseEntity(String pinCode, GunEntity gunEntity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
-        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
-        ResponseEntity<String> stringResponseEntity;
-        if (gunEntity != null) {
-            stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, gunEntity.getClass().getSimpleName() + " " + methodName + " ", gunEntity.getUuid());
-        } else {
-            stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "zmiana w zbrojowni", "kaliber");
-        }
-        if (stringResponseEntity != null) {
-            response = stringResponseEntity;
-        }
-        return response;
-    }
-
     public ResponseEntity<?> returnToStore(List<String> gunsUUID) {
         List<String> responseList = new ArrayList<>();
         gunsUUID.forEach(e -> {
@@ -556,20 +541,20 @@ public class ArmoryService {
     public ResponseEntity<?> changeCaliberQuantity(String caliberUUID, Integer quantity, String pinCode) throws NoUserPermissionException {
         CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
         caliberEntity.setQuantity(quantity);
-        return getStringResponseEntity(pinCode, null, HttpStatus.OK, "changeCaliberQuantity" + caliberEntity.getName(), "zmieniono ilość amunicji");
+        return historyService.getStringResponseEntity(pinCode, caliberEntity, HttpStatus.OK, "changeCaliberQuantity " + caliberEntity.getName(), "zmieniono ilość amunicji");
     }
 
     public ResponseEntity<?> changeCaliberUnitPrice(String caliberUUID, Float price, String pinCode) throws NoUserPermissionException {
         CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
         caliberEntity.setUnitPrice(price);
-        return getStringResponseEntity(pinCode, null, HttpStatus.OK, "changeCaliberUnitPrice" + caliberEntity.getName(), "zmieniono cenę amunicji");
+        return historyService.getStringResponseEntity(pinCode, caliberEntity, HttpStatus.OK, "changeCaliberUnitPrice " + caliberEntity.getName(), "zmieniono cenę amunicji");
 
     }
 
     public ResponseEntity<?> changeCaliberUnitPriceForNotMember(String caliberUUID, Float price, String pinCode) throws NoUserPermissionException {
         CaliberEntity caliberEntity = caliberRepository.getOne(caliberUUID);
         caliberEntity.setUnitPriceForNotMember(price);
-        return getStringResponseEntity(pinCode, null, HttpStatus.OK, "changeCaliberUnitPriceForNotMember" + caliberEntity.getName(), "zmieniono cenę amunicji dla pozostałych");
+        return historyService.getStringResponseEntity(pinCode, caliberEntity, HttpStatus.OK, "changeCaliberUnitPriceForNotMember " + caliberEntity.getName(), "zmieniono cenę amunicji dla pozostałych");
 
     }
 

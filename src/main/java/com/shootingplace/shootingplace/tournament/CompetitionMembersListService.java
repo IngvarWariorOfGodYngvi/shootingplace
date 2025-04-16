@@ -169,11 +169,10 @@ public class CompetitionMembersListService {
         }
         scoreList.remove(score);
         competitionMembersListRepository.save(list);
-        LOG.info("Usunięto osobę do Listy");
         if (score.getMember() != null) {
             historyService.removeCompetitionRecord(score.getMember().getUuid(), list);
         }
-        return "Usunięto osobę do Listy ";
+        return "Usunięto osobę z Listy " + list.getName();
     }
 
     public String getCompetitionIDByName(String competitionName, String tournamentUUID) {

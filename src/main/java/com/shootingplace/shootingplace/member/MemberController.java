@@ -158,7 +158,13 @@ public class MemberController {
 
     @PutMapping("/{uuid}" )
     public ResponseEntity<?> updateMember(@PathVariable String uuid, @RequestBody @Valid Member member, @RequestParam String pinCode) throws NoUserPermissionException {
-        return memberService.updateMember(uuid, member, pinCode);
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return memberService.updateMember(uuid, member, pinCode);
+        } else {
+            return code;
+        }
+
     }
 
     @GetMapping("/getMembersToReportToThePolice" )
