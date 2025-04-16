@@ -134,12 +134,22 @@ public class UserService {
             int p2 = Integer.parseInt(String.valueOf(pinNumbers[1]));
             int p3 = Integer.parseInt(String.valueOf(pinNumbers[2]));
             int p4 = Integer.parseInt(String.valueOf(pinNumbers[3]));
+            boolean b = p1 == p2 && p2 == p3 && p3 == p4;
+            for (int i = 0; i < pinNumbers.length; i++) {
+                if (b) {
+                    LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
+                    return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
+                }
+            }
             if (p4 == 0) {
                 p4 = 10;
             }
-            if (p2 == p1 + 1 && p3 == p2 + 1 && p4 == p3 + 1) {
+            if (p1 + 1 == p2 && p2 + 1 == p3 && p3 + 1 == p4) {
                 LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                 return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
+            }
+            if (p4 == 10) {
+                p4 = 0;
             }
             if (p1 == 0) {
                 p1 = 10;
@@ -147,13 +157,6 @@ public class UserService {
             if (p1 - 1 == p2 && p2 - 1 == p3 && p3 - 1 == p4) {
                 LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                 return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
-            }
-            String[] failCode = {"0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999"};
-            for (int i = 0; i < trim2.toCharArray().length; i++) {
-                if (trim2.equals(failCode[i])) {
-                    LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
-                    return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
-                }
             }
             boolean anyMatch1 = userRepository.findAll().stream().anyMatch(a -> a.getPinCode().equals(trim2));
             if (anyMatch1) {
@@ -218,12 +221,22 @@ public class UserService {
             int p2 = Integer.parseInt(String.valueOf(pinNumbers[1]));
             int p3 = Integer.parseInt(String.valueOf(pinNumbers[2]));
             int p4 = Integer.parseInt(String.valueOf(pinNumbers[3]));
+            boolean c = p1 == p2 && p2 == p3 && p3 == p4;
+            for (int i = 0; i < pinNumbers.length; i++) {
+                if (c) {
+                    LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
+                    return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
+                }
+            }
             if (p4 == 0) {
                 p4 = 10;
             }
-            if (p2 == p1 + 1 && p3 == p2 + 1 && p4 == p3 + 1) {
+            if (p1 + 1 == p2 && p2 + 1 == p3 && p3 + 1 == p4) {
                 LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                 return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
+            }
+            if (p4 == 10) {
+                p4 = 0;
             }
             if (p1 == 0) {
                 p1 = 10;
@@ -231,13 +244,6 @@ public class UserService {
             if (p1 - 1 == p2 && p2 - 1 == p3 && p3 - 1 == p4) {
                 LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
                 return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
-            }
-            String[] failCode = {"0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999"};
-            for (int i = 0; i < pinNumbers.length; i++) {
-                if (trim2.equals(failCode[i])) {
-                    LOG.info("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
-                    return ResponseEntity.status(409).body("Kod jest zbyt prosty - wymyśl coś trudniejszego.");
-                }
             }
             if (otherID == null) {
                 otherID = 0;
