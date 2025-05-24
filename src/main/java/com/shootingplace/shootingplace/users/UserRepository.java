@@ -18,4 +18,6 @@ public interface UserRepository {
     UserEntity findByPinCode(String pinCode);
 
     boolean existsByPinCode(String pinCode);
+
+    boolean existsBySecondName(String secondName);
 }

@@ -7,7 +7,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import java.time.LocalDateTime;
 
 @Entity
@@ -44,7 +47,7 @@ public class OtherPersonEntity {
     }
 
     public void setFirstName(String firstName) {
-        this.firstName = firstName;
+        this.firstName = firstName.substring(0, 1).toUpperCase() + firstName.substring(1).toLowerCase();
     }
 
     public String getSecondName() {
@@ -52,7 +55,7 @@ public class OtherPersonEntity {
     }
 
     public void setSecondName(String secondName) {
-        this.secondName = secondName;
+        this.secondName = secondName.toUpperCase();
     }
 
     public ClubEntity getClub() {
@@ -109,6 +112,9 @@ public class OtherPersonEntity {
 
     public void setCreationDate(LocalDateTime creationDate) {
         this.creationDate = creationDate;
+    }
+    public void setCreationDate() {
+        this.creationDate = LocalDateTime.now();
     }
 
     public AddressEntity getAddress() {

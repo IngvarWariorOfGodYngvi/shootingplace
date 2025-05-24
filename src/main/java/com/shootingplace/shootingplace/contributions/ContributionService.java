@@ -82,7 +82,7 @@ public class ContributionService {
                 }
             }
                 contributionRepository.save(contributionEntity);
-            response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "addContribution", "Przedłużono składkę " + memberEntity.getFullName());
+            response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "Dodaj Składkę", "Przedłużono składkę " + memberEntity.getFullName());
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 historyService.addContribution(memberUUID, contributionEntity);
                 LOG.info("zmieniono " + memberEntity.getSecondName());
@@ -120,7 +120,7 @@ public class ContributionService {
                 .validThru(validThru)
                 .acceptedBy(userRepository.findByPinCode(pin).getFullName())
                 .build();
-        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "addContribution ", "Dodano składkę " + memberEntity.getFullName());
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "Dodaj Składkę ręcznie do listy ", "Dodano składkę " + memberEntity.getFullName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             contributionRepository.save(contributionEntity);
             historyService.addContribution(memberUUID, contributionEntity);
@@ -174,7 +174,7 @@ public class ContributionService {
                 .filter(f -> f.getUuid().equals(contributionUUID))
                 .collect(Collectors.toList()).get(0);
 
-        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "addContribution", "Usunięto składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "Usuń ręcznie składkę", "Usunięto składkę " + memberEntity.getSecondName() + " " + memberEntity.getFirstName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             historyService.removeContribution(memberUUID, contributionEntity);
             LOG.info("zmieniono " + memberEntity.getSecondName());
@@ -202,7 +202,7 @@ public class ContributionService {
         }
         contributionEntity.setAcceptedBy(userRepository.findByPinCode(pin).getFullName());
         contributionEntity.setEdited(true);
-        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "updateContribution", "Edytowano składkę " + memberEntity.getFullName());
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "Edytuj składkę", "Edytowano składkę " + memberEntity.getFullName());
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             contributionRepository.save(contributionEntity);
             memberEntity.setActive(memberEntity.getHistory().getContributionList().get(0).getValidThru().isAfter(LocalDate.now()));

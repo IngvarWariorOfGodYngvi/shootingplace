@@ -41,7 +41,7 @@ public class ChangeHistoryService {
 
     public ResponseEntity<?> comparePinCode(String pinCode) throws NoUserPermissionException {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
-        UserEntity userEntity = userRepository.findAll().stream().filter(f -> f.getPinCode().equals(pin)).findFirst().orElse(null);
+        UserEntity userEntity = userRepository.findByPinCode(pin);
         if (userEntity != null && userEntity.getSubType().equals("Admin")) {
             throw new NoUserPermissionException();
         }

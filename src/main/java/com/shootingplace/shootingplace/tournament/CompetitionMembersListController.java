@@ -38,6 +38,10 @@ public class CompetitionMembersListController {
         return competitionMembersListService.setCompetitionUUIDToCompetitionMemberList();
     }
 
+    @GetMapping("/getShooterStarts")
+    public ResponseEntity<?> getShooterStarts( @RequestParam String tournamentUUID, @RequestParam String startNumber) {
+        return competitionMembersListService.getShooterStarts(tournamentUUID, startNumber);
+    }
     @GetMapping("/memberScores")
     public ResponseEntity<?> getMemberScoresFromCompetitionMemberListUUID(@RequestParam String competitionMemberListUUID) {
         return competitionMembersListService.getMemberScoresFromComtetitionMemberListUUID(competitionMemberListUUID);
@@ -56,6 +60,14 @@ public class CompetitionMembersListController {
     @GetMapping("/getByID")
     public ResponseEntity<?> getCompetitionListByID(@RequestParam String uuid) {
         return ResponseEntity.ok(competitionMembersListService.getCompetitionListByID(uuid));
+    }
+    @GetMapping("/getFilteredByID")
+    public ResponseEntity<?> getFilteredByID(@RequestParam String uuid, @RequestParam String startNumber) {
+        return ResponseEntity.ok(competitionMembersListService.getFilteredByID(uuid, startNumber));
+    }
+    @GetMapping("/getCompetitionDTOByUUID")
+    public ResponseEntity<?> getCompetitionNameByUUID(@RequestParam String uuid) {
+        return ResponseEntity.ok(competitionMembersListService.getCompetitionDTOByUUID(uuid));
     }
 
     @GetMapping("/getMemberStarts")

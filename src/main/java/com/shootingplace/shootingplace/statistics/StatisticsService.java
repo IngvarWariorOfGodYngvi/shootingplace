@@ -109,7 +109,7 @@ public class StatisticsService {
     }
 
     public String getMaxLegNumber() {
-        return String.valueOf(memberRepository.getMaxLegitimationNumber());
+        return String.valueOf(memberRepository.findAll().size() == 0? 0:memberRepository.getMaxLegitimationNumber());
     }
 
     public String getActualYearMemberCounts() {

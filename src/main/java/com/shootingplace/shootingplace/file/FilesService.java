@@ -400,6 +400,8 @@ public class FilesService {
         Paragraph p16 = new Paragraph("\n\nAdres Zamieszkania", font(11, 0));
         Paragraph p17 = new Paragraph("", font(11, 0));
         Paragraph p18 = new Paragraph("\n\n" + statement, font(11, 0));
+        Paragraph p18_5 = new Paragraph("\n\n\n\n" + ((memberEntity.getSignBy()!=null? memberEntity.getSignBy():"") + "                       "+"\n\n"), font(11,0));
+        p18_5.setAlignment(2);
         Paragraph p19;
         if (!memberEntity.getAdult()) {
             if (LocalDate.now().minusYears(18).isBefore(birthDate)) {
@@ -407,10 +409,11 @@ public class FilesService {
             }
             p19 = new Paragraph("\n\n\n\n.............................................", font(9, 0));
         } else {
-            p19 = new Paragraph("\n\n\n\n\n\n.............................................", font(9, 0));
+            String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())? "Łódź, " : "Panaszew, ";
+            p19 = new Paragraph(city + " " + LocalDate.now() + "..............................", font(9, 0));
         }
         Phrase p20 = new Phrase("                                                                                                 ");
-        Phrase p21 = new Phrase("............................................................");
+        Phrase p21 = new Phrase("...................................");
         Paragraph p22 = new Paragraph("miejscowość, data i podpis Klubowicza", font(11, 0));
         Phrase p23 = new Phrase("                                                                 ");
         Phrase p24 = new Phrase("podpis przyjmującego");
@@ -484,6 +487,7 @@ public class FilesService {
         document.add(p16);
         document.add(p17);
         document.add(p18);
+        document.add(p18_5);
         document.add(p19);
         document.add(p22);
 

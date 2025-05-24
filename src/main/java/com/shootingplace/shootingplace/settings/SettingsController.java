@@ -28,11 +28,7 @@ public class SettingsController {
     @Transactional
     @PostMapping("/createMotherClub")
     public ResponseEntity<?> createMotherClub(@RequestBody Club club) {
-        if (clubService.createMotherClub(club)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+        return clubService.createMotherClub(club);
     }
 
     @GetMapping("/termsAndLicense")

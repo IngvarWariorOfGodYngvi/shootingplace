@@ -18,4 +18,5 @@ public interface ClubRepository{
 
     ClubEntity findByName(String name);
 
+    long count();
 }

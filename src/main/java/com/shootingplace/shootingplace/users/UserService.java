@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.users;
 
 import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
@@ -38,12 +39,13 @@ public class UserService {
     private final OtherPersonRepository otherPersonRepository;
     private final TournamentService tournamentService;
     private final TournamentRepository tournamentRepository;
+    private final ClubRepository clubRepository;
 
     private final WorkingTimeEvidenceRepository workingTimeEvidenceRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public UserService(UserRepository userRepository, ChangeHistoryService changeHistoryService, MemberRepository memberRepository, LicenseRepository licenseRepository, ContributionRepository contributionRepository, OtherPersonRepository otherPersonRepository, TournamentService tournamentService, TournamentRepository tournamentRepository, WorkingTimeEvidenceRepository workingTimeEvidenceRepository) {
+    public UserService(UserRepository userRepository, ChangeHistoryService changeHistoryService, MemberRepository memberRepository, LicenseRepository licenseRepository, ContributionRepository contributionRepository, OtherPersonRepository otherPersonRepository, TournamentService tournamentService, TournamentRepository tournamentRepository, ClubRepository clubRepository, WorkingTimeEvidenceRepository workingTimeEvidenceRepository) {
         this.userRepository = userRepository;
         this.changeHistoryService = changeHistoryService;
         this.memberRepository = memberRepository;
@@ -52,6 +54,7 @@ public class UserService {
         this.otherPersonRepository = otherPersonRepository;
         this.tournamentService = tournamentService;
         this.tournamentRepository = tournamentRepository;
+        this.clubRepository = clubRepository;
         this.workingTimeEvidenceRepository = workingTimeEvidenceRepository;
     }
 
@@ -392,7 +395,8 @@ public class UserService {
                     if (e.getBelongsTo() != null) {
                         if (memberRepository.existsById(e.getBelongsTo())) {
                             MemberEntity member = memberRepository.getOne(e.getBelongsTo());
-                            e.setBelongsTo(member.getSecondName().concat(" " + member.getFirstName()));                        }
+                            e.setBelongsTo(member.getSecondName().concat(" " + member.getFirstName()));
+                        }
                         if (contributionRepository.existsById(e.getBelongsTo())) {
                             MemberEntity member = memberRepository.findByHistoryUuid(contributionRepository.getOne(e.getBelongsTo()).getHistoryUUID());
                             e.setBelongsTo(member.getSecondName().concat(" " + member.getFirstName()));
@@ -441,6 +445,11 @@ public class UserService {
 
     public ResponseEntity<?> setSuperUser(String uuid, String pinCode) {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
+
+        if (!userRepository.existsByPinCode(pin)) {
+            return ResponseEntity.badRequest().body("Brak użytkowsnika w bazie");
+        }
+
         UserEntity admin = userRepository.findByPinCode(pin);
 
         if (admin.getFirstName().equals("Admin")) {
@@ -483,4 +492,28 @@ public class UserService {
         return ResponseEntity.badRequest().body("Próba się nie powiodła");
     }
 
+    // Minimalne wymagania aby zwróciło false:
+    // minimum 1 Klub
+    // minimum 1 SuperUser
+    // minimum 1 User
+    // nie wolno wbrać pod uwagę Admina
+    public ResponseEntity<?> checkFirstStart() {
+
+        if (clubRepository.findAll().isEmpty()) {
+            return ResponseEntity.ok(true);
+        }
+
+        List<UserEntity> collect = userRepository.findAll()
+                .stream()
+                .filter(f -> !f.getSecondName().equals("Admin"))
+                .collect(Collectors.toList());
+
+        long superUserCount = collect.stream().filter(UserEntity::isSuperUser).count();
+        long userCount = collect.stream().filter(f -> !f.isSuperUser()).count();
+        if (superUserCount == 0 && userCount == 0) {
+            return ResponseEntity.ok(true);
+        }
+        return ResponseEntity.ok(false);
+
+    }
 }

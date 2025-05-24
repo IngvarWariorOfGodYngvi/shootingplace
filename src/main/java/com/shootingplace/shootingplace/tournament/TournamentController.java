@@ -28,13 +28,17 @@ public class TournamentController {
     }
 
     @GetMapping("/openTournament")
-    public ResponseEntity<?> getListOfTournaments() {
+    public ResponseEntity<?> getOpenTournament() {
         return tournamentService.getOpenTournament();
     }
 
     @GetMapping("/gunList")
     public ResponseEntity<?> getListOfGunsOnTournament(@RequestParam String tournamentUUID) {
         return ResponseEntity.ok(tournamentService.getListOfGunsOnTournament(tournamentUUID));
+    }
+    @GetMapping("/getShootersNamesList")
+    public ResponseEntity<?> getShootersNamesList(@RequestParam String tournamentUUID) {
+        return ResponseEntity.ok(tournamentService.getShootersNamesList(tournamentUUID));
     }
 
     @GetMapping("/closedList")

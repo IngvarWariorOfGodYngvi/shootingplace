@@ -1,8 +1,11 @@
 package com.shootingplace.shootingplace.otherPerson;
 
 import com.shootingplace.shootingplace.enums.ArbiterClass;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.member.MemberInfo;
 import com.shootingplace.shootingplace.member.MemberPermissions;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +19,11 @@ import java.util.Objects;
 @CrossOrigin
 public class OtherPersonController {
     private final OtherPersonService otherPersonService;
+    private final ChangeHistoryService changeHistoryService;
 
-    public OtherPersonController(OtherPersonService otherPersonService) {
+    public OtherPersonController(OtherPersonService otherPersonService, ChangeHistoryService changeHistoryService) {
         this.otherPersonService = otherPersonService;
+        this.changeHistoryService = changeHistoryService;
     }
 
     @PostMapping("")
@@ -74,6 +79,7 @@ public class OtherPersonController {
     public List<MemberInfo> getAllOthersArbiters() {
         return otherPersonService.getAllOthersArbiters();
     }
+
     @GetMapping("/getOhterByPhone/{phone}")
     public ResponseEntity<?> getOhterByPhone(@PathVariable String phone) {
         return otherPersonService.getOtherByPhone(phone);
@@ -84,9 +90,14 @@ public class OtherPersonController {
         return ResponseEntity.ok().body(otherPersonService.getAll());
     }
 
-    @PostMapping("/")
-    public ResponseEntity<?> deactivatePerson(@RequestParam int id) {
-        return otherPersonService.deactivatePerson(id);
+    @DeleteMapping ("/deactivatePerson")
+    public ResponseEntity<?> deactivatePerson(@RequestParam int id, @RequestParam String pinCode) throws NoUserPermissionException {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return otherPersonService.deactivatePerson(id, pinCode);
+
+        }
+        return code;
     }
 
     @PutMapping("/")

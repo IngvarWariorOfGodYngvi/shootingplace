@@ -6,12 +6,15 @@ import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.address.AddressRepository;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
+import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberInfo;
 import com.shootingplace.shootingplace.member.MemberPermissions;
 import com.shootingplace.shootingplace.member.MemberPermissionsEntity;
 import com.shootingplace.shootingplace.member.MemberPermissionsRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -31,18 +34,19 @@ public class OtherPersonService {
     private final OtherPersonRepository otherPersonRepository;
     private final MemberPermissionsRepository memberPermissionsRepository;
     private final AddressRepository addressRepository;
+    private final HistoryService historyService;
     private final Logger LOG = LogManager.getLogger();
 
 
-    public OtherPersonService(ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, MemberPermissionsRepository memberPermissionsRepository, AddressRepository addressRepository) {
+    public OtherPersonService(ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, MemberPermissionsRepository memberPermissionsRepository, AddressRepository addressRepository, HistoryService historyService) {
         this.clubRepository = clubRepository;
         this.otherPersonRepository = otherPersonRepository;
         this.memberPermissionsRepository = memberPermissionsRepository;
         this.addressRepository = addressRepository;
+        this.historyService = historyService;
     }
 
     public ResponseEntity<?> addPerson(String club, OtherPerson person, MemberPermissions permissions) {
-
         MemberPermissionsEntity permissionsEntity = null;
         boolean match = clubRepository.findAll().stream().anyMatch(a -> a.getName().equals(club));
 
@@ -99,6 +103,7 @@ public class OtherPersonService {
                 .club(clubEntity)
                 .address(addressEntity)
                 .build();
+        otherPersonEntity.setCreationDate();
         otherPersonRepository.save(otherPersonEntity);
         LOG.info("Zapisano nową osobę " + otherPersonEntity.getFirstName() + " " + otherPersonEntity.getSecondName());
         return ResponseEntity.status(201).body("Zapisano nową osobę " + otherPersonEntity.getFirstName() + " " + otherPersonEntity.getSecondName());
@@ -152,9 +157,10 @@ public class OtherPersonService {
                 .permissionsEntity(null)
                 .weaponPermissionNumber(person.getWeaponPermissionNumber() != null ? person.getWeaponPermissionNumber().toUpperCase(Locale.ROOT) : null)
                 .address(addressEntity)
-                .club(clubEntity)
                 .creationDate(LocalDateTime.now())
+                .club(clubEntity)
                 .build();
+        otherPersonEntity.setCreationDate();
         LOG.info("Zapisano nową osobę " + otherPersonEntity.getFirstName() + " " + otherPersonEntity.getSecondName());
         return otherPersonRepository.save(otherPersonEntity);
 
@@ -163,7 +169,7 @@ public class OtherPersonService {
     public List<String> getAllOthers() {
 
         List<String> list = new ArrayList<>();
-        otherPersonRepository.findAll().stream().filter(OtherPersonEntity::isActive)
+        otherPersonRepository.findAllByActiveTrue()
                 .forEach(e -> list.add(e.getSecondName().concat(" " + e.getFirstName() + " Klub: " + e.getClub().getName() + " ID: " + e.getId())));
         list.sort(Comparator.comparing(String::new));
         return list;
@@ -199,41 +205,45 @@ public class OtherPersonService {
         return list;
     }
 
-    public ResponseEntity<?> deactivatePerson(int id) {
+    public ResponseEntity<?> deactivatePerson(int id, String pinCode) throws NoUserPermissionException {
         if (!otherPersonRepository.existsById(id)) {
             return ResponseEntity.badRequest().body("Nie znaleziono osoby");
         }
         OtherPersonEntity otherPersonEntity = otherPersonRepository.getOne(id);
 
         otherPersonEntity.setActive(false);
-        otherPersonRepository.save(otherPersonEntity);
-        LOG.info("Dezaktywowano Nie-Klubowicza");
-        return ResponseEntity.ok("Dezaktywowano Osobę");
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, otherPersonEntity, HttpStatus.OK, "Usunięta Osoba spoza Klubu " + otherPersonEntity.getFullName(), "Usunięcie osoby spoza Klubu");
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            otherPersonRepository.save(otherPersonEntity);
+            LOG.info("Dezaktywowano Nie-Klubowicza");
+            return ResponseEntity.ok("Usunięto Osobę");
+        }
+        return response;
     }
 
-    public ResponseEntity<?> updatePerson(String id, OtherPerson otherPerson, String clubName) {
+    public ResponseEntity<?> updatePerson(String id, OtherPerson oP, String clubName) {
         OtherPersonEntity one = otherPersonRepository.getOne(Integer.valueOf(id));
-        if (otherPerson.getEmail() != null && !otherPerson.getEmail().isEmpty()) {
+        if ((oP.getEmail() != null && !oP.getEmail().isEmpty()) && !one.getEmail().equals(oP.getEmail())) {
             LOG.info("Zmieniono email");
-            one.setEmail(otherPerson.getEmail());
+            one.setEmail(oP.getEmail());
         }
-        if (otherPerson.getPhoneNumber() != null && !otherPerson.getPhoneNumber().isEmpty()) {
+        if ((oP.getPhoneNumber() != null && !oP.getPhoneNumber().isEmpty()) && !one.getPhoneNumber().equals(oP.getPhoneNumber())) {
             LOG.info("Zmieniono numer telefonu");
-            one.setPhoneNumber(otherPerson.getPhoneNumber().replaceAll(" ", ""));
+            one.setPhoneNumber(oP.getPhoneNumber().replaceAll(" ", ""));
         }
-        if (otherPerson.getFirstName() != null && !otherPerson.getFirstName().isEmpty()) {
+        if ((oP.getFirstName() != null && !oP.getFirstName().isEmpty()) && !(one.getFirstName().substring(0, 1).toUpperCase() + one.getFirstName().substring(1).toLowerCase()).equals(oP.getFirstName())) {
             LOG.info("Zmieniono Imię");
-            one.setFirstName(otherPerson.getFirstName());
+            one.setFirstName(oP.getFirstName());
         }
-        if (otherPerson.getSecondName() != null && !otherPerson.getSecondName().isEmpty()) {
+        if ((oP.getSecondName() != null && !oP.getSecondName().isEmpty()) && !one.getSecondName().toUpperCase().equals(oP.getSecondName())) {
             LOG.info("Zmieniono nazwisko");
-            one.setSecondName(otherPerson.getSecondName());
+            one.setSecondName(oP.getSecondName());
         }
-        if (otherPerson.getWeaponPermissionNumber() != null && !otherPerson.getWeaponPermissionNumber().isEmpty()) {
+        if ((oP.getWeaponPermissionNumber() != null && !oP.getWeaponPermissionNumber().isEmpty()) && !one.getWeaponPermissionNumber().equals(oP.getWeaponPermissionNumber())) {
             LOG.info("Zmieniono numer Pozwolenia na broń");
-            one.setWeaponPermissionNumber(otherPerson.getWeaponPermissionNumber());
+            one.setWeaponPermissionNumber(oP.getWeaponPermissionNumber());
         }
-        Address a1 = otherPerson.getAddress();
+        Address a1 = oP.getAddress();
         AddressEntity a2 = one.getAddress() != null ? one.getAddress() : new AddressEntity();
 
         a2.setPostOfficeCity(a1.getPostOfficeCity() != null ? a1.getPostOfficeCity() : a2.getPostOfficeCity());
@@ -243,7 +253,7 @@ public class OtherPersonService {
         a2.setFlatNumber(a1.getFlatNumber() != null ? a1.getFlatNumber() : a2.getFlatNumber());
         AddressEntity save1 = addressRepository.save(a2);
         one.setAddress(save1);
-        if (!one.getClub().getName().equals(clubName)) {
+        if ((clubName!=null && !clubName.isEmpty())&&!one.getClub().getName().equals(clubName)) {
             ClubEntity clubEntity = clubRepository.findAll().stream().filter(f -> f.getName().equals(clubName)).findFirst().orElse(null);
             if (clubEntity == null) {
                 {
@@ -259,7 +269,7 @@ public class OtherPersonService {
             LOG.info("Zmieniono Klub");
             one.setClub(clubEntity);
         }
-        MemberPermissions m1 = otherPerson.getMemberPermissions();
+        MemberPermissions m1 = oP.getMemberPermissions();
         MemberPermissionsEntity m2 = one.getPermissionsEntity() != null ? one.getPermissionsEntity() : new MemberPermissionsEntity();
 
         m2.setArbiterClass(m1.getArbiterClass() != null ? m1.getArbiterClass() : m2.getArbiterClass() != null ? m2.getArbiterClass() : null);

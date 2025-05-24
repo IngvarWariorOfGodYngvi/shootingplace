@@ -108,6 +108,10 @@ public class ArmoryController {
     public ResponseEntity<?> getAllShootingPacket() {
         return ResponseEntity.ok(shootingPacketService.getAllShootingPacket());
     }
+    @GetMapping("/getAllShootingPacketEntities")
+    public ResponseEntity<?> getAllShootingPacketEntities() {
+        return ResponseEntity.ok(shootingPacketService.getAllShootingPacketEntities());
+    }
 
     @Transactional
     @PostMapping("/addShootingPacket")
@@ -115,6 +119,16 @@ public class ArmoryController {
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return shootingPacketService.addShootingPacket(name, price, map, pinCode);
+        } else {
+            return code;
+        }
+    }
+    @Transactional
+    @PostMapping("/updateShootingPacket")
+    public ResponseEntity<?> updateShootingPacket(@RequestParam String uuid,@RequestParam String name, @RequestParam Float price, @RequestBody Map<String, Integer> map, @RequestParam String pinCode) throws NoUserPermissionException {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return shootingPacketService.updateShootingPacket(uuid, name, price, map, pinCode);
         } else {
             return code;
         }

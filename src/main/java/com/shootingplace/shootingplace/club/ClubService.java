@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.club;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -36,13 +37,13 @@ public class ClubService {
         return list;
     }
 
-    public boolean updateClub(int id, Club club) {
+    public ResponseEntity<String> updateClub(int id, Club club) {
         if (!clubRepository.existsById(id)) {
-            return false;
+            return ResponseEntity.badRequest().body("Nieznaleziono Klubu");
         }
         if (id == 2) {
             LOG.info("Forbidden");
-            return false;
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         ClubEntity clubEntity = clubRepository.findById(id)
                 .orElseThrow(EntityNotFoundException::new);
@@ -77,32 +78,29 @@ public class ClubService {
             }
         }
         clubRepository.save(clubEntity);
-        return true;
+        return ResponseEntity.ok("Edytowano Klub");
     }
 
-    public boolean createMotherClub(Club club) {
+    public ResponseEntity<?> createMotherClub(Club club) {
+        ResponseEntity<?> response;
         if (clubRepository.findById(1).isPresent()) {
-            return false;
+            response = ResponseEntity.badRequest().body("Istnieje już Klub Macierzysty - nie Można dodać kolejnego Klubu Macierzystego");
+        } else if (club.getName().isEmpty() || club.getFullName().isEmpty() || club.getAddress().isEmpty() || club.getEmail().isEmpty() || club.getLicenseNumber().isEmpty()) {
+            response = ResponseEntity.badRequest().body("Brak podanych danych - musisz podać wszystkie dane aby dodać Klub");
+        } else {
+            clubRepository.save(ClubEntity.builder()
+                    .id(1)
+                    .name(club.getName())
+                    .fullName(club.getFullName())
+                    .phoneNumber("+48 " + club.getPhoneNumber())
+                    .email(club.getEmail())
+                    .address(club.getAddress())
+                    .licenseNumber(club.getLicenseNumber())
+                    .url(club.getUrl())
+                    .build());
+            response = ResponseEntity.ok("Utworzono Klub Macierzysty - dalej pójdzie z górki");
         }
-        if (club.getName().isEmpty() ||
-                club.getFullName().isEmpty() ||
-                club.getAddress().isEmpty() ||
-                club.getEmail().isEmpty() ||
-                club.getLicenseNumber().isEmpty()
-        ) {
-            return false;
-        }
-        clubRepository.save(ClubEntity.builder()
-                .id(1)
-                .name(club.getName())
-                .fullName(club.getFullName())
-                .phoneNumber("+48 " + club.getPhoneNumber())
-                .email(club.getEmail())
-                .address(club.getAddress())
-                .licenseNumber(club.getLicenseNumber())
-                .url(club.getUrl())
-                .build());
-        return true;
+        return response;
     }
 
     public ResponseEntity<?> createNewClub(Club club) {
@@ -135,5 +133,9 @@ public class ClubService {
                 .collect(Collectors.toList());
         list.addAll(collect);
         return list;
+    }
+
+    public long getClubsCount() {
+        return clubRepository.count();
     }
 }

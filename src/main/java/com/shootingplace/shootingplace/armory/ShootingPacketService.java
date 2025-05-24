@@ -34,6 +34,7 @@ public class ShootingPacketService {
     public List<ShootingPacketDTO> getAllShootingPacket() {
         return shootingPacketRepository.findAll().stream().map(Mapping::map).sorted(Comparator.comparing(ShootingPacketDTO::getPrice)).collect(Collectors.toList());
     }
+
     public List<ShootingPacketEntity> getAllShootingPacketEntities() {
         return shootingPacketRepository.findAll().stream().sorted(Comparator.comparing(ShootingPacketEntity::getPrice)).collect(Collectors.toList());
     }
@@ -50,5 +51,41 @@ public class ShootingPacketService {
 
     public List<CaliberForShootingPacketEntity> getAllCalibersFromShootingPacket(String shootingPacketUUID) {
         return shootingPacketRepository.getOne(shootingPacketUUID).getCalibers();
+    }
+
+    public ResponseEntity<?> updateShootingPacket(String uuid, String name, Float price, Map<String, Integer> map, String pinCode) throws NoUserPermissionException {
+        if (!workingTimeEvidenceRepository.existsByIsCloseFalse()) {
+            return ResponseEntity.badRequest().body("Najpierw zarejestruj pobyt");
+        }
+        List<CaliberForShootingPacketEntity> entities = new ArrayList<>();
+        map.forEach((k, v) -> entities.add(caliberForShootingPacketRepository.save(CaliberForShootingPacketEntity.builder()
+                .caliberUUID(k)
+                .caliberName(caliberRepository.getOne(k).getName())
+                .quantity(v)
+                .build())));
+
+        ShootingPacketEntity one = shootingPacketRepository.getOne(uuid);
+
+        if (name != null && !name.isEmpty() && !name.equals(one.getName())) {
+            one.setName(name);
+        }
+        if (price != null && price != one.getPrice()) {
+            one.setPrice(price);
+        }
+        if (!entities.isEmpty()) {
+            boolean b = true;
+            for (CaliberForShootingPacketEntity entity : entities) {
+                if (entity.getQuantity() <= 0) {
+                    b = false;
+                    System.out.println(b);
+                    break;
+                }
+            }
+
+            if (b) one.setCalibers(entities);
+        }
+
+
+        return historyService.getStringResponseEntity(pinCode, shootingPacketRepository.save(one), HttpStatus.OK, "updateShootingPacket", "edytowano pakiet strzelecki " + one.getName().toUpperCase());
     }
 }

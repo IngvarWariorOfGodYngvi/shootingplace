@@ -229,9 +229,9 @@ public class MemberService {
             member.setErasedEntity(null);
             member.setActive(true);
 
-            ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.CREATED, "addNewMember " + member.getFullName(), "nowy Klubowicz");
+            memberEntity = memberRepository.save(Mapping.map(member));
+            ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.CREATED, "Dodanie Nowego Klubowicza " + member.getFullName(), "nowy Klubowicz");
             if (response.getStatusCode().equals(HttpStatus.CREATED)) {
-                memberEntity = memberRepository.save(Mapping.map(member));
                 UserEntity user = userRepository.findByPinCode(Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString());
                 memberEntity.setSignBy(user.getFullName());
                 memberRepository.save(memberEntity);
@@ -257,7 +257,7 @@ public class MemberService {
         }
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
-        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "activateOrDeactivateMember", "Zmieniono status aktywny/nieaktywny");
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "Zmieniono status aktywny/nieaktywny", "Zmieniono status aktywny/nieaktywny");
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             memberEntity.toggleActive();
             memberRepository.save(memberEntity);
@@ -292,7 +292,7 @@ public class MemberService {
             LOG.info("Klubowicz ma za krótki staż jako młodzież");
             return ResponseEntity.badRequest().body("Klubowicz ma za krótki staż jako młodzież");
         }
-        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "changeAdult", "Klubowicz należy od teraz do grupy dorosłej");
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "Zmieniono grupę na dorosłą", "Klubowicz należy od teraz do grupy dorosłej");
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             memberEntity.setAdult(true);
             memberRepository.save(memberEntity);
@@ -320,7 +320,7 @@ public class MemberService {
             memberEntity.setPzss(false);
             LOG.info("Klubowicz skreślony : " + LocalDate.now());
         }
-        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "eraseMember", "Usunięto Klubowicza");
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, memberEntity, HttpStatus.OK, "Usunięto Klubowicza", "Usunięto Klubowicza");
         if (response.getStatusCode().equals(HttpStatus.OK)) {
             memberRepository.save(memberEntity);
         }

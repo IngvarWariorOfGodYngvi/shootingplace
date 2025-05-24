@@ -313,9 +313,32 @@ public class CompetitionMembersListService {
 
         return ResponseEntity.ok(allByAttachedToTournament);
     }
+
     public ResponseEntity<?> getTournamentScoresFromUUID(String tournamentUUID) {
         List<CompetitionMembersListEntity> allByAttachedToTournament = competitionMembersListRepository.findAllByAttachedToTournament(tournamentUUID);
 
         return ResponseEntity.ok(allByAttachedToTournament);
+    }
+
+    public ResponseEntity<?> getShooterStarts(String tournamentUUID, String startNumber) {
+        List<CompetitionMembersListEntity> competitionsList = tournamentRepository.getOne(tournamentUUID).getCompetitionsList();
+        List<ScoreEntity> scoreEntities = new ArrayList<>();
+        competitionsList.forEach(e -> e.getScoreList()
+                .stream()
+                .filter(f -> f.getMetricNumber() == Integer.parseInt(startNumber))
+                .forEach(scoreEntities::add));
+        return ResponseEntity.ok(scoreEntities);
+    }
+
+    public Optional<ScoreEntity> getFilteredByID(String uuid, String startNumber) {
+        return competitionMembersListRepository.getOne(uuid)
+                .getScoreList()
+                .stream()
+                .filter(f -> f.getMetricNumber() == Integer.parseInt(startNumber)).collect(Collectors.toList()).stream().findFirst();
+    }
+
+    public CompetitionMembersList getCompetitionDTOByUUID(String uuid) {
+
+        return Mapping.map(competitionMembersListRepository.getOne(uuid));
     }
 }

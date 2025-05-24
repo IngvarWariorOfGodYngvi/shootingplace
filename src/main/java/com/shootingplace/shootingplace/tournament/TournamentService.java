@@ -23,9 +23,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,7 +54,7 @@ public class TournamentService {
     }
 
     public ResponseEntity<String> createNewTournament(Tournament tournament) {
-        if (tournamentRepository.findAll().stream().anyMatch(TournamentEntity::isOpen)){
+        if (tournamentRepository.findAll().stream().anyMatch(TournamentEntity::isOpen)) {
             return ResponseEntity.badRequest().body("Nie można otworzyć kolejnych zawodów bo inne są otwarte");
         }
         TournamentEntity tournamentEntity = TournamentEntity.builder()
@@ -613,13 +611,13 @@ public class TournamentService {
             }
 //            map.put(e.getUuid(), e.getName());
         });
-    return competitionsList.stream().map(m->CompetitionMembersListEntity.builder()
-            .uuid(m.getUuid())
-            .name(m.getName()                    )
-            .numberOfShots(m.getNumberOfShots())
-            .practiceShots(m.getPracticeShots())
-            .caliberUUID(m.getCaliberUUID()!=null?caliberRepository.getOne(m.getCaliberUUID()).getUuid():null)
-            .build()).collect(Collectors.toList());
+        return competitionsList.stream().map(m -> CompetitionMembersListEntity.builder()
+                .uuid(m.getUuid())
+                .name(m.getName())
+                .numberOfShots(m.getNumberOfShots())
+                .practiceShots(m.getPracticeShots())
+                .caliberUUID(m.getCaliberUUID() != null ? caliberRepository.getOne(m.getCaliberUUID()).getUuid() : null)
+                .build()).collect(Collectors.toList());
 //        return map;
     }
 
@@ -724,7 +722,7 @@ public class TournamentService {
             MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
             List<MemberEntity> list = tournamentEntity.getArbitersRTSList();
-            if(!list.contains(memberEntity)){
+            if (!list.contains(memberEntity)) {
                 return ResponseEntity.badRequest().body("Brak sędziego na Liście sędziów");
             }
             historyService.removeJudgingRecord(memberEntity.getUuid(), tournamentUUID);
@@ -752,7 +750,7 @@ public class TournamentService {
                     .findFirst().orElseThrow(EntityNotFoundException::new);
 
             List<OtherPersonEntity> list = tournamentEntity.getOtherArbitersRTSList();
-            if(!list.contains(otherPersonEntity)){
+            if (!list.contains(otherPersonEntity)) {
                 return ResponseEntity.badRequest().body("Brak sędziego na Liście sędziów");
             }
             list.remove(otherPersonEntity);
@@ -856,5 +854,27 @@ public class TournamentService {
         }
         list.sort(Comparator.comparing(JudgingHistoryDTO::getDate).reversed());
         return ResponseEntity.ok(list);
+    }
+
+    public List<ScoreDTO> getShootersNamesList(String tournamentUUID) {
+
+        List<ScoreDTO> list = new ArrayList<>();
+
+        tournamentRepository.getOne(tournamentUUID)
+                .getCompetitionsList()
+                .forEach(e -> e.getScoreList()
+                        .forEach(el -> {
+                            if (list.stream().noneMatch(r->el.getMetricNumber() == (r.getMetricNumber()))) {
+                            list.add(ScoreDTO.builder()
+                                    .name(el.getName())
+                                    .metricNumber(el.getMetricNumber())
+                                            .full(el.getName() + " " + el.getMetricNumber())
+                                    .build());
+                            }
+                        }));
+
+        return list.stream().distinct().sorted(Comparator.comparing(ScoreDTO::getMetricNumber)).collect(Collectors.toList());
+//        return set.stream().map(e -> ScoreDTO.builder().name(e.getName()).metricNumber(String.valueOf(e.getMetricNumber())).build()).collect(Collectors.toSet());
+
     }
 }

@@ -21,6 +21,10 @@ public class ClubController {
     public ResponseEntity<List<ClubEntity>> getAllClubs() {
         return ResponseEntity.ok(clubService.getAllClubs());
     }
+    @GetMapping("/count")
+    public ResponseEntity<?> getClubsCount() {
+        return ResponseEntity.ok(clubService.getClubsCount());
+    }
 
     @GetMapping("/tournament")
     public ResponseEntity<List<String>> getAllClubsToTournament() {
@@ -31,14 +35,10 @@ public class ClubController {
     public ResponseEntity<List<ClubEntity>> getAllClubsToMember() {
         return ResponseEntity.ok(clubService.getAllClubsToMember());
     }
-@Transactional
+    @Transactional
     @PutMapping("/{clubID}")
     public ResponseEntity<?> updateClub(@PathVariable int clubID, @RequestBody Club club) {
-        if (clubService.updateClub(clubID, club)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return clubService.updateClub(clubID, club);
     }
     @Transactional
     @PostMapping("/create")

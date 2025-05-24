@@ -11,6 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 public class ShootingPacketDTO {
+
     private String name;
     private List<CaliberForShootingPacketDTO> calibers;
     private float price;

@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
@@ -18,6 +19,25 @@ public class StartConfiguration {
 
     public StartConfiguration(UserRepository userRepository) {
         this.userRepository = userRepository;
+    }
+
+    @Bean
+    public void createAdmin() {
+        if (!userRepository.existsBySecondName("Admin")){
+
+        UserEntity admin = UserEntity.builder()
+                .pinCode("9966")
+                .secondName("Admin")
+                .firstName("Admin")
+                .active(true)
+                .otherID(null)
+                .member(null)
+                .subType("Admin")
+                .superUser(true)
+                .changeHistoryEntities(new ArrayList<>())
+                .build();
+        userRepository.save(admin);
+        }
     }
 
     @Bean
