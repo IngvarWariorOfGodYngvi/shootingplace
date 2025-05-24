@@ -170,10 +170,7 @@ public class FilesService {
         LocalDate contribution = contributionEntity.getPaymentDay();
         LocalDate validThru = contributionEntity.getValidThru();
         String fileName = "Składka_" + memberEntity.getFullName() + "_" + LocalDate.now().format(dateFormat()) + ".pdf";
-
-//        TLSEmail.sendMail();
-
-
+        String source = "src/main/resources/fbg_10_qrcode.jpg";
         String clubFullName = club.getFullName().toUpperCase();
 
         // tutaj powinien być text z ustawień o składki
@@ -191,6 +188,8 @@ public class FilesService {
         document.addTitle(fileName);
         document.addCreationDate();
 
+        Image img = Image.getInstance(source);
+        img.scaleAbsolute(50, 50);
         String group;
         if (memberEntity.getAdult()) {
             group = "OGÓLNA";
@@ -242,6 +241,7 @@ public class FilesService {
                 break;
         }
 
+        Paragraph newLine = new Paragraph("\n", font(5, 0));
 
         Paragraph p = new Paragraph(clubFullName + "\n", font(14, 1));
         Paragraph p1 = new Paragraph("Potwierdzenie opłacenia składki członkowskiej", font(11, 2));
@@ -260,10 +260,10 @@ public class FilesService {
         Paragraph p14 = new Paragraph("", font(11, 0));
 
         Paragraph p16 = new Paragraph("\n\n", font(11, 0));
-        Paragraph p19 = new Paragraph("pieczęć klubu", font(11, 0));
-        Phrase p20 = new Phrase("                                                                 ");
+        Paragraph p19 = new Paragraph("               pieczęć klubu", font(11, 0));
+        Phrase p20 = new Phrase("                                                  ");
         Phrase p21 = new Phrase("podpis osoby przyjmującej składkę");
-
+        Paragraph p200 = new Paragraph("dołącz do naszej gruby na Facebooku", font(11,0));
         p.setAlignment(1);
         p1.setAlignment(1);
         h1.add(h2);
@@ -298,7 +298,11 @@ public class FilesService {
         document.add(p14);
         document.add(p16);
         document.add(p19);
-
+        document.add(newLine);
+        document.add(newLine);
+        document.add(newLine);
+        document.add(img);
+        document.add(p200);
         document.close();
 
         byte[] data = convertToByteArray(fileName);
