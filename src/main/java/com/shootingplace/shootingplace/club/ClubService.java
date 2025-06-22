@@ -1,5 +1,11 @@
 package com.shootingplace.shootingplace.club;
 
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
+import com.shootingplace.shootingplace.history.HistoryService;
+import com.shootingplace.shootingplace.member.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberRepository;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
+import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -16,23 +22,30 @@ import java.util.stream.Collectors;
 public class ClubService {
 
     private final ClubRepository clubRepository;
+    private final HistoryService historyService;
+    private final MemberRepository memberRepository;
+    private final OtherPersonRepository otherPersonRepository;
     private final Logger LOG = LogManager.getLogger();
 
-    public ClubService(ClubRepository clubRepository) {
+    public ClubService(ClubRepository clubRepository, HistoryService historyService, MemberRepository memberRepository, OtherPersonRepository otherPersonRepository) {
         this.clubRepository = clubRepository;
+        this.historyService = historyService;
+        this.memberRepository = memberRepository;
+        this.otherPersonRepository = otherPersonRepository;
     }
 
     public List<ClubEntity> getAllClubs() {
-        List<ClubEntity> all = clubRepository.findAll();
-        all.sort(Comparator.comparing(ClubEntity::getName));
-        return all;
+        return clubRepository.findAll()
+                .stream()
+                .filter(f -> !f.getId().equals(2))
+                .collect(Collectors.toList());
     }
 
     public List<String> getAllClubsToTournament() {
         List<String> list = new ArrayList<>();
         clubRepository.findAll().stream()
                 .filter(f -> f.getId() != 1)
-                .forEach(e -> list.add(e.getName()));
+                .forEach(e -> list.add(e.getShortName()));
         list.sort(String::compareTo);
         return list;
     }
@@ -45,32 +58,44 @@ public class ClubService {
             LOG.info("Forbidden");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        ClubEntity clubEntity = clubRepository.findById(id)
-                .orElseThrow(EntityNotFoundException::new);
-        if (club.getName() != null && !club.getName().isEmpty()) {
-            String[] s = club.getName().split(" ");
-            String s1 = s[0].toUpperCase();
-            StringBuilder name = new StringBuilder();
-            for (int i = 1; i < s.length; i++) {
-                String splinted = s[i].substring(0, 1).toUpperCase() + s[i].substring(1).toLowerCase() + " ";
-                name.append(splinted);
-            }
-            clubEntity.setName(s1 + " " + name);
+
+        if (clubRepository.existsByShortName(club.getShortName()) && !clubRepository.findByShortName(club.getShortName()).getId().equals(id)) {
+            return ResponseEntity.badRequest().body("Taki Klub już istnieje");
+        }
+
+        ClubEntity clubEntity = clubRepository.getOne(id);
+        if (club.getShortName() != null && !club.getShortName().isEmpty()) {
+            clubEntity.setShortName(club.getShortName());
         }
         if (club.getFullName() != null && !club.getFullName().isEmpty()) {
             clubEntity.setFullName(club.getFullName().toUpperCase());
-        }
-        if (club.getAddress() != null && !club.getAddress().isEmpty()) {
-            clubEntity.setAddress(club.getAddress());
         }
         if (club.getEmail() != null && !club.getEmail().isEmpty()) {
             clubEntity.setEmail(club.getEmail());
         }
         if (club.getPhoneNumber() != null && !club.getPhoneNumber().isEmpty()) {
-            clubEntity.setPhoneNumber("+48 " + club.getPhoneNumber());
+            clubEntity.setPhoneNumber(club.getPhoneNumber());
         }
         if (club.getUrl() != null && !club.getUrl().isEmpty()) {
             clubEntity.setUrl(club.getUrl());
+        }
+        if (club.getVovoidership() != null && !club.getVovoidership().isEmpty()) {
+            clubEntity.setVovoidership(club.getVovoidership());
+        }
+        if (club.getWzss() != null && !club.getWzss().isEmpty()) {
+            clubEntity.setWzss(club.getWzss());
+        }
+        if (club.getHouseNumber() != null && !club.getHouseNumber().isEmpty()) {
+            clubEntity.setHouseNumber(club.getHouseNumber());
+        }
+        if (club.getAppartmentNumber() != null && !club.getAppartmentNumber().isEmpty()) {
+            clubEntity.setAppartmentNumber(club.getAppartmentNumber());
+        }
+        if (club.getStreet() != null && !club.getStreet().isEmpty()) {
+            clubEntity.setStreet(club.getStreet());
+        }
+        if (club.getCity() != null && !club.getCity().isEmpty()) {
+            clubEntity.setCity(club.getCity());
         }
         if (id == 1) {
             if (club.getLicenseNumber() != null && !club.getLicenseNumber().isEmpty()) {
@@ -84,20 +109,11 @@ public class ClubService {
     public ResponseEntity<?> createMotherClub(Club club) {
         ResponseEntity<?> response;
         if (clubRepository.findById(1).isPresent()) {
-            response = ResponseEntity.badRequest().body("Istnieje już Klub Macierzysty - nie Można dodać kolejnego Klubu Macierzystego");
-        } else if (club.getName().isEmpty() || club.getFullName().isEmpty() || club.getAddress().isEmpty() || club.getEmail().isEmpty() || club.getLicenseNumber().isEmpty()) {
-            response = ResponseEntity.badRequest().body("Brak podanych danych - musisz podać wszystkie dane aby dodać Klub");
+            response = ResponseEntity.badRequest().body("Istnieje już Klub Macierzysty - nie można dodać kolejnego Klubu Macierzystego");
         } else {
-            clubRepository.save(ClubEntity.builder()
-                    .id(1)
-                    .name(club.getName())
-                    .fullName(club.getFullName())
-                    .phoneNumber("+48 " + club.getPhoneNumber())
-                    .email(club.getEmail())
-                    .address(club.getAddress())
-                    .licenseNumber(club.getLicenseNumber())
-                    .url(club.getUrl())
-                    .build());
+            club.setId(1);
+            ClubEntity clubEntity = buildCLub(club);
+            clubRepository.save(clubEntity);
             response = ResponseEntity.ok("Utworzono Klub Macierzysty - dalej pójdzie z górki");
         }
         return response;
@@ -109,17 +125,9 @@ public class ClubService {
                 .stream()
                 .max(Comparator.comparing(ClubEntity::getId)).orElseThrow(EntityNotFoundException::new)
                 .getId() + 1;
-
-        clubRepository.save(ClubEntity.builder()
-                .id(id)
-                .name(club.getName().trim())
-                .fullName(club.getFullName().trim())
-                .phoneNumber("+48 " + club.getPhoneNumber())
-                .email(club.getEmail())
-                .address(club.getAddress())
-                .licenseNumber(club.getLicenseNumber())
-                .url(club.getUrl())
-                .build());
+        club.setId(id);
+        ClubEntity clubEntity = buildCLub(club);
+        clubRepository.save(clubEntity);
         return ResponseEntity.ok("Utworzono nowy Klub");
     }
 
@@ -129,13 +137,74 @@ public class ClubService {
         List<ClubEntity> collect = clubRepository.findAll()
                 .stream()
                 .filter(f -> f.getId() != 1)
-                .sorted(Comparator.comparing(ClubEntity::getName))
+                .sorted(Comparator.comparing(ClubEntity::getShortName))
                 .collect(Collectors.toList());
         list.addAll(collect);
         return list;
     }
 
-    public long getClubsCount() {
-        return clubRepository.count();
+    public boolean getClubsCount() {
+        return clubRepository.existsById(1);
+    }
+
+    public ResponseEntity<?> importCLub(Club club) {
+        boolean b = clubRepository.findAll()
+                .stream()
+                .anyMatch(a -> a.getShortName()
+                        .replaceAll(" ", "")
+                        .equalsIgnoreCase(club.getShortName().replaceAll(" ", "")));
+        if (!b) {
+            Integer id = clubRepository.findAll()
+                    .stream()
+                    .max(Comparator.comparing(ClubEntity::getId)).orElseThrow(EntityNotFoundException::new)
+                    .getId() + 1;
+            club.setId(id);
+            ClubEntity clubEntity = buildCLub(club);
+            clubRepository.save(clubEntity);
+            LOG.info("dodano Klub :" + club.getShortName());
+            return ResponseEntity.ok("importowano Klub: " + club.getShortName());
+        }
+        return ResponseEntity.ok("Klub " + club.getShortName() + " już istenije w bazie");
+
+
+    }
+
+    private ClubEntity buildCLub(Club club) {
+        return ClubEntity.builder()
+                .city(club.getCity())
+                .wzss(club.getWzss())
+                .vovoidership(club.getVovoidership())
+                .url(club.getUrl())
+                .phoneNumber(club.getPhoneNumber())
+                .appartmentNumber(club.getAppartmentNumber())
+                .street(club.getStreet())
+                .houseNumber(club.getHouseNumber())
+                .licenseNumber(club.getLicenseNumber())
+                .email(club.getEmail())
+                .fullName(club.getFullName())
+                .shortName(club.getShortName())
+                .id(club.getId())
+                .build();
+    }
+
+    public ResponseEntity<?> deleteClub(Integer id, String pinCode) throws NoUserPermissionException {
+        if (id == 2  || id == 1) {
+            return ResponseEntity.badRequest().body("Nie można usunąć tego Klubu");
+        }
+        ClubEntity one = clubRepository.getOne(id);
+        List<MemberEntity> collect = memberRepository.findAll().stream().filter(f -> f.getClub().getId().equals(id)).collect(Collectors.toList());
+        collect.forEach(e -> {
+            e.setClub(clubRepository.getOne(2));
+            memberRepository.save(e);
+        });
+        List<OtherPersonEntity> collect1 = otherPersonRepository.findAll().stream().filter(f -> f.getClub().getId().equals(id)).collect(Collectors.toList());
+        collect1.forEach(e -> {
+            e.setClub(clubRepository.getOne(2));
+            otherPersonRepository.save(e);
+        });
+
+        clubRepository.delete(one);
+        return historyService.getStringResponseEntity(pinCode, one, HttpStatus.OK, "Delete Competition", "Usunięto konkurencję " + one.getShortName());
+
     }
 }

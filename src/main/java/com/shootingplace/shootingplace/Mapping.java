@@ -1,5 +1,7 @@
 package com.shootingplace.shootingplace;
 
+import com.shootingplace.shootingplace.score.Score;
+import com.shootingplace.shootingplace.score.ScoreEntity;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.ammoEvidence.*;
@@ -511,7 +513,7 @@ public class Mapping {
     static Club map(ClubEntity c) {
         return Club.builder()
                 .id(c.getId())
-                .name(c.getName())
+                .shortName(c.getShortName())
                 .build();
     }
 
@@ -613,4 +615,20 @@ public class Mapping {
                 .build();
     }
 
+    public static ClubEntity map(Club c) {
+        return ClubEntity.builder()
+                .shortName(c.getShortName())
+                .fullName(c.getFullName())
+                .email(c.getEmail())
+                .licenseNumber(c.getLicenseNumber())
+                .phoneNumber(c.getPhoneNumber())
+                .url(c.getUrl())
+                .vovoidership(c.getVovoidership())
+                .wzss(c.getWzss())
+                .houseNumber(c.getHouseNumber())
+                .appartmentNumber(c.getAppartmentNumber())
+                .city(c.getCity())
+                .street(c.getStreet())
+                .build();
+    }
 }

@@ -1,5 +1,8 @@
 package com.shootingplace.shootingplace.club;
 
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -12,16 +15,18 @@ import java.util.List;
 public class ClubController {
 
     private final ClubService clubService;
+    private final ChangeHistoryService changeHistoryService;
 
-    public ClubController(ClubService clubService) {
+    public ClubController(ClubService clubService, ChangeHistoryService changeHistoryService) {
         this.clubService = clubService;
+        this.changeHistoryService = changeHistoryService;
     }
 
     @GetMapping("/")
     public ResponseEntity<List<ClubEntity>> getAllClubs() {
         return ResponseEntity.ok(clubService.getAllClubs());
     }
-    @GetMapping("/count")
+    @GetMapping("/isMotherClubExist")
     public ResponseEntity<?> getClubsCount() {
         return ResponseEntity.ok(clubService.getClubsCount());
     }
@@ -40,9 +45,27 @@ public class ClubController {
     public ResponseEntity<?> updateClub(@PathVariable int clubID, @RequestBody Club club) {
         return clubService.updateClub(clubID, club);
     }
+
+    @Transactional
+    @PostMapping("/import")
+    public ResponseEntity<?> importClub(@RequestBody Club club) {
+        return clubService.importCLub(club);
+    }
+
     @Transactional
     @PostMapping("/create")
-    public ResponseEntity<?> createNewClub(@RequestBody Club clubName){
-        return clubService.createNewClub(clubName);
+    public ResponseEntity<?> createNewClub(@RequestBody Club club){
+        return clubService.createNewClub(club);
+    }
+
+    @Transactional
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteClub(@RequestParam String id, String pinCode) throws NoUserPermissionException {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return clubService.deleteClub(Integer.parseInt(id), pinCode);
+        } else {
+            return code;
+        }
     }
 }

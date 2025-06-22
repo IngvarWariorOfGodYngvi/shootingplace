@@ -5,7 +5,8 @@ public enum CountingMethod {
     COMSTOCK("COMSTOCK"),
     TIME("CZAS"),
     IPSC("IPSC"),
-    DYNAMIKADZIESIATKA("Dynamika Dziesiątka");
+    DYNAMIKADZIESIATKA("Dynamika Dziesiątka"),
+    POJEDYNEK("Pojedynek Strzelecki");
 
     private final String name;
 

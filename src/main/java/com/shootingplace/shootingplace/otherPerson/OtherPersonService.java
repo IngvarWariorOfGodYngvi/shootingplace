@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityNotFoundException;
 import java.text.Collator;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -48,14 +47,14 @@ public class OtherPersonService {
 
     public ResponseEntity<?> addPerson(String club, OtherPerson person, MemberPermissions permissions) {
         MemberPermissionsEntity permissionsEntity = null;
-        boolean match = clubRepository.findAll().stream().anyMatch(a -> a.getName().equals(club));
+        boolean match = clubRepository.findAll().stream().anyMatch(a -> a.getShortName().equals(club));
 
         ClubEntity clubEntity;
         if (match) {
             clubEntity = clubRepository
                     .findAll()
                     .stream()
-                    .filter(f -> f.getName()
+                    .filter(f -> f.getShortName()
                             .equals(club))
                     .findFirst()
                     .orElseThrow(EntityNotFoundException::new);
@@ -65,7 +64,7 @@ public class OtherPersonService {
             Integer id = (all.get(0).getId()) + 1;
             clubEntity = ClubEntity.builder()
                     .id(id)
-                    .name(club).build();
+                    .shortName(club).build();
             clubRepository.save(clubEntity);
         }
         List<OtherPersonEntity> all = otherPersonRepository.findAll();
@@ -112,14 +111,16 @@ public class OtherPersonService {
 
     public OtherPersonEntity addPerson(String club, OtherPerson person) {
 
-        boolean match = clubRepository.findAll().stream().anyMatch(a -> a.getName().equals(club));
-
+        boolean match = clubRepository.findAll().stream().anyMatch(a -> a.getShortName().equals(club));
         ClubEntity clubEntity;
+        if (club.isEmpty()) {
+            clubEntity = clubRepository.getOne(2);
+        } else {
         if (match) {
             clubEntity = clubRepository
                     .findAll()
                     .stream()
-                    .filter(f -> f.getName()
+                    .filter(f -> f.getShortName()
                             .equals(club))
                     .findFirst()
                     .orElseThrow(EntityNotFoundException::new);
@@ -129,9 +130,9 @@ public class OtherPersonService {
             Integer id = (all.get(0).getId()) + 1;
             clubEntity = ClubEntity.builder()
                     .id(id)
-                    .name(club).build();
+                    .shortName(club).build();
             clubRepository.save(clubEntity);
-        }
+        }}
         AddressEntity addressEntity = addressRepository.save(AddressEntity.builder()
                 .zipCode(person.getAddress().getZipCode())
                 .postOfficeCity(person.getAddress().getPostOfficeCity())
@@ -145,7 +146,7 @@ public class OtherPersonService {
             id = 1;
         } else {
             all.sort(Comparator.comparing(OtherPersonEntity::getId).reversed());
-            id = (all.get(0).getId()) + 1;
+            id = all.stream().max(Comparator.comparing(OtherPersonEntity::getId)).get().getId() + 1;
         }
         OtherPersonEntity otherPersonEntity = OtherPersonEntity.builder()
                 .id(id)
@@ -167,12 +168,10 @@ public class OtherPersonService {
     }
 
     public List<String> getAllOthers() {
-
-        List<String> list = new ArrayList<>();
-        otherPersonRepository.findAllByActiveTrue()
-                .forEach(e -> list.add(e.getSecondName().concat(" " + e.getFirstName() + " Klub: " + e.getClub().getName() + " ID: " + e.getId())));
-        list.sort(Comparator.comparing(String::new));
-        return list;
+        return otherPersonRepository.findAllByActiveTrue()
+                .stream()
+                .map(e -> e.getSecondName().concat(" " + e.getFirstName() + " Klub: " + e.getClub().getShortName() + " ID: " + e.getId()))
+                .collect(Collectors.toList());
     }
 
     public List<MemberInfo> getAllOthersArbiters() {
@@ -190,19 +189,18 @@ public class OtherPersonService {
     }
 
     public List<?> getAll() {
-        return otherPersonRepository.findAll()
+        return otherPersonRepository.findAllByActiveTrue()
                 .stream()
-                .filter(OtherPersonEntity::isActive)
                 .sorted(Comparator.comparing(OtherPersonEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl")))
                         .thenComparing(OtherPersonEntity::getFirstName))
                 .collect(Collectors.toList());
     }
 
     public List<OtherPersonEntity> getOthersWithPermissions() {
-        List<OtherPersonEntity> list = new ArrayList<>();
-        otherPersonRepository.findAll().stream().filter(f -> f.getPermissionsEntity() != null)
-                .forEach(list::add);
-        return list;
+        return otherPersonRepository.findAllByActiveTrue()
+                .stream()
+                .filter(f -> f.getPermissionsEntity() != null)
+                .collect(Collectors.toList());
     }
 
     public ResponseEntity<?> deactivatePerson(int id, String pinCode) throws NoUserPermissionException {
@@ -224,23 +222,23 @@ public class OtherPersonService {
     public ResponseEntity<?> updatePerson(String id, OtherPerson oP, String clubName) {
         OtherPersonEntity one = otherPersonRepository.getOne(Integer.valueOf(id));
         if ((oP.getEmail() != null && !oP.getEmail().isEmpty()) && !one.getEmail().equals(oP.getEmail())) {
-            LOG.info("Zmieniono email");
+            LOG.info("Osobie" + one.getFullName() + " Zmieniono email");
             one.setEmail(oP.getEmail());
         }
         if ((oP.getPhoneNumber() != null && !oP.getPhoneNumber().isEmpty()) && !one.getPhoneNumber().equals(oP.getPhoneNumber())) {
-            LOG.info("Zmieniono numer telefonu");
+            LOG.info("Osobie" + one.getFullName() + " Zmieniono numer telefonu");
             one.setPhoneNumber(oP.getPhoneNumber().replaceAll(" ", ""));
         }
         if ((oP.getFirstName() != null && !oP.getFirstName().isEmpty()) && !(one.getFirstName().substring(0, 1).toUpperCase() + one.getFirstName().substring(1).toLowerCase()).equals(oP.getFirstName())) {
-            LOG.info("Zmieniono Imię");
+            LOG.info("Osobie" + one.getFullName() + " Zmieniono Imię");
             one.setFirstName(oP.getFirstName());
         }
         if ((oP.getSecondName() != null && !oP.getSecondName().isEmpty()) && !one.getSecondName().toUpperCase().equals(oP.getSecondName())) {
-            LOG.info("Zmieniono nazwisko");
+            LOG.info("Osobie" + one.getFullName() + " Zmieniono nazwisko");
             one.setSecondName(oP.getSecondName());
         }
         if ((oP.getWeaponPermissionNumber() != null && !oP.getWeaponPermissionNumber().isEmpty()) && !one.getWeaponPermissionNumber().equals(oP.getWeaponPermissionNumber())) {
-            LOG.info("Zmieniono numer Pozwolenia na broń");
+            LOG.info("Osobie" + one.getFullName() + " Zmieniono numer Pozwolenia na broń");
             one.setWeaponPermissionNumber(oP.getWeaponPermissionNumber());
         }
         Address a1 = oP.getAddress();
@@ -253,8 +251,8 @@ public class OtherPersonService {
         a2.setFlatNumber(a1.getFlatNumber() != null ? a1.getFlatNumber() : a2.getFlatNumber());
         AddressEntity save1 = addressRepository.save(a2);
         one.setAddress(save1);
-        if ((clubName!=null && !clubName.isEmpty())&&!one.getClub().getName().equals(clubName)) {
-            ClubEntity clubEntity = clubRepository.findAll().stream().filter(f -> f.getName().equals(clubName)).findFirst().orElse(null);
+        if ((clubName!=null && !clubName.isEmpty())&&!one.getClub().getShortName().equals(clubName)) {
+            ClubEntity clubEntity = clubRepository.findAll().stream().filter(f -> f.getShortName().equals(clubName)).findFirst().orElse(null);
             if (clubEntity == null) {
                 {
                     List<ClubEntity> all = clubRepository.findAll();
@@ -262,11 +260,11 @@ public class OtherPersonService {
                     Integer clubID = (all.get(0).getId()) + 1;
                     clubEntity = ClubEntity.builder()
                             .id(clubID)
-                            .name(clubName).build();
+                            .shortName(clubName).build();
                     clubRepository.save(clubEntity);
                 }
             }
-            LOG.info("Zmieniono Klub");
+            LOG.info("Osobie" + one.getFullName() + " Zmieniono Klub");
             one.setClub(clubEntity);
         }
         MemberPermissions m1 = oP.getMemberPermissions();
@@ -282,7 +280,7 @@ public class OtherPersonService {
     }
 
     public ResponseEntity<?> getOtherByPhone(String phone) {
-        OtherPersonEntity otherPerson = otherPersonRepository.findAllByPhoneNumber(phone.replaceAll(" ", "")).stream().filter(OtherPersonEntity::isActive).findFirst().orElse(null);
+        OtherPersonEntity otherPerson = otherPersonRepository.findAllByPhoneNumberAndActiveTrue(phone.replaceAll(" ", "")).stream().filter(OtherPersonEntity::isActive).findFirst().orElse(null);
         if (otherPerson != null && otherPerson.isActive()) {
             return ResponseEntity.ok(otherPerson);
         } else {

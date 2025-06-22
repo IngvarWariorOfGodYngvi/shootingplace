@@ -74,7 +74,7 @@ public class RegistrationRecordsService {
         RegistrationRecordEntity r = new RegistrationRecordEntity();
         OtherPersonEntity otherPerson = null;
         if (!phone.isEmpty()) {
-            otherPerson = otherPersonRepository.findAllByPhoneNumber(phone.replaceAll(" ", "")).stream().filter(OtherPersonEntity::isActive).findFirst().orElse(null);
+            otherPerson = otherPersonRepository.findAllByPhoneNumberAndActiveTrue(phone.replaceAll(" ", "")).stream().filter(OtherPersonEntity::isActive).findFirst().orElse(null);
         }
         if (otherPerson != null) {
             OtherPersonEntity finalOtherPerson = otherPerson;

@@ -16,4 +16,5 @@ public interface CompetitionRepository{
 
     long count();
 
+    void delete(CompetitionEntity entity);
 }

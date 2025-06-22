@@ -36,36 +36,8 @@ public class CompetitionService {
 
         if (competitionEntityList.isEmpty()) {
             createCompetitions();
-            LOG.info("Zostały utworzone domyślne encje Konkurencji");
+            LOG.info("Zostały utworzone domyślne Konkurencje");
         }
-//        for (CompetitionEntity competitionEntity : competitionEntityList) {
-//            if (competitionEntity.getNumberOfShots() == null) {
-//                String[] split = competitionEntity.getName().split(" ");
-//                for (String value : split) {
-//                    String s = value.replaceAll("[a-zA-ZżźćńółęąśŻŹĆĄŚĘŁÓŃ]", "");
-//                    if (!s.equals("")) {
-//                        competitionEntity.setNumberOfShots(Integer.parseInt(s));
-//                        competitionRepository.save(competitionEntity);
-//                    }
-//                }
-//            }
-//        }
-//        for (CompetitionEntity competitionEntity : competitionEntityList) {
-//            if (competitionEntity.getType() == null) {
-//                String[] split = competitionEntity.getName().split(" ");
-//                for (String s : split) {
-//                    if (s.equals(CompetitionType.OPEN.getName())) {
-//                        competitionEntity.setType(CompetitionType.OPEN.getName());
-//                    } else {
-//                        competitionEntity.setType(CompetitionType.YOUTH.getName());
-//                    }
-//                    competitionRepository.save(competitionEntity);
-//
-//                }
-//            }
-//        }
-
-//        competitionEntityList.sort(Comparator.comparing(CompetitionEntity::getOrdering));
         return competitionEntityList;
     }
 
@@ -209,5 +181,11 @@ public class CompetitionService {
 
     public List<String> getCompetitionTypes() {
         return Arrays.stream(CompetitionType.values()).map(CompetitionType::getName).collect(Collectors.toList());
+    }
+
+    public ResponseEntity<?> deleteCompetition(String uuid, String pinCode) throws NoUserPermissionException {
+        CompetitionEntity one = competitionRepository.getOne(uuid);
+        competitionRepository.delete(one);
+        return historyService.getStringResponseEntity(pinCode, one, HttpStatus.OK, "Delete Competition", "Usunięto konkurencję " + one.getName());
     }
 }

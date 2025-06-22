@@ -123,6 +123,18 @@ public class ArmoryController {
             return code;
         }
     }
+
+    @Transactional
+    @DeleteMapping("/deleteShootingPacket")
+    public ResponseEntity<?> deleteShootingPacket(@RequestParam String uuid, @RequestParam String pinCode) throws NoUserPermissionException {
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        if (code.getStatusCode().equals(HttpStatus.OK)){
+            return shootingPacketService.deleteShootingPacket(uuid, pinCode);
+        } else {
+            return code;
+        }
+    }
+
     @Transactional
     @PostMapping("/updateShootingPacket")
     public ResponseEntity<?> updateShootingPacket(@RequestParam String uuid,@RequestParam String name, @RequestParam Float price, @RequestBody Map<String, Integer> map, @RequestParam String pinCode) throws NoUserPermissionException {

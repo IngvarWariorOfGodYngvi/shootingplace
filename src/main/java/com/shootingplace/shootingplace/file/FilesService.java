@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.file;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceEntity;
@@ -11,6 +12,7 @@ import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlac
 import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
+import com.shootingplace.shootingplace.club.ClubService;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
 import com.shootingplace.shootingplace.competition.CompetitionRepository;
 import com.shootingplace.shootingplace.configurations.ProfilesEnum;
@@ -22,13 +24,15 @@ import com.shootingplace.shootingplace.history.CompetitionHistoryEntity;
 import com.shootingplace.shootingplace.history.JudgingHistoryEntity;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.member.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberPermissions;
 import com.shootingplace.shootingplace.member.MemberRepository;
+import com.shootingplace.shootingplace.otherPerson.OtherPerson;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonService;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
-import com.shootingplace.shootingplace.tournament.ScoreEntity;
+import com.shootingplace.shootingplace.score.ScoreEntity;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
@@ -84,10 +88,11 @@ public class FilesService {
     private final ArmoryService armoryService;
     private final RegistrationRecordRepository registrationRepo;
     private final OtherPersonService otherPersonService;
+    private final ClubService clubService;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ, Environment environment, ArmoryService armoryService, RegistrationRecordRepository registrationRepo, OtherPersonService otherPersonService) {
+    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ, Environment environment, ArmoryService armoryService, RegistrationRecordRepository registrationRepo, OtherPersonService otherPersonService, ClubService clubService) {
         this.memberRepository = memberRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.filesRepository = filesRepository;
@@ -104,6 +109,7 @@ public class FilesService {
         this.armoryService = armoryService;
         this.registrationRepo = registrationRepo;
         this.otherPersonService = otherPersonService;
+        this.clubService = clubService;
     }
 
     private FilesEntity createFileEntity(FilesModel filesModel) {
@@ -126,6 +132,28 @@ public class FilesService {
         createFileEntity(build);
     }
 
+    public void uploadCSVOthers(MultipartFile file) throws IOException {
+
+        InputStream inputStream = file.getInputStream();
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+        List<String> list = br.lines().collect(Collectors.toList());
+        list.forEach(e -> {
+            String[] s = e.split(";");
+            OtherPersonEntity otherPerson = otherPersonService.addPerson(s[2],
+                    OtherPerson.builder()
+                            .address(new Address())
+                            .email("")
+                            .phoneNumber("")
+                            .memberPermissions(new MemberPermissions())
+                            .weaponPermissionNumber("")
+                            .secondName(s[0].toUpperCase(Locale.ROOT))
+                            .firstName(s[1].substring(0, 1).toUpperCase(Locale.ROOT).concat(s[1].substring(1).toLowerCase(Locale.ROOT)))
+                            .build());
+            otherPersonRepository.save(otherPerson);
+        });
+
+    }
+
     public String storeImageEvidenceBook(ImageOtherPersonWrapper other, String imageString, String pesel_or_phone) {
         String s = imageString.split(",")[1];
         MemberEntity memberEntity = memberRepository.findByPesel(pesel_or_phone.replaceAll(" ", "")).orElse(null);
@@ -133,10 +161,10 @@ public class FilesService {
         if (memberEntity != null) {
             fullName = memberEntity.getFullName();
         } else {
-            OtherPersonEntity otherPerson = otherPersonRepository.findAllByPhoneNumber(pesel_or_phone.replaceAll(" ", "")).stream().filter(OtherPersonEntity::isActive).findFirst().orElse(null);
+            OtherPersonEntity otherPerson = otherPersonRepository.findAllByPhoneNumberAndActiveTrue(pesel_or_phone.replaceAll(" ", "")).stream().filter(OtherPersonEntity::isActive).findFirst().orElse(null);
 //            OtherPersonEntity otherPerson = otherPersonRepository.findByPhoneNumber(pesel_or_phone.replaceAll(" ","")).orElse(null);
             if (otherPerson == null) {
-                OtherPersonEntity otherPerson1 = otherPersonService.addPerson(String.valueOf(other.getOther().getClub().getName()), other.getOther());
+                OtherPersonEntity otherPerson1 = otherPersonService.addPerson(String.valueOf(other.getOther().getClub().getShortName()), other.getOther());
                 fullName = otherPerson1.getFullName();
             } else {
                 fullName = otherPerson.getFullName();
@@ -170,7 +198,8 @@ public class FilesService {
         LocalDate contribution = contributionEntity.getPaymentDay();
         LocalDate validThru = contributionEntity.getValidThru();
         String fileName = "Składka_" + memberEntity.getFullName() + "_" + LocalDate.now().format(dateFormat()) + ".pdf";
-        String source = "src/main/resources/fbg_10_qrcode.jpg";
+//        String source = "src/main/resources/fbg_10_qrcode.jpg";
+        String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/fbg_10_qrcode.jpg";
         String clubFullName = club.getFullName().toUpperCase();
 
         // tutaj powinien być text z ustawień o składki
@@ -263,7 +292,7 @@ public class FilesService {
         Paragraph p19 = new Paragraph("               pieczęć klubu", font(11, 0));
         Phrase p20 = new Phrase("                                                  ");
         Phrase p21 = new Phrase("podpis osoby przyjmującej składkę");
-        Paragraph p200 = new Paragraph("dołącz do naszej gruby na Facebooku", font(11,0));
+        Paragraph p200 = new Paragraph("dołącz do naszej grupy na Facebooku", font(11, 0));
         p.setAlignment(1);
         p1.setAlignment(1);
         h1.add(h2);
@@ -404,7 +433,7 @@ public class FilesService {
         Paragraph p16 = new Paragraph("\n\nAdres Zamieszkania", font(11, 0));
         Paragraph p17 = new Paragraph("", font(11, 0));
         Paragraph p18 = new Paragraph("\n\n" + statement, font(11, 0));
-        Paragraph p18_5 = new Paragraph("\n\n\n\n" + ((memberEntity.getSignBy()!=null? memberEntity.getSignBy():"") + "                       "+"\n\n"), font(11,0));
+        Paragraph p18_5 = new Paragraph("\n\n\n\n" + ((memberEntity.getSignBy() != null ? memberEntity.getSignBy() : "") + "                       " + "\n\n"), font(11, 0));
         p18_5.setAlignment(2);
         Paragraph p19;
         if (!memberEntity.getAdult()) {
@@ -413,7 +442,7 @@ public class FilesService {
             }
             p19 = new Paragraph("\n\n\n\n.............................................", font(9, 0));
         } else {
-            String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())? "Łódź, " : "Panaszew, ";
+            String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź, " : "Panaszew, ";
             p19 = new Paragraph(city + " " + LocalDate.now() + "..............................", font(9, 0));
         }
         Phrase p20 = new Phrase("                                                                                                 ");
@@ -846,7 +875,7 @@ public class FilesService {
             float[] pointColumnWidths = {50, 20, 20, 5, 10, 2, 28};
             PdfPTable table = new PdfPTable(pointColumnWidths);
             counter++;
-            PdfPCell cell = new PdfPCell(new Paragraph(collectPistol.get(i).getName() + "\n" + club.getName(), font(fontSize, 0)));
+            PdfPCell cell = new PdfPCell(new Paragraph(collectPistol.get(i).getName() + "\n" + club.getShortName(), font(fontSize, 0)));
             PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectPistol.get(i).getDate().toString(), font(fontSize, 0)));
             PdfPCell cell2 = new PdfPCell(new Paragraph(activeProfile.equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : activeProfile.equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
             PdfPCell cell3 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
@@ -885,7 +914,7 @@ public class FilesService {
             PdfPTable table = new PdfPTable(pointColumnWidths);
             counter++;
 
-            PdfPCell cell = new PdfPCell(new Paragraph(collectRifle.get(i).getName() + "\n" + club.getName(), font(fontSize, 0)));
+            PdfPCell cell = new PdfPCell(new Paragraph(collectRifle.get(i).getName() + "\n" + club.getShortName(), font(fontSize, 0)));
             PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectRifle.get(i).getDate().toString(), font(fontSize, 0)));
             PdfPCell cell2 = new PdfPCell(new Paragraph(activeProfile.equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : activeProfile.equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
             PdfPCell cell3 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
@@ -924,7 +953,7 @@ public class FilesService {
             PdfPTable table = new PdfPTable(pointColumnWidths);
             counter++;
 
-            PdfPCell cell = new PdfPCell(new Paragraph(collectShotgun.get(i).getName() + "\n" + club.getName(), font(fontSize, 0)));
+            PdfPCell cell = new PdfPCell(new Paragraph(collectShotgun.get(i).getName() + "\n" + club.getShortName(), font(fontSize, 0)));
             PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectShotgun.get(i).getDate().toString(), font(fontSize, 0)));
             PdfPCell cell2 = new PdfPCell(new Paragraph(activeProfile.equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : activeProfile.equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
             PdfPCell cell3 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
@@ -985,7 +1014,7 @@ public class FilesService {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         ClubEntity c = clubRepository.getOne(1);
 
-        String fileName = tournamentEntity.getDate().format(dateFormat()) + " " + c.getName() + " " + tournamentEntity.getName() + ".pdf";
+        String fileName = tournamentEntity.getDate().format(dateFormat()) + " " + c.getShortName() + " " + tournamentEntity.getName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
         document.setMargins(35F, 35F, 50F, 50F);
@@ -1008,7 +1037,7 @@ public class FilesService {
         String now = hour + ":" + minute;
 
 
-        Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase() + "\n" + c.getName(), font(13, 1));
+        Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase() + "\n" + c.getShortName(), font(13, 1));
         String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : "Panaszew";
         Paragraph date = new Paragraph(city + ", " + monthFormat(tournamentEntity.getDate()), font(10, 2));
         Paragraph newLine = new Paragraph("\n", font(10, 0));
@@ -1095,12 +1124,12 @@ public class FilesService {
                     if (scoreList.get(j).getMember() != null) {
                         secondName = scoreList.get(j).getMember().getSecondName();
                         firstName = scoreList.get(j).getMember().getFirstName();
-                        club = scoreList.get(j).getMember().getClub().getName();
+                        club = scoreList.get(j).getMember().getClub().getShortName();
 
                     } else {
                         secondName = scoreList.get(j).getOtherPersonEntity().getSecondName();
                         firstName = scoreList.get(j).getOtherPersonEntity().getFirstName();
-                        club = scoreList.get(j).getOtherPersonEntity().getClub().getName();
+                        club = scoreList.get(j).getOtherPersonEntity().getClub().getShortName();
 
                     }
                     float score = scoreList.get(j).getScore();
@@ -1913,12 +1942,12 @@ public class FilesService {
 
         if (otherID != null) {
             OtherPersonEntity otherPersonEntity = otherPersonRepository.findById(Integer.parseInt(otherID)).orElseThrow(EntityNotFoundException::new);
-            name = otherPersonEntity.getSecondName() + " " + otherPersonEntity.getFirstName();
-            club = otherPersonEntity.getClub().getName();
+            name = otherPersonEntity.getSecondName().toUpperCase(Locale.ROOT) + " " + otherPersonEntity.getFirstName();
+            club = otherPersonEntity.getClub().getShortName();
         } else {
             MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
-            name = memberEntity.getFullName();
-            club = memberEntity.getClub().getName();
+            name = memberEntity.getSecondName().toUpperCase(Locale.ROOT) + " " + memberEntity.getFirstName();
+            club = memberEntity.getClub().getShortName();
         }
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
 
@@ -1936,16 +1965,13 @@ public class FilesService {
         System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-//        writer.setPageEvent(new PageStamper(environment));
 
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
 
-//        List<String> comp = competitions.stream().sorted().collect(Collectors.toList());
         List<String> comp = competitions.stream().map(m -> competitionRepository.getOne(m).getName()).filter(value -> !value.contains(" pneumatyczny ") && !value.contains(" pneumatyczna ")).sorted().collect(Collectors.toList());
         competitions.stream().map(m -> competitionRepository.getOne(m).getName()).filter(competition -> competition.contains(" pneumatyczny ") || competition.contains(" pneumatyczna ")).sorted().forEach(comp::add);
-        comp.forEach(System.out::println);
         Paragraph newLine = new Paragraph("\n", font(9, 0));
         for (int j = 0; j < comp.size(); j++) {
 
@@ -1969,8 +1995,8 @@ public class FilesService {
             } else {
                 numberOfShots = competitionEntity.getNumberOfShots();
             }
-            //  nazwa zawodów i tytuł
-            Paragraph par1 = new Paragraph(tournamentEntity.getName().toUpperCase() + "    " + clubEntity.getName(), font(11, 1));
+            //  nazwa zawodów, tytuł i data
+            Paragraph par1 = new Paragraph(tournamentEntity.getName().toUpperCase() + "    " + clubEntity.getShortName() + " " + tournamentEntity.getDate(), font(11, 1));
             par1.setAlignment(1);
             String a = "";
             String b = "";
@@ -1982,7 +2008,7 @@ public class FilesService {
                 b = "B";
             }
             // nazwisko klub i numer startowy
-            Chunk nameChunk = new Chunk(name.toUpperCase(), font(11, 1));
+            Chunk nameChunk = new Chunk(name, font(11, 1));
             Chunk clubChunk = new Chunk(" " + club, font(11, 1));
             Chunk numberChunk = new Chunk(a + " " + b + "  Nr. " + startNumber, font(13, 1));
             // nazwa konkurencji
@@ -2097,6 +2123,58 @@ public class FilesService {
             document.add(par3); // nazwa konkurencji
 
             document.add(new Paragraph("\n", font(4, 0))); // nowa linia
+            if (competitionEntity.getCountingMethod().equals(CountingMethod.POJEDYNEK.getName())){
+                for (int i = 0; i < pointColumnWidths.length; i++) {
+                    Paragraph p = new Paragraph();
+                    if (i == 0) {
+                        p = new Paragraph(" ", font(12, 0));
+                    }
+                    if (i == 1) {
+                        p = new Paragraph(" ", font(12, 0));
+                    }
+                    if (i == 2) {
+                        p = new Paragraph(" ", font(12, 0));
+                    }
+                    if (i == 3) {
+                        p = new Paragraph(" ", font(12, 0));
+                    }
+                    if (i == 4) {
+                        p = new Paragraph("UWAGI", font(12, 0));
+                    }
+                    if (i == 5) {
+                        p = new Paragraph("UWAGI", font(12, 0));
+                    }
+                    PdfPCell cell = new PdfPCell(p);
+                    cell.setHorizontalAlignment(1);
+                    table.addCell(cell);
+                }
+                document.add(table); // tytuł tabeli
+                for (int i = 0; i < pointColumnWidths.length; i++) {
+                    Paragraph p = new Paragraph();
+                    if (i == 0) {
+                        p = new Paragraph(" ", font(28, 0));
+                    }
+                    if (i == 1) {
+                        p = new Paragraph(" ", font(28, 0));
+                    }
+                    if (i == 2) {
+                        p = new Paragraph(" ", font(28, 0));
+                    }
+                    if (i == 3) {
+                        p = new Paragraph(" ", font(28, 0));
+                    }
+                    if (i == 4) {
+                        p = new Paragraph(" ", font(28, 0));
+                    }
+                    if (i == 5) {
+                        p = new Paragraph(" ", font(28, 0));
+                    }
+                    PdfPCell cell = new PdfPCell(p);
+                    cell.setHorizontalAlignment(1);
+                    table1.addCell(cell);
+                }
+                document.add(table1); // ciało tabeli
+            }
             if (competitionEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                 for (int i = 0; i < numberOfColumns; i++) {
                     Paragraph p = new Paragraph(String.valueOf(i), font(12, 0));
@@ -2104,7 +2182,7 @@ public class FilesService {
                         p = new Paragraph("seria", font(12, 0));
                     }
                     if (i == numberOfColumns - 4) {
-                        p = new Paragraph("zew", font(12, 0));
+                        p = new Paragraph("zw", font(12, 0));
                     }
                     if (i == numberOfColumns - 3) {
                         p = new Paragraph("wew", font(12, 0));
@@ -2174,7 +2252,11 @@ public class FilesService {
                     }
                 }
                 document.add(table1);
-            } else {
+            } if ( competitionEntity.getCountingMethod().equals(CountingMethod.DYNAMIKADZIESIATKA.getName()) ||
+                    competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName()) ||
+                    competitionEntity.getCountingMethod().equals(CountingMethod.IPSC.getName()) ||
+                    competitionEntity.getCountingMethod().equals(CountingMethod.TIME.getName())
+            ) {
                 for (int i = 0; i < pointColumnWidths.length; i++) {
                     Paragraph p = new Paragraph();
                     if (i == 0) {

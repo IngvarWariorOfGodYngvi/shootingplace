@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.tournament;
+package com.shootingplace.shootingplace.score;
 
 import java.util.Optional;
 

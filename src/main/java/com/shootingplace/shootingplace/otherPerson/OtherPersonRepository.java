@@ -18,7 +18,7 @@ public interface OtherPersonRepository{
 
     OtherPersonEntity getOne(Integer id);
     Optional<OtherPersonEntity> findByPhoneNumber(String phone);
-    List<OtherPersonEntity> findAllByPhoneNumber(String phone);
+    List<OtherPersonEntity> findAllByPhoneNumberAndActiveTrue(String phone);
 
     boolean existsById(int id);
 }

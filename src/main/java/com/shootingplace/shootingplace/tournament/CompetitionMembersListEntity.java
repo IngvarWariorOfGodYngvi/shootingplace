@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.tournament;
 
+import com.shootingplace.shootingplace.score.ScoreEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

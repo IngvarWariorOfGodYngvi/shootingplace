@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.tournament;
+package com.shootingplace.shootingplace.score;
 
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;

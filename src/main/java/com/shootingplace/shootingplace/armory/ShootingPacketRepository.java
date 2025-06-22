@@ -8,4 +8,6 @@ public interface ShootingPacketRepository {
     ShootingPacketEntity save(ShootingPacketEntity entity);
 
     ShootingPacketEntity getOne(String uuid);
+
+    void delete(ShootingPacketEntity entity);
 }

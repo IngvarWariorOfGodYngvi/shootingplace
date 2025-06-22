@@ -85,4 +85,18 @@ public class OtherPerson {
     public void setMemberPermissions(MemberPermissions memberPermissions) {
         this.memberPermissions = memberPermissions;
     }
+
+    @Override
+    public String toString() {
+        return "OtherPerson{" +
+                "firstName='" + firstName + '\'' +
+                ", secondName='" + secondName + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", email='" + email + '\'' +
+                ", address=" + address +
+                ", memberPermissions=" + memberPermissions +
+                ", club=" + club +
+                ", weaponPermissionNumber='" + weaponPermissionNumber + '\'' +
+                '}';
+    }
 }

@@ -4,6 +4,7 @@ import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.armory.CaliberEntity;
 import com.shootingplace.shootingplace.armory.GunEntity;
 import com.shootingplace.shootingplace.armory.ShootingPacketEntity;
+import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
@@ -550,6 +551,15 @@ public class HistoryService {
     public ResponseEntity<?> getStringResponseEntity(String pinCode, OtherPersonEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "Osoby spoza Klubu " + methodName, String.valueOf(entity.getId()));
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
+    }
+
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, ClubEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "Klub " + methodName, String.valueOf(entity.getId()));
         if (stringResponseEntity != null) {
             response = stringResponseEntity;
         }

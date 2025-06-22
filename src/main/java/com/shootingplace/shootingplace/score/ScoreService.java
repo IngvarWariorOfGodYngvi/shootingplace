@@ -1,10 +1,14 @@
-package com.shootingplace.shootingplace.tournament;
+package com.shootingplace.shootingplace.score;
 
 import com.shootingplace.shootingplace.configurations.ProfilesEnum;
 import com.shootingplace.shootingplace.enums.CompetitionType;
 import com.shootingplace.shootingplace.enums.CountingMethod;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
+import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
+import com.shootingplace.shootingplace.tournament.CompetitionMembersListRepository;
+import com.shootingplace.shootingplace.tournament.TournamentEntity;
+import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -498,7 +502,46 @@ public class ScoreService {
                     .collect(Collectors.toList());
             scoreList.addAll(collect);
             competitionMembersListEntity.setScoreList(scoreList);
-            System.out.println("Stop");
+        }
+        // Metoda Pojedynek
+        if (competitionMembersListEntity.getCountingMethod() != null && competitionMembersListEntity.getCountingMethod().equals(CountingMethod.POJEDYNEK.getName())) {
+
+            if (innerTen == -1) {
+                innerTen = scoreEntity.getInnerTen();
+            }
+            if (outerTen == -1) {
+                outerTen = scoreEntity.getOuterTen();
+            }
+            List<Float> series1 = scoreEntity.getSeries();
+            if (series != null) {
+                for (int i = 0; i < scoreEntity.getSeries().size(); i++) {
+                    series1.set(i, series.get(i) == null ? series1.get(i) : series.get(i));
+                }
+            }
+            series = series1;
+            scoreEntity.setScore((float) series.stream().mapToDouble(a -> a).sum());
+            scoreEntity.setInnerTen(innerTen);
+            scoreEntity.setOuterTen(outerTen);
+            scoreEntity.setEdited(true);
+            scoreRepository.save(scoreEntity);
+
+            List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream()
+                    .filter(f -> !f.isDsq() && !f.isDnf() && !f.isPk())
+                    .sorted(Comparator.comparing(ScoreEntity::getScore)
+                            .thenComparing(ScoreEntity::getInnerTen)
+                            .thenComparing(ScoreEntity::getOuterTen).reversed())
+                    .collect(Collectors.toList());
+
+            List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream()
+                    .filter(f -> f.isDnf() || f.isDsq() || f.isPk())
+                    .sorted(Comparator.comparing(ScoreEntity::getScore)
+                            .thenComparing(ScoreEntity::getInnerTen)
+                            .thenComparing(ScoreEntity::getOuterTen).reversed())
+                    .collect(Collectors.toList());
+
+            scoreList.addAll(collect);
+
+            competitionMembersListEntity.setScoreList(scoreList);
         }
         competitionMembersListRepository.save(competitionMembersListEntity);
         String name = getNameFromScore(scoreEntity);

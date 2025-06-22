@@ -1,6 +1,8 @@
 package com.shootingplace.shootingplace.tournament;
 
 import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.score.ScoreEntity;
+import com.shootingplace.shootingplace.score.ScoreService;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
 import com.shootingplace.shootingplace.competition.CompetitionRepository;
 import com.shootingplace.shootingplace.history.HistoryService;

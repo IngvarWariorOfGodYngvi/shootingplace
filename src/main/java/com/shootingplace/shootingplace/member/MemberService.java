@@ -649,7 +649,7 @@ public class MemberService {
         ClubEntity club = clubRepository.getOne(clubID);
         member.setClub(club);
         memberRepository.save(member);
-        return ResponseEntity.ok("Zmieniono Klub macierzysty zawodnika " + member.getFullName() + " na: " + club.getName());
+        return ResponseEntity.ok("Zmieniono Klub macierzysty zawodnika " + member.getFullName() + " na: " + club.getShortName());
     }
 
     public ResponseEntity<?> deleteMember(String uuid) {

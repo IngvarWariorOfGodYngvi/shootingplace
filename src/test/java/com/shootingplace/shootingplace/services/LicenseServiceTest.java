@@ -452,7 +452,7 @@ public class LicenseServiceTest {
         int i = r.nextInt(10000);
         return ClubEntity.builder()
                 .id(1)
-                .name("Some Club")
+                .shortName("Some Club")
                 .fullName("Some Club in Some City")
                 .licenseNumber(i + "/2021")
                 .build();

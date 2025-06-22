@@ -1,16 +1,18 @@
 package com.shootingplace.shootingplace.barCodeCards;
 
+import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.domain.Person;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,44 +21,65 @@ import java.util.stream.Collectors;
 public class BarCodeCardService {
 
     private final BarCodeCardRepository barCodeCardRepo;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private MemberRepository memberRepository;
+    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
 
     private static final Logger log = LoggerFactory.getLogger(BarCodeCardService.class);
 
-    public BarCodeCardService(BarCodeCardRepository barCodeCardRepo) {
+    public BarCodeCardService(BarCodeCardRepository barCodeCardRepo, UserRepository userRepository, MemberRepository memberRepository) {
         this.barCodeCardRepo = barCodeCardRepo;
+        this.userRepository = userRepository;
+        this.memberRepository = memberRepository;
     }
 
-    public ResponseEntity<?> createNewCard(BarCodeCardDTO dto) {
-//        String adminBarCode = findAdminBarCode(dto.getBarCode());
-//        if (!adminBarCode.equals("false")) {
-//            String s = dto.getBarCode().replaceAll(adminBarCode, "");
-//            dto.setBarCode(s);
-//            dto.setMaster(true);
-//        }
-
-        if (barCodeCardRepo.existsByBarCode(dto.getBarCode())) {
+    public ResponseEntity<?> createNewCard(String barCode, String uuid, String pinCode) throws NoUserPermissionException {
+        String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
+        UserEntity userEntity = userRepository.findByPinCode(pin);
+        if (barCodeCardRepo.existsByBarCode(barCode)) {
             return ResponseEntity.badRequest().body("Taki numer jest już do kogoś przypisany - użyj innej karty");
         }
-        String bc = dto.getBarCode();
-        if (bc.equals("null") || bc.isEmpty() || bc.isBlank()) {
+        if (barCode.isEmpty() || barCode.isBlank()) {
             return ResponseEntity.badRequest().body("Nie podano numeru Karty");
         }
-        MemberEntity memberEntity = null;
-        UserEntity userEntity = userRepository.findById(dto.getBelongsTo()).orElse(null);
-        if (userEntity == null) {
-            memberEntity = memberRepository.findById(dto.getBelongsTo()).orElse(null);
+        if (!userEntity.isSuperUser()) {
+            throw new NoUserPermissionException();
         }
-
         Person person = null;
-        BarCodeCardEntity build;
-        List<BarCodeCardEntity> barCodeCardList;
-        if (memberEntity != null) {
-            build = BarCodeCardEntity.builder()
-                    .barCode(bc)
+        if (userRepository.existsById(uuid)) {
+            userEntity = userRepository.getOne(uuid);
+            List<BarCodeCardEntity> barCodeCardList;
+            List<BarCodeCardEntity> allByBelongsTo = barCodeCardRepo.findAllByBelongsTo(userEntity.getUuid());
+            int size = (int) allByBelongsTo.stream().filter(f -> f.getActivatedDay().getMonthValue() == LocalDate.now().getMonthValue()).count();
+            if (size > 2) {
+                return ResponseEntity.badRequest().body("Nie można dodać więcej kart do " + userEntity.getFirstName());
+            }
+            BarCodeCardEntity build = BarCodeCardEntity.builder()
+                    .barCode(barCode)
+                    .belongsTo(userEntity.getUuid())
+                    .isActive(true)
+                    .isMaster(true)
+                    .activatedDay(LocalDate.now())
+                    .type("User")
+                    .subType(userEntity.getSubType())
+                    .build();
+            BarCodeCardEntity save = barCodeCardRepo.save(build);
+            barCodeCardList = userEntity.getBarCodeCardList();
+            barCodeCardList.add(save);
+            userEntity.setBarCodeCardList(barCodeCardList);
+            userRepository.save(userEntity);
+            person = userEntity;
+            return ResponseEntity.ok("Zapisano numer i przypisano do: " + person.getFirstName() + " " + person.getSecondName());
+        }
+        if (memberRepository.existsById(uuid)) {
+            MemberEntity memberEntity = memberRepository.getOne(uuid);
+            List<BarCodeCardEntity> barCodeCardList;
+            List<BarCodeCardEntity> allByBelongsTo = barCodeCardRepo.findAllByBelongsTo(userEntity.getUuid());
+            int size = (int) allByBelongsTo.stream().filter(f -> f.getActivatedDay().getMonthValue() == LocalDate.now().getMonthValue()).count();
+            if (size > 2) {
+                return ResponseEntity.badRequest().body("Nie można dodać więcej kart do " + userEntity.getFirstName());
+            }
+            BarCodeCardEntity build = BarCodeCardEntity.builder()
+                    .barCode(barCode)
                     .belongsTo(memberEntity.getUuid())
                     .isActive(true)
                     .isMaster(true)
@@ -69,29 +92,6 @@ public class BarCodeCardService {
             memberEntity.setBarCodeCardList(barCodeCardList);
             memberRepository.save(memberEntity);
             person = memberEntity;
-
-        } else if (userEntity != null) {
-
-            List<BarCodeCardEntity> allByBelongsTo = barCodeCardRepo.findAllByBelongsTo(userEntity.getUuid());
-            int size = (int) allByBelongsTo.stream().filter(f -> f.getActivatedDay().getMonthValue() == LocalDate.now().getMonthValue()).count();
-            if (size > 2) {
-                return ResponseEntity.badRequest().body("Nie można dodać więcej kart do " + userEntity.getFirstName());
-            }
-            build = BarCodeCardEntity.builder()
-                    .barCode(bc)
-                    .belongsTo(userEntity.getUuid())
-                    .isActive(true)
-                    .isMaster(true)
-                    .activatedDay(LocalDate.now())
-                    .type("User")
-                    .subType(dto.getSubType())
-                    .build();
-            BarCodeCardEntity save = barCodeCardRepo.save(build);
-            barCodeCardList = userEntity.getBarCodeCardList();
-            barCodeCardList.add(save);
-            userEntity.setBarCodeCardList(barCodeCardList);
-            userRepository.save(userEntity);
-            person = userEntity;
         }
         if (person != null) {
             return ResponseEntity.ok("Zapisano numer i przypisano do: " + person.getFirstName() + " " + person.getSecondName());

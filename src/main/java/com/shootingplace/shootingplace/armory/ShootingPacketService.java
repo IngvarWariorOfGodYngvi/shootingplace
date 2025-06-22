@@ -88,4 +88,10 @@ public class ShootingPacketService {
 
         return historyService.getStringResponseEntity(pinCode, shootingPacketRepository.save(one), HttpStatus.OK, "updateShootingPacket", "edytowano pakiet strzelecki " + one.getName().toUpperCase());
     }
+
+    public ResponseEntity<?> deleteShootingPacket(String uuid, String pinCode) throws NoUserPermissionException {
+        ShootingPacketEntity one = shootingPacketRepository.getOne(uuid);
+        shootingPacketRepository.delete(shootingPacketRepository.getOne(uuid));
+        return historyService.getStringResponseEntity(pinCode, one,HttpStatus.OK, "deleteShootingPacket","usunięto pakiet Strzelecki");
+    }
 }

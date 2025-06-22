@@ -14,9 +14,11 @@ public interface ClubRepository{
 
     ClubEntity getOne(int id);
 
-    boolean existsByName(String clubName);
+    boolean existsByShortName(String clubName);
 
-    ClubEntity findByName(String name);
+    ClubEntity findByShortName(String shotrName);
 
     long count();
+
+    void delete(ClubEntity entity);
 }

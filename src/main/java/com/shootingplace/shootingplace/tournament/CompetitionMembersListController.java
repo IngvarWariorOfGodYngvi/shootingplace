@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.tournament;
 
+import com.shootingplace.shootingplace.score.ScoreService;
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
 import com.shootingplace.shootingplace.armory.ShootingPacketEntity;
 import com.shootingplace.shootingplace.armory.ShootingPacketService;

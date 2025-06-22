@@ -16,7 +16,7 @@ import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.statistics.StatisticsService;
 import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
-import com.shootingplace.shootingplace.tournament.ScoreEntity;
+import com.shootingplace.shootingplace.score.ScoreEntity;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import com.shootingplace.shootingplace.wrappers.MemberWithContributionWrapper;
@@ -81,7 +81,7 @@ public class XLSXFilesService {
 
         int rc = 0;
 
-        String fileName = "rezultaty" + c.getName().toUpperCase() + ".xlsx";
+        String fileName = "rezultaty" + c.getShortName().toUpperCase() + ".xlsx";
 
         XSSFWorkbook workbook = new XSSFWorkbook();
 
@@ -146,7 +146,7 @@ public class XLSXFilesService {
         for (int i = 4; i < 13; i++) {
             sheet.setColumnWidth(i, 18 * 128);
         }
-        cell.setCellValue(tournamentEntity.getName().toUpperCase() + " " + c.getName());
+        cell.setCellValue(tournamentEntity.getName().toUpperCase() + " " + c.getShortName());
         cell1.setCellValue((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź, " : "Panaszew, ") + dateFormat(tournamentEntity.getDate()));
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
         sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 6));
@@ -265,12 +265,12 @@ public class XLSXFilesService {
                     if (scoreList.get(j).getMember() != null) {
                         secondName = scoreList.get(j).getMember().getSecondName();
                         firstName = scoreList.get(j).getMember().getFirstName();
-                        club = scoreList.get(j).getMember().getClub().getName();
+                        club = scoreList.get(j).getMember().getClub().getShortName();
 
                     } else {
                         secondName = scoreList.get(j).getOtherPersonEntity().getSecondName();
                         firstName = scoreList.get(j).getOtherPersonEntity().getFirstName();
-                        club = scoreList.get(j).getOtherPersonEntity().getClub().getName();
+                        club = scoreList.get(j).getOtherPersonEntity().getClub().getShortName();
 
                     }
                     float score = scoreList.get(j).getScore();
@@ -818,7 +818,7 @@ public class XLSXFilesService {
             cell11.setCellValue(collect.get(i).getFullName());
             cell21.setCellValue(collect.get(i).getPesel());
             cell31.setCellValue(collect.get(i).getAddress().fullAddress());
-            cell41.setCellValue(collect.get(i).getClub().getName());
+            cell41.setCellValue(collect.get(i).getClub().getShortName());
             cell51.setCellValue(collect.get(i).getLicense().getNumber());
             XSSFCellStyle cellStyle2 = workbook.createCellStyle();
             cellStyle2.setAlignment(HorizontalAlignment.CENTER);
