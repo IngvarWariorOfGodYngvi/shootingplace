@@ -9,7 +9,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Entity
@@ -26,13 +25,13 @@ public class CompetitionEntity {
     private String name;
     private String abbreviation;
 
-    private String discipline;
+//    private String discipline;
     private Integer numberOfShots;
 
-    private String[] disciplines;
+//    private String[] disciplines;
     private String disciplineList;
 
-    private Integer[] numberOfManyShots;
+//    private Integer[] numberOfManyShots;
     private String numberOfManyShotsList;
 
     private String type;
@@ -121,13 +120,13 @@ public class CompetitionEntity {
         this.name = name;
     }
 
-    public String getDiscipline() {
-        return discipline;
-    }
-
-    public void setDiscipline(String discipline) {
-        this.discipline = discipline;
-    }
+//    public String getDiscipline() {
+//        return discipline;
+//    }
+//
+//    public void setDiscipline(String discipline) {
+//        this.discipline = discipline;
+//    }
 
 
     public String getType() {
@@ -154,21 +153,21 @@ public class CompetitionEntity {
         this.ordering = ordering;
     }
 
-    public String[] getDisciplines() {
-        return disciplines;
-    }
-
-    public void setDisciplines(String[] disciplines) {
-        this.disciplines = disciplines;
-    }
-
-    public Integer[] getNumberOfManyShots() {
-        return numberOfManyShots;
-    }
-
-    public void setNumberOfManyShots(Integer[] numberOfManyShots) {
-        this.numberOfManyShots = numberOfManyShots;
-    }
+//    public String[] getDisciplines() {
+//        return disciplines;
+//    }
+//
+//    public void setDisciplines(String[] disciplines) {
+//        this.disciplines = disciplines;
+//    }
+//
+//    public Integer[] getNumberOfManyShots() {
+//        return numberOfManyShots;
+//    }
+//
+//    public void setNumberOfManyShots(Integer[] numberOfManyShots) {
+//        this.numberOfManyShots = numberOfManyShots;
+//    }
 
     public String getAbbreviation() {
         return abbreviation;
@@ -183,10 +182,10 @@ public class CompetitionEntity {
         return "CompetitionEntity{" +
                 "uuid='" + uuid + '\'' +
                 ", name='" + name + '\'' +
-                ", discipline='" + discipline + '\'' +
-                ", disciplines=" + Arrays.toString(disciplines) +
+                ", abbreviation='" + abbreviation + '\'' +
                 ", numberOfShots=" + numberOfShots +
-                ", numberOfManyShots=" + Arrays.toString(numberOfManyShots) +
+                ", disciplineList='" + disciplineList + '\'' +
+                ", numberOfManyShotsList='" + numberOfManyShotsList + '\'' +
                 ", type='" + type + '\'' +
                 ", countingMethod='" + countingMethod + '\'' +
                 ", ordering=" + ordering +

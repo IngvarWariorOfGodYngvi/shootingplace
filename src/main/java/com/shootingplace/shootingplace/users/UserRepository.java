@@ -20,4 +20,6 @@ public interface UserRepository {
     boolean existsByPinCode(String pinCode);
 
     boolean existsBySecondName(String secondName);
+
+    void delete(UserEntity entity);
 }

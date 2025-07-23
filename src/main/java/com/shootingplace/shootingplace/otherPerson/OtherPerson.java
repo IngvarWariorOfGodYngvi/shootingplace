@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class OtherPerson {
 
+    private String id;
     private String firstName;
     private String secondName;
     private String phoneNumber;
@@ -21,6 +22,14 @@ public class OtherPerson {
 
     private Club club;
     private String weaponPermissionNumber;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getFirstName() {
         return firstName;
@@ -85,7 +94,10 @@ public class OtherPerson {
     public void setMemberPermissions(MemberPermissions memberPermissions) {
         this.memberPermissions = memberPermissions;
     }
-
+    public String getFullName() {
+        return this.getSecondName().replaceAll(" ", "") + ' ' +
+                this.getFirstName().replaceAll(" ", "");
+    }
     @Override
     public String toString() {
         return "OtherPerson{" +

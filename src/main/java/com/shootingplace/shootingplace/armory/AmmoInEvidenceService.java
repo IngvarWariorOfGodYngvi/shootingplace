@@ -105,6 +105,11 @@ public class AmmoInEvidenceService {
                         .filter(f -> f.getCaliberUUID().equals(ammoUsedToEvidenceEntity.getCaliberUUID()))
                         .findFirst()
                         .orElseThrow(EntityNotFoundException::new);
+                // Lista jest zablokowana - nie nastąpi dodanie amunicji do listy
+                if (ammoInEvidenceEntity.isLocked()) {
+                    LOG.info("Lista z kalibrem jest zablokowana - nie można dodać amunicji do listy");
+                    return false;
+                }
 
                 List<AmmoUsedToEvidenceEntity> ammoUsedToEvidenceEntityList = ammoInEvidenceEntity.getAmmoUsedToEvidenceEntityList();
                 if (ammoUsedToEvidenceEntityList.stream().noneMatch(f -> f.getName().equals(ammoUsedToEvidenceEntity.getName()))) {

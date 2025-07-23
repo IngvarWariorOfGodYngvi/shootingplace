@@ -97,10 +97,8 @@ public class ClubService {
         if (club.getCity() != null && !club.getCity().isEmpty()) {
             clubEntity.setCity(club.getCity());
         }
-        if (id == 1) {
-            if (club.getLicenseNumber() != null && !club.getLicenseNumber().isEmpty()) {
-                clubEntity.setLicenseNumber(club.getLicenseNumber());
-            }
+        if (club.getLicenseNumber() != null && !club.getLicenseNumber().isEmpty()) {
+            clubEntity.setLicenseNumber(club.getLicenseNumber());
         }
         clubRepository.save(clubEntity);
         return ResponseEntity.ok("Edytowano Klub");
@@ -188,7 +186,7 @@ public class ClubService {
     }
 
     public ResponseEntity<?> deleteClub(Integer id, String pinCode) throws NoUserPermissionException {
-        if (id == 2  || id == 1) {
+        if (id == 2 || id == 1) {
             return ResponseEntity.badRequest().body("Nie można usunąć tego Klubu");
         }
         ClubEntity one = clubRepository.getOne(id);

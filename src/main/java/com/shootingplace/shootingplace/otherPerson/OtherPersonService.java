@@ -110,7 +110,7 @@ public class OtherPersonService {
     }
 
     public OtherPersonEntity addPerson(String club, OtherPerson person) {
-
+        System.out.println(club);
         boolean match = clubRepository.findAll().stream().anyMatch(a -> a.getShortName().equals(club));
         ClubEntity clubEntity;
         if (club.isEmpty()) {

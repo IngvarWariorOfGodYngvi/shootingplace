@@ -26,6 +26,10 @@ public class GunStoreEntity {
     @OrderBy("caliber ASC, modelName ASC")
     private List<GunEntity> gunEntityList;
 
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("caliber ASC, modelName ASC")
+    private List<GunEntity> removedGunEntityList;
+
     public String getUuid() {
         return uuid;
     }
@@ -44,5 +48,13 @@ public class GunStoreEntity {
 
     public void setGunEntityList(List<GunEntity> gunEntityList) {
         this.gunEntityList = gunEntityList;
+    }
+
+    public List<GunEntity> getRemovedGunEntityList() {
+        return removedGunEntityList;
+    }
+
+    public void setRemovedGunEntityList(List<GunEntity> removedGunEntityList) {
+        this.removedGunEntityList = removedGunEntityList;
     }
 }

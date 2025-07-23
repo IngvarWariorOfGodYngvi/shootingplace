@@ -11,6 +11,7 @@ import org.hibernate.annotations.GenericGenerator;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -35,14 +36,31 @@ public class UserEntity extends Person {
     @OneToMany
     private List<BarCodeCardEntity> barCodeCardList;
 
-    private boolean superUser;
-
     private boolean active;
     @OrderBy("dayNow DESC, timeNow DESC")
-    @ManyToMany
+    @OneToMany(orphanRemoval = true)
     private List<ChangeHistoryEntity> changeHistoryEntities;
 
-    private String subType;
+    private String userPermissionsList;
+
+    public List<String> getUserPermissionsList() {
+        List<String> vals = new ArrayList<>();
+        if (userPermissionsList != null) {
+            for (String s : userPermissionsList.split(";")) {
+                vals.add(String.valueOf(s));
+            }
+        }
+        return vals;
+    }
+
+    public void setUserPermissionsList(List<String> userPermissionsList) {
+        String value = "";
+        for (String f : userPermissionsList) {
+            value = value.concat(f + ";");
+        }
+        this.userPermissionsList = value;
+    }
+
 
     @Nullable
     public MemberEntity getMember() {
@@ -51,14 +69,6 @@ public class UserEntity extends Person {
 
     public void setMember(MemberEntity member) {
         this.member = member;
-    }
-
-    public String getSubType() {
-        return subType;
-    }
-
-    public void setSubType(String subType) {
-        this.subType = subType;
     }
 
     public String getUuid() {
@@ -107,14 +117,6 @@ public class UserEntity extends Person {
         this.otherID = otherID;
     }
 
-    public boolean isSuperUser() {
-        return superUser;
-    }
-
-    public void setSuperUser(boolean superUser) {
-        this.superUser = superUser;
-    }
-
     public String getPinCode() {
         return pinCode;
     }
@@ -134,14 +136,19 @@ public class UserEntity extends Person {
     @Override
     public String toString() {
         return "UserEntity{" +
-                "firstName='" + firstName + '\'' +
+                "uuid='" + uuid + '\'' +
+                ", member=" + member +
+                ", firstName='" + firstName + '\'' +
                 ", secondName='" + secondName + '\'' +
-                ", legitimationNumber=" + otherID +
-                ", superUser=" + superUser +
+                ", otherID=" + otherID +
+                ", pinCode='" + pinCode + '\'' +
+                ", barCodeCardList=" + barCodeCardList +
                 ", active=" + active +
-                ", subType='" + subType + '\'' +
+                ", changeHistoryEntities=" + changeHistoryEntities +
+                ", userPermissionsList='" + userPermissionsList + '\'' +
                 '}';
     }
+
     public String getFullName() {
         return this.secondName + ' ' + this.firstName;
     }

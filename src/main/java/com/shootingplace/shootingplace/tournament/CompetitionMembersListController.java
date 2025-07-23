@@ -23,7 +23,6 @@ public class CompetitionMembersListController {
     private final AmmoUsedService ammoUsedService;
     private final ScoreService scoreService;
     private final CompetitionMembersListRepository competitionMembersListRepository;
-
     private final ShootingPacketService shootingPacketService;
 
     public CompetitionMembersListController(CompetitionMembersListService competitionMembersListService, AmmoUsedService ammoUsedService, ScoreService scoreService, CompetitionMembersListRepository competitionMembersListRepository, ShootingPacketService shootingPacketService) {
@@ -32,11 +31,6 @@ public class CompetitionMembersListController {
         this.scoreService = scoreService;
         this.competitionMembersListRepository = competitionMembersListRepository;
         this.shootingPacketService = shootingPacketService;
-    }
-
-    @PatchMapping("/setCompetitionUUIDToCompetitionMemberList")
-    public ResponseEntity<?> setCompetitionUUIDToCompetitionMemberList() {
-        return competitionMembersListService.setCompetitionUUIDToCompetitionMemberList();
     }
 
     @GetMapping("/getShooterStarts")
@@ -142,10 +136,8 @@ public class CompetitionMembersListController {
     @Transactional
     @PostMapping("/removeMember")
     public ResponseEntity<?> removeMemberFromList(@RequestParam List<String> competitionNameList, @RequestParam int legitimationNumber, @RequestParam @Nullable int otherPerson) {
-
         List<String> list = new ArrayList<>();
         competitionNameList.forEach(e -> list.add(competitionMembersListService.removeScoreFromList(e.replaceAll("\\.", ","), legitimationNumber, otherPerson)));
-
         if (!list.isEmpty()) {
             return ResponseEntity.ok(list);
         } else

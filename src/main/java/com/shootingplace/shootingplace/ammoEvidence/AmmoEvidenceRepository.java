@@ -39,4 +39,8 @@ public interface AmmoEvidenceRepository {
 
     @Query(nativeQuery = true, value = "Select * from shootingplace.ammo_evidence_entity where (date between (:firstDate) and (:secondDate))")
     List<AmmoEvidenceEntity> getAllDateBetween(@Param("firstDate") LocalDate firstDate, @Param("secondDate") LocalDate secondDate);
+
+    AmmoEvidenceEntity getByOpenTrue();
+
+    List<AmmoEvidenceEntity> findAllByLockedFalse();
 }

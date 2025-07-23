@@ -3,11 +3,13 @@ package com.shootingplace.shootingplace.competition;
 import com.shootingplace.shootingplace.score.ScoreService;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.users.UserSubType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -62,7 +64,8 @@ public class CompetitionController {
     @Transactional
     @PutMapping("/update")
     public ResponseEntity<?> updateCompetition(@RequestParam String uuid, @RequestBody Competition competition, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode,acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return competitionService.updateCompetition(uuid, competition, pinCode);
         } else {
@@ -72,7 +75,8 @@ public class CompetitionController {
     @Transactional
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteCompetition(@RequestParam String uuid, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode,acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return competitionService.deleteCompetition(uuid, pinCode);
         } else {

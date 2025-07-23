@@ -1,4 +1,9 @@
 {
+  "dateTime": {
+    "dateTime": "ActualDateTime",
+    "type": "java.time.LocalDateTime",
+    "description": "Actual date time."
+  },
   "properties": [
     {
       "name": "licenseDate",

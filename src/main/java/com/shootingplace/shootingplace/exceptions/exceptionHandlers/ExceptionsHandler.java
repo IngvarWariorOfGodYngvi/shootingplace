@@ -26,19 +26,19 @@ public class ExceptionsHandler {
     @ExceptionHandler(value = ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public String handleConstraintViolationException(Exception ex) {
-        LOG.error(ex.getMessage() + " Wprowadzono nieprawidłowe dane");
-        return " Wprowadzono nieprawidłowe dane";
+        LOG.error("Wprowadzono nieprawidłowe dane");
+        return "Wprowadzono nieprawidłowe dane";
     }
     @ExceptionHandler(value = NoPersonToAmmunitionException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public String handleNoPersonToAmmunitionException(NoPersonToAmmunitionException ex) {
-        LOG.error(ex.getMessage());
+        LOG.error("Wprowadź osobę by wydać amunicję.");
         return "Wprowadź osobę by wydać amunicję.";
     }
     @ExceptionHandler(value = NoUserPermissionException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public String handleNoPermissionException(NoUserPermissionException ex) {
-        LOG.error(ex.getMessage());
+        LOG.error("Brak uprawnień.");
         return "Brak uprawnień.";
     }
 

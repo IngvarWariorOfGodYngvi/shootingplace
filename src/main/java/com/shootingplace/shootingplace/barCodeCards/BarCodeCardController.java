@@ -20,9 +20,4 @@ public class BarCodeCardController {
         return barCodeCardService.createNewCard(barCode, uuid, pinCode);
     }
 
-    @GetMapping("/")
-    public ResponseEntity<?> findAdminMasterCode(@RequestParam String code) {
-        return barCodeCardService.findAdminCode(code);
-    }
-
 }

@@ -1,10 +1,10 @@
 package com.shootingplace.shootingplace.configurations;
 
-import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordsService;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceService;
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardService;
-import com.shootingplace.shootingplace.enums.UserSubType;
+import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordsService;
+import com.shootingplace.shootingplace.users.UserSubType;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberService;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
@@ -23,7 +23,14 @@ public class ScheduledTasks {
     private final AmmoUsedService ammoUsedService;
     private final RegistrationRecordsService registrationRecordsService;
 
-    public ScheduledTasks(WorkingTimeEvidenceService workRepo, MemberService memberServ, HistoryService historyServ, BarCodeCardService barCodeCardServ, AmmoEvidenceService ammoEvidenceService, AmmoUsedService ammoUsedService, RegistrationRecordsService registrationRecordsService) {
+    public ScheduledTasks(WorkingTimeEvidenceService workRepo,
+                          MemberService memberServ,
+                          HistoryService historyServ,
+                          BarCodeCardService barCodeCardServ,
+                          AmmoEvidenceService ammoEvidenceService,
+                          AmmoUsedService ammoUsedService,
+                          RegistrationRecordsService registrationRecordsService
+                          ) {
         this.workServ = workRepo;
         this.memberServ = memberServ;
         this.historyServ = historyServ;
@@ -31,6 +38,7 @@ public class ScheduledTasks {
         this.ammoEvidenceService = ammoEvidenceService;
         this.ammoUsedService = ammoUsedService;
         this.registrationRecordsService = registrationRecordsService;
+
     }
 
     @Transactional
@@ -77,9 +85,12 @@ public class ScheduledTasks {
     public void setEndTimeToAllRegistrationRecordEntity() {
         registrationRecordsService.setEndTimeToAllRegistrationRecordEntity();
     }
-//    @Scheduled(cron = "0 0 0 * * *")
-//    public void checkAdult() {
-//        memberServ.automateChangeAdult();
+
+//    @Scheduled(cron = "0/30 * * * * ?")
+//    public void runPowerShell() throws InterruptedException, IOException {
+//
+//
+//
 //    }
 
 }

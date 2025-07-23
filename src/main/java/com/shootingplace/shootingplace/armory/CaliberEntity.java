@@ -24,6 +24,7 @@ public class CaliberEntity {
 
     private String name;
     private Integer quantity;
+    private boolean active;
     @OneToMany
     private List<CaliberUsedEntity> ammoUsed;
     @OneToMany
@@ -82,5 +83,13 @@ public class CaliberEntity {
 
     public void setAmmoAdded(List<CalibersAddedEntity> ammoAdded) {
         this.ammoAdded = ammoAdded;
+    }
+
+    public void changeActive(){
+        this.active = !this.active;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 }

@@ -34,80 +34,81 @@ public class CompetitionService {
     public List<CompetitionEntity> getAllCompetitions() {
         List<CompetitionEntity> competitionEntityList = competitionRepository.findAll().stream().sorted(Comparator.comparing(CompetitionEntity::getOrdering)).collect(Collectors.toList());
 
-        if (competitionEntityList.isEmpty()) {
-            createCompetitions();
-            LOG.info("Zostały utworzone domyślne Konkurencje");
-        }
+//        if (competitionEntityList.isEmpty()) {
+//            createCompetitions();
+//            LOG.info("Zostały utworzone domyślne Konkurencje");
+//        }
         return competitionEntityList;
     }
 
-    private void createCompetitions() {
-
-        competitionRepository.save(CompetitionEntity.builder()
-                .uuid(UUID.randomUUID().toString())
-                .name("25m Pistolet sportowy 10 strzałów OPEN")
-                .numberOfShots(10)
-                .type(CompetitionType.OPEN.getName())
-                .discipline(Discipline.PISTOL.getName())
-                .countingMethod(CountingMethod.NORMAL.getName())
-                .ordering(3)
-                .build());
-        competitionRepository.save(CompetitionEntity.builder()
-                .uuid(UUID.randomUUID().toString())
-                .name("25m Pistolet centralnego zapłonu 10 strzałów OPEN")
-                .numberOfShots(10)
-                .type(CompetitionType.OPEN.getName())
-                .discipline(Discipline.PISTOL.getName())
-                .countingMethod(CountingMethod.NORMAL.getName())
-                .ordering(4)
-                .build());
-        competitionRepository.save(CompetitionEntity.builder()
-                .uuid(UUID.randomUUID().toString())
-                .name("10m Pistolet pneumatyczny 10 strzałów OPEN")
-                .numberOfShots(10)
-                .type(CompetitionType.OPEN.getName())
-                .discipline(Discipline.PISTOL.getName())
-                .countingMethod(CountingMethod.NORMAL.getName())
-                .ordering(2)
-                .build());
-        competitionRepository.save(CompetitionEntity.builder()
-                .uuid(UUID.randomUUID().toString())
-                .name("50m Pistolet dowolny 10 strzałów OPEN")
-                .numberOfShots(10)
-                .type(CompetitionType.OPEN.getName())
-                .discipline(Discipline.PISTOL.getName())
-                .countingMethod(CountingMethod.NORMAL.getName())
-                .ordering(5)
-                .build());
-        competitionRepository.save(CompetitionEntity.builder()
-                .uuid(UUID.randomUUID().toString())
-                .name("10m Karabin pneumatyczny 10 strzałów OPEN")
-                .numberOfShots(10)
-                .type(CompetitionType.OPEN.getName())
-                .discipline(Discipline.RIFLE.getName())
-                .countingMethod(CountingMethod.NORMAL.getName())
-                .ordering(1)
-                .build());
-        LOG.info("Stworzono encje konkurencji");
-    }
+//    private void createCompetitions() {
+//
+//        competitionRepository.save(CompetitionEntity.builder()
+//                .uuid(UUID.randomUUID().toString())
+//                .name("25m Pistolet sportowy 10 strzałów OPEN")
+//                .numberOfShots(10)
+//                .type(CompetitionType.OPEN.getName())
+////                .discipline(Discipline.PISTOL.getName())
+//                .countingMethod(CountingMethod.NORMAL.getName())
+//                .ordering(3)
+//                .build());
+//
+//        competitionRepository.save(CompetitionEntity.builder()
+//                .uuid(UUID.randomUUID().toString())
+//                .name("25m Pistolet centralnego zapłonu 10 strzałów OPEN")
+//                .numberOfShots(10)
+//                .type(CompetitionType.OPEN.getName())
+////                .discipline(Discipline.PISTOL.getName())
+//                .countingMethod(CountingMethod.NORMAL.getName())
+//                .ordering(4)
+//                .build());
+//        competitionRepository.save(CompetitionEntity.builder()
+//                .uuid(UUID.randomUUID().toString())
+//                .name("10m Pistolet pneumatyczny 10 strzałów OPEN")
+//                .numberOfShots(10)
+//                .type(CompetitionType.OPEN.getName())
+//                .discipline(Discipline.PISTOL.getName())
+//                .countingMethod(CountingMethod.NORMAL.getName())
+//                .ordering(2)
+//                .build());
+//        competitionRepository.save(CompetitionEntity.builder()
+//                .uuid(UUID.randomUUID().toString())
+//                .name("50m Pistolet dowolny 10 strzałów OPEN")
+//                .numberOfShots(10)
+//                .type(CompetitionType.OPEN.getName())
+//                .discipline(Discipline.PISTOL.getName())
+//                .countingMethod(CountingMethod.NORMAL.getName())
+//                .ordering(5)
+//                .build());
+//        competitionRepository.save(CompetitionEntity.builder()
+//                .uuid(UUID.randomUUID().toString())
+//                .name("10m Karabin pneumatyczny 10 strzałów OPEN")
+//                .numberOfShots(10)
+//                .type(CompetitionType.OPEN.getName())
+//                .discipline(Discipline.RIFLE.getName())
+//                .countingMethod(CountingMethod.NORMAL.getName())
+//                .ordering(1)
+//                .build());
+//        LOG.info("Stworzono encje konkurencji");
+//    }
 
     public ResponseEntity<?> createNewCompetition(Competition competition) {
         List<String> list = competitionRepository.findAll().stream().map(CompetitionEntity::getName).collect(Collectors.toList());
-        int size = (int) competitionRepository.count() + 1;
-        LOG.info(competition.getName().trim().toLowerCase(Locale.ROOT));
+        int size = competitionRepository.findAll().stream().max(Comparator.comparing(CompetitionEntity::getOrdering)).get().getOrdering() + 1;
+        LOG.info(competition.getName().replaceAll("\\s+", " ").trim().toLowerCase(Locale.ROOT));
         if (list.stream().anyMatch(a -> a.trim().toLowerCase(Locale.ROOT).equals(competition.getName().trim().toLowerCase(Locale.ROOT)))) {
             LOG.info("Taka konkurencja już istnieje");
             return ResponseEntity.badRequest().body("Taka konkurencja już istnieje");
         }
-        List<String> disciplines = List.of(competition.getDisciplines());
+        List<String> disciplines = competition.getDisciplineList();
         CompetitionEntity c = CompetitionEntity.builder()
-                .name(competition.getName())
+                .name(competition.getName().replaceAll("\\s+", " ").trim())
                 .abbreviation(competition.getAbbreviation())
-                .discipline(competition.getDiscipline())
+//                .discipline(competition.getDiscipline())
                 .ordering(size)
                 .type(competition.getType())
                 .countingMethod(competition.getCountingMethod())
-                .caliberUUID(competition.getCaliberUUID())
+                .caliberUUID(!competition.getCaliberUUID().isEmpty()?competition.getCaliberUUID():null)
                 .numberOfShots(competition.getNumberOfShots())
                 .numberOfManyShotsList(null)
                 .build();
@@ -122,22 +123,24 @@ public class CompetitionService {
         competitionEntity.setOrdering(competition.getOrdering() != null ? competition.getOrdering() : competitionEntity.getOrdering());
         competitionEntity.setPracticeShots(competition.getPracticeShots() != null ? competition.getPracticeShots() : competitionEntity.getPracticeShots());
         competitionEntity.setCaliberUUID(competition.getCaliberUUID() != null ? competition.getCaliberUUID() : competitionEntity.getCaliberUUID());
-        if (competition.getName() != null && !competition.getName().equals("null")) {
-            if (competitionRepository.findByNameEquals(competition.getName()).isEmpty()) {
-                competitionEntity.setName(competition.getName());
+        if (competition.getName() != null && !competition.getName().isEmpty()) {
+            if (competitionRepository.existsByName(competition.getName()) && !competitionEntity.getName().equals(competition.getName())) {
+                return ResponseEntity.badRequest().body("Taka nazwa już istnieje i nie można zaktualizować konkurencji");
             } else {
-                return ResponseEntity.badRequest().body("taka nazwa już istnieje i nie można zaktualizować konkurencji");
+                if (!competitionEntity.getName().equals(competition.getName())) {
+                    competitionEntity.setName(competition.getName());
+                }
             }
         }
         competitionEntity.setNumberOfShots(competition.getNumberOfShots() != null ? competition.getNumberOfShots() : competitionEntity.getNumberOfShots());
         competitionEntity.setCountingMethod(competition.getCountingMethod() != null ? competition.getCountingMethod() : competitionEntity.getCountingMethod());
         competitionEntity.setType(competition.getType() != null ? competition.getType() : competitionEntity.getType());
 
-        if (competition.getDiscipline() != null) {
-            competition.setDiscipline(competition.getDiscipline().equals("") ? null : competition.getDiscipline());
-            competitionEntity.setDiscipline(competition.getDiscipline());
-        }
-        competition.setDisciplineList(competition.getDisciplineList().size() > 1 ? competition.getDisciplineList() : null);
+//        if (competition.getDiscipline() != null) {
+//            competition.setDiscipline(competition.getDiscipline().equals("") ? null : competition.getDiscipline());
+//            competitionEntity.setDiscipline(competition.getDiscipline());
+//        }
+        competition.setDisciplineList(competition.getDisciplineList());
         competitionEntity.setDisciplineList(competition.getDisciplineList() != null ? competition.getDisciplineList() : competitionEntity.getDisciplineList());
         competitionRepository.save(competitionEntity);
         ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, competitionEntity, HttpStatus.OK, "update Competition", "Zaktualizowano konkurencję");
@@ -154,7 +157,7 @@ public class CompetitionService {
                         e.setNumberOfShots(competition.getNumberOfShots() != null ? competition.getNumberOfShots() : e.getNumberOfShots());
                         e.setCountingMethod(competition.getCountingMethod() != null ? competition.getCountingMethod() : e.getCountingMethod());
                         e.setType(competition.getType() != null ? competition.getType() : e.getType());
-                        e.setDiscipline(competition.getDiscipline() != null ? competition.getDiscipline() : e.getDiscipline());
+//                        e.setDiscipline(competition.getDiscipline() != null ? competition.getDiscipline() : e.getDiscipline());
                         e.setDisciplineList(competition.getDisciplineList() != null ? competition.getDisciplineList() : e.getDisciplineList());
                         competitionMembersListRepository.save(e);
                     });

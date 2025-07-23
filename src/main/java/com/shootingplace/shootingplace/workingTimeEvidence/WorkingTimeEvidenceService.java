@@ -4,7 +4,7 @@ import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.Mapping;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
-import com.shootingplace.shootingplace.enums.UserSubType;
+import com.shootingplace.shootingplace.users.UserSubType;
 import com.shootingplace.shootingplace.file.FilesEntity;
 import com.shootingplace.shootingplace.file.FilesRepository;
 import com.shootingplace.shootingplace.file.IFile;
@@ -60,9 +60,7 @@ public class WorkingTimeEvidenceService {
 
         // szukam osoby do której należy karta
         UserEntity user = userRepository.findById(belongsTo).orElse(null);
-//        if (user != null) {
-//            recordsService.createRecordInBook(user.getOtherID(), 0);
-//        }
+
         // biorę wszystkie niezamknięte wiersze z obecnego miesiąca gdzie występuje osoba
         WorkingTimeEvidenceEntity entity1 = workRepo.findAll()
                 .stream()
@@ -70,10 +68,6 @@ public class WorkingTimeEvidenceService {
                 .filter(f -> f.getStart().getMonth().equals(LocalDateTime.now().getMonth()))
                 .filter(f -> f.getUser().equals(user))
                 .findFirst().orElse(null);
-//
-//        WorkingTimeEvidenceEntity entity1 = all.stream()
-//                .filter(Objects::nonNull)
-//                .findFirst().orElse(null);
 
         // jeżeli jedna osoba jest zalogowana jako pracownik a odbije się jako zarząd to pracownika ma zamykać a otwierać zarząd
 
@@ -92,79 +86,6 @@ public class WorkingTimeEvidenceService {
             msg = openWTE(barCode, number);
             return ResponseEntity.ok(msg);
         }
-    }
-
-    String openWTE(BarCodeCardEntity barCode, String number) {
-        String msg;
-        String belongsTo = barCode.getBelongsTo();
-        UserEntity user = userRepository.findById(belongsTo).orElse(null);
-        if (user == null) {
-            msg = "nie znaleziono osoby o tym numerze karty";
-        } else {
-            LocalDateTime start = LocalDateTime.now();
-
-            String subType = barCode.getSubType();
-
-            WorkingTimeEvidenceEntity entity = WorkingTimeEvidenceEntity.builder()
-                    .start(start)
-                    .stop(null)
-                    .cardNumber(number)
-                    .isClose(false)
-                    .user(user)
-                    .workType(subType).build();
-
-            workRepo.save(entity);
-            msg = user.getFirstName() + " " + user.getSecondName() + " Witaj w Pracy";
-        }
-        barCode.addCountUse();
-        barCodeCardRepo.save(barCode);
-        log.info(msg);
-        return msg;
-    }
-
-
-    String closeWTE(WorkingTimeEvidenceEntity entity, boolean auto, BarCodeCardEntity barCode) {
-        String msg;
-
-        LocalDateTime stop = LocalDateTime.now();
-        entity.setAutomatedClosed(false);
-        if (auto) {
-            if (entity.getStart().getHour() > 20) {
-                stop = entity.getStart().plusMinutes(1);
-            } else {
-                stop = LocalDateTime.of(entity.getStart().getYear(), entity.getStart().getMonth(), entity.getStart().getDayOfMonth(), 20, 0);
-            }
-            entity.setAutomatedClosed(true);
-        }
-        if (!barCode.isMaster()) {
-            barCode.setActive(false);
-            barCodeCardRepo.save(barCode);
-        }
-
-        LocalDateTime temp = getTime(entity.getStart(), true);
-        LocalDateTime temp1 = getTime(stop, false);
-
-        entity.setStop(stop);
-        String s = countTime(temp, temp1);
-        int i = Integer.parseInt(s.substring(0, 2));
-
-        if (i > 8) {
-            entity.setToClarify(true);
-        }
-        if (i > 24) {
-            i = i % 24;
-            int j = Integer.parseInt(s.substring(3, 5));
-            int k = Integer.parseInt(s.substring(6));
-
-            s = String.format("%02d:%02d:%02d", i, j, k);
-        }
-
-        entity.setWorkTime(s);
-        entity.closeWTE();
-        workRepo.save(entity);
-        msg = entity.getUser().getFullName() + " Opuścił Pracę";
-        log.info(msg);
-        return msg;
     }
 
     public String countTime(LocalDateTime start, LocalDateTime stop) {
@@ -356,7 +277,7 @@ public class WorkingTimeEvidenceService {
                     .uuid(e.getUuid())
                     .firstName(e.getFirstName())
                     .secondName(e.getSecondName())
-                    .subType(e.getSubType())
+                    .subType(e.getUserPermissionsList().toString())
                     .WTEdtoList(pl2)
                     .workTime(String.valueOf(format))
                     .build();
@@ -385,12 +306,12 @@ public class WorkingTimeEvidenceService {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity userEntity = userRepository.findAll()
                 .stream()
-                .filter(f -> f.getSubType().contains(UserSubType.MANAGEMENT_CEO.getName()))
+                .filter(f -> f.getUserPermissionsList().contains(UserSubType.CEO.getName()))
                 .filter(f -> f.getPinCode().equals(pin))
                 .findFirst()
                 .orElse(null);
 
-        if (userEntity != null && userEntity.getSubType().contains(UserSubType.MANAGEMENT_CEO.getName())) {
+        if (userEntity != null && userEntity.getUserPermissionsList().contains(UserSubType.CEO.getName())) {
             List<WorkingTimeEvidenceEntity> list = new ArrayList<>();
             uuidList.forEach(e -> list.add(workRepo.findById(e).orElseThrow(EntityNotFoundException::new)));
             list.forEach(e -> e.setAccepted(true));
@@ -409,7 +330,7 @@ public class WorkingTimeEvidenceService {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity userEntity = userRepository.findByPinCode(pin);
 
-        if (userEntity != null && userEntity.getSubType().contains(UserSubType.MANAGEMENT_CEO.getName())) {
+        if (userEntity != null && userEntity.getUserPermissionsList().contains(UserSubType.CEO.getName())) {
 
             String month = list.get(0).getStart().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).toLowerCase(Locale.ROOT);
             String workType = workRepo.getOne(list.get(0).getUuid()).getWorkType();
@@ -458,11 +379,7 @@ public class WorkingTimeEvidenceService {
     }
 
     public boolean isInWork(UserEntity userEntity) {
-//        if (userEntity.getSubType().equals("Admin")) {
-//            return true;
-//        } else {
-            return workRepo.findAll().stream().filter(f -> !f.isClose()).anyMatch(e -> e.getUser().equals(userEntity));
-//        }
+        return workRepo.findAll().stream().filter(f -> !f.isClose()).anyMatch(e -> e.getUser().equals(userEntity));
     }
 
     public ResponseEntity<?> getAllWorkingYear() {
@@ -527,5 +444,124 @@ public class WorkingTimeEvidenceService {
                 break;
         }
         return pl;
+    }
+
+    public ResponseEntity<?> createNewWTEByPin(String pinCode) {
+        String msg;
+        String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
+        UserEntity user = userRepository.findByPinCode(pin);
+        if (user == null) {
+            msg = "Brak użytkownika";
+            log.info(msg);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(msg);
+        }
+
+        WorkingTimeEvidenceEntity entity1 = workRepo.findAll()
+                .stream()
+                .filter(f -> !f.isClose())
+                .filter(f -> f.getStart().getMonth().equals(LocalDateTime.now().getMonth()))
+                .filter(f -> f.getUser().equals(user))
+                .findFirst().orElse(null);
+
+        if (entity1 != null) {
+            return ResponseEntity.ok("użutkownik znajduje się już na liście");
+        } else {
+            msg = openWTEByPin( user);
+            return ResponseEntity.ok(msg);
+        }
+    }
+    String openWTE(BarCodeCardEntity barCode, String number) {
+        String msg;
+        String belongsTo = barCode.getBelongsTo();
+        UserEntity user = userRepository.findById(belongsTo).orElse(null);
+        if (user == null) {
+            msg = "nie znaleziono osoby o tym numerze karty";
+        } else {
+            LocalDateTime start = LocalDateTime.now();
+
+            String subType = barCode.getSubType();
+
+            WorkingTimeEvidenceEntity entity = WorkingTimeEvidenceEntity.builder()
+                    .start(start)
+                    .stop(null)
+                    .cardNumber(number)
+                    .isClose(false)
+                    .user(user)
+                    .workType(subType).build();
+
+            workRepo.save(entity);
+            msg = user.getFirstName() + " " + user.getSecondName() + " Witaj w Pracy";
+        }
+        barCode.addCountUse();
+        barCodeCardRepo.save(barCode);
+        log.info(msg);
+        return msg;
+    }
+
+    String openWTEByPin(UserEntity user) {
+        String msg;
+        if (user == null) {
+            msg = "nie znaleziono osoby o tym numerze karty";
+        } else {
+            LocalDateTime start = LocalDateTime.now();
+
+            WorkingTimeEvidenceEntity entity = WorkingTimeEvidenceEntity.builder()
+                    .start(start)
+                    .stop(null)
+                    .cardNumber(user.getBarCodeCardList().get(0).getBarCode())
+                    .isClose(false)
+                    .user(user)
+                    .workType(user.getBarCodeCardList().get(0).getSubType()).build();
+
+            workRepo.save(entity);
+            msg = user.getFirstName() + " " + user.getSecondName() + " Witaj w Pracy";
+        }
+        log.info(msg);
+        return msg;
+    }
+
+
+    String closeWTE(WorkingTimeEvidenceEntity entity, boolean auto, BarCodeCardEntity barCode) {
+        String msg;
+
+        LocalDateTime stop = LocalDateTime.now();
+        entity.setAutomatedClosed(false);
+        if (auto) {
+            if (entity.getStart().getHour() > 20) {
+                stop = entity.getStart().plusMinutes(1);
+            } else {
+                stop = LocalDateTime.of(entity.getStart().getYear(), entity.getStart().getMonth(), entity.getStart().getDayOfMonth(), 20, 0);
+            }
+            entity.setAutomatedClosed(true);
+        }
+        if (!barCode.isMaster()) {
+            barCode.setActive(false);
+            barCodeCardRepo.save(barCode);
+        }
+
+        LocalDateTime temp = getTime(entity.getStart(), true);
+        LocalDateTime temp1 = getTime(stop, false);
+
+        entity.setStop(stop);
+        String s = countTime(temp, temp1);
+        int i = Integer.parseInt(s.substring(0, 2));
+
+        if (i > 8) {
+            entity.setToClarify(true);
+        }
+        if (i > 24) {
+            i = i % 24;
+            int j = Integer.parseInt(s.substring(3, 5));
+            int k = Integer.parseInt(s.substring(6));
+
+            s = String.format("%02d:%02d:%02d", i, j, k);
+        }
+
+        entity.setWorkTime(s);
+        entity.closeWTE();
+        workRepo.save(entity);
+        msg = entity.getUser().getFullName() + " Opuścił Pracę";
+        log.info(msg);
+        return msg;
     }
 }

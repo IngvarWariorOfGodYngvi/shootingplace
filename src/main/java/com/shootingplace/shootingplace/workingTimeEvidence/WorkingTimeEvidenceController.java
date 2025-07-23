@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.workingTimeEvidence;
 
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.users.UserSubType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
@@ -30,6 +31,11 @@ public class WorkingTimeEvidenceController {
     public ResponseEntity<?> startStopWork(@RequestParam String number) {
 
         return workService.createNewWTE(number);
+    }
+    @PostMapping("/byPin")
+    public ResponseEntity<?> startStopWorkByPin(@RequestParam String pinCode) {
+
+        return workService.createNewWTEByPin(pinCode);
     }
 
     @GetMapping("/")
@@ -70,7 +76,8 @@ public class WorkingTimeEvidenceController {
     @Transactional
     @PatchMapping("/accept")
     public ResponseEntity<?> acceptWorkingTime(@RequestParam List<String> uuidList, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = List.of(UserSubType.CEO.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode,acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return workService.acceptWorkingTime(uuidList, pinCode);
         } else {

@@ -2,12 +2,15 @@ package com.shootingplace.shootingplace.contributions;
 
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.users.UserSubType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 
 @RestController
 @RequestMapping("/contribution")
@@ -25,7 +28,8 @@ public class ContributionController {
     @Transactional
     @PostMapping("/history/{memberUUID}")
     public ResponseEntity<?> addHistoryContributionRecord(@PathVariable String memberUUID, @RequestParam String date, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode,acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return contributionService.addContributionRecord(memberUUID, LocalDate.parse(date), pinCode);
         } else {
@@ -36,8 +40,8 @@ public class ContributionController {
     @Transactional
     @PatchMapping("/{memberUUID}")
     public ResponseEntity<?> addContribution(@PathVariable String memberUUID, @RequestParam String pinCode, @RequestParam Integer contributionCount) throws NoUserPermissionException {
-
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode,acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return contributionService.addContribution(memberUUID, LocalDate.now(), pinCode, contributionCount);
         } else {
@@ -48,7 +52,8 @@ public class ContributionController {
     @Transactional
     @PutMapping("/edit")
     public ResponseEntity<?> editContribution(@RequestParam String memberUUID, @RequestParam String contributionUUID, @RequestParam String paymentDay, @RequestParam String validThru, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode,acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             LocalDate parsedPaymentDay = null;
             if (paymentDay != null && !paymentDay.isEmpty() && !paymentDay.equals("null")) {
@@ -68,7 +73,8 @@ public class ContributionController {
     @Transactional
     @PatchMapping("/remove/{memberUUID}")
     public ResponseEntity<?> removeContribution(@PathVariable String memberUUID, @RequestParam String contributionUUID, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode,acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return contributionService.removeContribution(memberUUID, contributionUUID, pinCode);
         } else {

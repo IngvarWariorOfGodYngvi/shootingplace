@@ -31,11 +31,8 @@ public class CompetitionMembersListEntity {
     private String attachedToTournament;
     private LocalDate date;
 
-    private String discipline;
     private Integer numberOfShots;
-    private String[] disciplines;
     private String disciplineList;
-    private Integer[] numberOfManyShots;
     private String numberOfManyShotsList;
 
     private String type;
@@ -135,14 +132,6 @@ public class CompetitionMembersListEntity {
         this.scoreList = scoreList;
     }
 
-    public String getDiscipline() {
-        return discipline;
-    }
-
-    public void setDiscipline(String discipline) {
-        this.discipline = discipline;
-    }
-
     public Integer getNumberOfShots() {
         return numberOfShots;
     }
@@ -189,22 +178,6 @@ public class CompetitionMembersListEntity {
 
     public void setCompetitionUUID(String competitionUUID) {
         this.competitionUUID = competitionUUID;
-    }
-
-    public String[] getDisciplines() {
-        return disciplines;
-    }
-
-    public void setDisciplines(String[] disciplines) {
-        this.disciplines = disciplines;
-    }
-
-    public Integer[] getNumberOfManyShots() {
-        return numberOfManyShots;
-    }
-
-    public void setNumberOfManyShots(Integer[] numberOfManyShots) {
-        this.numberOfManyShots = numberOfManyShots;
     }
 
     public Integer getPracticeShots() {

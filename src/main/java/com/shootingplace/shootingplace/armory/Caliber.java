@@ -14,7 +14,15 @@ public class Caliber {
     private Integer quantity;
     private float unitPrice;
     private float unitPriceForNotMember;
+    private boolean active;
 
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 
     public String getUuid() {
         return uuid;

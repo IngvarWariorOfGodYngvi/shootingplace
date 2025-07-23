@@ -136,8 +136,6 @@ public class TournamentService {
                 .forEach(e ->
                 {
                     if (e.getOrdering() == null) {
-                        System.out.println(e.getName());
-                        System.out.println(e.getCompetitionUUID());
                         CompetitionEntity competitionEntity = competitionRepository.getOne(e.getCompetitionUUID());
                         e.setOrdering(competitionEntity.getOrdering());
                         competitionMembersListRepository.save(e);
@@ -171,7 +169,7 @@ public class TournamentService {
     }
 
     public ResponseEntity<?> closeTournament(String tournamentUUID) {
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
         if (tournamentEntity.isOpen()) {
             LOG.info("Zawody " + tournamentEntity.getName() + " zostały zamknięte");
             tournamentEntity.setOpen(false);
@@ -514,45 +512,42 @@ public class TournamentService {
     }
 
     public String addNewCompetitionListToTournament(String tournamentUUID, String competitionUUID) {
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
-        if (tournamentEntity.isOpen()) {
-            if (competitionUUID != null) {
-                CompetitionEntity competition = competitionRepository.findById(competitionUUID).orElseThrow(EntityNotFoundException::new);
-                if (!tournamentEntity.getCompetitionsList().isEmpty()) {
-                    for (int i = 0; i < tournamentEntity.getCompetitionsList().size(); i++) {
-                        if (tournamentEntity.getCompetitionsList().get(i).getName().equals(competition.getName())) {
-                            LOG.info("konkurencja " + competition.getName() + " jest już dodana");
-                            return "konkurencja " + competition.getName() + " jest już dodana";
-                        }
-                    }
-                }
-                CompetitionMembersListEntity competitionMembersList = CompetitionMembersListEntity.builder()
-                        .name(competition.getName())
-                        .attachedToTournament(tournamentEntity.getUuid())
-                        .date(tournamentEntity.getDate())
-                        .discipline(competition.getDiscipline())
-                        .disciplines(competition.getDisciplines())
-                        .countingMethod(competition.getCountingMethod())
-                        .competitionUUID(competition.getUuid())
-                        .type(competition.getType())
-                        .numberOfShots(competition.getNumberOfShots())
-                        .WZSS(tournamentEntity.isWZSS())
-                        .ordering(competition.getOrdering())
-                        .caliberUUID(competition.getCaliberUUID())
-                        .practiceShots(competition.getPracticeShots())
-                        .build();
-                competitionMembersList.setNumberOfManyShotsList(competition.getNumberOfManyShotsList());
-                competitionMembersList.setDisciplineList(competition.getDisciplineList());
-                competitionMembersListRepository.save(competitionMembersList);
-                List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
-                competitionsList.add(competitionMembersList);
-                competitionsList.sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
-                tournamentRepository.save(tournamentEntity);
-                LOG.info("Dodano konkurencję " + competition.getName() + " do zawodów");
-                return "Dodano konkurencję " + competition.getName() + " do zawodów";
-            }
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
+
+        if (!tournamentEntity.isOpen() || competitionUUID == null) {
+            return "Nie udało się dodać konkurencji";
         }
-        return "Nie udało się dodać konkurencji";
+
+        CompetitionEntity competition = competitionRepository.getOne(competitionUUID);
+        if (!tournamentEntity.getCompetitionsList().isEmpty() && tournamentEntity.getCompetitionsList().stream().anyMatch(e -> e.getName().equals(competition.getName()))) {
+            LOG.info("konkurencja " + competition.getName() + " jest już dodana");
+            return "konkurencja " + competition.getName() + " jest już dodana";
+        }
+
+        CompetitionMembersListEntity competitionMembersList = CompetitionMembersListEntity.builder()
+                .name(competition.getName())
+                .attachedToTournament(tournamentEntity.getUuid())
+                .date(tournamentEntity.getDate())
+                .countingMethod(competition.getCountingMethod())
+                .competitionUUID(competition.getUuid())
+                .type(competition.getType())
+                .numberOfShots(competition.getNumberOfShots())
+                .WZSS(tournamentEntity.isWZSS())
+                .ordering(competition.getOrdering())
+                .caliberUUID(competition.getCaliberUUID())
+                .practiceShots(competition.getPracticeShots())
+                .build();
+        competitionMembersList.setNumberOfManyShotsList(competition.getNumberOfManyShotsList());
+        competitionMembersList.setDisciplineList(competition.getDisciplineList());
+        competitionMembersListRepository.save(competitionMembersList);
+        List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
+        competitionsList.add(competitionMembersList);
+        competitionsList.sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
+        tournamentRepository.save(tournamentEntity);
+        LOG.info("Dodano konkurencję " + competition.getName() + " do zawodów");
+        return "Dodano konkurencję " + competition.getName() + " do zawodów";
+
+
     }
 
     public List<TournamentDTO> getClosedTournaments(Pageable page) {
@@ -568,39 +563,35 @@ public class TournamentService {
         if (!tournamentRepository.existsById(tournamentUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono zawodów z tym identyfikatorem");
         }
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
-
-        if (tournamentEntity.isOpen()) {
-            if (!tournamentEntity.getCompetitionsList().isEmpty()) {
-                tournamentEntity.getCompetitionsList()
-                        .forEach(e -> e.getScoreList()
-                                .stream().filter(f -> f.getMember() != null)
-                                .forEach(a -> historyService.removeCompetitionRecord(a.getMember().getUuid(), competitionMembersListRepository.findById(a.getCompetitionMembersListEntityUUID()).orElseThrow(EntityNotFoundException::new))));
-            }
-            if (tournamentEntity.getMainArbiter() != null) {
-                historyService.removeJudgingRecord(tournamentEntity.getMainArbiter().getUuid(), tournamentEntity.getUuid());
-            }
-            if (tournamentEntity.getCommissionRTSArbiter() != null) {
-                historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentEntity.getUuid());
-            }
-            if (!tournamentEntity.getArbitersList().isEmpty()) {
-                tournamentEntity.getArbitersList().forEach(e -> historyService.removeJudgingRecord(e.getUuid(), tournamentEntity.getUuid()));
-            }
-            ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, tournamentEntity, HttpStatus.OK, "deleteTournament", "Zawody zostały usunięte - nie da się już ich przywrócić");
-            if (response.getStatusCode().equals(HttpStatus.OK)) {
-                tournamentRepository.delete(tournamentEntity);
-            }
-            return response;
-        } else {
-            return ResponseEntity.badRequest().body("Coś poszło nie tak i nie udało się usunąć zawodów");
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
+        if (!tournamentEntity.isOpen()) {
+            return ResponseEntity.badRequest().body("Nie udało się usunąć zawodów");
         }
-
+        if (!tournamentEntity.getCompetitionsList().isEmpty()) {
+            tournamentEntity.getCompetitionsList()
+                    .forEach(e -> e.getScoreList()
+                            .stream().filter(f -> f.getMember() != null)
+                            .forEach(a -> historyService.removeCompetitionRecord(a.getMember().getUuid(), competitionMembersListRepository.getOne(a.getCompetitionMembersListEntityUUID()))));
+        }
+        if (tournamentEntity.getMainArbiter() != null) {
+            historyService.removeJudgingRecord(tournamentEntity.getMainArbiter().getUuid(), tournamentEntity.getUuid());
+        }
+        if (tournamentEntity.getCommissionRTSArbiter() != null) {
+            historyService.removeJudgingRecord(tournamentEntity.getCommissionRTSArbiter().getUuid(), tournamentEntity.getUuid());
+        }
+        if (!tournamentEntity.getArbitersList().isEmpty()) {
+            tournamentEntity.getArbitersList().forEach(e -> historyService.removeJudgingRecord(e.getUuid(), tournamentEntity.getUuid()));
+        }
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, tournamentEntity, HttpStatus.OK, "deleteTournament", "Zawody zostały usunięte - nie da się już ich przywrócić");
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            tournamentRepository.delete(tournamentEntity);
+        }
+        return response;
 
     }
 
     public List<CompetitionMembersListEntity> getCompetitionsListInTournament(String tournamentUUID) {
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
-//        Map<String, String> map = new HashMap<>();
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
 
         List<CompetitionMembersListEntity> competitionsList = tournamentEntity.getCompetitionsList();
         competitionsList.sort(Comparator.comparing(CompetitionMembersListEntity::getOrdering));
@@ -611,7 +602,6 @@ public class TournamentService {
                 e.setOrdering(competitionEntity.getOrdering());
                 competitionMembersListRepository.save(e);
             }
-//            map.put(e.getUuid(), e.getName());
         });
         return competitionsList.stream().map(m -> CompetitionMembersListEntity.builder()
                 .uuid(m.getUuid())
@@ -620,7 +610,6 @@ public class TournamentService {
                 .practiceShots(m.getPracticeShots())
                 .caliberUUID(m.getCaliberUUID() != null ? caliberRepository.getOne(m.getCaliberUUID()).getUuid() : null)
                 .build()).collect(Collectors.toList());
-//        return map;
     }
 
     public ResponseEntity<?> addOthersRTSArbiters(String tournamentUUID, String memberUUID) {
@@ -671,7 +660,7 @@ public class TournamentService {
         if (!tournamentRepository.existsById(tournamentUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono zawodów z tym identyfikatorem");
         }
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
         if (tournamentEntity.isOpen()) {
 
             OtherPersonEntity otherPersonEntity = otherPersonRepository
@@ -719,7 +708,7 @@ public class TournamentService {
         if (!tournamentRepository.existsById(tournamentUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono zawodów z tym identyfikatorem");
         }
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
         if (tournamentEntity.isOpen()) {
             MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
@@ -741,7 +730,7 @@ public class TournamentService {
         if (!tournamentRepository.existsById(tournamentUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono zawodów z tym identyfikatorem");
         }
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
         if (tournamentEntity.isOpen()) {
 
             OtherPersonEntity otherPersonEntity = otherPersonRepository
@@ -766,10 +755,9 @@ public class TournamentService {
 
     public List<String> getStatistics(String tournamentUUID) {
 
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
-        List<String> list = new ArrayList<>();
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
 
-//        List<Integer> list1 = new ArrayList<>();
+        List<String> list = new ArrayList<>();
         List<String> list1 = new ArrayList<>();
         List<Integer> list2 = new ArrayList<>();
         tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().forEach(g -> {
@@ -785,8 +773,6 @@ public class TournamentService {
             }
         }));
         tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().forEach(g -> list2.add(g.getMetricNumber())));
-//        int i = list2.stream().mapToInt(v->v).max().orElseThrow(NoSuchElementException::new);
-
 
         List<ScoreEntity> list3 = new ArrayList<>();
         tournamentEntity.getCompetitionsList().forEach(e -> e.getScoreList().stream().filter(ScoreEntity::isAmmunition).forEach(list3::add));
@@ -807,9 +793,7 @@ public class TournamentService {
         if (tournamentRepository.findAll().stream().anyMatch(TournamentEntity::isOpen)) {
             return ResponseEntity.badRequest().body("Nie można otworzyć zawodów gdy inne są otwarte");
         } else {
-            TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
-
-
+            TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
             ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, tournamentEntity, HttpStatus.OK, "openTournament", "Otwarto zawody z dnia" + tournamentEntity.getDate());
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 tournamentEntity.setOpen(true);
@@ -866,17 +850,16 @@ public class TournamentService {
                 .getCompetitionsList()
                 .forEach(e -> e.getScoreList()
                         .forEach(el -> {
-                            if (list.stream().noneMatch(r->el.getMetricNumber() == (r.getMetricNumber()))) {
-                            list.add(ScoreDTO.builder()
-                                    .name(el.getName())
-                                    .metricNumber(el.getMetricNumber())
-                                            .full(el.getName() + " " + el.getMetricNumber())
-                                    .build());
+                            if (list.stream().noneMatch(r -> el.getMetricNumber() == (r.getMetricNumber()))) {
+                                list.add(ScoreDTO.builder()
+                                        .name(el.getName())
+                                        .metricNumber(el.getMetricNumber())
+                                        .full(el.getName() + " " + el.getMetricNumber())
+                                        .build());
                             }
                         }));
 
         return list.stream().distinct().sorted(Comparator.comparing(ScoreDTO::getMetricNumber)).collect(Collectors.toList());
-//        return set.stream().map(e -> ScoreDTO.builder().name(e.getName()).metricNumber(String.valueOf(e.getMetricNumber())).build()).collect(Collectors.toSet());
 
     }
 }

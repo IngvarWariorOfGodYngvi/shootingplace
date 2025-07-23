@@ -5,6 +5,7 @@ import java.util.Optional;
 
 public interface CompetitionRepository{
     Optional<CompetitionEntity> findByNameEquals(String name);
+    boolean existsByName(String name);
 
     List<CompetitionEntity> findAll();
 

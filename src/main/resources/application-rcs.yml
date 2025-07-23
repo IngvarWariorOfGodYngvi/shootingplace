@@ -10,3 +10,9 @@ spring:
   jooq:
     sql-dialect: org.hibernate.dialect.MySQL8Dialect
 licenseDate: "2028-02-28"
+dateTime: LocalDateTime.now()
+server:
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024

@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @AllArgsConstructor
@@ -26,10 +27,13 @@ public class CalibersAddedEntity {
     private String description;
 
     private LocalDate date;
+    private LocalTime time;
     private Integer ammoAdded;
+    private String imageUUID;
 
     private Integer stateForAddedDay;
     private Integer finalStateForAddedDay;
+    private String addedBy;
 
     public String getUuid() {
         return uuid;
@@ -89,5 +93,29 @@ public class CalibersAddedEntity {
 
     public void setCaliberName(String caliberName) {
         this.caliberName = caliberName;
+    }
+
+    public String getAddedBy() {
+        return addedBy;
+    }
+
+    public void setAddedBy(String addedBy) {
+        this.addedBy = addedBy;
+    }
+
+    public String getImageUUID() {
+        return imageUUID;
+    }
+
+    public void setImageUUID(String imageUUID) {
+        this.imageUUID = imageUUID;
+    }
+
+    public LocalTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalTime time) {
+        this.time = time;
     }
 }

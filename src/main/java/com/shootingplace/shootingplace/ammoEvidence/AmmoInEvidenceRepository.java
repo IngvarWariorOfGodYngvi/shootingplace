@@ -8,4 +8,6 @@ public interface AmmoInEvidenceRepository{
     void delete(AmmoInEvidenceEntity entity);
 
     List<AmmoInEvidenceEntity> findAll();
+
+    AmmoInEvidenceEntity getOne(String uuid);
 }

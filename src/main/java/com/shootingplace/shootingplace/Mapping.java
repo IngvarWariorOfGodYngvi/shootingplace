@@ -1,7 +1,5 @@
 package com.shootingplace.shootingplace;
 
-import com.shootingplace.shootingplace.score.Score;
-import com.shootingplace.shootingplace.score.ScoreEntity;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.ammoEvidence.*;
@@ -17,10 +15,15 @@ import com.shootingplace.shootingplace.license.License;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.member.*;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
+import com.shootingplace.shootingplace.score.Score;
+import com.shootingplace.shootingplace.score.ScoreEntity;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatent;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.statistics.MemberAmmo;
-import com.shootingplace.shootingplace.tournament.*;
+import com.shootingplace.shootingplace.tournament.CompetitionMembersList;
+import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
+import com.shootingplace.shootingplace.tournament.TournamentDTO;
+import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.users.ChangeHistoryDTO;
 import com.shootingplace.shootingplace.users.UserDTO;
 import com.shootingplace.shootingplace.users.UserEntity;
@@ -341,8 +344,6 @@ public class Mapping {
                 .attachedToTournament(c.getAttachedToTournament())
                 .scoreList(c.getScoreList().stream().map(Mapping::map).collect(Collectors.toList()))
                 .scoreListSize(c.getScoreList().size())
-                .discipline(c.getDiscipline())
-                .disciplines(c.getDisciplines())
                 .countingMethod(c.getCountingMethod())
                 .type(c.getType())
                 .numberOfShots(c.getNumberOfShots())
@@ -363,8 +364,6 @@ public class Mapping {
                 .WZSS(c.isWZSS())
                 .attachedToTournament(c.getAttachedToTournament())
                 .scoreListSize(c.getScoreList().size())
-                .discipline(c.getDiscipline())
-                .disciplines(c.getDisciplines())
                 .countingMethod(c.getCountingMethod())
                 .type(c.getType())
                 .numberOfShots(c.getNumberOfShots())
@@ -433,14 +432,14 @@ public class Mapping {
                 .build()).orElse(null);
     }
 
-    public static Caliber map(CaliberEntity c) {
-        return Optional.ofNullable(c).map(e -> Caliber.builder()
+    public static Caliber map(CaliberEntity e) {
+        return Caliber.builder()
                 .name(e.getName())
                 .uuid(e.getUuid())
                 .quantity(e.getQuantity())
                 .unitPrice(e.getUnitPrice())
                 .unitPriceForNotMember(e.getUnitPriceForNotMember())
-                .build()).orElse(null);
+                .build();
     }
 
     public static CaliberEntity map(Caliber c) {
@@ -468,7 +467,7 @@ public class Mapping {
     }
 
     public static AmmoUsedToEvidenceEntity map(AmmoUsedEvidence a) {
-        return Optional.ofNullable(a).map(e -> AmmoUsedToEvidenceEntity.builder()
+        return AmmoUsedToEvidenceEntity.builder()
                 .caliberName(a.getCaliberName())
                 .caliberUUID(a.getCaliberUUID())
                 .counter(a.getCounter())
@@ -476,7 +475,8 @@ public class Mapping {
                 .otherPersonEntity(a.getOtherPersonEntity())
                 .name(a.getUserName())
                 .date(a.getDate())
-                .build()).orElse(null);
+                .time(a.getTime())
+                .build();
     }
 
     public static AmmoUsedEntity map(AmmoUsedPersonal a) {
@@ -535,6 +535,15 @@ public class Mapping {
                 .serialNumber(c.getSerialNumber())
                 .addedDate(c.getAddedDate())
                 .uuid(c.getUuid())
+                .addedDate(c.getAddedDate())
+                .addedBy(c.getAddedBy())
+                .addedSing(c.getAddedSign())
+                .addedUserUUID(c.getAddedUserUUID())
+                .removedBy(c.getRemovedBy())
+                .removedSing(c.getRemovedSign())
+                .removedUserUUID(c.getRemovedUserUUID())
+                .removedDate(c.getRemovedDate())
+                .basisOfRemoved(c.getBasisOfRemoved())
                 .build();
     }
 
@@ -553,10 +562,11 @@ public class Mapping {
     }
 
     public static UserDTO map(UserEntity u) {
-        return UserDTO.builder().firstName(u.getFirstName())
+        return UserDTO.builder()
+                .firstName(u.getFirstName())
                 .secondName(u.getSecondName())
                 .uuid(u.getUuid())
-                .subType(u.getSubType())
+                .userPermissionsList(u.getUserPermissionsList().toString())
                 .build();
 
     }
@@ -583,7 +593,13 @@ public class Mapping {
 
     public static AmmoInEvidenceDTO map(AmmoInEvidenceEntity a) {
         return AmmoInEvidenceDTO.builder()
+                .uuid(a.getUuid())
+                .locked(a.isLocked())
                 .caliberName(a.getCaliberName())
+                .signedBy(a.getSignedBy())
+                .imageUUID(a.getImageUUID())
+                .date(a.getDateTime().toLocalDate())
+                .time(a.getDateTime().toLocalTime())
                 .ammoUsedToEvidenceDTOList(a.getAmmoUsedToEvidenceEntityList().stream().map(Mapping::map).collect(Collectors.toList()))
                 .quantity(a.getQuantity())
                 .build();
@@ -629,6 +645,27 @@ public class Mapping {
                 .appartmentNumber(c.getAppartmentNumber())
                 .city(c.getCity())
                 .street(c.getStreet())
+                .build();
+    }
+
+    public static GunUsedDTO map(GunUsedEntity g) {
+        return GunUsedDTO.builder()
+                .uuid(g.getUuid())
+                .acceptanceBy(g.getAcceptanceBy())
+                .acceptanceDate(g.getAcceptanceDate())
+                .acceptanceSign(g.getAcceptanceSign())
+                .acceptanceTime(g.getAcceptanceTime())
+                .issuanceBy(g.getIssuanceBy())
+                .issuanceDate(g.getIssuanceDate())
+                .issuanceSign(g.getIssuanceSign())
+                .issuanceTime(g.getIssuanceTime())
+                .gunTakerName(g.getGunTakerName())
+                .gunTakerSign(g.getGunTakerSign())
+                .gunReturnerName(g.getGunReturnerName())
+                .gunReturnerSign(g.getGunReturnerSign())
+                .adnotation(g.getAdnotation())
+                .usedDate(g.getUsedDate())
+                .usedTime(g.getUsedTime())
                 .build();
     }
 }

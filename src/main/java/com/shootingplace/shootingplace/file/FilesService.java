@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.file;
 
+import com.google.common.hash.Hashing;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import com.shootingplace.shootingplace.Mapping;
@@ -12,7 +13,6 @@ import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlac
 import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
-import com.shootingplace.shootingplace.club.ClubService;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
 import com.shootingplace.shootingplace.competition.CompetitionRepository;
 import com.shootingplace.shootingplace.configurations.ProfilesEnum;
@@ -30,19 +30,18 @@ import com.shootingplace.shootingplace.otherPerson.OtherPerson;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonService;
-import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
-import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
 import com.shootingplace.shootingplace.score.ScoreEntity;
+import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
+import com.shootingplace.shootingplace.users.UserRepository;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
 import com.shootingplace.shootingplace.wrappers.ImageOtherPersonWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.core.env.Environment;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.PageRequest;
@@ -55,10 +54,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
+import javax.validation.constraints.NotNull;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.Collator;
-import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -88,11 +88,11 @@ public class FilesService {
     private final ArmoryService armoryService;
     private final RegistrationRecordRepository registrationRepo;
     private final OtherPersonService otherPersonService;
-    private final ClubService clubService;
+    private final UserRepository userRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ, Environment environment, ArmoryService armoryService, RegistrationRecordRepository registrationRepo, OtherPersonService otherPersonService, ClubService clubService) {
+    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ, Environment environment, ArmoryService armoryService, RegistrationRecordRepository registrationRepo, OtherPersonService otherPersonService, UserRepository userRepository) {
         this.memberRepository = memberRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.filesRepository = filesRepository;
@@ -109,7 +109,7 @@ public class FilesService {
         this.armoryService = armoryService;
         this.registrationRepo = registrationRepo;
         this.otherPersonService = otherPersonService;
-        this.clubService = clubService;
+        this.userRepository = userRepository;
     }
 
     private FilesEntity createFileEntity(FilesModel filesModel) {
@@ -153,26 +153,142 @@ public class FilesService {
         });
 
     }
-
-    public String storeImageEvidenceBook(ImageOtherPersonWrapper other, String imageString, String pesel_or_phone) {
+    // podpis rejestr pobytu
+    public String storeImageEvidenceBookMember(String imageString, String pesel) {
         String s = imageString.split(",")[1];
-        MemberEntity memberEntity = memberRepository.findByPesel(pesel_or_phone.replaceAll(" ", "")).orElse(null);
-        String fullName;
-        if (memberEntity != null) {
-            fullName = memberEntity.getFullName();
-        } else {
-            OtherPersonEntity otherPerson = otherPersonRepository.findAllByPhoneNumberAndActiveTrue(pesel_or_phone.replaceAll(" ", "")).stream().filter(OtherPersonEntity::isActive).findFirst().orElse(null);
-//            OtherPersonEntity otherPerson = otherPersonRepository.findByPhoneNumber(pesel_or_phone.replaceAll(" ","")).orElse(null);
-            if (otherPerson == null) {
-                OtherPersonEntity otherPerson1 = otherPersonService.addPerson(String.valueOf(other.getOther().getClub().getShortName()), other.getOther());
-                fullName = otherPerson1.getFullName();
-            } else {
-                fullName = otherPerson.getFullName();
-            }
-        }
-
+        MemberEntity memberEntity = memberRepository.findByPesel(pesel.replaceAll(" ", "")).get();
+        String fullName = memberEntity.getFullName();
 
         String fileName = fullName + "evidence.png";
+        byte[] data = Base64.getMimeDecoder().decode(s);
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(MediaType.IMAGE_PNG))
+                .data(data)
+                .size(data.length)
+                .build();
+        FilesEntity fileEntity = createFileEntity(build);
+        return fileEntity.getUuid();
+    }
+    // podpis rejestr pobytu
+    public String storeImageEvidenceBook(ImageOtherPersonWrapper other, String imageString) {
+        String s = imageString.split(",")[1];
+        String fullName;
+        if (other.getOther().getId() != null) {
+            fullName = otherPersonRepository.getOne(Integer.valueOf(other.getOther().getId())).getFullName();
+        } else {
+            fullName = other.getOther().getFullName();
+        }
+
+        String fileName = fullName + "evidence.png";
+        byte[] data = Base64.getMimeDecoder().decode(s);
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(MediaType.IMAGE_PNG))
+                .data(data)
+                .size(data.length)
+                .build();
+        FilesEntity fileEntity = createFileEntity(build);
+        return fileEntity.getUuid();
+    }
+    // podpis magazyniera dodawanie amunicji do stanu
+    public String storeImageAddedAmmo(String imageString, String pinCode) {
+        String s = imageString.split(",")[1];
+        String code = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
+        UserEntity user = userRepository.findByPinCode(code);
+        String fileName = user.getFullName() + " ammoAdded.png";
+        byte[] data = Base64.getMimeDecoder().decode(s);
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(MediaType.IMAGE_PNG))
+                .data(data)
+                .size(data.length)
+                .build();
+        FilesEntity fileEntity = createFileEntity(build);
+        return fileEntity.getUuid();
+    }
+    // podpis magazyniera wydawanie amunicji do stanu
+    public String storeImageUpkeepAmmo(String imageString, String pinCode) {
+        String s = imageString.split(",")[1];
+        String code = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
+        UserEntity user = userRepository.findByPinCode(code);
+        String fileName = user.getFullName() + " upkeepAmmo.png";
+        byte[] data = Base64.getMimeDecoder().decode(s);
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(MediaType.IMAGE_PNG))
+                .data(data)
+                .size(data.length)
+                .build();
+        FilesEntity fileEntity = createFileEntity(build);
+        return fileEntity.getUuid();
+    }
+    // podpis magazyniera wydawanie bromi
+    public String storeImageIssuanceGun(String imageString, String pinCode) {
+        String s = imageString.split(",")[1];
+        String code = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
+        UserEntity user = userRepository.findByPinCode(code);
+        String fileName = user.getFullName() + " IssuanceGun.png";
+        byte[] data = Base64.getMimeDecoder().decode(s);
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(MediaType.IMAGE_PNG))
+                .data(data)
+                .size(data.length)
+                .build();
+        FilesEntity fileEntity = createFileEntity(build);
+        return fileEntity.getUuid();
+    }
+    // podpis osoby pobierającej broń wydawanie bromi
+    public String storeImageTakerGun(String imageString, Integer memberLeg) {
+        MemberEntity one = memberRepository.findByLegitimationNumber(memberLeg).orElseThrow(EntityNotFoundException::new);
+        String s = imageString.split(",")[1];
+        String fileName = one.getFullName() + " TakerGun.png";
+        byte[] data = Base64.getMimeDecoder().decode(s);
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(MediaType.IMAGE_PNG))
+                .data(data)
+                .size(data.length)
+                .build();
+        FilesEntity fileEntity = createFileEntity(build);
+        return fileEntity.getUuid();
+    }
+    // podpis osoby pobierającej broń wydawanie bromi
+    public String storeImageReturnerGun(String imageString, Integer memberLeg) {
+        MemberEntity one = memberRepository.findByLegitimationNumber(memberLeg).orElseThrow(EntityNotFoundException::new);
+        String s = imageString.split(",")[1];
+        String fileName = one.getFullName() + " ReturnerGun.png";
+        byte[] data = Base64.getMimeDecoder().decode(s);
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(MediaType.IMAGE_PNG))
+                .data(data)
+                .size(data.length)
+                .build();
+        FilesEntity fileEntity = createFileEntity(build);
+        return fileEntity.getUuid();
+    }
+    // podpis osoby pobierającej broń wydawanie bromi
+    public String storeImageRemoveGun(String imageString, String takerName) {
+        String s = imageString.split(",")[1];
+        String fileName = takerName + " RemoveGun.png";
+        byte[] data = Base64.getMimeDecoder().decode(s);
+        FilesModel build = FilesModel.builder()
+                .name(fileName)
+                .type(String.valueOf(MediaType.IMAGE_PNG))
+                .data(data)
+                .size(data.length)
+                .build();
+        FilesEntity fileEntity = createFileEntity(build);
+        return fileEntity.getUuid();
+    }
+    // podpis osoby wprowadzającej broń na stan
+    public String storeImageAddGun(String imageString, String pinCode) {
+        String s = imageString.split(",")[1];
+        String code = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
+        UserEntity user = userRepository.findByPinCode(code);
+        String fileName = user.getFullName() + " ReturnerGun.png";
         byte[] data = Base64.getMimeDecoder().decode(s);
         FilesModel build = FilesModel.builder()
                 .name(fileName)
@@ -1010,303 +1126,303 @@ public class FilesService {
     }
 
     // komunikat z zawodów
-    public FilesEntity createAnnouncementFromCompetition(String tournamentUUID) throws IOException, DocumentException {
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
-        ClubEntity c = clubRepository.getOne(1);
-
-        String fileName = tournamentEntity.getDate().format(dateFormat()) + " " + c.getShortName() + " " + tournamentEntity.getName() + ".pdf";
-
-        Document document = new Document(PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-            writer.setPageEvent(new PageStamper(environment, true));
-        }
-        document.open();
-        document.addTitle(fileName);
-        document.addCreationDate();
-
-        String hour = String.valueOf(LocalTime.now().getHour());
-        String minute = String.valueOf(LocalTime.now().getMinute());
-        if (Integer.parseInt(minute) < 10) {
-            minute = "0" + minute;
-        }
-
-        String now = hour + ":" + minute;
-
-
-        Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase() + "\n" + c.getShortName(), font(13, 1));
-        String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : "Panaszew";
-        Paragraph date = new Paragraph(city + ", " + monthFormat(tournamentEntity.getDate()), font(10, 2));
-        Paragraph newLine = new Paragraph("\n", font(10, 0));
-
-        document.add(title);
-        document.add(date);
-        document.add(newLine);
-
-        PdfPTable mainTable = new PdfPTable(1);
-        mainTable.setWidthPercentage(100);
-
-
-        for (int i = 0; i < tournamentEntity.getCompetitionsList().size(); i++) {
-            if (!tournamentEntity.getCompetitionsList().get(i).getScoreList().isEmpty()) {
-                CompetitionMembersListEntity competitionMembersListEntity = tournamentEntity.getCompetitionsList().get(i);
-
-                List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList()
-                        .stream()
-                        .filter(f -> !f.isDsq() && !f.isDnf() && !f.isPk())
-                        .sorted(Comparator.comparing(ScoreEntity::getScore).reversed())
-                        .collect(Collectors.toList());
-
-                List<ScoreEntity> collect = competitionMembersListEntity.getScoreList()
-                        .stream()
-                        .filter(f -> f.isDnf() || f.isDsq() || f.isPk())
-                        .sorted(Comparator.comparing(ScoreEntity::getScore).reversed())
-                        .collect(Collectors.toList());
-                scoreList.addAll(collect);
-                Paragraph competition = new Paragraph(competitionMembersListEntity.getName(), font(14, 1));
-                competition.add("\n");
-                document.add(competition);
-                float[] pointColumnWidths;
-                pointColumnWidths = new float[]{25F, 150F, 125F, 25F, 25F, 50F};
-                PdfPTable tableLabel = new PdfPTable(pointColumnWidths);
-                String p1 = "10 x", p2 = "10 /";
-                if (competitionMembersListEntity.getCountingMethod() != null) {
-                    if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-                        p1 = "";
-                        p2 = "";
-                    } else {
-                        p1 = "10 x";
-                        p2 = "10 /";
-                    }
-                }
-                PdfPCell cellLabel = new PdfPCell(new Paragraph("M-ce", font(10, 1)));
-                PdfPCell cellLabel1 = new PdfPCell(new Paragraph("Imię i Nazwisko", font(10, 1)));
-                PdfPCell cellLabel2 = new PdfPCell(new Paragraph("Klub", font(10, 1)));
-                PdfPCell cellLabel3 = new PdfPCell(new Paragraph(p1, font(10, 1)));
-                PdfPCell cellLabel4 = new PdfPCell(new Paragraph(p2, font(10, 1)));
-                PdfPCell cellLabel5 = new PdfPCell(new Paragraph("Wynik", font(10, 1)));
-
-                document.add(newLine);
-
-                cellLabel.setHorizontalAlignment(Element.ALIGN_CENTER);
-                cellLabel1.setHorizontalAlignment(Element.ALIGN_CENTER);
-                cellLabel2.setHorizontalAlignment(Element.ALIGN_CENTER);
-                cellLabel3.setHorizontalAlignment(Element.ALIGN_CENTER);
-                cellLabel4.setHorizontalAlignment(Element.ALIGN_CENTER);
-                cellLabel5.setHorizontalAlignment(Element.ALIGN_CENTER);
-
-                cellLabel.setBorder(0);
-                cellLabel1.setBorder(0);
-                cellLabel2.setBorder(0);
-                cellLabel3.setBorder(0);
-                cellLabel4.setBorder(0);
-                cellLabel5.setBorder(0);
-
-                tableLabel.setWidthPercentage(100F);
-                tableLabel.addCell(cellLabel);
-                tableLabel.addCell(cellLabel1);
-                tableLabel.addCell(cellLabel2);
-                tableLabel.addCell(cellLabel3);
-                tableLabel.addCell(cellLabel4);
-                tableLabel.addCell(cellLabel5);
-
-                document.add(tableLabel);
-
-
-                for (int j = 0; j < scoreList.size(); j++) {
-
-                    String secondName;
-                    String firstName;
-                    String club;
-                    if (scoreList.get(j).getMember() != null) {
-                        secondName = scoreList.get(j).getMember().getSecondName();
-                        firstName = scoreList.get(j).getMember().getFirstName();
-                        club = scoreList.get(j).getMember().getClub().getShortName();
-
-                    } else {
-                        secondName = scoreList.get(j).getOtherPersonEntity().getSecondName();
-                        firstName = scoreList.get(j).getOtherPersonEntity().getFirstName();
-                        club = scoreList.get(j).getOtherPersonEntity().getClub().getShortName();
-
-                    }
-                    float score = scoreList.get(j).getScore();
-                    String scoreOuterTen = String.valueOf(scoreList.get(j).getOuterTen());
-                    String scoreInnerTen = String.valueOf(scoreList.get(j).getInnerTen());
-                    if (scoreOuterTen.startsWith("0")) {
-                        scoreOuterTen = "";
-                    }
-                    if (scoreInnerTen.startsWith("0")) {
-                        scoreInnerTen = "";
-                    }
-                    String o1 = scoreInnerTen.replace(".0", ""), o2 = scoreOuterTen.replace(".0", "");
-                    if (scoreList.get(j).getInnerTen() == 0) {
-                        o1 = scoreInnerTen = "";
-                    }
-                    if (scoreList.get(j).getOuterTen() == 0) {
-                        o2 = scoreOuterTen = "";
-                    }
-                    DecimalFormat myFormatter = new DecimalFormat("###.####");
-                    String result = myFormatter.format(score);
-                    if (score == 100 && competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-                        result = "100,0000";
-                    }
-                    if (scoreList.get(j).isDnf()) {
-                        result = "DNF";
-                    }
-                    if (scoreList.get(j).isDsq()) {
-                        result = "DSQ";
-                    }
-                    if (scoreList.get(j).isPk()) {
-                        result = "PK(" + score + ")";
-                    }
-                    if (competitionMembersListEntity.getCountingMethod() != null) {
-
-                        if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-                            o1 = "";
-                            o2 = "";
-
-                        } else {
-                            o1 = scoreInnerTen.replace(".0", "");
-                            o2 = scoreOuterTen.replace(".0", "");
-//                            result = result.replace(".0", "");
-
-                        }
-                    }
-                    PdfPTable playerTableLabel = new PdfPTable(pointColumnWidths);
-                    PdfPCell playerCellLabel = new PdfPCell(new Paragraph(String.valueOf(j + 1), font(11, 0)));
-                    PdfPCell playerCellLabel1 = new PdfPCell(new Paragraph(secondName + " " + firstName, font(11, 0)));
-                    PdfPCell playerCellLabel2 = new PdfPCell(new Paragraph(club, font(11, 0)));
-                    PdfPCell playerCellLabel3 = new PdfPCell(new Paragraph(o1, font(9, 2)));
-                    PdfPCell playerCellLabel4 = new PdfPCell(new Paragraph(o2, font(9, 1)));
-                    PdfPCell playerCellLabel5 = new PdfPCell(new Paragraph(result, font(11, 1)));
-
-
-                    playerCellLabel.setBorder(0);
-                    playerCellLabel1.setBorder(0);
-                    playerCellLabel2.setBorder(0);
-                    playerCellLabel3.setBorder(0);
-                    playerCellLabel4.setBorder(0);
-                    playerCellLabel5.setBorder(0);
-
-                    playerCellLabel.setHorizontalAlignment(Element.ALIGN_CENTER);
-                    playerCellLabel1.setHorizontalAlignment(Element.ALIGN_LEFT);
-                    playerCellLabel2.setHorizontalAlignment(Element.ALIGN_LEFT);
-                    playerCellLabel3.setHorizontalAlignment(Element.ALIGN_CENTER);
-                    playerCellLabel4.setHorizontalAlignment(Element.ALIGN_CENTER);
-                    playerCellLabel5.setHorizontalAlignment(Element.ALIGN_CENTER);
-
-
-                    playerTableLabel.setWidthPercentage(100F);
-
-                    playerTableLabel.addCell(playerCellLabel);
-                    playerTableLabel.addCell(playerCellLabel1);
-                    playerTableLabel.addCell(playerCellLabel2);
-                    playerTableLabel.addCell(playerCellLabel3);
-                    playerTableLabel.addCell(playerCellLabel4);
-                    playerTableLabel.addCell(playerCellLabel5);
-
-                    document.add(playerTableLabel);
-
-                }
-            }
-        }
-        float[] pointColumnWidths = {220F, 240F, 240F};
-        String mainArbiter;
-        String mainArbiterClass;
-        if (tournamentEntity.getMainArbiter() != null) {
-            mainArbiter = tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getSecondName();
-            mainArbiterClass = tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass();
-            mainArbiterClass = getArbiterClass(mainArbiterClass);
-        } else {
-            if (tournamentEntity.getOtherMainArbiter() != null) {
-                mainArbiter = tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getSecondName();
-                mainArbiterClass = tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass();
-                mainArbiterClass = getArbiterClass(mainArbiterClass);
-            } else {
-                mainArbiter = "Nie Wskazano";
-                mainArbiterClass = "";
-            }
-        }
-
-        String arbiterRTS;
-        String arbiterRTSClass;
-        if (tournamentEntity.getCommissionRTSArbiter() != null) {
-            arbiterRTS = tournamentEntity.getCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getCommissionRTSArbiter().getSecondName();
-            arbiterRTSClass = tournamentEntity.getCommissionRTSArbiter().getMemberPermissions().getArbiterClass();
-            arbiterRTSClass = getArbiterClass(arbiterRTSClass);
-        } else {
-            if (tournamentEntity.getOtherCommissionRTSArbiter() != null) {
-                arbiterRTS = tournamentEntity.getOtherCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getOtherCommissionRTSArbiter().getSecondName();
-                arbiterRTSClass = tournamentEntity.getOtherCommissionRTSArbiter().getPermissionsEntity().getArbiterClass();
-                arbiterRTSClass = getArbiterClass(arbiterRTSClass);
-            } else {
-                arbiterRTS = "Nie Wskazano";
-                arbiterRTSClass = "";
-            }
-        }
-
-
-        PdfPTable arbiterTableLabel = new PdfPTable(pointColumnWidths);
-        PdfPCell arbiterCellLabel1 = new PdfPCell(new Paragraph("Sędzia Główny \n" + mainArbiter + "\n" + mainArbiterClass, font(12, 0)));
-        PdfPCell arbiterCellLabel2 = new PdfPCell(new Paragraph(" ", font(10, 0)));
-        PdfPCell arbiterCellLabel3 = new PdfPCell(new Paragraph("Przewodniczący Komisji RTS \n" + arbiterRTS + "\n" + arbiterRTSClass, font(12, 0)));
-
-        arbiterCellLabel1.setHorizontalAlignment(Element.ALIGN_CENTER);
-        arbiterCellLabel2.setHorizontalAlignment(Element.ALIGN_CENTER);
-        arbiterCellLabel3.setHorizontalAlignment(Element.ALIGN_CENTER);
-
-        arbiterCellLabel1.setBorder(0);
-        arbiterCellLabel2.setBorder(0);
-        arbiterCellLabel3.setBorder(0);
-
-        arbiterTableLabel.setWidthPercentage(100F);
-
-        arbiterTableLabel.addCell(arbiterCellLabel1);
-        arbiterTableLabel.addCell(arbiterCellLabel2);
-        arbiterTableLabel.addCell(arbiterCellLabel3);
-
-
-        document.add(newLine);
-        document.add(newLine);
-
-        Paragraph state = new Paragraph("Zawody odbyły się zgodnie z przepisami bezpieczeństwa i regulaminem zawodów,", font(10, 0));
-        Paragraph state1 = new Paragraph("oraz liczba sklasyfikowanych zawodników", font(10, 0));
-        Paragraph state2 = new Paragraph("była zgodna ze stanem faktycznym.", font(10, 0));
-        state.setAlignment(0);
-        state1.setAlignment(0);
-        state2.setAlignment(0);
-        if (!tournamentEntity.isOpen()) {
-            document.add(state);
-            document.add(state1);
-            document.add(state2);
-            document.add(newLine);
-        }
-        document.add(arbiterTableLabel);
-        if (tournamentEntity.isOpen()) {
-            document.add(new Paragraph("Sporządzono " + now, font(14, 0)));
-        }
-        document.close();
-
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
-
-        File file = new File(fileName);
-
-        file.delete();
-        return filesEntity;
-    }
+//    public FilesEntity createAnnouncementFromCompetition(String tournamentUUID) throws IOException, DocumentException {
+//        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+//        ClubEntity c = clubRepository.getOne(1);
+//
+//        String fileName = tournamentEntity.getDate().format(dateFormat()) + " " + c.getShortName() + " " + tournamentEntity.getName() + ".pdf";
+//
+//        Document document = new Document(PageSize.A4);
+//        document.setMargins(35F, 35F, 50F, 50F);
+//        System.out.println(document.bottomMargin());
+//        PdfWriter writer = PdfWriter.getInstance(document,
+//                new FileOutputStream(fileName));
+//        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+//            writer.setPageEvent(new PageStamper(environment, true));
+//        }
+//        document.open();
+//        document.addTitle(fileName);
+//        document.addCreationDate();
+//
+//        String hour = String.valueOf(LocalTime.now().getHour());
+//        String minute = String.valueOf(LocalTime.now().getMinute());
+//        if (Integer.parseInt(minute) < 10) {
+//            minute = "0" + minute;
+//        }
+//
+//        String now = hour + ":" + minute;
+//
+//
+//        Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase() + "\n" + c.getShortName(), font(13, 1));
+//        String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : "Panaszew";
+//        Paragraph date = new Paragraph(city + ", " + monthFormat(tournamentEntity.getDate()), font(10, 2));
+//        Paragraph newLine = new Paragraph("\n", font(10, 0));
+//
+//        document.add(title);
+//        document.add(date);
+//        document.add(newLine);
+//
+//        PdfPTable mainTable = new PdfPTable(1);
+//        mainTable.setWidthPercentage(100);
+//
+//
+//        for (int i = 0; i < tournamentEntity.getCompetitionsList().size(); i++) {
+//            if (!tournamentEntity.getCompetitionsList().get(i).getScoreList().isEmpty()) {
+//                CompetitionMembersListEntity competitionMembersListEntity = tournamentEntity.getCompetitionsList().get(i);
+//
+//                List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList()
+//                        .stream()
+//                        .filter(f -> !f.isDsq() && !f.isDnf() && !f.isPk())
+//                        .sorted(Comparator.comparing(ScoreEntity::getScore).reversed())
+//                        .collect(Collectors.toList());
+//
+//                List<ScoreEntity> collect = competitionMembersListEntity.getScoreList()
+//                        .stream()
+//                        .filter(f -> f.isDnf() || f.isDsq() || f.isPk())
+//                        .sorted(Comparator.comparing(ScoreEntity::getScore).reversed())
+//                        .collect(Collectors.toList());
+//                scoreList.addAll(collect);
+//                Paragraph competition = new Paragraph(competitionMembersListEntity.getName(), font(14, 1));
+//                competition.add("\n");
+//                document.add(competition);
+//                float[] pointColumnWidths;
+//                pointColumnWidths = new float[]{25F, 150F, 125F, 25F, 25F, 50F};
+//                PdfPTable tableLabel = new PdfPTable(pointColumnWidths);
+//                String p1 = "10 x", p2 = "10 /";
+//                if (competitionMembersListEntity.getCountingMethod() != null) {
+//                    if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+//                        p1 = "";
+//                        p2 = "";
+//                    } else {
+//                        p1 = "10 x";
+//                        p2 = "10 /";
+//                    }
+//                }
+//                PdfPCell cellLabel = new PdfPCell(new Paragraph("M-ce", font(10, 1)));
+//                PdfPCell cellLabel1 = new PdfPCell(new Paragraph("Imię i Nazwisko", font(10, 1)));
+//                PdfPCell cellLabel2 = new PdfPCell(new Paragraph("Klub", font(10, 1)));
+//                PdfPCell cellLabel3 = new PdfPCell(new Paragraph(p1, font(10, 1)));
+//                PdfPCell cellLabel4 = new PdfPCell(new Paragraph(p2, font(10, 1)));
+//                PdfPCell cellLabel5 = new PdfPCell(new Paragraph("Wynik", font(10, 1)));
+//
+//                document.add(newLine);
+//
+//                cellLabel.setHorizontalAlignment(Element.ALIGN_CENTER);
+//                cellLabel1.setHorizontalAlignment(Element.ALIGN_CENTER);
+//                cellLabel2.setHorizontalAlignment(Element.ALIGN_CENTER);
+//                cellLabel3.setHorizontalAlignment(Element.ALIGN_CENTER);
+//                cellLabel4.setHorizontalAlignment(Element.ALIGN_CENTER);
+//                cellLabel5.setHorizontalAlignment(Element.ALIGN_CENTER);
+//
+//                cellLabel.setBorder(0);
+//                cellLabel1.setBorder(0);
+//                cellLabel2.setBorder(0);
+//                cellLabel3.setBorder(0);
+//                cellLabel4.setBorder(0);
+//                cellLabel5.setBorder(0);
+//
+//                tableLabel.setWidthPercentage(100F);
+//                tableLabel.addCell(cellLabel);
+//                tableLabel.addCell(cellLabel1);
+//                tableLabel.addCell(cellLabel2);
+//                tableLabel.addCell(cellLabel3);
+//                tableLabel.addCell(cellLabel4);
+//                tableLabel.addCell(cellLabel5);
+//
+//                document.add(tableLabel);
+//
+//
+//                for (int j = 0; j < scoreList.size(); j++) {
+//
+//                    String secondName;
+//                    String firstName;
+//                    String club;
+//                    if (scoreList.get(j).getMember() != null) {
+//                        secondName = scoreList.get(j).getMember().getSecondName();
+//                        firstName = scoreList.get(j).getMember().getFirstName();
+//                        club = scoreList.get(j).getMember().getClub().getShortName();
+//
+//                    } else {
+//                        secondName = scoreList.get(j).getOtherPersonEntity().getSecondName();
+//                        firstName = scoreList.get(j).getOtherPersonEntity().getFirstName();
+//                        club = scoreList.get(j).getOtherPersonEntity().getClub().getShortName();
+//
+//                    }
+//                    float score = scoreList.get(j).getScore();
+//                    String scoreOuterTen = String.valueOf(scoreList.get(j).getOuterTen());
+//                    String scoreInnerTen = String.valueOf(scoreList.get(j).getInnerTen());
+//                    if (scoreOuterTen.startsWith("0")) {
+//                        scoreOuterTen = "";
+//                    }
+//                    if (scoreInnerTen.startsWith("0")) {
+//                        scoreInnerTen = "";
+//                    }
+//                    String o1 = scoreInnerTen.replace(".0", ""), o2 = scoreOuterTen.replace(".0", "");
+//                    if (scoreList.get(j).getInnerTen() == 0) {
+//                        o1 = scoreInnerTen = "";
+//                    }
+//                    if (scoreList.get(j).getOuterTen() == 0) {
+//                        o2 = scoreOuterTen = "";
+//                    }
+//                    DecimalFormat myFormatter = new DecimalFormat("###.####");
+//                    String result = myFormatter.format(score);
+//                    if (score == 100 && competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+//                        result = "100,0000";
+//                    }
+//                    if (scoreList.get(j).isDnf()) {
+//                        result = "DNF";
+//                    }
+//                    if (scoreList.get(j).isDsq()) {
+//                        result = "DSQ";
+//                    }
+//                    if (scoreList.get(j).isPk()) {
+//                        result = "PK(" + score + ")";
+//                    }
+//                    if (competitionMembersListEntity.getCountingMethod() != null) {
+//
+//                        if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+//                            o1 = "";
+//                            o2 = "";
+//
+//                        } else {
+//                            o1 = scoreInnerTen.replace(".0", "");
+//                            o2 = scoreOuterTen.replace(".0", "");
+////                            result = result.replace(".0", "");
+//
+//                        }
+//                    }
+//                    PdfPTable playerTableLabel = new PdfPTable(pointColumnWidths);
+//                    PdfPCell playerCellLabel = new PdfPCell(new Paragraph(String.valueOf(j + 1), font(11, 0)));
+//                    PdfPCell playerCellLabel1 = new PdfPCell(new Paragraph(secondName + " " + firstName, font(11, 0)));
+//                    PdfPCell playerCellLabel2 = new PdfPCell(new Paragraph(club, font(11, 0)));
+//                    PdfPCell playerCellLabel3 = new PdfPCell(new Paragraph(o1, font(9, 2)));
+//                    PdfPCell playerCellLabel4 = new PdfPCell(new Paragraph(o2, font(9, 1)));
+//                    PdfPCell playerCellLabel5 = new PdfPCell(new Paragraph(result, font(11, 1)));
+//
+//
+//                    playerCellLabel.setBorder(0);
+//                    playerCellLabel1.setBorder(0);
+//                    playerCellLabel2.setBorder(0);
+//                    playerCellLabel3.setBorder(0);
+//                    playerCellLabel4.setBorder(0);
+//                    playerCellLabel5.setBorder(0);
+//
+//                    playerCellLabel.setHorizontalAlignment(Element.ALIGN_CENTER);
+//                    playerCellLabel1.setHorizontalAlignment(Element.ALIGN_LEFT);
+//                    playerCellLabel2.setHorizontalAlignment(Element.ALIGN_LEFT);
+//                    playerCellLabel3.setHorizontalAlignment(Element.ALIGN_CENTER);
+//                    playerCellLabel4.setHorizontalAlignment(Element.ALIGN_CENTER);
+//                    playerCellLabel5.setHorizontalAlignment(Element.ALIGN_CENTER);
+//
+//
+//                    playerTableLabel.setWidthPercentage(100F);
+//
+//                    playerTableLabel.addCell(playerCellLabel);
+//                    playerTableLabel.addCell(playerCellLabel1);
+//                    playerTableLabel.addCell(playerCellLabel2);
+//                    playerTableLabel.addCell(playerCellLabel3);
+//                    playerTableLabel.addCell(playerCellLabel4);
+//                    playerTableLabel.addCell(playerCellLabel5);
+//
+//                    document.add(playerTableLabel);
+//
+//                }
+//            }
+//        }
+//        float[] pointColumnWidths = {220F, 240F, 240F};
+//        String mainArbiter;
+//        String mainArbiterClass;
+//        if (tournamentEntity.getMainArbiter() != null) {
+//            mainArbiter = tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getSecondName();
+//            mainArbiterClass = tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass();
+//            mainArbiterClass = getArbiterClass(mainArbiterClass);
+//        } else {
+//            if (tournamentEntity.getOtherMainArbiter() != null) {
+//                mainArbiter = tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getSecondName();
+//                mainArbiterClass = tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass();
+//                mainArbiterClass = getArbiterClass(mainArbiterClass);
+//            } else {
+//                mainArbiter = "Nie Wskazano";
+//                mainArbiterClass = "";
+//            }
+//        }
+//
+//        String arbiterRTS;
+//        String arbiterRTSClass;
+//        if (tournamentEntity.getCommissionRTSArbiter() != null) {
+//            arbiterRTS = tournamentEntity.getCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getCommissionRTSArbiter().getSecondName();
+//            arbiterRTSClass = tournamentEntity.getCommissionRTSArbiter().getMemberPermissions().getArbiterClass();
+//            arbiterRTSClass = getArbiterClass(arbiterRTSClass);
+//        } else {
+//            if (tournamentEntity.getOtherCommissionRTSArbiter() != null) {
+//                arbiterRTS = tournamentEntity.getOtherCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getOtherCommissionRTSArbiter().getSecondName();
+//                arbiterRTSClass = tournamentEntity.getOtherCommissionRTSArbiter().getPermissionsEntity().getArbiterClass();
+//                arbiterRTSClass = getArbiterClass(arbiterRTSClass);
+//            } else {
+//                arbiterRTS = "Nie Wskazano";
+//                arbiterRTSClass = "";
+//            }
+//        }
+//
+//
+//        PdfPTable arbiterTableLabel = new PdfPTable(pointColumnWidths);
+//        PdfPCell arbiterCellLabel1 = new PdfPCell(new Paragraph("Sędzia Główny \n" + mainArbiter + "\n" + mainArbiterClass, font(12, 0)));
+//        PdfPCell arbiterCellLabel2 = new PdfPCell(new Paragraph(" ", font(10, 0)));
+//        PdfPCell arbiterCellLabel3 = new PdfPCell(new Paragraph("Przewodniczący Komisji RTS \n" + arbiterRTS + "\n" + arbiterRTSClass, font(12, 0)));
+//
+//        arbiterCellLabel1.setHorizontalAlignment(Element.ALIGN_CENTER);
+//        arbiterCellLabel2.setHorizontalAlignment(Element.ALIGN_CENTER);
+//        arbiterCellLabel3.setHorizontalAlignment(Element.ALIGN_CENTER);
+//
+//        arbiterCellLabel1.setBorder(0);
+//        arbiterCellLabel2.setBorder(0);
+//        arbiterCellLabel3.setBorder(0);
+//
+//        arbiterTableLabel.setWidthPercentage(100F);
+//
+//        arbiterTableLabel.addCell(arbiterCellLabel1);
+//        arbiterTableLabel.addCell(arbiterCellLabel2);
+//        arbiterTableLabel.addCell(arbiterCellLabel3);
+//
+//
+//        document.add(newLine);
+//        document.add(newLine);
+//
+//        Paragraph state = new Paragraph("Zawody odbyły się zgodnie z przepisami bezpieczeństwa i regulaminem zawodów,", font(10, 0));
+//        Paragraph state1 = new Paragraph("oraz liczba sklasyfikowanych zawodników", font(10, 0));
+//        Paragraph state2 = new Paragraph("była zgodna ze stanem faktycznym.", font(10, 0));
+//        state.setAlignment(0);
+//        state1.setAlignment(0);
+//        state2.setAlignment(0);
+//        if (!tournamentEntity.isOpen()) {
+//            document.add(state);
+//            document.add(state1);
+//            document.add(state2);
+//            document.add(newLine);
+//        }
+//        document.add(arbiterTableLabel);
+//        if (tournamentEntity.isOpen()) {
+//            document.add(new Paragraph("Sporządzono " + now, font(14, 0)));
+//        }
+//        document.close();
+//
+//
+//        byte[] data = convertToByteArray(fileName);
+//        FilesModel filesModel = FilesModel.builder()
+//                .name(fileName)
+//                .data(data)
+//                .type(String.valueOf(MediaType.APPLICATION_PDF))
+//                .size(data.length)
+//                .build();
+//
+//        FilesEntity filesEntity =
+//                createFileEntity(filesModel);
+//
+//        File file = new File(fileName);
+//
+//        file.delete();
+//        return filesEntity;
+//    }
 
     // zaświadczenie z Klubu RCS Panaszew
     public FilesEntity CertificateOfClubMembership(String memberUUID, String reason, boolean enlargement) throws IOException, DocumentException {
@@ -2023,7 +2139,7 @@ public class FilesService {
             par4.add(chunk2);
             int numberOfColumns = numberOfShots + 5;
             float[] pointColumnWidths = new float[numberOfColumns];
-            if (competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
+            if (!competitionEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
                 pointColumnWidths = new float[6];
             }
             if (competitionEntity.getCountingMethod().equals(CountingMethod.NORMAL.getName())) {
@@ -2123,7 +2239,7 @@ public class FilesService {
             document.add(par3); // nazwa konkurencji
 
             document.add(new Paragraph("\n", font(4, 0))); // nowa linia
-            if (competitionEntity.getCountingMethod().equals(CountingMethod.POJEDYNEK.getName())){
+            if (competitionEntity.getCountingMethod().equals(CountingMethod.POJEDYNEK.getName())) {
                 for (int i = 0; i < pointColumnWidths.length; i++) {
                     Paragraph p = new Paragraph();
                     if (i == 0) {
@@ -2252,7 +2368,8 @@ public class FilesService {
                     }
                 }
                 document.add(table1);
-            } if ( competitionEntity.getCountingMethod().equals(CountingMethod.DYNAMIKADZIESIATKA.getName()) ||
+            }
+            if (competitionEntity.getCountingMethod().equals(CountingMethod.DYNAMIKADZIESIATKA.getName()) ||
                     competitionEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName()) ||
                     competitionEntity.getCountingMethod().equals(CountingMethod.IPSC.getName()) ||
                     competitionEntity.getCountingMethod().equals(CountingMethod.TIME.getName())
@@ -4695,20 +4812,6 @@ public class FilesService {
             return filesRepository.getOne(gunRepository.getOne(gunUUID).getImgUUID());
         else LOG.warn("plik nie istnieje");
         return null;
-    }
-
-    public void addImageToGun(MultipartFile file, String gunUUID) throws IOException {
-        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-        System.out.println(file.getSize());
-        FilesModel build = FilesModel.builder()
-                .name(fileName)
-                .type(String.valueOf(file.getContentType()))
-                .data(file.getBytes())
-                .size(file.getSize())
-                .build();
-        FilesEntity fileEntity = createFileEntity(build);
-        System.out.println(fileEntity.getUuid());
-        armoryService.addImageToGun(gunUUID, fileEntity.getUuid());
     }
 
     public String store(MultipartFile file, MemberEntity member) throws IOException {

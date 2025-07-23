@@ -1,14 +1,17 @@
 package com.shootingplace.shootingplace.armory;
 
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
+import com.shootingplace.shootingplace.file.FilesService;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.users.UserSubType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -22,14 +25,16 @@ public class ArmoryController {
     private final AmmoUsedService ammoUsedService;
     private final ChangeHistoryService changeHistoryService;
     private final ShootingPacketService shootingPacketService;
+    private final FilesService filesService;
 
 
-    public ArmoryController(ArmoryService armoryService, CaliberService caliberService, AmmoUsedService ammoUsedService, ChangeHistoryService changeHistoryService, ShootingPacketService shootingPacketService) {
+    public ArmoryController(ArmoryService armoryService, CaliberService caliberService, AmmoUsedService ammoUsedService, ChangeHistoryService changeHistoryService, ShootingPacketService shootingPacketService, FilesService filesService) {
         this.armoryService = armoryService;
         this.caliberService = caliberService;
         this.ammoUsedService = ammoUsedService;
         this.changeHistoryService = changeHistoryService;
         this.shootingPacketService = shootingPacketService;
+        this.filesService = filesService;
     }
 
     @GetMapping("/recount")
@@ -37,10 +42,36 @@ public class ArmoryController {
         ammoUsedService.recountAmmo();
     }
 
+    @GetMapping("/getCaiberNameFromCaliberUUID")
+    public ResponseEntity<?> getCaiberNameFromCaliberUUID(@RequestParam String caliberUUID) {
+        return ResponseEntity.ok(caliberService.getCaiberNameFromCaliberUUID(caliberUUID));
+    }
+
+    @GetMapping("/getAllGunUsedIssuance")
+    public ResponseEntity<?> getAllGunUsedIssuance() {
+        return ResponseEntity.ok(armoryService.getAllGunUsedIssuance());
+    }
+
+    @GetMapping("/getAllGunUsedAcceptance")
+    public ResponseEntity<?> getAllGunUsedAcceptance() {
+        return ResponseEntity.ok(armoryService.getAllGunUsedAcceptance());
+    }
+
+    @GetMapping("/getAllGunUsed")
+    public ResponseEntity<?> getAllGunUsed(@RequestParam String firstDate, @RequestParam String secondDate) {
+        LocalDate parseFirstDate = LocalDate.parse(firstDate);
+        LocalDate parseSecondDate = LocalDate.parse(secondDate);
+        return ResponseEntity.ok(armoryService.getAllGunUsed(parseFirstDate,parseSecondDate));
+    }
 
     @GetMapping("/calibers")
     public ResponseEntity<?> getCalibersList() {
         return ResponseEntity.ok(caliberService.getCalibersList());
+    }
+
+    @GetMapping("/calibersForEvidence")
+    public ResponseEntity<?> calibersForEvidence() {
+        return ResponseEntity.ok(caliberService.calibersForEvidence());
     }
 
     @GetMapping("/caliberQuantity")
@@ -49,14 +80,26 @@ public class ArmoryController {
         return ResponseEntity.ok(caliberService.getCalibersQuantity(uuid, parseDate));
     }
 
-    @GetMapping("/calibersList")
-    public ResponseEntity<List<String>> getCalibersNamesList() {
-        return ResponseEntity.ok(caliberService.getCalibersNamesList());
-    }
-
     @GetMapping("/getGun")
     public ResponseEntity<?> getGun(@RequestParam String gunUUID) {
         return armoryService.getGun(gunUUID);
+    }
+
+    @GetMapping("/getGunUsedByUUID")
+    public ResponseEntity<?> getGunUsedByUUID(@RequestParam String gunUsedUUID) {
+        return armoryService.getGunUsedByUUID(gunUsedUUID);
+    }
+
+    // jest nadal w użyciu na liście amunicyjnej
+    @GetMapping("/getGunList")
+    public ResponseEntity<?> getGunList() {
+        return ResponseEntity.ok(armoryService.getGunList());
+    }
+
+    // Lista amunicyjna
+    @GetMapping("/getGunListAmmoList")
+    public ResponseEntity<?> getGunUsedListAmmoList() {
+        return ResponseEntity.ok(armoryService.getGunUsedListAmmoList());
     }
 
     @Transactional
@@ -77,21 +120,14 @@ public class ArmoryController {
         return ResponseEntity.ok(armoryService.getAllGuns());
     }
 
+    @GetMapping("/getRemovedGuns")
+    public ResponseEntity<?> getAllRemovedGuns() {
+        return ResponseEntity.ok(armoryService.getAllRemovedGuns());
+    }
+
     @GetMapping("/getHistory")
     public ResponseEntity<?> getHistoryOfCaliber(@RequestParam String caliberUUID) {
         return ResponseEntity.ok(armoryService.getHistoryOfCaliber(caliberUUID));
-    }
-
-    @GetMapping("/getHistoryGuns")
-    public ResponseEntity<?> getHistoryGuns(@RequestParam String firstDate, @RequestParam String secondDate) {
-        LocalDate parseFirstDate = LocalDate.parse(firstDate);
-        LocalDate parseSecondDate = LocalDate.parse(secondDate);
-        return ResponseEntity.ok(armoryService.getHistoryGuns(parseFirstDate, parseSecondDate));
-    }
-
-    @GetMapping("/getGunsUsedInDate")
-    public ResponseEntity<?> getGunsUsedInDate(@RequestParam LocalDate date) {
-        return armoryService.getListGunsUsedInDate(date);
     }
 
     @GetMapping("/getGunByBarcode")
@@ -101,6 +137,7 @@ public class ArmoryController {
 
     @GetMapping("/getGunUsedHistory")
     public ResponseEntity<?> getGunUsedHistory(@RequestParam String gunUUID) {
+
         return ResponseEntity.ok(armoryService.getGunUsedHistory(gunUUID));
     }
 
@@ -108,6 +145,7 @@ public class ArmoryController {
     public ResponseEntity<?> getAllShootingPacket() {
         return ResponseEntity.ok(shootingPacketService.getAllShootingPacket());
     }
+
     @GetMapping("/getAllShootingPacketEntities")
     public ResponseEntity<?> getAllShootingPacketEntities() {
         return ResponseEntity.ok(shootingPacketService.getAllShootingPacketEntities());
@@ -116,7 +154,8 @@ public class ArmoryController {
     @Transactional
     @PostMapping("/addShootingPacket")
     public ResponseEntity<?> addShootingPacket(@RequestParam String name, @RequestParam float price, @RequestBody Map<String, Integer> map, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName(), UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return shootingPacketService.addShootingPacket(name, price, map, pinCode);
         } else {
@@ -127,8 +166,9 @@ public class ArmoryController {
     @Transactional
     @DeleteMapping("/deleteShootingPacket")
     public ResponseEntity<?> deleteShootingPacket(@RequestParam String uuid, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
-        if (code.getStatusCode().equals(HttpStatus.OK)){
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName(), UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
             return shootingPacketService.deleteShootingPacket(uuid, pinCode);
         } else {
             return code;
@@ -137,8 +177,9 @@ public class ArmoryController {
 
     @Transactional
     @PostMapping("/updateShootingPacket")
-    public ResponseEntity<?> updateShootingPacket(@RequestParam String uuid,@RequestParam String name, @RequestParam Float price, @RequestBody Map<String, Integer> map, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+    public ResponseEntity<?> updateShootingPacket(@RequestParam String uuid, @RequestParam String name, @RequestParam Float price, @RequestBody Map<String, Integer> map, @RequestParam String pinCode) throws NoUserPermissionException {
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName(), UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return shootingPacketService.updateShootingPacket(uuid, name, price, map, pinCode);
         } else {
@@ -146,22 +187,57 @@ public class ArmoryController {
         }
     }
 
+    @Transactional
     @PutMapping("/addAmmo")
-    public ResponseEntity<?> updateAmmoQuantity(@RequestParam String caliberUUID, @RequestParam Integer count, @RequestParam String date, @RequestParam String description) {
-        LocalDate parse = LocalDate.parse(date);
-        armoryService.updateAmmo(caliberUUID, count, parse, description);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> updateAmmoQuantity(@RequestParam String caliberUUID, @RequestParam Integer count, @RequestParam String date, @RequestParam String time, @RequestParam String description, @RequestParam String pinCode, @RequestBody String imageString) throws NoUserPermissionException {
+        List<String> acceptedPermissions = List.of(UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            LocalDate parse = LocalDate.parse(date);
+            LocalTime parseTime = LocalTime.parse(time);
+            String imageUUID = filesService.storeImageAddedAmmo(imageString, pinCode);
+            return armoryService.updateAmmo(caliberUUID, count, parse, parseTime, description, imageUUID, pinCode);
+        }
+        return code;
     }
 
-    @PutMapping("/addUsedHistoryToGun")
-    public ResponseEntity<?> addUsedHistoryToGun(@RequestParam String barcode) {
-        return armoryService.addUsedHistoryToGun(barcode);
+    @Transactional
+    @PutMapping("/signUpkeepAmmo")
+    public ResponseEntity<?> signUpkeepAmmo(@RequestParam String ammoInEvidenceUUID, @RequestParam String pinCode, @RequestBody String imageString) throws NoUserPermissionException {
+        List<String> acceptedPermissions = List.of(UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            String imageUUID = filesService.storeImageUpkeepAmmo(imageString, pinCode);
+            return armoryService.signUpkeepAmmo(ammoInEvidenceUUID, imageUUID, pinCode);
+        }
+        return code;
     }
 
     @Transactional
     @PostMapping("/addGun")
-    public ResponseEntity<?> addGunEntity(@RequestBody Gun gun) {
-        return armoryService.addGunEntity(gun);
+    public ResponseEntity<?> addGunEntity(@RequestBody AddGunImageWrapper addGunImageWrapper, @RequestParam String pinCode) throws NoUserPermissionException {
+        List<String> acceptedPermissions = List.of(UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            String imageUUID = filesService.storeImageAddGun(addGunImageWrapper.getImageString(), pinCode);
+            return armoryService.addGunEntity(addGunImageWrapper, imageUUID, pinCode);
+        } else {
+            return code;
+        }
+    }
+
+    @Transactional
+    @PostMapping("/signAddGun")
+    public ResponseEntity<?> signAddGun(@RequestParam String gunUUID, @RequestParam String pinCode, @RequestBody String imageString) throws NoUserPermissionException {
+        List<String> acceptedPermissions = List.of(UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            String imageUUID = filesService.storeImageAddGun(imageString, pinCode);
+            return armoryService.addGunSign(gunUUID, imageUUID, pinCode);
+        } else {
+            return code;
+        }
+
     }
 
     @Transactional
@@ -172,14 +248,15 @@ public class ArmoryController {
 
     @Transactional
     @PutMapping("/remove")
-    public ResponseEntity<?> removeGun(@RequestParam String gunUUID, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+    public ResponseEntity<?> removeGun(@RequestParam String gunUUID, @RequestParam String pinCode,@RequestParam String basisOfRemoved, @RequestBody String imageString) throws NoUserPermissionException {
+        List<String> acceptedPermissions = List.of(UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
-            return armoryService.removeGun(gunUUID, pinCode);
+            String imageUUID = filesService.storeImageRemoveGun(imageString, pinCode);
+            return armoryService.removeGun(gunUUID,basisOfRemoved, pinCode, imageUUID);
         } else {
             return code;
         }
-
     }
 
     @Transactional
@@ -188,20 +265,24 @@ public class ArmoryController {
         if (caliber.isEmpty()) {
             return ResponseEntity.badRequest().body("Wprowadź dane");
         }
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = List.of(UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return caliberService.createNewCaliber(caliber, pinCode);
         } else {
             return code;
         }
     }
-
     @Transactional
-    @PatchMapping("/changeCaliberQuantity")
-    public ResponseEntity<?> changeCaliberQuantity(@RequestParam String caliberUUID, @RequestParam Integer quantity, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+    @PostMapping("/activateOrDeactivateCaliber")
+    public ResponseEntity<?> activateOrDeactivateCaliber(@RequestParam String caliberUUID, @RequestParam String pinCode) throws NoUserPermissionException {
+        if (caliberUUID.isEmpty()) {
+            return ResponseEntity.badRequest().body("Wprowadź dane");
+        }
+        List<String> acceptedPermissions = List.of(UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
-            return armoryService.changeCaliberQuantity(caliberUUID, quantity, pinCode);
+            return caliberService.activateOrDeactivateCaliber(caliberUUID, pinCode);
         } else {
             return code;
         }
@@ -210,7 +291,8 @@ public class ArmoryController {
     @Transactional
     @PatchMapping("/changeCaliberUnitPrice")
     public ResponseEntity<?> changeCaliberUnitPrice(@RequestParam String caliberUUID, @RequestParam Float price, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName(), UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return armoryService.changeCaliberUnitPrice(caliberUUID, price, pinCode);
         } else {
@@ -221,7 +303,8 @@ public class ArmoryController {
     @Transactional
     @PatchMapping("/changeCaliberUnitPriceForNotMember")
     public ResponseEntity<?> changeCaliberUnitPriceForNotMember(@RequestParam String caliberUUID, @RequestParam Float price, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName(), UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return armoryService.changeCaliberUnitPriceForNotMember(caliberUUID, price, pinCode);
         } else {
@@ -239,40 +322,53 @@ public class ArmoryController {
     }
 
     @Transactional
-    @PutMapping("/addGunToList")
-    public ResponseEntity<?> addGunToList(@RequestParam String evidenceUUID, @RequestParam String barcode, @Nullable @RequestParam String legitimationNumber, @Nullable @RequestParam String IDNumber) {
-        if (evidenceUUID.equals("undefined")) {
-            evidenceUUID = null;
+    @PostMapping("/addGunToList")
+    public ResponseEntity<?> addGunToList(@RequestBody List<String> gunUUID, @RequestParam String date, @RequestParam String time) {
+        LocalDate parseDate = LocalDate.parse(date);
+        LocalTime parseTime = LocalTime.parse(time);
+        return armoryService.addGunToList(gunUUID, parseDate, parseTime);
+    }
+
+    @Transactional
+    @PutMapping("/signIssuanceGun")
+    public ResponseEntity<?> signIssuanceGun(@RequestParam String gunUsedUUID, @RequestParam String issuanceDate, @RequestParam String issuanceTime, @RequestParam String pinCode, @RequestBody String imageString) throws NoUserPermissionException {
+        List<String> acceptedPermissions = List.of(UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        LocalDate parseDate = LocalDate.parse(issuanceDate);
+        LocalTime parseTime = LocalTime.parse(issuanceTime);
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            String imageUUID = filesService.storeImageIssuanceGun(imageString, pinCode);
+            return armoryService.signIssuanceGun(gunUsedUUID, imageUUID, parseDate, parseTime, pinCode);
         }
-        return armoryService.addGunToList(evidenceUUID, barcode, legitimationNumber, IDNumber);
+        return code;
     }
 
     @Transactional
-    @PutMapping("/addGunToRepair")
-    public ResponseEntity<?> addGunToRepair(@RequestParam String gunUUID) {
-        return armoryService.addGunToRepair(gunUUID);
-    }
-
-    @GetMapping("/getGunInAmmoEvidenceList")
-    public ResponseEntity<?> getGunInAmmoEvidenceList() {
-        return ResponseEntity.ok().body(armoryService.getGunInAmmoEvidenceList());
+    @PutMapping("/signTakerGun")
+    public ResponseEntity<?> signTakerGun(@RequestParam String gunUsedUUID, @RequestParam Integer memberLeg, @RequestBody String imageString) {
+        String imageUUID = filesService.storeImageTakerGun(imageString, memberLeg);
+        return armoryService.signTakerGun(gunUsedUUID, imageUUID, memberLeg);
     }
 
     @Transactional
-    @PatchMapping("/returnToStore")
-    public ResponseEntity<?> returnToStore(@RequestParam List<String> gunsUUID) {
-        return armoryService.returnToStore(gunsUUID);
+    @PutMapping("/signReturnerGun")
+    public ResponseEntity<?> signReturnerGun(@RequestParam String gunUsedUUID, @RequestParam Integer memberLeg, @RequestBody String imageString) {
+        String imageUUID = filesService.storeImageReturnerGun(imageString, memberLeg);
+        return armoryService.signReturnerGun(gunUsedUUID, imageUUID, memberLeg);
     }
 
     @Transactional
-    @PatchMapping("/addImageToGun")
-    public ResponseEntity<?> addImageToGun(@RequestParam String gunUUID, @RequestParam String fileUUID) {
-
-        if (armoryService.addImageToGun(gunUUID, fileUUID)) {
-            return ResponseEntity.ok("Przypisano zdjęcie");
-        } else {
-            return ResponseEntity.badRequest().build();
+    @PutMapping("/signAcceptanceGun")
+    public ResponseEntity<?> signAcceptanceGun(@RequestParam String gunUsedUUID, @RequestParam String acceptanceDate, @RequestParam String acceptanceTime, @RequestParam String pinCode, @RequestBody String imageString) throws NoUserPermissionException {
+        List<String> acceptedPermissions = List.of(UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        LocalDate parseDate = LocalDate.parse(acceptanceDate);
+        LocalTime parseTime = LocalTime.parse(acceptanceTime);
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            String imageUUID = filesService.storeImageIssuanceGun(imageString, pinCode);
+            return armoryService.signAcceptanceGun(gunUsedUUID, imageUUID, parseDate, parseTime, pinCode);
         }
+        return code;
     }
 
 

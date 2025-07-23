@@ -3,6 +3,7 @@ package com.shootingplace.shootingplace.tournament;
 import com.shootingplace.shootingplace.armory.ArmoryService;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.users.UserSubType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -75,11 +77,6 @@ public class TournamentController {
         return tournamentService.createNewTournament(tournament);
     }
 
-    @PostMapping("/addGunToTournament")
-    public ResponseEntity<?> addGunToTournament(@RequestParam String barcode, @RequestParam String tournamentUUID) {
-        return armoryService.addUsedHistoryToGunInTournament(barcode, tournamentUUID);
-    }
-
     @Transactional
     @PostMapping("/removeArbiter/{tournamentUUID}")
     public ResponseEntity<?> removeArbiterFromTournament(@PathVariable String tournamentUUID, @RequestParam String memberUUID, @RequestParam int id) {
@@ -117,7 +114,8 @@ public class TournamentController {
     @Transactional
     @PatchMapping("/open/{tournamentUUID}")
     public ResponseEntity<?> openTournament(@PathVariable String tournamentUUID, @RequestParam String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode,acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return tournamentService.openTournament(tournamentUUID, pinCode);
         } else {

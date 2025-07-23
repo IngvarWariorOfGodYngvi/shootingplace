@@ -127,7 +127,7 @@ public class MemberService {
 
     //--------------------------------------------------------------------------
     public ResponseEntity<?> addNewMember(Member member, Address address, boolean returningToClub, String pinCode) throws NoUserPermissionException {
-        MemberEntity memberEntity = new MemberEntity();
+        MemberEntity memberEntity;
 
         List<MemberEntity> memberEntityList = memberRepository.findAll();
         MemberEntity member1 = memberEntityList.stream().filter(f -> f.getPesel().equals(member.getPesel())).findFirst().orElse(null);

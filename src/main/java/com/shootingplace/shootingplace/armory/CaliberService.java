@@ -33,25 +33,28 @@ public class CaliberService {
         this.historyService = historyService;
     }
 
+    public String getCaiberNameFromCaliberUUID(String caliberUUID) {
+        return caliberRepository.getOne(caliberUUID).getName();
+    }
+
     public List<CaliberEntity> getCalibersEntityList() {
         List<CaliberEntity> caliberEntityList;
-//        if (caliberRepository.findAll().isEmpty()) {
-//            caliberEntityList = createAllCalibersEntities();
-//        } else {
-            caliberEntityList = caliberRepository.findAll();
-//        }
-
+        caliberEntityList = caliberRepository.findAll();
         return getCaliberSortedEntityList(caliberEntityList);
 
     }
 
     public List<Caliber> getCalibersList() {
         List<Caliber> caliberList;
-//        if (caliberRepository.findAll().isEmpty()) {
-//            caliberList = createAllCalibersEntities().stream().map(this::map).collect(Collectors.toList());
-//        } else {
-            caliberList = caliberRepository.findAll().stream().map(this::map).collect(Collectors.toList());
-//        }
+        caliberList = caliberRepository.findAll().stream().filter(CaliberEntity::isActive).map(this::map).collect(Collectors.toList());
+
+        return caliberList;
+
+    }
+
+    public List<Caliber> calibersForEvidence() {
+        List<Caliber> caliberList;
+        caliberList = caliberRepository.findAll().stream().map(this::map).collect(Collectors.toList());
 
         return caliberList;
 
@@ -65,9 +68,7 @@ public class CaliberService {
                 .collect(Collectors.toList());
         AtomicReference<Integer> count = new AtomicReference<>(0);
         if (collect.size() > 0) {
-            collect.forEach(f -> {
-                count.updateAndGet(v -> v + f.getAmmoAdded());
-            });
+            collect.forEach(f -> count.updateAndGet(v -> v + f.getAmmoAdded()));
         }
         List<AmmoInEvidenceEntity> collect1 = new ArrayList<>();
         ammoEvidenceRepository.findAll()
@@ -82,9 +83,7 @@ public class CaliberService {
                 });
         AtomicReference<Integer> count1 = new AtomicReference<>(0);
         if (collect1.size() > 0) {
-            collect1.forEach(g -> {
-                count1.updateAndGet(v -> v + g.getQuantity());
-            });
+            collect1.forEach(g -> count1.updateAndGet(v -> v + g.getQuantity()));
         }
         Integer opaque = count.getOpaque();
         Integer opaque1 = count1.getOpaque();
@@ -95,6 +94,7 @@ public class CaliberService {
         return Optional.ofNullable(c).map(e -> Caliber.builder()
                 .name(e.getName())
                 .uuid(e.getUuid())
+                .active(e.isActive())
                 .quantity(getCaliberAmmoInStore(c.getUuid()))
                 .unitPrice(e.getUnitPrice())
                 .unitPriceForNotMember(e.getUnitPriceForNotMember())
@@ -107,17 +107,13 @@ public class CaliberService {
                 .filter(f -> f.getBelongTo().equals(uuid))
                 .collect(Collectors.toList());
         AtomicReference<Integer> count = new AtomicReference<>(0);
-        collect.forEach(f -> {
-            count.updateAndGet(v -> v + f.getAmmoAdded());
-        });
+        collect.forEach(f -> count.updateAndGet(v -> v + f.getAmmoAdded()));
         List<AmmoInEvidenceEntity> collect1 = ammoInEvidenceRepository.findAll()
                 .stream()
                 .filter(f -> f.getCaliberUUID().equals(uuid))
                 .collect(Collectors.toList());
         AtomicReference<Integer> count1 = new AtomicReference<>(0);
-        collect1.forEach(g -> {
-            count1.updateAndGet(v -> v + g.getQuantity());
-        });
+        collect1.forEach(g -> count1.updateAndGet(v -> v + g.getQuantity()));
         return count.getOpaque() - count1.getOpaque();
     }
 
@@ -148,99 +144,6 @@ public class CaliberService {
         return caliberEntityList2;
     }
 
-    private List<Caliber> getCaliberSortedList(List<Caliber> caliberList) {
-        String[] sort = {"5,6mm", "9x19mm", "12/76", ".357", ".38", "7,62x39mm"};
-        List<Caliber> collect = caliberList.stream().filter(f -> !f.getName().equals(sort[0])
-                        && !f.getName().equals(sort[1])
-                        && !f.getName().equals(sort[2])
-                        && !f.getName().equals(sort[3])
-                        && !f.getName().equals(sort[4])
-                        && !f.getName().equals(sort[5]))
-                .collect(Collectors.toList());
-
-        Caliber caliber = caliberList.stream().filter(f -> f.getName().equals(sort[0])).findFirst().orElse(null);
-        Caliber caliber1 = caliberList.stream().filter(f -> f.getName().equals(sort[1])).findFirst().orElse(null);
-        Caliber caliber2 = caliberList.stream().filter(f -> f.getName().equals(sort[2])).findFirst().orElse(null);
-        Caliber caliber3 = caliberList.stream().filter(f -> f.getName().equals(sort[3])).findFirst().orElse(null);
-        Caliber caliber4 = caliberList.stream().filter(f -> f.getName().equals(sort[4])).findFirst().orElse(null);
-        Caliber caliber5 = caliberList.stream().filter(f -> f.getName().equals(sort[5])).findFirst().orElse(null);
-        List<Caliber> caliberList2 = new ArrayList<>();
-        caliberList2.add(caliber);
-        caliberList2.add(caliber1);
-        caliberList2.add(caliber2);
-        caliberList2.add(caliber3);
-        caliberList2.add(caliber4);
-        caliberList2.add(caliber5);
-        caliberList2.addAll(collect);
-        return caliberList2;
-    }
-
-    public List<String> getCalibersNamesList() {
-        List<CaliberEntity> caliberEntityList;
-//        if (caliberRepository.findAll().isEmpty()) {
-//            caliberEntityList = createAllCalibersEntities();
-//        } else {
-            caliberEntityList = caliberRepository.findAll();
-//        }
-//        List<CaliberEntity> caliberSortedEntityList = getCaliberSortedEntityList(caliberEntityList);
-        List<CaliberEntity> caliberSortedEntityList = caliberEntityList;
-        List<String> caliberSortedEntityListNames = new ArrayList<>();
-        caliberSortedEntityList.forEach(e -> caliberSortedEntityListNames.add(e.getName()));
-
-        return caliberSortedEntityListNames;
-
-    }
-
-//    private List<CaliberEntity> createAllCalibersEntities() {
-//
-//        List<CaliberEntity> list = new ArrayList<>();
-//        CaliberEntity caliberEntity = CaliberEntity.builder()
-//
-//                .name("5,6mm")
-//                .quantity(0)
-//                .ammoAdded(null)
-//                .ammoUsed(null)
-//                .build();
-//        list.add(caliberEntity);
-//        CaliberEntity caliberEntity1 = CaliberEntity.builder()
-//                .name("9x19mm")
-//                .quantity(0)
-//                .ammoAdded(null)
-//                .ammoUsed(null)
-//                .build();
-//        list.add(caliberEntity1);
-//        CaliberEntity caliberEntity2 = CaliberEntity.builder()
-//                .name("7,62x39mm")
-//                .quantity(0)
-//                .ammoAdded(null)
-//                .ammoUsed(null)
-//                .build();
-//        list.add(caliberEntity2);
-//        CaliberEntity caliberEntity3 = CaliberEntity.builder()
-//                .name(".38")
-//                .quantity(0)
-//                .ammoAdded(null)
-//                .ammoUsed(null)
-//                .build();
-//        list.add(caliberEntity3);
-//        CaliberEntity caliberEntity4 = CaliberEntity.builder()
-//                .name(".357")
-//                .quantity(0)
-//                .ammoAdded(null)
-//                .ammoUsed(null)
-//                .build();
-//        list.add(caliberEntity4);
-//        CaliberEntity caliberEntity5 = CaliberEntity.builder()
-//                .name("12/76")
-//                .quantity(0)
-//                .ammoAdded(null)
-//                .ammoUsed(null)
-//                .build();
-//        list.add(caliberEntity5);
-//        list.forEach(caliberRepository::save);
-//        return list;
-//    }
-
     public ResponseEntity<?> createNewCaliber(String caliber, String pinCode) throws NoUserPermissionException {
 
         boolean match = caliberRepository.findAll().stream().anyMatch(a -> a.getName().equals(caliber.trim().toLowerCase()));
@@ -248,6 +151,7 @@ public class CaliberService {
             CaliberEntity caliberEntity = CaliberEntity.builder()
                     .name(caliber.trim().toLowerCase())
                     .quantity(0)
+                    .active(true)
                     .ammoAdded(null)
                     .ammoUsed(null)
                     .build();
@@ -259,5 +163,16 @@ public class CaliberService {
         } else {
             return ResponseEntity.badRequest().body("Nie udało się utworzyć nowego kalibru");
         }
+    }
+
+    public ResponseEntity<?> activateOrDeactivateCaliber(String caliberUUID, String pinCode) throws NoUserPermissionException {
+        CaliberEntity one = caliberRepository.getOne(caliberUUID);
+        one.changeActive();
+        ResponseEntity<?> response = historyService.getStringResponseEntity(pinCode, one, HttpStatus.OK, "deactivateCaliber", one.isActive()? "Aktywowano Kaiber" :"Dezaktywowano Kaliber");
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
+            caliberRepository.save(one);
+            return response;
+        } else
+            return ResponseEntity.badRequest().body("Nie udało się utworzyć nowego kalibru");
     }
 }

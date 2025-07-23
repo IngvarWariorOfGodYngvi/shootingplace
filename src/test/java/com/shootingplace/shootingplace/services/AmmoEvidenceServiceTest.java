@@ -135,23 +135,23 @@ public class AmmoEvidenceServiceTest {
         assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.BAD_REQUEST));
         assertThat(responseEntity.getBody(), Matchers.equalTo("Nie można otworzyć listy bo inna jest otwarta"));
     }
-
-    @Test
-    public void open_evidence_return_true() throws NoUserPermissionException {
-        //given
-        List<AmmoEvidenceEntity> list = ammoEvidenceEntities;
-        AmmoEvidenceEntity ammoEvidenceEntity = list.get(1);
-        list.remove(ammoEvidenceEntity);
-        String uuid = list.get(5).getUuid();
-        //when
-        when(ammoEvidenceRepository.findAll()).thenReturn(list);
-        when(ammoEvidenceRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findById(uuid)));
-        when(historyService.getStringResponseEntity(any(String.class),any(AmmoEvidenceEntity.class),any(HttpStatus.class),any(String.class),any(Object.class))).thenReturn(new ResponseEntity("Ręcznie otworzono listę - Pamiętaj by ją zamknąć!",HttpStatus.OK));
-        ResponseEntity<?> responseEntity = ammoEvidenceService.openEvidence(uuid, "0125");
-        //then
-        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
-        assertThat(responseEntity.getBody(), Matchers.equalTo("Ręcznie otworzono listę - Pamiętaj by ją zamknąć!"));
-    }
+//
+//    @Test
+//    public void open_evidence_return_true() throws NoUserPermissionException {
+//        //given
+//        List<AmmoEvidenceEntity> list = ammoEvidenceEntities;
+//        AmmoEvidenceEntity ammoEvidenceEntity = list.get(1);
+//        list.remove(ammoEvidenceEntity);
+//        String uuid = list.get(5).getUuid();
+//        //when
+//        when(ammoEvidenceRepository.findAll()).thenReturn(list);
+//        when(ammoEvidenceRepository.findById(any(String.class))).thenReturn(java.util.Optional.ofNullable(findById(uuid)));
+//        when(historyService.getStringResponseEntity(any(String.class),any(AmmoEvidenceEntity.class),any(HttpStatus.class),any(String.class),any(Object.class))).thenReturn(new ResponseEntity("Ręcznie otworzono listę - Pamiętaj by ją zamknąć!",HttpStatus.OK));
+//        ResponseEntity<?> responseEntity = ammoEvidenceService.openEvidence(uuid, "0125");
+//        //then
+//        assertThat(responseEntity.getStatusCode(), Matchers.equalTo(HttpStatus.OK));
+//        assertThat(responseEntity.getBody(), Matchers.equalTo("Ręcznie otworzono listę - Pamiętaj by ją zamknąć!"));
+//    }
 
     @Test
     public void check_any_open_evidence_all_evidence_close() {

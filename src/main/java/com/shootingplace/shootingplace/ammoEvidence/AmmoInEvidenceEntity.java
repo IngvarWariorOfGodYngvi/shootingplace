@@ -9,7 +9,9 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Entity
@@ -34,6 +36,13 @@ public class AmmoInEvidenceEntity {
     private List<AmmoUsedToEvidenceEntity> ammoUsedToEvidenceEntityList;
 
     private LocalDateTime dateTime;
+
+    private String imageUUID;
+
+    private String signedBy;
+    private LocalDate signedDate;
+    private LocalTime signedTime;
+    private boolean locked;
 
     private float price;
 
@@ -96,5 +105,64 @@ public class AmmoInEvidenceEntity {
 
     public void setAmmoUsedToEvidenceEntityList(List<AmmoUsedToEvidenceEntity> ammoUsedToEvidenceEntityList) {
         this.ammoUsedToEvidenceEntityList = ammoUsedToEvidenceEntityList;
+    }
+
+    public String getImageUUID() {
+        return imageUUID;
+    }
+
+    public void setImageUUID(String imageUUID) {
+        this.imageUUID = imageUUID;
+    }
+
+    public String getSignedBy() {
+        return signedBy;
+    }
+
+    public void setSignedBy(String signedBy) {
+        this.signedBy = signedBy;
+    }
+
+    public LocalDate getSignedDate() {
+        return signedDate;
+    }
+
+    public void setSignedDate(LocalDate signedDate) {
+        this.signedDate = signedDate;
+    }
+
+    public LocalTime getSignedTime() {
+        return signedTime;
+    }
+
+    public void setSignedTime(LocalTime signedTime) {
+        this.signedTime = signedTime;
+    }
+
+    public boolean isLocked() {
+        return locked;
+    }
+
+    public void lock() {
+        this.locked = true;
+    }
+
+    @Override
+    public String toString() {
+        return "AmmoInEvidenceEntity{" +
+                "uuid='" + uuid + '\'' +
+                ", caliberName='" + caliberName + '\'' +
+                ", caliberUUID='" + caliberUUID + '\'' +
+                ", evidenceUUID='" + evidenceUUID + '\'' +
+                ", quantity=" + quantity +
+                ", ammoUsedToEvidenceEntityList=" + ammoUsedToEvidenceEntityList +
+                ", dateTime=" + dateTime +
+                ", imageUUID='" + imageUUID + '\'' +
+                ", signedBy='" + signedBy + '\'' +
+                ", signedDate=" + signedDate +
+                ", signedTime=" + signedTime +
+                ", locked=" + locked +
+                ", price=" + price +
+                '}';
     }
 }

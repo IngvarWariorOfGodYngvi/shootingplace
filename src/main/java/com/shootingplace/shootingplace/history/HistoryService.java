@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.history;
 
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
+import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceEntity;
 import com.shootingplace.shootingplace.armory.CaliberEntity;
 import com.shootingplace.shootingplace.armory.GunEntity;
 import com.shootingplace.shootingplace.armory.ShootingPacketEntity;
@@ -184,14 +185,13 @@ public class HistoryService {
     }
 
     //  Tournament
-    private CompetitionHistoryEntity createCompetitionHistoryEntity(String tournamentUUID, LocalDate date, String discipline, List<String> disciplineList, String attachedTo) {
+    private CompetitionHistoryEntity createCompetitionHistoryEntity(String tournamentUUID, LocalDate date, List<String> disciplineList, String attachedTo) {
         TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
         String name = tournamentEntity.getName();
         CompetitionHistoryEntity build = CompetitionHistoryEntity.builder()
                 .name(name)
                 .WZSS(tournamentEntity.isWZSS())
                 .date(date)
-                .discipline(discipline)
                 .attachedToList(attachedTo)
                 .build();
         build.setDisciplineList(disciplineList);
@@ -201,7 +201,7 @@ public class HistoryService {
     public void addCompetitionRecord(String memberUUID, CompetitionMembersListEntity list) {
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
-        CompetitionHistoryEntity competitionHistoryEntity = createCompetitionHistoryEntity(list.getAttachedToTournament(), list.getDate(), list.getDiscipline(), list.getDisciplineList(), list.getUuid());
+        CompetitionHistoryEntity competitionHistoryEntity = createCompetitionHistoryEntity(list.getAttachedToTournament(), list.getDate(), list.getDisciplineList(), list.getUuid());
         competitionHistoryRepository.save(competitionHistoryEntity);
 
         List<CompetitionHistoryEntity> competitionHistoryEntityList = memberEntity
@@ -556,10 +556,19 @@ public class HistoryService {
         }
         return response;
     }
-
+    // Club
     public ResponseEntity<?> getStringResponseEntity(String pinCode, ClubEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "Klub " + methodName, String.valueOf(entity.getId()));
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
+    }
+    // AmmoInEvidence
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, AmmoInEvidenceEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "lista z kalibrem " + methodName, entity.getUuid());
         if (stringResponseEntity != null) {
             response = stringResponseEntity;
         }

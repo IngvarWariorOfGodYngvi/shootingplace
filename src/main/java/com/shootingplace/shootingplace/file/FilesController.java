@@ -3,7 +3,6 @@ package com.shootingplace.shootingplace.file;
 import com.itextpdf.text.DocumentException;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberService;
-import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -26,27 +25,17 @@ public class FilesController {
 
     private final FilesService filesService;
     private final XLSXFilesService xlsxFiles;
-    private final DocxFiles docxFiles;
     private final MemberService memberService;
     private final Environment environment;
 
 
-    public FilesController(FilesService filesService, XLSXFilesService xlsxFiles, DocxFiles docxFiles, MemberService memberService, Environment environment) {
+    public FilesController(FilesService filesService, XLSXFilesService xlsxFiles, MemberService memberService, Environment environment) {
         this.filesService = filesService;
         this.xlsxFiles = xlsxFiles;
-        this.docxFiles = docxFiles;
         this.memberService = memberService;
         this.environment = environment;
     }
 
-    @GetMapping("/simpleDocx")
-    public ResponseEntity<?> simple() throws IOException, Docx4JException {
-        FilesEntity filesEntity = docxFiles.simpleDocxFile();
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                .body(filesEntity.getData());
-    }
     @GetMapping("/countPages")
     public ResponseEntity<?> countPages() {
         return filesService.countPages();
@@ -79,18 +68,6 @@ public class FilesController {
         }
     }
 
-    @PostMapping("/addImageToGun")
-    public ResponseEntity<?> addImageToGun(@RequestParam("file") MultipartFile file, @RequestParam String gunUUID) {
-        String message;
-        try {
-            filesService.addImageToGun(file, gunUUID);
-            message = "Uploaded the file successfully: " + file.getName();
-            return ResponseEntity.status(HttpStatus.OK).body(message);
-        } catch (Exception e) {
-            message = "Could not upload the file: " + file.getOriginalFilename() + "!";
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(message);
-        }
-    }
 
     @DeleteMapping("/removeImg")
     public ResponseEntity<?> removeImageFromGun(@RequestParam String gunUUID) {
@@ -210,15 +187,6 @@ public class FilesController {
                 .body(filesEntity.getData());
     }
 
-    // komunikat z zawodów pdf
-    @GetMapping("/downloadAnnouncementFromCompetition/{tournamentUUID}")
-    public ResponseEntity<byte[]> getAnnouncementFromCompetition(@PathVariable String tournamentUUID) throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.createAnnouncementFromCompetition(tournamentUUID);
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
-                .body(filesEntity.getData());
-    }
 
     // komunikat z zawodów xls
     @GetMapping("/downloadAnnouncementFromCompetitionXLSX/{tournamentUUID}")

@@ -36,6 +36,14 @@ public class Gun {
     private String barcode;
 
     private LocalDate addedDate;
+    private String addedSing;
+    private String addedBy;
+    private String addedUserUUID;
+    private String removedBy;
+    private String removedSing;
+    private String removedUserUUID;
+    private LocalDate removedDate;
+    private String basisOfRemoved;
 
     public String getUuid() {
         return uuid;
@@ -171,5 +179,69 @@ public class Gun {
 
     public void setAddedDate(LocalDate addedDate) {
         this.addedDate = addedDate;
+    }
+
+    public void setAddedSing(String addedSing) {
+        this.addedSing = addedSing;
+    }
+
+    public String getAddedSing() {
+        return addedSing;
+    }
+
+    public void setAddedBy(String addedBy) {
+        this.addedBy = addedBy;
+    }
+
+    public String getAddedBy() {
+        return addedBy;
+    }
+
+    public void setAddedUserUUID(String addedUserUUID) {
+        this.addedUserUUID = addedUserUUID;
+    }
+
+    public String getAddedUserUUID() {
+        return addedUserUUID;
+    }
+
+    public void setRemovedBy(String removedBy) {
+        this.removedBy = removedBy;
+    }
+
+    public String getRemovedBy() {
+        return removedBy;
+    }
+
+    public void setRemovedSign(String removedSing) {
+        this.removedSing = removedSing;
+    }
+
+    public String getRemovedSing() {
+        return removedSing;
+    }
+
+    public void setRemovedUserUUID(String removedUserUUID) {
+        this.removedUserUUID = removedUserUUID;
+    }
+
+    public String getRemovedUserUUID() {
+        return removedUserUUID;
+    }
+
+    public void setRemovedDate(LocalDate removedDate) {
+        this.removedDate = removedDate;
+    }
+
+    public LocalDate getRemovedDate() {
+        return removedDate;
+    }
+
+    public void setBasisOfRemoved(String basisOfRemoved) {
+        this.basisOfRemoved = basisOfRemoved;
+    }
+
+    public String getBasisOfRemoved() {
+        return basisOfRemoved;
     }
 }

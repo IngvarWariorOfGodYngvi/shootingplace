@@ -1,10 +1,10 @@
 package com.shootingplace.shootingplace.history;
 
 import com.google.common.hash.Hashing;
-import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
+import com.shootingplace.shootingplace.users.UserSubType;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 @Service
 public class ChangeHistoryService {
@@ -39,11 +40,14 @@ public class ChangeHistoryService {
                 .build());
     }
 
-    public ResponseEntity<?> comparePinCode(String pinCode) throws NoUserPermissionException {
+    public ResponseEntity<?> comparePinCode(String pinCode, List<String> acceptedPermission) throws NoUserPermissionException {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity userEntity = userRepository.findByPinCode(pin);
-        if (userEntity != null && userEntity.getSubType().equals("Admin")) {
+        if (userEntity != null && userEntity.getUserPermissionsList().stream().noneMatch(acceptedPermission::contains)) {
             throw new NoUserPermissionException();
+        }
+        if (userEntity != null && acceptedPermission.contains(UserSubType.ADMIN.getName()) && userEntity.getUserPermissionsList().contains(UserSubType.ADMIN.getName())) {
+            return ResponseEntity.ok().build();
         }
         boolean inWork;
         if (userEntity != null) {
@@ -64,7 +68,7 @@ public class ChangeHistoryService {
             if (!workServ.isInWork(userEntity)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Najpierw zarejestruj pobyt w Klubie");
             }
-            if (userEntity.getSubType().contains(UserSubType.MANAGEMENT.getName()) || userEntity.getSubType().contains(UserSubType.WORKER.getName())) {
+            if (userEntity.getUserPermissionsList().contains(UserSubType.MANAGEMENT.getName()) || userEntity.getUserPermissionsList().contains(UserSubType.WORKER.getName())) {
                 userEntity.getList().add(addRecord(userEntity, classNamePlusMethod, uuid));
                 userRepository.save(userEntity);
                 return null;

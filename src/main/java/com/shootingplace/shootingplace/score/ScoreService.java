@@ -7,11 +7,9 @@ import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
 import com.shootingplace.shootingplace.tournament.CompetitionMembersListRepository;
-import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -42,23 +40,14 @@ public class ScoreService {
     }
 
     public ScoreEntity createScore(float score, float innerTen, float outerTen, int procedures, String competitionMembersListEntityUUID, MemberEntity memberEntity, OtherPersonEntity otherPersonEntity) {
-        String name;
-        if (memberEntity != null) {
-            name = memberEntity.getFullName();
-        } else {
-            name = otherPersonEntity.getFullName();
-        }
-        int number = 0;
-
+        String name = memberEntity != null ? memberEntity.getFullName() : otherPersonEntity.getFullName();
 
         CompetitionMembersListEntity competitionMembersListEntity = competitionMembersListRepository.findById(competitionMembersListEntityUUID)
                 .orElseThrow(EntityNotFoundException::new);
 
-        TournamentEntity tournamentEntity = tournamentRepository.findById(competitionMembersListEntity.getAttachedToTournament()).orElseThrow(EntityNotFoundException::new);
-
         List<ScoreEntity> scoreEntityList = new ArrayList<>();
 
-        tournamentEntity.getCompetitionsList().forEach(e -> scoreEntityList.addAll(e.getScoreList()));
+        tournamentRepository.getOne(competitionMembersListEntity.getAttachedToTournament()).getCompetitionsList().forEach(e -> scoreEntityList.addAll(e.getScoreList()));
 
         ScoreEntity scoreEntity = scoreEntityList.stream().max(Comparator.comparing(ScoreEntity::getMetricNumber)).orElse(null);
 
@@ -66,15 +55,14 @@ public class ScoreService {
 
         boolean match1 = scoreEntityList.stream().anyMatch(a -> a.getOtherPersonEntity() == (otherPersonEntity));
 
+        int number = scoreEntity != null ? scoreEntity.getMetricNumber() + 1 : 1;
+
         if (memberEntity != null) {
             if (match) {
                 number = scoreEntityList.stream().filter(f -> f.getMember() == (memberEntity)).findFirst().orElseThrow(EntityNotFoundException::new).getMetricNumber();
             } else {
                 if (scoreEntity != null) {
                     number = scoreEntity.getMetricNumber() + 1;
-
-                } else {
-                    number = 1;
                 }
             }
         }
@@ -84,14 +72,11 @@ public class ScoreService {
             } else {
                 if (scoreEntity != null) {
                     number = scoreEntity.getMetricNumber() + 1;
-
-                } else {
-                    number = 1;
                 }
             }
         }
         String value = null;
-        if (competitionMembersListEntity.getNumberOfShots()>0) {
+        if (competitionMembersListEntity.getNumberOfShots() > 0) {
             Integer n = competitionMembersListEntity.getNumberOfShots();
             double s = n / 10d;
             s = Math.ceil(s);
@@ -122,7 +107,6 @@ public class ScoreService {
                 .metricNumber(number)
                 .createDate(LocalDateTime.now())
                 .build());
-        getNameFromScore(scoreEntity);
 
         LOG.info("Utworzono wynik dla " + name);
 
@@ -135,6 +119,7 @@ public class ScoreService {
             return ResponseEntity.badRequest().body("Nie znaleziono wyniku. Sprawdź identyfikator rekordu");
         }
         ScoreEntity scoreEntity = scoreRepository.getOne(scoreUUID);
+        scoreEntity.setName(scoreEntity.getOtherPersonEntity() != null ? scoreEntity.getOtherPersonEntity().getFullName() : scoreEntity.getMember().getFullName());
         String competitionMembersListEntityUUID = scoreEntity.getCompetitionMembersListEntityUUID();
         CompetitionMembersListEntity competitionMembersListEntity = competitionMembersListRepository.findById(competitionMembersListEntityUUID).orElseThrow(EntityNotFoundException::new);
         // Metoda COMSTOCK
@@ -167,7 +152,6 @@ public class ScoreService {
                     .sorted(Comparator.comparing(ScoreEntity::getScore).reversed())
                     .collect(Collectors.toList());
             if (competitionMembersListEntity.getNumberOfShots() == null) {
-                scoreEntity.setEdited(true);
                 scoreRepository.save(scoreEntity);
             } else {
                 int numberOfShots = competitionMembersListEntity.getNumberOfShots();
@@ -219,7 +203,6 @@ public class ScoreService {
                     scoreEntity.setScore(0);
                     scoreEntity.setHf(0);
                 }
-                scoreEntity.setEdited(true);
                 scoreRepository.save(scoreEntity);
                 float hf2 = scoreList.stream()
                         .max(Comparator.comparing(ScoreEntity::getHf))
@@ -260,7 +243,6 @@ public class ScoreService {
             scoreEntity.setScore((float) series.stream().mapToDouble(a -> a).sum());
             scoreEntity.setInnerTen(innerTen);
             scoreEntity.setOuterTen(outerTen);
-            scoreEntity.setEdited(true);
             scoreRepository.save(scoreEntity);
 
             List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream()
@@ -294,7 +276,6 @@ public class ScoreService {
             scoreEntity.setScore(score);
             scoreEntity.setInnerTen(0);
             scoreEntity.setOuterTen(0);
-            scoreEntity.setEdited(true);
             scoreRepository.save(scoreEntity);
             int time;
             if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
@@ -393,7 +374,6 @@ public class ScoreService {
                 scoreEntity.setScore(0);
                 scoreEntity.setHf(0);
             }
-            scoreEntity.setEdited(true);
             scoreRepository.save(scoreEntity);
             scoreList.forEach(e -> {
                 float hf2 = scoreList.stream()
@@ -483,7 +463,6 @@ public class ScoreService {
                 scoreEntity.setScore(0);
                 scoreEntity.setHf(0);
             }
-            scoreEntity.setEdited(true);
             scoreRepository.save(scoreEntity);
             scoreList.forEach(e -> {
                 float hf2 = scoreList.stream()
@@ -522,7 +501,6 @@ public class ScoreService {
             scoreEntity.setScore((float) series.stream().mapToDouble(a -> a).sum());
             scoreEntity.setInnerTen(innerTen);
             scoreEntity.setOuterTen(outerTen);
-            scoreEntity.setEdited(true);
             scoreRepository.save(scoreEntity);
 
             List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream()
@@ -544,8 +522,7 @@ public class ScoreService {
             competitionMembersListEntity.setScoreList(scoreList);
         }
         competitionMembersListRepository.save(competitionMembersListEntity);
-        String name = getNameFromScore(scoreEntity);
-        return ResponseEntity.ok("Ustawiono wynik " + name);
+        return ResponseEntity.ok("Ustawiono wynik " + scoreEntity.getName());
     }
 
     public ResponseEntity<?> toggleAmmunitionInScore(String scoreUUID) {
@@ -556,11 +533,10 @@ public class ScoreService {
         ScoreEntity scoreEntity = scoreRepository.findById(scoreUUID).orElseThrow(EntityNotFoundException::new);
         scoreEntity.toggleAmmunition();
 
-        String name = getNameFromScore(scoreEntity);
 
         scoreRepository.save(scoreEntity);
-        LOG.info("wydaję amunicję " + name);
-        return ResponseEntity.ok("Wydano amunicję " + name);
+        LOG.info("wydaję amunicję " + scoreEntity.getName());
+        return ResponseEntity.ok("Wydano amunicję " + scoreEntity.getName());
     }
 
     public ResponseEntity<?> toggleGunInScore(String scoreUUID) {
@@ -572,9 +548,8 @@ public class ScoreService {
         scoreEntity.toggleGun();
         scoreRepository.save(scoreEntity);
         reorganizeCompetitionMemberList(scoreUUID);
-        String name = getNameFromScore(scoreEntity);
-        LOG.info("wydaję broń " + name);
-        return ResponseEntity.ok("Wydano broń " + name);
+        LOG.info("wydaję broń " + scoreEntity.getName());
+        return ResponseEntity.ok("Wydano broń " + scoreEntity.getName());
     }
 
     public ResponseEntity<?> toggleDnfScore(String scoreUUID) {
@@ -587,9 +562,8 @@ public class ScoreService {
         scoreRepository.save(scoreEntity);
         reorganizeCompetitionMemberList(scoreUUID);
 
-        String name = getNameFromScore(scoreEntity);
-        LOG.info("Ustawiam DNF " + name);
-        return ResponseEntity.ok("Ustawiono DNF " + name);
+        LOG.info("Ustawiam DNF " + scoreEntity.getName());
+        return ResponseEntity.ok("Ustawiono DNF " + scoreEntity.getName());
     }
 
     public ResponseEntity<?> toggleDsqScore(String scoreUUID) {
@@ -623,9 +597,8 @@ public class ScoreService {
         scoreRepository.save(scoreEntity);
         reorganizeCompetitionMemberList(scoreUUID);
 
-        String name = getNameFromScore(scoreEntity);
-        LOG.info("Ustawiono PK " + name);
-        return ResponseEntity.ok("\"Ustawiono PK " + name + "\"");
+        LOG.info("Ustawiono PK " + scoreEntity.getName());
+        return ResponseEntity.ok("Ustawiono PK " + scoreEntity.getName());
     }
 
     public void reorganizeCompetitionMemberList(String scoreUUID) {
@@ -640,7 +613,8 @@ public class ScoreService {
         CompetitionMembersListEntity competitionMembersListEntity = competitionMembersListRepository.findById(competitionMembersListEntityUUID).orElseThrow(EntityNotFoundException::new);
 
         scoreEntity.setScore(score);
-        scoreEntity.setEdited(true);
+        scoreEntity.setName(scoreEntity.getOtherPersonEntity() != null ? scoreEntity.getOtherPersonEntity().getFullName() : scoreEntity.getMember().getFullName());
+
         scoreRepository.save(scoreEntity);
         List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream().filter(f -> !f.isDsq()).filter(f -> !f.isDnf()).filter(f -> !f.isPk()).sorted(Comparator.comparing(ScoreEntity::getScore)
                 .reversed()).collect(Collectors.toList());
@@ -649,19 +623,7 @@ public class ScoreService {
         scoreList.addAll(collect);
         competitionMembersListEntity.setScoreList(scoreList);
         competitionMembersListRepository.save(competitionMembersListEntity);
-        String name = getNameFromScore(scoreEntity);
-        LOG.info("Ustawiono wynik na twardo " + name);
-        return ResponseEntity.ok("Ustawiono wynik " + name);
-    }
-
-    @NotNull
-    private String getNameFromScore(ScoreEntity scoreEntity) {
-        String name;
-        if (scoreEntity.getMember() != null) {
-            name = scoreEntity.getMember().getFullName();
-        } else {
-            name = scoreEntity.getOtherPersonEntity().getFirstName() + scoreEntity.getOtherPersonEntity().getSecondName();
-        }
-        return name;
+        LOG.info("Ustawiono wynik na twardo " + scoreEntity.getName());
+        return ResponseEntity.ok("Ustawiono wynik " + scoreEntity.getName());
     }
 }

@@ -12,6 +12,7 @@ public class GunStoreDTO {
     private String typeName;
 
     private List<Gun> gunList;
+    private List<Gun> gunRemovedList;
 
     public String getTypeName() {
         return typeName;
@@ -25,7 +26,15 @@ public class GunStoreDTO {
         return gunList;
     }
 
-    public void setGunEntityList(List<Gun> gunList) {
+    public void setGunList(List<Gun> gunList) {
         this.gunList = gunList;
+    }
+
+    public List<Gun> getGunRemovedList() {
+        return gunRemovedList;
+    }
+
+    public void setGunRemovedList(List<Gun> gunRemovedList) {
+        this.gunRemovedList = gunRemovedList;
     }
 }

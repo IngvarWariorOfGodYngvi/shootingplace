@@ -2,6 +2,7 @@ package com.shootingplace.shootingplace.club;
 
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.users.UserSubType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ public class ClubController {
     public ResponseEntity<List<ClubEntity>> getAllClubs() {
         return ResponseEntity.ok(clubService.getAllClubs());
     }
+
     @GetMapping("/isMotherClubExist")
     public ResponseEntity<?> getClubsCount() {
         return ResponseEntity.ok(clubService.getClubsCount());
@@ -40,6 +42,7 @@ public class ClubController {
     public ResponseEntity<List<ClubEntity>> getAllClubsToMember() {
         return ResponseEntity.ok(clubService.getAllClubsToMember());
     }
+
     @Transactional
     @PutMapping("/{clubID}")
     public ResponseEntity<?> updateClub(@PathVariable int clubID, @RequestBody Club club) {
@@ -54,14 +57,15 @@ public class ClubController {
 
     @Transactional
     @PostMapping("/create")
-    public ResponseEntity<?> createNewClub(@RequestBody Club club){
+    public ResponseEntity<?> createNewClub(@RequestBody Club club) {
         return clubService.createNewClub(club);
     }
 
     @Transactional
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteClub(@RequestParam String id, String pinCode) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = List.of(UserSubType.MANAGEMENT.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return clubService.deleteClub(Integer.parseInt(id), pinCode);
         } else {

@@ -1,6 +1,5 @@
 package com.shootingplace.shootingplace.armory;
 
-import com.shootingplace.shootingplace.history.UsedHistoryEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -32,8 +31,8 @@ public class GunEntity {
     @NotNull
     private String gunType;
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @OrderBy("dateTime DESC")
-    private List<UsedHistoryEntity> usedHistoryEntityList;
+    @OrderBy("usedDate DESC")
+    private List<GunUsedEntity> gunUsedList;
 
     private String numberOfMagazines;
     private String gunCertificateSerialNumber;
@@ -51,6 +50,14 @@ public class GunEntity {
     private String barcode;
 
     private LocalDate addedDate;
+    private String addedSign;
+    private String addedBy;
+    private String addedUserUUID;
+    private String removedBy;
+    private String removedSign;
+    private String removedUserUUID;
+    private LocalDate removedDate;
+    private String basisOfRemoved;
 
     public String getImgUUID() {
         return imgUUID;
@@ -185,12 +192,12 @@ public class GunEntity {
         this.barcode = barcode;
     }
 
-    public List<UsedHistoryEntity> getUsedHistoryEntityList() {
-        return usedHistoryEntityList;
+    public List<GunUsedEntity> getGunUsedList() {
+        return gunUsedList;
     }
 
-    public void setUsedHistoryEntityList(List<UsedHistoryEntity> usedHistoryEntityList) {
-        this.usedHistoryEntityList = usedHistoryEntityList;
+    public void setGunUsedList(List<GunUsedEntity> gunUsedList) {
+        this.gunUsedList = gunUsedList;
     }
 
     public LocalDate getAddedDate() {
@@ -199,5 +206,68 @@ public class GunEntity {
 
     public void setAddedDate(LocalDate addedDate) {
         this.addedDate = addedDate;
+    }
+
+    public void setAddedSign(String addedSign) {
+        this.addedSign = addedSign;
+    }
+    public String getAddedSign() {
+        return addedSign;
+    }
+
+    public void setAddedBy(String addedBy) {
+        this.addedBy = addedBy;
+    }
+
+    public String getAddedBy() {
+        return addedBy;
+    }
+
+    public void setAddedUserUUID(String addedUserUUID) {
+        this.addedUserUUID = addedUserUUID;
+    }
+
+    public String getAddedUserUUID() {
+        return addedUserUUID;
+    }
+
+    public void setRemovedBy(String removedBy) {
+        this.removedBy = removedBy;
+    }
+
+    public String getRemovedBy() {
+        return removedBy;
+    }
+
+    public void setRemovedSign(String removedSign) {
+        this.removedSign = removedSign;
+    }
+
+    public String getRemovedSign() {
+        return removedSign;
+    }
+
+    public void setRemovedUserUUID(String userUUID) {
+        this.removedUserUUID = userUUID;
+    }
+
+    public String getRemovedUserUUID() {
+        return removedUserUUID;
+    }
+
+    public LocalDate getRemovedDate() {
+        return removedDate;
+    }
+
+    public void setRemovedDate(LocalDate removedDate) {
+        this.removedDate = removedDate;
+    }
+
+    public String getBasisOfRemoved() {
+        return basisOfRemoved;
+    }
+
+    public void setBasisOfRemoved(String basisOfRemoved) {
+        this.basisOfRemoved = basisOfRemoved;
     }
 }

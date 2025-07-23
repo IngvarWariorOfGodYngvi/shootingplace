@@ -1,13 +1,14 @@
-package com.shootingplace.shootingplace.enums;
+package com.shootingplace.shootingplace.users;
 
 public enum UserSubType {
     ADMIN("Admin"),
     MANAGEMENT("Zarząd"),
+    WEAPONS_WAREHOUSEMAN("Magazynier"),
     WORKER("Pracownik"),
     REVISION_COMMITTEE("Komisja Rewizyjna"),
     VISITOR("Gość"),
-    MANAGEMENT_CEO("Prezes/Zarząd"),
-    MANAGEMENT_WORKER("Pracownik/Zarząd");
+    SUPER_USER("Super Użytkownik"),
+    CEO("Prezes");
     private final String name;
 
     UserSubType(String name) {this.name = name;}

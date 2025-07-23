@@ -1,9 +1,14 @@
 package com.shootingplace.shootingplace.users;
 
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -11,9 +16,11 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final ChangeHistoryService changeHistoryService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, ChangeHistoryService changeHistoryService) {
         this.userService = userService;
+        this.changeHistoryService = changeHistoryService;
     }
 
     @GetMapping("/getAccess")
@@ -21,9 +28,14 @@ public class UserController {
         return userService.getAccess(pinCode);
     }
 
-    @GetMapping("/superUserList")
-    public ResponseEntity<?> getListOfSuperUser() {
-        return ResponseEntity.ok(userService.getListOfSuperUser());
+    @GetMapping("/permissions")
+    public ResponseEntity<?> getPermissions() {
+        return ResponseEntity.ok(userService.getPermissions());
+    }
+
+    @GetMapping("/permissionsByPin")
+    public ResponseEntity<?> permissionsByPin(@RequestParam String pinCode) {
+        return ResponseEntity.ok(userService.permissionsByPin(pinCode));
     }
 
     @GetMapping("/userList")
@@ -31,42 +43,43 @@ public class UserController {
         return ResponseEntity.ok(userService.getListOfUser());
     }
 
-    @GetMapping("/allUsers")
-    public ResponseEntity<?> getListOfAllUsers(@Nullable @RequestParam String type) {
-        return ResponseEntity.ok(userService.getListOfAllUsersNoAdmin(type));
-    }
-
     @GetMapping("/userActions")
     public ResponseEntity<?> getUserActions(@RequestParam String uuid) {
         return userService.getUserActions(uuid);
     }
 
-    @PostMapping("/createSuperUser")
-    public ResponseEntity<?> createSuperUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode, @RequestParam @Nullable String memberUUID, @RequestParam @Nullable Integer otherID) {
-        return userService.createSuperUser(firstName, secondName, subType, pinCode, superPinCode, memberUUID, otherID);
-    }
 
     @PostMapping("/createUser")
-    public ResponseEntity<?> createUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam String subType, @RequestParam String pinCode, @RequestParam String superPinCode, @RequestParam @Nullable String memberUUID, @RequestParam @Nullable Integer otherID) throws NoUserPermissionException {
-        return userService.createUser(firstName, secondName, subType, pinCode, superPinCode, memberUUID, otherID);
+    public ResponseEntity<?> createUser(@RequestParam String firstName, @RequestParam String secondName, @RequestParam List<String> userPermissionsList, @RequestParam String pinCode, @RequestParam String superPinCode, @RequestParam @Nullable String memberUUID, @RequestParam @Nullable Integer otherID) throws NoUserPermissionException {
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.ADMIN.getName(), UserSubType.SUPER_USER.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(superPinCode, acceptedPermissions);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return userService.createUser(firstName, secondName, userPermissionsList, pinCode, superPinCode, memberUUID, otherID);
+        }
+        return code;
     }
 
     @PostMapping("/editUser")
-    public ResponseEntity<?> editUser(@Nullable @RequestParam String firstName, @Nullable @RequestParam String secondName, @Nullable @RequestParam String subType, @Nullable @RequestParam String pinCode, @RequestParam String superPinCode, @RequestParam @Nullable String memberUUID, @RequestParam @Nullable String otherID, @RequestParam String userUUID) {
-        if (pinCode.equals("null")) {
+    public ResponseEntity<?> editUser(@Nullable @RequestParam String firstName, @Nullable @RequestParam String secondName, @Nullable @RequestParam List<String> userPermissionsList, @Nullable @RequestParam String pinCode, @RequestParam String superPinCode, @RequestParam @Nullable String memberUUID, @RequestParam @Nullable String otherID, @RequestParam String userUUID) throws NoUserPermissionException {
+        if (pinCode == null || pinCode.isEmpty() || pinCode.equals("null")) {
             pinCode = null;
         }
-        return userService.editUser(firstName, secondName, subType, pinCode, superPinCode, memberUUID, otherID, userUUID);
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.ADMIN.getName(), UserSubType.SUPER_USER.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(superPinCode, acceptedPermissions);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return userService.editUser(firstName, secondName, userPermissionsList, pinCode, superPinCode, memberUUID, otherID, userUUID);
+        }
+        return code;
     }
 
-    @GetMapping("/checkPinCode")
-    public ResponseEntity<?> checkPinCode(@RequestParam String pinCode) {
-        return userService.checkPinCode(pinCode);
-    }
-
-    @PutMapping("/setSuperUser")
-    public ResponseEntity<?> setSuperUser(@RequestParam String uuid, @RequestParam String pinCode) {
-        return userService.setSuperUser(uuid, pinCode);
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteUser(@RequestParam String userID, @RequestParam String pinCode) throws NoUserPermissionException {
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.ADMIN.getName(), UserSubType.SUPER_USER.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            return userService.deleteUser(userID, pinCode);
+        }
+        return code;
     }
 
 }

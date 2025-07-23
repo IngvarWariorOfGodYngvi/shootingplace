@@ -29,6 +29,7 @@ public class AmmoEvidenceEntity {
     private boolean open;
 
     private boolean forceOpen;
+    private boolean locked;
 
 
     public String getUuid() {
@@ -72,6 +73,23 @@ public class AmmoEvidenceEntity {
     }
 
     public void setForceOpen(boolean forceOpen) {
-        this.forceOpen = forceOpen;
+        if (!this.locked) {
+            this.forceOpen = forceOpen;
+        } else {
+            this.forceOpen = false;
+        }
+    }
+
+    public boolean isLocked() {
+        return locked;
+    }
+
+    /**
+     * Użycie tej funkcji sprawi, że Ewidencja zostanie na stałe zamknięta i nie da się już jej otworzyć.
+     */
+    public void lockEvidence() {
+        this.open = false;
+        this.forceOpen = false;
+        this.locked = true;
     }
 }

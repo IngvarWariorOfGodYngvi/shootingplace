@@ -20,8 +20,6 @@ public class CompetitionMembersList {
     private String attachedToTournament;
     private LocalDate date;
 
-    private String discipline;
-    private String[] disciplines;
     private String disciplineList;
     private Integer numberOfShots;
     private String numberOfManyShotsList;
@@ -104,13 +102,6 @@ public class CompetitionMembersList {
         this.date = date;
     }
 
-    public String getDiscipline() {
-        return discipline;
-    }
-
-    public void setDiscipline(String discipline) {
-        this.discipline = discipline;
-    }
 
     public List<Score> getScoreList() {
         return scoreList;
@@ -152,14 +143,6 @@ public class CompetitionMembersList {
         this.WZSS = WZSS;
     }
 
-    public String[] getDisciplines() {
-        return disciplines;
-    }
-
-    public void setDisciplines(String[] disciplines) {
-        this.disciplines = disciplines;
-    }
-
     public void setDisciplineList(List<String> disciplineList) {
         String value = "";
         for (String f : disciplineList) {
@@ -168,8 +151,14 @@ public class CompetitionMembersList {
         this.disciplineList = value;
     }
 
-    public String getDisciplineList() {
-        return disciplineList;
+    public List<String> getDisciplineList() {
+        List<String> vals = new ArrayList<>();
+        if (disciplineList != null) {
+            for (String s : disciplineList.split(";")) {
+                vals.add(String.valueOf(s));
+            }
+        }
+        return vals;
     }
 
     public void setDisciplineList(String disciplineList) {

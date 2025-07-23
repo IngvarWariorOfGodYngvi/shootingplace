@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.configurations;
 
-import com.shootingplace.shootingplace.enums.UserSubType;
+import com.shootingplace.shootingplace.users.UserSubType;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;

@@ -93,6 +93,11 @@ public class AmmoUsedService {
                 ammoEvidenceRepository.save(ammoEvidenceEntity);
                 LOG.info("zamknięto starą listę");
             }
+            AmmoInEvidenceEntity ammoInEvidenceEntity = ammoEvidenceEntity.getAmmoInEvidenceEntityList().stream().filter(f -> f.getCaliberUUID().equals(caliberUUID)).findFirst().orElse(null);
+
+            if (ammoInEvidenceEntity != null && ammoInEvidenceEntity.isLocked()) {
+                return ResponseEntity.badRequest().body("Nie można dodać do listy - Kaiber zastał zatwierdzony i zablokowany");
+            }
         }
         CaliberEntity one = caliberRepository.getOne(caliberUUID);
         boolean substrat = quantity > 0;
@@ -180,7 +185,18 @@ public class AmmoUsedService {
             String value = entry.getValue();
             CaliberEntity one = caliberRepository.getOne(key);
             boolean substrat = Integer.parseInt(value) > 0;
-
+            AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository.findAllByOpenTrue()
+                    .stream().findFirst().orElse(null);
+            if (ammoEvidenceEntity != null) {
+                AmmoInEvidenceEntity ammoInEvidenceEntity = ammoEvidenceEntity.getAmmoInEvidenceEntityList()
+                        .stream()
+                        .filter(f -> f.getCaliberUUID().equals(one.getUuid()))
+                        .findFirst()
+                        .orElse(null);
+                if (ammoInEvidenceEntity != null && ammoInEvidenceEntity.isLocked()) {
+                    returnList.add("Nie można dodać amunicji bo lista została zablokowana");
+                }
+            }
             if (substrat) {
                 armoryService.substratAmmo(key, Integer.parseInt(value));
                 LOG.info("dodaję amunicję do listy");
@@ -224,6 +240,8 @@ public class AmmoUsedService {
             if (starEvidence(ammoUsedEvidence)) {
                 returnList.add((substrat ? "Dodano do listy " : "Zwrócono do magazynu ") + (memberEntity != null ? memberEntity.getFullName() : otherPersonEntity.getFullName()) + " " + one.getName() + " " + value);
             }
+
+
         }
         return ResponseEntity.ok(returnList);
     }

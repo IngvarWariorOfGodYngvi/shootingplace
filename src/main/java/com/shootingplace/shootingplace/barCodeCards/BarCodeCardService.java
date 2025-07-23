@@ -7,6 +7,7 @@ import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
+import com.shootingplace.shootingplace.users.UserSubType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -41,7 +42,7 @@ public class BarCodeCardService {
         if (barCode.isEmpty() || barCode.isBlank()) {
             return ResponseEntity.badRequest().body("Nie podano numeru Karty");
         }
-        if (!userEntity.isSuperUser()) {
+        if (!userEntity.getUserPermissionsList().contains(UserSubType.SUPER_USER.getName())) {
             throw new NoUserPermissionException();
         }
         Person person = null;
@@ -60,7 +61,7 @@ public class BarCodeCardService {
                     .isMaster(true)
                     .activatedDay(LocalDate.now())
                     .type("User")
-                    .subType(userEntity.getSubType())
+                    .subType(userEntity.getUserPermissionsList().toString())
                     .build();
             BarCodeCardEntity save = barCodeCardRepo.save(build);
             barCodeCardList = userEntity.getBarCodeCardList();
@@ -103,7 +104,7 @@ public class BarCodeCardService {
     public ResponseEntity<?> findAdminCode(String code) {
         List<UserEntity> adminList = userRepository.findAll()
                 .stream()
-                .filter(f -> f.getSubType().equals("Admin"))
+                .filter(f -> f.getUserPermissionsList().contains("Admin"))
                 .collect(Collectors.toList());
 
         String[] keyList = new String[adminList.size()];
@@ -172,61 +173,61 @@ public class BarCodeCardService {
                 });
     }
 
-    public String findAdminBarCode(String code) {
-        List<UserEntity> adminList = userRepository.findAll()
-                .stream()
-                .filter(f -> f.getSubType().equals("Admin"))
-                .collect(Collectors.toList());
-
-        String[] keyList = new String[adminList.size()];
-        int z = 0;
-        for (UserEntity userEntity : adminList) {
-            List<BarCodeCardEntity> barCodeCardList = userEntity.getBarCodeCardList();
-            if (barCodeCardList.size() < 1) {
-                break;
-            }
-            for (BarCodeCardEntity barCodeCardEntity : barCodeCardList) {
-                keyList[z] = barCodeCardEntity.getBarCode();
-                z++;
-            }
-        }
-        String res = "";
-
-        char[] codeChars = code.toCharArray();
-
-        // idę po długości klucza
-        for (String s : keyList) {
-            char[] key = s.toCharArray();
-            boolean[] ok = new boolean[key.length];
-
-            if (codeChars.length < key.length) {
-                break;
-            }
-            int y = 0;
-            for (char q : codeChars) {
-                char k = key[y];
-                if (q != k) {
-                    ok[y] = false;
-                    y = 0;
-                } else {
-                    ok[y] = true;
-                    y++;
-                }
-                if (y >= ok.length) {
-                    break;
-                }
-            }
-            for (boolean b : ok) {
-                if (b) {
-                    res = s;
-                } else {
-                    res = "false";
-                    break;
-                }
-            }
-            break;
-        }
-
-        return res;
-    }
+//    public String findAdminBarCode(String code) {
+//        List<UserEntity> adminList = userRepository.findAll()
+//                .stream()
+//                .filter(f -> f.getUserPermissionsList().contains("Admin"))
+//                .collect(Collectors.toList());
+//
+//        String[] keyList = new String[adminList.size()];
+//        int z = 0;
+//        for (UserEntity userEntity : adminList) {
+//            List<BarCodeCardEntity> barCodeCardList = userEntity.getBarCodeCardList();
+//            if (barCodeCardList.size() < 1) {
+//                break;
+//            }
+//            for (BarCodeCardEntity barCodeCardEntity : barCodeCardList) {
+//                keyList[z] = barCodeCardEntity.getBarCode();
+//                z++;
+//            }
+//        }
+//        String res = "";
+//
+//        char[] codeChars = code.toCharArray();
+//
+//        // idę po długości klucza
+//        for (String s : keyList) {
+//            char[] key = s.toCharArray();
+//            boolean[] ok = new boolean[key.length];
+//
+//            if (codeChars.length < key.length) {
+//                break;
+//            }
+//            int y = 0;
+//            for (char q : codeChars) {
+//                char k = key[y];
+//                if (q != k) {
+//                    ok[y] = false;
+//                    y = 0;
+//                } else {
+//                    ok[y] = true;
+//                    y++;
+//                }
+//                if (y >= ok.length) {
+//                    break;
+//                }
+//            }
+//            for (boolean b : ok) {
+//                if (b) {
+//                    res = s;
+//                } else {
+//                    res = "false";
+//                    break;
+//                }
+//            }
+//            break;
+//        }
+//
+//        return res;
+//    }
 }

@@ -46,7 +46,7 @@ public class TournamentEntity {
 
 
     @OneToMany(orphanRemoval = true)
-    @OrderBy("name ASC")
+    @OrderBy("ordering ASC")
     private List<CompetitionMembersListEntity> competitionsList = new ArrayList<>();
     private boolean open;
     private boolean WZSS;

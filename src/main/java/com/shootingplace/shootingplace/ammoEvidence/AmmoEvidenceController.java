@@ -4,6 +4,7 @@ import com.shootingplace.shootingplace.armory.AmmoUsedService;
 import com.shootingplace.shootingplace.exceptions.NoPersonToAmmunitionException;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import com.shootingplace.shootingplace.users.UserSubType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +51,10 @@ public class AmmoEvidenceController {
     public ResponseEntity<AmmoEvidenceEntity> getEvidence(@RequestParam String uuid) {
         return ResponseEntity.ok(ammoEvidenceService.getEvidence(uuid));
     }
+    @GetMapping("/notLockedEvidences")
+    public ResponseEntity<?> getNotLockedEvidences() {
+        return ResponseEntity.ok(ammoEvidenceService.getNotLockedEvidences());
+    }
 
     @GetMapping("/closedEvidences")
     public ResponseEntity<List<AmmoDTO>> getClosedEvidence(Pageable page) {
@@ -58,6 +64,10 @@ public class AmmoEvidenceController {
     @GetMapping("/checkAnyOpenEvidence")
     public ResponseEntity<?> checkAnyOpenEvidence() {
         return ResponseEntity.ok().body(ammoEvidenceService.checkAnyOpenEvidence());
+    }
+    @GetMapping("/getAmmoInEvidece")
+    public ResponseEntity<?> getAmmoInEvidece(String caliberUUID) {
+        return ResponseEntity.ok().body(ammoEvidenceService.getAmmoInEvidece(caliberUUID));
     }
 
     @Transactional
@@ -105,7 +115,8 @@ public class AmmoEvidenceController {
     @Transactional
     @PatchMapping("/ammoOpen")
     public ResponseEntity<?> openEvidence(@RequestParam String pinCode, @RequestParam String evidenceUUID) throws NoUserPermissionException {
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode);
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName(),UserSubType.WEAPONS_WAREHOUSEMAN.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode,acceptedPermissions);
         if (code.getStatusCode().equals(HttpStatus.OK)) {
             return ammoEvidenceService.openEvidence(evidenceUUID, pinCode);
         } else {
