@@ -25,14 +25,12 @@ public class RunPowerShell {
 
             LOG.info("Start: downloadfrontdziesiatka");
 
-            Process pb1;
-            pb1 = new ProcessBuilder("powershell", "-ExecutionPolicy", "Bypass", "-File", "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/downloadfrontdziesiatka.ps1")
+            new ProcessBuilder("powershell", "-ExecutionPolicy", "Bypass", "-File", "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/downloadfrontdziesiatka.ps1")
                     .inheritIO()
                     .start();
             LOG.info("Stop: downloadfrontdziesiatka");
             LOG.info("Start: downloadbackdziesiatka");
-            Process pb;
-            pb = new ProcessBuilder("powershell", "-ExecutionPolicy", "Bypass", "-File", "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/downloadbackdziesiatka.ps1")
+            new ProcessBuilder("powershell", "-ExecutionPolicy", "Bypass", "-File", "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/downloadbackdziesiatka.ps1")
                     .inheritIO()
                     .start();
             LOG.info("Stop: downloadbackdziesiatka");

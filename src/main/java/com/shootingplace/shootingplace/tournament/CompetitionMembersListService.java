@@ -144,7 +144,7 @@ public class CompetitionMembersListService {
             competitionMembersListRepository.delete(competitionMembersListEntity);
             return ResponseEntity.ok("Usunięto konkurencję");
         } else {
-            return ResponseEntity.badRequest().body("Coś poszło nie tak");
+            return ResponseEntity.badRequest().body("Nie można usunąć konkurencji z zawodów");
         }
 
     }

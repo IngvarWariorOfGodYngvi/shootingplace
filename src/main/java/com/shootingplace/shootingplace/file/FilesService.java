@@ -8,7 +8,10 @@ import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceEntity;
-import com.shootingplace.shootingplace.armory.*;
+import com.shootingplace.shootingplace.armory.GunEntity;
+import com.shootingplace.shootingplace.armory.GunRepository;
+import com.shootingplace.shootingplace.armory.GunStoreEntity;
+import com.shootingplace.shootingplace.armory.GunStoreRepository;
 import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordEntity;
 import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
 import com.shootingplace.shootingplace.club.ClubEntity;
@@ -36,6 +39,7 @@ import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
+import com.shootingplace.shootingplace.utils.PageStamper;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
@@ -71,7 +75,6 @@ import java.util.stream.Collectors;
 @Service
 public class FilesService {
 
-
     private final MemberRepository memberRepository;
     private final AmmoEvidenceRepository ammoEvidenceRepository;
     private final FilesRepository filesRepository;
@@ -85,14 +88,13 @@ public class FilesService {
     private final WorkingTimeEvidenceRepository workRepo;
     private final WorkingTimeEvidenceService workServ;
     private final Environment environment;
-    private final ArmoryService armoryService;
     private final RegistrationRecordRepository registrationRepo;
     private final OtherPersonService otherPersonService;
     private final UserRepository userRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ, Environment environment, ArmoryService armoryService, RegistrationRecordRepository registrationRepo, OtherPersonService otherPersonService, UserRepository userRepository) {
+    public FilesService(MemberRepository memberRepository, AmmoEvidenceRepository ammoEvidenceRepository, FilesRepository filesRepository, TournamentRepository tournamentRepository, ClubRepository clubRepository, OtherPersonRepository otherPersonRepository, GunRepository gunRepository, ContributionRepository contributionRepository, CompetitionRepository competitionRepository, GunStoreRepository gunStoreRepository, WorkingTimeEvidenceRepository workRepo, WorkingTimeEvidenceService workServ, Environment environment, RegistrationRecordRepository registrationRepo, OtherPersonService otherPersonService, UserRepository userRepository) {
         this.memberRepository = memberRepository;
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.filesRepository = filesRepository;
@@ -106,7 +108,6 @@ public class FilesService {
         this.workRepo = workRepo;
         this.workServ = workServ;
         this.environment = environment;
-        this.armoryService = armoryService;
         this.registrationRepo = registrationRepo;
         this.otherPersonService = otherPersonService;
         this.userRepository = userRepository;
@@ -153,24 +154,96 @@ public class FilesService {
         });
 
     }
-    // podpis rejestr pobytu
+
+    public List<?> getAllMemberFiles(String uuid) {
+
+        return filesRepository.findAllByBelongToMemberUUIDEquals(uuid);
+    }
+
+    public List<?> getAllFilesList(Pageable page) {
+
+        page = PageRequest.of(page.getPageNumber(), page.getPageSize(), Sort.by("date").and(Sort.by("time")).descending());
+        return filesRepository.findAllByDateIsNotNullAndTimeIsNotNull(page)
+                .stream()
+                .collect(Collectors.toList());
+    }
+
+    public FilesEntity getFile(String uuid) {
+        if (filesRepository.existsById(uuid))
+            return filesRepository.getOne(uuid);
+        else LOG.warn("plik nie istnieje");
+        return null;
+    }
+
+    public String store(MultipartFile file, MemberEntity member) throws IOException {
+        String name = member.getLegitimationNumber().toString() + member.getSecondName().toUpperCase() + member.getFirstName().toUpperCase();
+        FilesModel build = FilesModel.builder()
+                .name(name)
+                .type(String.valueOf(file.getContentType()))
+                .data(file.getBytes())
+                .size(file.getSize())
+                .belongToMemberUUID(member.getUuid())
+                .build();
+        FilesEntity fileEntity = createFileEntity(build);
+
+        member.setImageUUID(fileEntity.getUuid());
+        memberRepository.save(member);
+
+        return fileEntity.getUuid();
+    }
+
+    public ResponseEntity<?> delete(String uuid) {
+
+        if (filesRepository.existsById(uuid)) {
+
+            MemberEntity memberEntity = memberRepository.findAll()
+                    .stream()
+                    .filter(f -> f.getImageUUID() != null)
+                    .filter(f -> f.getImageUUID().equals(uuid))
+                    .findFirst()
+                    .orElse(null);
+            if (memberEntity != null) {
+                memberEntity.setImageUUID(null);
+                memberRepository.save(memberEntity);
+            }
+
+            filesRepository.deleteById(uuid);
+            LOG.info("Usunięto plik");
+            return ResponseEntity.ok("Usunięto plik");
+        } else {
+            return ResponseEntity.badRequest().body("Nie udało się usunąć");
+        }
+
+    }
+
+    public ResponseEntity<?> removeImageFromGun(String gunUUID) {
+        GunEntity one = gunRepository.getOne(gunUUID);
+        try {
+            filesRepository.deleteById(one.getImgUUID());
+        } catch (EmptyResultDataAccessException e) {
+            System.out.println("plik nie istnieje");
+        }
+        one.setImgUUID(null);
+        gunRepository.save(one);
+        return ResponseEntity.ok("usunięto zdjęcie");
+    }
+
+    public ResponseEntity<?> countPages() {
+        return ResponseEntity.ok(filesRepository.countAllRecordsDividedBy50());
+    }
+
+    // podpis rejestr pobytu - klubowicz
     public String storeImageEvidenceBookMember(String imageString, String pesel) {
         String s = imageString.split(",")[1];
-        MemberEntity memberEntity = memberRepository.findByPesel(pesel.replaceAll(" ", "")).get();
+        MemberEntity memberEntity = memberRepository.findByPesel(pesel.replaceAll(" ", "")).orElseThrow(EntityNotFoundException::new);
         String fullName = memberEntity.getFullName();
 
         String fileName = fullName + "evidence.png";
-        byte[] data = Base64.getMimeDecoder().decode(s);
-        FilesModel build = FilesModel.builder()
-                .name(fileName)
-                .type(String.valueOf(MediaType.IMAGE_PNG))
-                .data(data)
-                .size(data.length)
-                .build();
-        FilesEntity fileEntity = createFileEntity(build);
+        FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
     }
-    // podpis rejestr pobytu
+
+    // podpis rejestr pobytu - pozostali
     public String storeImageEvidenceBook(ImageOtherPersonWrapper other, String imageString) {
         String s = imageString.split(",")[1];
         String fullName;
@@ -181,126 +254,77 @@ public class FilesService {
         }
 
         String fileName = fullName + "evidence.png";
-        byte[] data = Base64.getMimeDecoder().decode(s);
-        FilesModel build = FilesModel.builder()
-                .name(fileName)
-                .type(String.valueOf(MediaType.IMAGE_PNG))
-                .data(data)
-                .size(data.length)
-                .build();
-        FilesEntity fileEntity = createFileEntity(build);
+        FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
     }
-    // podpis magazyniera dodawanie amunicji do stanu
+
+    // podpis magazyniera - przyjmowanie amunicji na stan
     public String storeImageAddedAmmo(String imageString, String pinCode) {
         String s = imageString.split(",")[1];
         String code = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity user = userRepository.findByPinCode(code);
         String fileName = user.getFullName() + " ammoAdded.png";
-        byte[] data = Base64.getMimeDecoder().decode(s);
-        FilesModel build = FilesModel.builder()
-                .name(fileName)
-                .type(String.valueOf(MediaType.IMAGE_PNG))
-                .data(data)
-                .size(data.length)
-                .build();
-        FilesEntity fileEntity = createFileEntity(build);
+        FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
     }
-    // podpis magazyniera wydawanie amunicji do stanu
+
+    // podpis magazyniera - wydawanie amunicji
     public String storeImageUpkeepAmmo(String imageString, String pinCode) {
         String s = imageString.split(",")[1];
         String code = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity user = userRepository.findByPinCode(code);
         String fileName = user.getFullName() + " upkeepAmmo.png";
-        byte[] data = Base64.getMimeDecoder().decode(s);
-        FilesModel build = FilesModel.builder()
-                .name(fileName)
-                .type(String.valueOf(MediaType.IMAGE_PNG))
-                .data(data)
-                .size(data.length)
-                .build();
-        FilesEntity fileEntity = createFileEntity(build);
+        FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
     }
-    // podpis magazyniera wydawanie bromi
+
+    // podpis magazyniera - wydawanie bromi
     public String storeImageIssuanceGun(String imageString, String pinCode) {
         String s = imageString.split(",")[1];
         String code = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity user = userRepository.findByPinCode(code);
         String fileName = user.getFullName() + " IssuanceGun.png";
-        byte[] data = Base64.getMimeDecoder().decode(s);
-        FilesModel build = FilesModel.builder()
-                .name(fileName)
-                .type(String.valueOf(MediaType.IMAGE_PNG))
-                .data(data)
-                .size(data.length)
-                .build();
-        FilesEntity fileEntity = createFileEntity(build);
+        FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
     }
-    // podpis osoby pobierającej broń wydawanie bromi
+
+    // podpis osoby pobierającej broń
     public String storeImageTakerGun(String imageString, Integer memberLeg) {
         MemberEntity one = memberRepository.findByLegitimationNumber(memberLeg).orElseThrow(EntityNotFoundException::new);
         String s = imageString.split(",")[1];
         String fileName = one.getFullName() + " TakerGun.png";
-        byte[] data = Base64.getMimeDecoder().decode(s);
-        FilesModel build = FilesModel.builder()
-                .name(fileName)
-                .type(String.valueOf(MediaType.IMAGE_PNG))
-                .data(data)
-                .size(data.length)
-                .build();
-        FilesEntity fileEntity = createFileEntity(build);
+        FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
     }
-    // podpis osoby pobierającej broń wydawanie bromi
+
+    // podpis osoby oddającej broń
     public String storeImageReturnerGun(String imageString, Integer memberLeg) {
         MemberEntity one = memberRepository.findByLegitimationNumber(memberLeg).orElseThrow(EntityNotFoundException::new);
         String s = imageString.split(",")[1];
         String fileName = one.getFullName() + " ReturnerGun.png";
-        byte[] data = Base64.getMimeDecoder().decode(s);
-        FilesModel build = FilesModel.builder()
-                .name(fileName)
-                .type(String.valueOf(MediaType.IMAGE_PNG))
-                .data(data)
-                .size(data.length)
-                .build();
-        FilesEntity fileEntity = createFileEntity(build);
+        FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
     }
-    // podpis osoby pobierającej broń wydawanie bromi
+
+    // podpis magazyniera - usuwanie bromi
     public String storeImageRemoveGun(String imageString, String takerName) {
         String s = imageString.split(",")[1];
         String fileName = takerName + " RemoveGun.png";
-        byte[] data = Base64.getMimeDecoder().decode(s);
-        FilesModel build = FilesModel.builder()
-                .name(fileName)
-                .type(String.valueOf(MediaType.IMAGE_PNG))
-                .data(data)
-                .size(data.length)
-                .build();
-        FilesEntity fileEntity = createFileEntity(build);
+        FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
     }
-    // podpis osoby wprowadzającej broń na stan
+
+    // podpis magazyniera - wprowadzanie broń na stan
     public String storeImageAddGun(String imageString, String pinCode) {
         String s = imageString.split(",")[1];
         String code = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity user = userRepository.findByPinCode(code);
         String fileName = user.getFullName() + " ReturnerGun.png";
-        byte[] data = Base64.getMimeDecoder().decode(s);
-        FilesModel build = FilesModel.builder()
-                .name(fileName)
-                .type(String.valueOf(MediaType.IMAGE_PNG))
-                .data(data)
-                .size(data.length)
-                .build();
-        FilesEntity fileEntity = createFileEntity(build);
+        FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
     }
 
-    // potwierdzenie składki
+    // potwierdzenie opłacenie składki
     public FilesEntity contributionConfirm(String memberUUID, String contributionUUID, Boolean a5rotate) throws DocumentException, IOException {
         ClubEntity club = clubRepository.getOne(1);
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
@@ -314,21 +338,11 @@ public class FilesService {
         LocalDate contribution = contributionEntity.getPaymentDay();
         LocalDate validThru = contributionEntity.getValidThru();
         String fileName = "Składka_" + memberEntity.getFullName() + "_" + LocalDate.now().format(dateFormat()) + ".pdf";
-//        String source = "src/main/resources/fbg_10_qrcode.jpg";
         String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/fbg_10_qrcode.jpg";
         String clubFullName = club.getFullName().toUpperCase();
-
-        // tutaj powinien być text z ustawień o składki
-
         a5rotate = a5rotate != null && a5rotate;
         Document document = new Document(a5rotate ? PageSize.A5.rotate() : PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-            writer.setPageEvent(new PageStamper(environment, false));
-        }
+        setAttToDoc(fileName, document, true, false);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -415,20 +429,13 @@ public class FilesService {
         h1.setAlignment(1);
         p2.add(p3);
         p2.add("                                    ");
-//        p4.add(p5);
         p211.add(p5);
         p6.add(p7);
         p8.add(p9);
-//        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-//            p14.add(p15);
-//        }
-
         p20.add(p21);
         p19.add(p20);
         p16.setIndentationLeft(25);
         p19.setIndentationLeft(40);
-
-
         document.add(p);
         document.add(p1);
         document.add(h1);
@@ -439,7 +446,6 @@ public class FilesService {
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
             document.add(p10);
         }
-//        document.add(p13);
         document.add(p14);
         document.add(p16);
         document.add(p19);
@@ -449,18 +455,7 @@ public class FilesService {
         document.add(img);
         document.add(p200);
         document.close();
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .belongToMemberUUID(memberUUID)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -468,20 +463,16 @@ public class FilesService {
         return filesEntity;
     }
 
-    // karta Klubowicza
+    // karta członkowska
     public FilesEntity personalCardFile(String memberUUID) throws IOException, DocumentException {
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         ClubEntity club = clubRepository.getOne(1);
         String fileName = "Karta Członkowska " + memberEntity.getFirstName().stripTrailing() + " " + memberEntity.getSecondName().stripTrailing() + ".pdf";
         LocalDate birthDate = birthDay(memberEntity.getPesel());
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin() + document.bottomMargin() + document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
+        setAttToDoc(fileName, document, true, false);
         String s = "", s1 = "", s2 = "", s3 = "", s4 = "", s5 = "";
         if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-            writer.setPageEvent(new PageStamper(environment, false));
             s = "Klubu Strzeleckiego „Dziesiątka” Ligi Obrony Kraju w Łodzi";
             s1 = "Klub Strzelecki „Dziesiątka”";
             s2 = "biuro@ksdziesiatka.pl";
@@ -517,7 +508,6 @@ public class FilesService {
         }
         String adultAcceptation = "- Wyrażam zgodę na udział i członkostwo " + sex + " w Klubie";
         Paragraph p = new Paragraph(club.getFullName() + "\n", font(14, 1));
-        // setAlignment(0) = left setAlignment(1) = center setAlignment(2) = right
         p.setAlignment(1);
         String group;
         if (memberEntity.getAdult()) {
@@ -640,25 +630,9 @@ public class FilesService {
         document.add(p19);
         document.add(p22);
 
-
         document.close();
 
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .belongToMemberUUID(memberUUID)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
-
-
-        filesEntity.setName(fileName);
-        filesEntity.setType(String.valueOf(MediaType.APPLICATION_PDF));
-        filesEntity.setData(data);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
         File file = new File(fileName);
 
         file.delete();
@@ -666,13 +640,12 @@ public class FilesService {
 
     }
 
-    // lista Amunicyjna
+    // lista amunicyjna
     public FilesEntity createAmmunitionListDocument(String ammoEvidenceUUID) throws IOException, DocumentException {
-        AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository.findById(ammoEvidenceUUID).orElseThrow(EntityNotFoundException::new);
+        AmmoEvidenceEntity ammoEvidenceEntity = ammoEvidenceRepository.getOne(ammoEvidenceUUID);
         ClubEntity club = clubRepository.getOne(1);
 
         List<AmmoInEvidenceEntity> ammoInEvidenceEntityList1 = new ArrayList<>();
-
 
         List<AmmoInEvidenceEntity> a = ammoEvidenceEntity.getAmmoInEvidenceEntityList();
 
@@ -726,11 +699,7 @@ public class FilesService {
         String fileName = "Lista_Amunicyjna_" + ammoEvidenceEntity.getDate().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment, true));
+        setAttToDoc(fileName, document, true, false);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -804,17 +773,7 @@ public class FilesService {
 
         document.close();
 
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -830,9 +789,8 @@ public class FilesService {
         String fileName = "Wniosek " + memberEntity.getFullName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
         PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(fileName));
+        setAttToDoc(fileName, document, true, false);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -1105,18 +1063,7 @@ public class FilesService {
         }
         document.close();
 
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .belongToMemberUUID(memberUUID)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -1124,305 +1071,6 @@ public class FilesService {
         return filesEntity;
 
     }
-
-    // komunikat z zawodów
-//    public FilesEntity createAnnouncementFromCompetition(String tournamentUUID) throws IOException, DocumentException {
-//        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
-//        ClubEntity c = clubRepository.getOne(1);
-//
-//        String fileName = tournamentEntity.getDate().format(dateFormat()) + " " + c.getShortName() + " " + tournamentEntity.getName() + ".pdf";
-//
-//        Document document = new Document(PageSize.A4);
-//        document.setMargins(35F, 35F, 50F, 50F);
-//        System.out.println(document.bottomMargin());
-//        PdfWriter writer = PdfWriter.getInstance(document,
-//                new FileOutputStream(fileName));
-//        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-//            writer.setPageEvent(new PageStamper(environment, true));
-//        }
-//        document.open();
-//        document.addTitle(fileName);
-//        document.addCreationDate();
-//
-//        String hour = String.valueOf(LocalTime.now().getHour());
-//        String minute = String.valueOf(LocalTime.now().getMinute());
-//        if (Integer.parseInt(minute) < 10) {
-//            minute = "0" + minute;
-//        }
-//
-//        String now = hour + ":" + minute;
-//
-//
-//        Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase() + "\n" + c.getShortName(), font(13, 1));
-//        String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : "Panaszew";
-//        Paragraph date = new Paragraph(city + ", " + monthFormat(tournamentEntity.getDate()), font(10, 2));
-//        Paragraph newLine = new Paragraph("\n", font(10, 0));
-//
-//        document.add(title);
-//        document.add(date);
-//        document.add(newLine);
-//
-//        PdfPTable mainTable = new PdfPTable(1);
-//        mainTable.setWidthPercentage(100);
-//
-//
-//        for (int i = 0; i < tournamentEntity.getCompetitionsList().size(); i++) {
-//            if (!tournamentEntity.getCompetitionsList().get(i).getScoreList().isEmpty()) {
-//                CompetitionMembersListEntity competitionMembersListEntity = tournamentEntity.getCompetitionsList().get(i);
-//
-//                List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList()
-//                        .stream()
-//                        .filter(f -> !f.isDsq() && !f.isDnf() && !f.isPk())
-//                        .sorted(Comparator.comparing(ScoreEntity::getScore).reversed())
-//                        .collect(Collectors.toList());
-//
-//                List<ScoreEntity> collect = competitionMembersListEntity.getScoreList()
-//                        .stream()
-//                        .filter(f -> f.isDnf() || f.isDsq() || f.isPk())
-//                        .sorted(Comparator.comparing(ScoreEntity::getScore).reversed())
-//                        .collect(Collectors.toList());
-//                scoreList.addAll(collect);
-//                Paragraph competition = new Paragraph(competitionMembersListEntity.getName(), font(14, 1));
-//                competition.add("\n");
-//                document.add(competition);
-//                float[] pointColumnWidths;
-//                pointColumnWidths = new float[]{25F, 150F, 125F, 25F, 25F, 50F};
-//                PdfPTable tableLabel = new PdfPTable(pointColumnWidths);
-//                String p1 = "10 x", p2 = "10 /";
-//                if (competitionMembersListEntity.getCountingMethod() != null) {
-//                    if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-//                        p1 = "";
-//                        p2 = "";
-//                    } else {
-//                        p1 = "10 x";
-//                        p2 = "10 /";
-//                    }
-//                }
-//                PdfPCell cellLabel = new PdfPCell(new Paragraph("M-ce", font(10, 1)));
-//                PdfPCell cellLabel1 = new PdfPCell(new Paragraph("Imię i Nazwisko", font(10, 1)));
-//                PdfPCell cellLabel2 = new PdfPCell(new Paragraph("Klub", font(10, 1)));
-//                PdfPCell cellLabel3 = new PdfPCell(new Paragraph(p1, font(10, 1)));
-//                PdfPCell cellLabel4 = new PdfPCell(new Paragraph(p2, font(10, 1)));
-//                PdfPCell cellLabel5 = new PdfPCell(new Paragraph("Wynik", font(10, 1)));
-//
-//                document.add(newLine);
-//
-//                cellLabel.setHorizontalAlignment(Element.ALIGN_CENTER);
-//                cellLabel1.setHorizontalAlignment(Element.ALIGN_CENTER);
-//                cellLabel2.setHorizontalAlignment(Element.ALIGN_CENTER);
-//                cellLabel3.setHorizontalAlignment(Element.ALIGN_CENTER);
-//                cellLabel4.setHorizontalAlignment(Element.ALIGN_CENTER);
-//                cellLabel5.setHorizontalAlignment(Element.ALIGN_CENTER);
-//
-//                cellLabel.setBorder(0);
-//                cellLabel1.setBorder(0);
-//                cellLabel2.setBorder(0);
-//                cellLabel3.setBorder(0);
-//                cellLabel4.setBorder(0);
-//                cellLabel5.setBorder(0);
-//
-//                tableLabel.setWidthPercentage(100F);
-//                tableLabel.addCell(cellLabel);
-//                tableLabel.addCell(cellLabel1);
-//                tableLabel.addCell(cellLabel2);
-//                tableLabel.addCell(cellLabel3);
-//                tableLabel.addCell(cellLabel4);
-//                tableLabel.addCell(cellLabel5);
-//
-//                document.add(tableLabel);
-//
-//
-//                for (int j = 0; j < scoreList.size(); j++) {
-//
-//                    String secondName;
-//                    String firstName;
-//                    String club;
-//                    if (scoreList.get(j).getMember() != null) {
-//                        secondName = scoreList.get(j).getMember().getSecondName();
-//                        firstName = scoreList.get(j).getMember().getFirstName();
-//                        club = scoreList.get(j).getMember().getClub().getShortName();
-//
-//                    } else {
-//                        secondName = scoreList.get(j).getOtherPersonEntity().getSecondName();
-//                        firstName = scoreList.get(j).getOtherPersonEntity().getFirstName();
-//                        club = scoreList.get(j).getOtherPersonEntity().getClub().getShortName();
-//
-//                    }
-//                    float score = scoreList.get(j).getScore();
-//                    String scoreOuterTen = String.valueOf(scoreList.get(j).getOuterTen());
-//                    String scoreInnerTen = String.valueOf(scoreList.get(j).getInnerTen());
-//                    if (scoreOuterTen.startsWith("0")) {
-//                        scoreOuterTen = "";
-//                    }
-//                    if (scoreInnerTen.startsWith("0")) {
-//                        scoreInnerTen = "";
-//                    }
-//                    String o1 = scoreInnerTen.replace(".0", ""), o2 = scoreOuterTen.replace(".0", "");
-//                    if (scoreList.get(j).getInnerTen() == 0) {
-//                        o1 = scoreInnerTen = "";
-//                    }
-//                    if (scoreList.get(j).getOuterTen() == 0) {
-//                        o2 = scoreOuterTen = "";
-//                    }
-//                    DecimalFormat myFormatter = new DecimalFormat("###.####");
-//                    String result = myFormatter.format(score);
-//                    if (score == 100 && competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-//                        result = "100,0000";
-//                    }
-//                    if (scoreList.get(j).isDnf()) {
-//                        result = "DNF";
-//                    }
-//                    if (scoreList.get(j).isDsq()) {
-//                        result = "DSQ";
-//                    }
-//                    if (scoreList.get(j).isPk()) {
-//                        result = "PK(" + score + ")";
-//                    }
-//                    if (competitionMembersListEntity.getCountingMethod() != null) {
-//
-//                        if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.COMSTOCK.getName())) {
-//                            o1 = "";
-//                            o2 = "";
-//
-//                        } else {
-//                            o1 = scoreInnerTen.replace(".0", "");
-//                            o2 = scoreOuterTen.replace(".0", "");
-////                            result = result.replace(".0", "");
-//
-//                        }
-//                    }
-//                    PdfPTable playerTableLabel = new PdfPTable(pointColumnWidths);
-//                    PdfPCell playerCellLabel = new PdfPCell(new Paragraph(String.valueOf(j + 1), font(11, 0)));
-//                    PdfPCell playerCellLabel1 = new PdfPCell(new Paragraph(secondName + " " + firstName, font(11, 0)));
-//                    PdfPCell playerCellLabel2 = new PdfPCell(new Paragraph(club, font(11, 0)));
-//                    PdfPCell playerCellLabel3 = new PdfPCell(new Paragraph(o1, font(9, 2)));
-//                    PdfPCell playerCellLabel4 = new PdfPCell(new Paragraph(o2, font(9, 1)));
-//                    PdfPCell playerCellLabel5 = new PdfPCell(new Paragraph(result, font(11, 1)));
-//
-//
-//                    playerCellLabel.setBorder(0);
-//                    playerCellLabel1.setBorder(0);
-//                    playerCellLabel2.setBorder(0);
-//                    playerCellLabel3.setBorder(0);
-//                    playerCellLabel4.setBorder(0);
-//                    playerCellLabel5.setBorder(0);
-//
-//                    playerCellLabel.setHorizontalAlignment(Element.ALIGN_CENTER);
-//                    playerCellLabel1.setHorizontalAlignment(Element.ALIGN_LEFT);
-//                    playerCellLabel2.setHorizontalAlignment(Element.ALIGN_LEFT);
-//                    playerCellLabel3.setHorizontalAlignment(Element.ALIGN_CENTER);
-//                    playerCellLabel4.setHorizontalAlignment(Element.ALIGN_CENTER);
-//                    playerCellLabel5.setHorizontalAlignment(Element.ALIGN_CENTER);
-//
-//
-//                    playerTableLabel.setWidthPercentage(100F);
-//
-//                    playerTableLabel.addCell(playerCellLabel);
-//                    playerTableLabel.addCell(playerCellLabel1);
-//                    playerTableLabel.addCell(playerCellLabel2);
-//                    playerTableLabel.addCell(playerCellLabel3);
-//                    playerTableLabel.addCell(playerCellLabel4);
-//                    playerTableLabel.addCell(playerCellLabel5);
-//
-//                    document.add(playerTableLabel);
-//
-//                }
-//            }
-//        }
-//        float[] pointColumnWidths = {220F, 240F, 240F};
-//        String mainArbiter;
-//        String mainArbiterClass;
-//        if (tournamentEntity.getMainArbiter() != null) {
-//            mainArbiter = tournamentEntity.getMainArbiter().getFirstName() + " " + tournamentEntity.getMainArbiter().getSecondName();
-//            mainArbiterClass = tournamentEntity.getMainArbiter().getMemberPermissions().getArbiterClass();
-//            mainArbiterClass = getArbiterClass(mainArbiterClass);
-//        } else {
-//            if (tournamentEntity.getOtherMainArbiter() != null) {
-//                mainArbiter = tournamentEntity.getOtherMainArbiter().getFirstName() + " " + tournamentEntity.getOtherMainArbiter().getSecondName();
-//                mainArbiterClass = tournamentEntity.getOtherMainArbiter().getPermissionsEntity().getArbiterClass();
-//                mainArbiterClass = getArbiterClass(mainArbiterClass);
-//            } else {
-//                mainArbiter = "Nie Wskazano";
-//                mainArbiterClass = "";
-//            }
-//        }
-//
-//        String arbiterRTS;
-//        String arbiterRTSClass;
-//        if (tournamentEntity.getCommissionRTSArbiter() != null) {
-//            arbiterRTS = tournamentEntity.getCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getCommissionRTSArbiter().getSecondName();
-//            arbiterRTSClass = tournamentEntity.getCommissionRTSArbiter().getMemberPermissions().getArbiterClass();
-//            arbiterRTSClass = getArbiterClass(arbiterRTSClass);
-//        } else {
-//            if (tournamentEntity.getOtherCommissionRTSArbiter() != null) {
-//                arbiterRTS = tournamentEntity.getOtherCommissionRTSArbiter().getFirstName() + " " + tournamentEntity.getOtherCommissionRTSArbiter().getSecondName();
-//                arbiterRTSClass = tournamentEntity.getOtherCommissionRTSArbiter().getPermissionsEntity().getArbiterClass();
-//                arbiterRTSClass = getArbiterClass(arbiterRTSClass);
-//            } else {
-//                arbiterRTS = "Nie Wskazano";
-//                arbiterRTSClass = "";
-//            }
-//        }
-//
-//
-//        PdfPTable arbiterTableLabel = new PdfPTable(pointColumnWidths);
-//        PdfPCell arbiterCellLabel1 = new PdfPCell(new Paragraph("Sędzia Główny \n" + mainArbiter + "\n" + mainArbiterClass, font(12, 0)));
-//        PdfPCell arbiterCellLabel2 = new PdfPCell(new Paragraph(" ", font(10, 0)));
-//        PdfPCell arbiterCellLabel3 = new PdfPCell(new Paragraph("Przewodniczący Komisji RTS \n" + arbiterRTS + "\n" + arbiterRTSClass, font(12, 0)));
-//
-//        arbiterCellLabel1.setHorizontalAlignment(Element.ALIGN_CENTER);
-//        arbiterCellLabel2.setHorizontalAlignment(Element.ALIGN_CENTER);
-//        arbiterCellLabel3.setHorizontalAlignment(Element.ALIGN_CENTER);
-//
-//        arbiterCellLabel1.setBorder(0);
-//        arbiterCellLabel2.setBorder(0);
-//        arbiterCellLabel3.setBorder(0);
-//
-//        arbiterTableLabel.setWidthPercentage(100F);
-//
-//        arbiterTableLabel.addCell(arbiterCellLabel1);
-//        arbiterTableLabel.addCell(arbiterCellLabel2);
-//        arbiterTableLabel.addCell(arbiterCellLabel3);
-//
-//
-//        document.add(newLine);
-//        document.add(newLine);
-//
-//        Paragraph state = new Paragraph("Zawody odbyły się zgodnie z przepisami bezpieczeństwa i regulaminem zawodów,", font(10, 0));
-//        Paragraph state1 = new Paragraph("oraz liczba sklasyfikowanych zawodników", font(10, 0));
-//        Paragraph state2 = new Paragraph("była zgodna ze stanem faktycznym.", font(10, 0));
-//        state.setAlignment(0);
-//        state1.setAlignment(0);
-//        state2.setAlignment(0);
-//        if (!tournamentEntity.isOpen()) {
-//            document.add(state);
-//            document.add(state1);
-//            document.add(state2);
-//            document.add(newLine);
-//        }
-//        document.add(arbiterTableLabel);
-//        if (tournamentEntity.isOpen()) {
-//            document.add(new Paragraph("Sporządzono " + now, font(14, 0)));
-//        }
-//        document.close();
-//
-//
-//        byte[] data = convertToByteArray(fileName);
-//        FilesModel filesModel = FilesModel.builder()
-//                .name(fileName)
-//                .data(data)
-//                .type(String.valueOf(MediaType.APPLICATION_PDF))
-//                .size(data.length)
-//                .build();
-//
-//        FilesEntity filesEntity =
-//                createFileEntity(filesModel);
-//
-//        File file = new File(fileName);
-//
-//        file.delete();
-//        return filesEntity;
-//    }
 
     // zaświadczenie z Klubu RCS Panaszew
     public FilesEntity CertificateOfClubMembership(String memberUUID, String reason, boolean enlargement) throws IOException, DocumentException {
@@ -1486,20 +1134,7 @@ public class FilesService {
         document.add(par5);
 
         document.close();
-
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .belongToMemberUUID(memberUUID)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
-
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
         File file = new File(fileName);
 
         file.delete();
@@ -1565,7 +1200,7 @@ public class FilesService {
         }
 
         Document document = new Document(PageSize.A4);
-        setAttToDoc(fileName, document, false, true);
+        setAttToDoc(fileName, document, true, true);
         Paragraph newLine = new Paragraph("\n", font(10, 0));
 
         Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "") + ", " + LocalDate.now().format(dateFormat()), font(10, 0));
@@ -1629,7 +1264,7 @@ public class FilesService {
         par71.setIndentationLeft(50);
         Paragraph par8 = new Paragraph("3.   dla dopuszczenia do posiadania broni palnej sportowej:", font(10, 0));
         par8.setFirstLineIndent(20);
-        Paragraph par81 = new Paragraph("a. spełnienie kryteriów, o których mowa w art. 30 ust. 1a ustawy o broni i amunicji, tj.  posiadanie ważnej licencji zawodnika strzelectwa sportowego nadanej przez Polski Związek Strzelectwa Sportowego nr L-" + member.getLicense().getNumber() + "/" + getPartOfDate(parselicenseDate) + " Z dnia " + parselicenseDate.format(dateFormat()) + "r.  w dyscyplinach: pistolet, karabin, strzelba gładkolufowa,", font(10, 0));
+        Paragraph par81 = new Paragraph("spełnienie kryteriów, o których mowa w art. 30 ust. 1a ustawy o broni i amunicji, tj.  posiadanie ważnej licencji zawodnika strzelectwa sportowego nadanej przez Polski Związek Strzelectwa Sportowego nr L-" + member.getLicense().getNumber() + "/" + getPartOfDate(parselicenseDate) + " Z dnia " + parselicenseDate.format(dateFormat()) + "r.  w dyscyplinach: pistolet, karabin, strzelba gładkolufowa,", font(10, 0));
         par81.setIndentationLeft(50);
         Paragraph par9 = new Paragraph("Na podstawie posiadanych kwalifikacji sportowych tj. posiadania patentu strzeleckiego oraz ważnej licencji wydanych przez PZSS jestem zwolniony z egzaminu przed organem Policji, w zakresie broni sportowej, ponieważ zdałem go na podstawie odrębnych przepisów. ", font(10, 0));
         par9.setFirstLineIndent(20);
@@ -1706,6 +1341,7 @@ public class FilesService {
         document.add(par8);
         document.add(par81);
         document.newPage();
+        document.newPage();
         document.add(par9);
         document.add(par10);
         document.add(par11);
@@ -1720,43 +1356,11 @@ public class FilesService {
 
         document.close();
 
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .belongToMemberUUID(memberUUID)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
         file.delete();
         return filesEntity;
-    }
-
-    private String getPartOfDate(LocalDate date) {
-        String month, year;
-        month = date.getMonthValue() < 10 ? "0" + date.getMonthValue() : String.valueOf(date.getMonthValue());
-        year = String.valueOf(date.getYear());
-        return month + "/" + year;
-    }
-
-    private String getDisciplinesFromShootingPatentOrLicense(ShootingPatentEntity patent, LicenseEntity license) {
-        String pistol = null, rifle = null, shotgun = null;
-        if (patent != null) {
-            pistol = patent.getPistolPermission() ? "pistolet" : "";
-            rifle = patent.getRiflePermission() ? "karabin" : "";
-            shotgun = patent.getShotgunPermission() ? "strzelba gładkolufowa" : "";
-        }
-        if (license != null) {
-            pistol = license.isPistolPermission() ? "pistolet" : "";
-            rifle = license.isRiflePermission() ? "karabin" : "";
-            shotgun = license.isShotgunPermission() ? "strzelba gładkolufowa" : "";
-        }
-        return pistol + " " + rifle + " " + shotgun;
     }
 
     // zaświadczenie z Klubu Dziesiątka
@@ -1766,11 +1370,7 @@ public class FilesService {
         String fileName = reason + " " + memberEntity.getFullName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment, false));
+        setAttToDoc(fileName, document, true, false);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -1980,18 +1580,7 @@ public class FilesService {
 
         document.close();
 
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .belongToMemberUUID(memberUUID)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -1999,9 +1588,9 @@ public class FilesService {
         return filesEntity;
     }
 
-    // plik ,csv klubowiczas
+    // plik .csv klubowicza
     public FilesEntity getMemberCSVFile(String memberUUID) throws IOException {
-        MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
         String fileName = memberEntity.getFirstName().stripTrailing() + memberEntity.getSecondName().toUpperCase().stripTrailing() + ".csv";
         File file = new File(fileName);
 
@@ -2024,7 +1613,6 @@ public class FilesService {
         tab[4] = memberEntity.getEmail();
 
         FileWriter fileWriter = new FileWriter(fileName);
-        System.out.println(fileWriter.getEncoding());
         String coma = ";";
         for (String s : tab) {
 
@@ -2057,31 +1645,21 @@ public class FilesService {
         String club;
 
         if (otherID != null) {
-            OtherPersonEntity otherPersonEntity = otherPersonRepository.findById(Integer.parseInt(otherID)).orElseThrow(EntityNotFoundException::new);
+            OtherPersonEntity otherPersonEntity = otherPersonRepository.getOne(Integer.parseInt(otherID));
             name = otherPersonEntity.getSecondName().toUpperCase(Locale.ROOT) + " " + otherPersonEntity.getFirstName();
             club = otherPersonEntity.getClub().getShortName();
         } else {
-            MemberEntity memberEntity = memberRepository.findById(memberUUID).orElseThrow(EntityNotFoundException::new);
+            MemberEntity memberEntity = memberRepository.getOne(memberUUID);
             name = memberEntity.getSecondName().toUpperCase(Locale.ROOT) + " " + memberEntity.getFirstName();
             club = memberEntity.getClub().getShortName();
         }
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
 
-        ClubEntity clubEntity = clubRepository.findById(1).orElseThrow(EntityNotFoundException::new);
+        ClubEntity clubEntity = clubRepository.getOne(1);
 
         String fileName = "metryki_" + name + ".pdf";
-        Document document;
-        if (a5rotate) {
-            document = new Document(PageSize.A5.rotate());
-            document.setMargins(35F, 35F, 60F, 60F);
-        } else {
-            document = new Document(PageSize.A4);
-            document.setMargins(35F, 35F, 20F, 20F);
-        }
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-
+        Document document = a5rotate ? new Document(PageSize.A5.rotate()) : new Document(PageSize.A4);
+        setAttToDoc(fileName, document, true, false);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2442,17 +2020,7 @@ public class FilesService {
 
         document.close();
 
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -2461,84 +2029,26 @@ public class FilesService {
 
     }
 
-    private String arabicToRomanNumberConverter(int arabicNumber) {
-        String romanNumber;
-        switch (arabicNumber) {
-            case 0:
-                romanNumber = "";
-                break;
-            case 1:
-                romanNumber = "I";
-                break;
-            case 2:
-                romanNumber = "II";
-                break;
-            case 3:
-                romanNumber = "III";
-                break;
-            case 4:
-                romanNumber = "IV";
-                break;
-            case 5:
-                romanNumber = "V";
-                break;
-            case 6:
-                romanNumber = "VI";
-                break;
-            case 7:
-                romanNumber = "VII";
-                break;
-            case 8:
-                romanNumber = "VIII";
-                break;
-            case 9:
-                romanNumber = "IX";
-                break;
-            case 10:
-                romanNumber = "X";
-                break;
-            default:
-                romanNumber = "error";
-                break;
-        }
-        return romanNumber;
-    }
-
-    public FilesEntity generateMembersListWithCondition(boolean condition) throws IOException, DocumentException {
-
+    // lista klubowiczów - grupa wiekowa
+    public FilesEntity generateMembersListByAdult(boolean adult) throws IOException, DocumentException {
         String fileName = "Lista_klubowiczów_na_dzień " + LocalDate.now().format(dateFormat()) + ".pdf";
-
         Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment, true));
+        setAttToDoc(fileName, document, true, true);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
-
         List<MemberEntity> all = memberRepository.findAll()
                 .stream()
                 .filter(f -> !f.getErased())
-                .filter(f -> f.getAdult().equals(condition))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl())).collect(Collectors.toList());
+                .filter(f -> f.getAdult().equals(adult))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()).thenComparing(MemberEntity::getFirstName, pl())).collect(Collectors.toList());
 
-        String hour = String.valueOf(LocalTime.now().getHour());
-        String minute = String.valueOf(LocalTime.now().getMinute());
-        if (Integer.parseInt(minute) < 10) {
-            minute = "0" + minute;
-        }
-
-        String now = hour + ":" + minute;
-
-        Paragraph title = new Paragraph("Lista klubowiczów na dzień " + LocalDate.now().format(dateFormat()) + " " + now, font(14, 1));
+        Paragraph title = new Paragraph("Lista klubowiczów na dzień " + LocalDate.now().format(dateFormat()), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
         document.add(title);
         document.add(newLine);
 
         float[] pointColumnWidths = {4F, 58F, 10F, 12F, 12F, 12F};
-
 
         PdfPTable titleTable = new PdfPTable(pointColumnWidths);
 
@@ -2574,39 +2084,25 @@ public class FilesService {
             PdfPCell contributionDateCell;
             PdfPCell contributionValidThruCell;
             if (memberEntity.getHistory().getContributionList().size() > 0) {
-
                 contributionDateCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getHistory().getContributionList().get(0).getPaymentDay()), font(12, 0)));
                 contributionValidThruCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getHistory().getContributionList().get(0).getValidThru()), font(12, 0)));
-
             } else {
-
                 contributionDateCell = new PdfPCell(new Paragraph("BRAK SKŁADEK", font(12, 1)));
                 contributionValidThruCell = new PdfPCell(new Paragraph("BRAK SKŁADEK", font(12, 1)));
-
             }
             if (!memberEntity.getActive()) {
                 contributionDateCell.setBackgroundColor(BaseColor.RED);
                 contributionValidThruCell.setBackgroundColor(BaseColor.RED);
-                inDateCell.setBackgroundColor(BaseColor.RED);
-                legNumberCell.setBackgroundColor(BaseColor.RED);
-                nameCell.setBackgroundColor(BaseColor.RED);
-                lpCell.setBackgroundColor(BaseColor.RED);
             }
-
             memberTable.addCell(lpCell);
             memberTable.addCell(nameCell);
             memberTable.addCell(legNumberCell);
             memberTable.addCell(inDateCell);
             memberTable.addCell(contributionDateCell);
             memberTable.addCell(contributionValidThruCell);
-
             document.add(memberTable);
         }
-
-
         document.close();
-
-
         byte[] data = convertToByteArray(fileName);
         FilesModel filesModel = FilesModel.builder()
                 .name(fileName)
@@ -2614,44 +2110,29 @@ public class FilesService {
                 .type(String.valueOf(MediaType.APPLICATION_PDF))
                 .size(data.length)
                 .build();
-
         FilesEntity filesEntity =
                 createFileEntity(filesModel);
-
         File file = new File(fileName);
-
         file.delete();
         return filesEntity;
     }
 
+    // lista Klubowiczów - lista obecności
     public FilesEntity generateAllMembersList() throws IOException, DocumentException {
-
         String fileName = "Lista_obecności_klubowiczów " + LocalDate.now().format(dateFormat()) + ".pdf";
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment, true));
-
+        setAttToDoc(fileName, document, true, true);
         document.open();
         document.setMarginMirroringTopBottom(true);
         document.addTitle(fileName);
         document.addCreationDate();
-
-        List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).sorted(Comparator.comparing(MemberEntity::getSecondName, pl())).collect(Collectors.toList());
-
+        List<MemberEntity> all = memberRepository.findAll().stream().filter(f -> !f.getErased()).sorted(Comparator.comparing(MemberEntity::getSecondName, pl()).thenComparing(MemberEntity::getFirstName, pl())).collect(Collectors.toList());
         Paragraph title = new Paragraph("Lista obecności klubowiczów na dzień " + LocalDate.now().format(dateFormat()), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
-
         document.add(title);
         document.add(newLine);
-
         float[] pointColumnWidths = {3F, 25F, 15F, 20F};
-
-
         PdfPTable titleTable = new PdfPTable(pointColumnWidths);
-
         titleTable.setWidthPercentage(100);
         Paragraph lp1 = new Paragraph("lp", font(12, 0));
         PdfPCell lp = new PdfPCell(lp1);
@@ -2661,12 +2142,10 @@ public class FilesService {
         PdfPCell legNumber = new PdfPCell(legNumber1);
         Paragraph signature1 = new Paragraph("Podpis", font(12, 0));
         PdfPCell signature = new PdfPCell(signature1);
-
         lp.setHorizontalAlignment(1);
         name.setHorizontalAlignment(1);
         legNumber.setHorizontalAlignment(1);
         signature.setHorizontalAlignment(1);
-
         titleTable.addCell(lp);
         titleTable.addCell(name);
         titleTable.addCell(legNumber);
@@ -2696,21 +2175,9 @@ public class FilesService {
 
             document.add(memberTable);
         }
-
-
         document.close();
 
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -2718,22 +2185,18 @@ public class FilesService {
         return filesEntity;
     }
 
+    // lista sędziów na zawodach
     public FilesEntity getJudge(String tournamentUUID) throws IOException, DocumentException {
 
-        TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
+        TournamentEntity tournamentEntity = tournamentRepository.getOne(tournamentUUID);
 
         String fileName = "Lista_sędziów_na_zawodach_" + tournamentEntity.getName() + ".pdf";
 
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment, false));
+        setAttToDoc(fileName, document, true, false);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
-
         Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase(), font(13, 1));
         Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ?
                 "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ?
@@ -2849,17 +2312,7 @@ public class FilesService {
 
         document.close();
 
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -2868,17 +2321,14 @@ public class FilesService {
 
     }
 
+    // lista osób do zgłoszenia na policję
     public FilesEntity generateListOfMembersToReportToPolice() throws
             IOException, DocumentException {
 
         String fileName = "Lista_osób_do_zgłoszenia_na_Policję " + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment, true));
+        setAttToDoc(fileName, document, true, true);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -2952,17 +2402,7 @@ public class FilesService {
 
         document.close();
 
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -2970,13 +2410,12 @@ public class FilesService {
         return filesEntity;
     }
 
+    // lista osób do skreślenia
     public FilesEntity generateAllMembersToErasedList() throws IOException, DocumentException {
 
         String fileName = "Lista osób do skreślenia na dzień " + LocalDate.now().format(dateFormat()) + ".pdf";
 
         Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
         setAttToDoc(fileName, document, true, true);
 
         Paragraph title = new Paragraph("Lista osób do skreślenia na dzień " + LocalDate.now().format(dateFormat()), font(14, 1));
@@ -2986,18 +2425,6 @@ public class FilesService {
         document.add(title);
         document.add(newLine);
         LocalDate notValidDate = LocalDate.now().minusMonths(6);
-//        List<MemberEntity> memberEntityListAdult = memberRepository.findAllByErasedFalse().stream()
-//                .filter(MemberEntity::getAdult)
-//                .filter(f -> !f.getActive())
-//                .filter(f -> f.getHistory() != null && f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
-//                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
-//                .collect(Collectors.toList());
-//
-//        memberEntityListAdult.addAll(memberRepository.findAllByErasedFalse().stream()
-//                .filter(f -> !f.getAdult())
-//                .filter(f -> f.getHistory() != null && f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
-//                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
-//                .collect(Collectors.toList()));
 
         List<MemberEntity> members = memberRepository.findAllByErasedFalseAndActiveFalse().stream()
                 .filter(f -> f.getHistory().getContributionList().isEmpty() || f.getHistory().getContributionList().get(0).getValidThru().minusDays(1).isBefore(notValidDate))
@@ -3072,17 +2499,7 @@ public class FilesService {
 
         document.close();
 
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -3090,126 +2507,11 @@ public class FilesService {
         return filesEntity;
     }
 
-    public FilesEntity getAllMembersWithLicenceValidAndContributionNotValid() throws IOException, DocumentException {
-
-
-        String fileName = "Lista_osób_bez_składek_z_ważnymi_licencjami_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
-
-        Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        setAttToDoc(fileName, document, false, false);
-        String minute;
-        if (LocalTime.now().getMinute() < 10) {
-            minute = "0" + LocalTime.now().getMinute();
-        } else {
-            minute = String.valueOf(LocalTime.now().getMinute());
-        }
-        String now = LocalTime.now().getHour() + ":" + minute;
-        Paragraph title = new Paragraph("Lista osób bez składek z ważnymi licencjami na dzień " + LocalDate.now().format(dateFormat()) + " " + now, font(14, 1));
-        Paragraph newLine = new Paragraph("\n", font(14, 0));
-
-
-        document.add(title);
-        document.add(newLine);
-
-        List<MemberEntity> memberEntityList = memberRepository.findAll().stream()
-                .filter(f -> !f.getErased())
-                .filter(f -> f.getLicense().getNumber() != null)
-                .filter(f -> f.getLicense().isValid())
-                .filter(f -> !f.getActive())
-                .sorted(Comparator.comparing(MemberEntity::getSecondName, pl()))
-                .collect(Collectors.toList());
-        float[] pointColumnWidths = {4F, 42F, 14F, 14F, 14F, 14F};
-
-
-        PdfPTable titleTable = new PdfPTable(pointColumnWidths);
-
-        PdfPCell lp = new PdfPCell(new Paragraph("lp", font(12, 0)));
-        PdfPCell name = new PdfPCell(new Paragraph("Nazwisko Imię", font(12, 0)));
-        PdfPCell legitimation = new PdfPCell(new Paragraph("legitymacja", font(12, 0)));
-        PdfPCell licenceNumber = new PdfPCell(new Paragraph("numer licencji", font(12, 0)));
-        PdfPCell licenceDate = new PdfPCell(new Paragraph("licencja ważna do", font(12, 0)));
-        PdfPCell contributionDate = new PdfPCell(new Paragraph("Składka ważna do", font(12, 0)));
-
-        titleTable.setWidthPercentage(100);
-
-        titleTable.addCell(lp);
-        titleTable.addCell(name);
-        titleTable.addCell(legitimation);
-        titleTable.addCell(licenceNumber);
-        titleTable.addCell(licenceDate);
-        titleTable.addCell(contributionDate);
-
-        document.add(titleTable);
-
-        document.add(newLine);
-
-        for (int i = 0; i < memberEntityList.size(); i++) {
-
-            MemberEntity memberEntity = memberEntityList.get(i);
-
-            String memberEntityName = memberEntity.getSecondName().concat(" " + memberEntity.getFirstName());
-
-            PdfPTable memberTable = new PdfPTable(pointColumnWidths);
-
-            PdfPCell lpCell = new PdfPCell(new Paragraph(String.valueOf(i + 1), font(12, 0)));
-            PdfPCell nameCell = new PdfPCell(new Paragraph(memberEntityName, font(12, 0)));
-            PdfPCell legitimationCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getLegitimationNumber()), font(12, 0)));
-            PdfPCell licenceNumberCell = new PdfPCell(new Paragraph(memberEntity.getLicense().getNumber(), font(12, 0)));
-            PdfPCell licenceDateCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getLicense().getValidThru()), font(12, 0)));
-            PdfPCell contributionDateCell;
-            if (memberEntity.getHistory().getContributionList().size() > 0) {
-                contributionDateCell = new PdfPCell(new Paragraph(String.valueOf(memberEntity.getHistory().getContributionList().get(0).getValidThru()), font(12, 0)));
-            } else {
-                contributionDateCell = new PdfPCell(new Paragraph("BRAK SKŁADEK", font(12, 0)));
-            }
-            memberTable.setWidthPercentage(100);
-
-            memberTable.addCell(lpCell);
-            memberTable.addCell(nameCell);
-            memberTable.addCell(legitimationCell);
-            memberTable.addCell(licenceNumberCell);
-            memberTable.addCell(licenceDateCell);
-            memberTable.addCell(contributionDateCell);
-
-            document.add(memberTable);
-
-        }
-
-
-        document.close();
-
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
-
-        File file = new File(fileName);
-
-        file.delete();
-        return filesEntity;
-
-    }
-
+    // lista broni - według podanej listy
     public FilesEntity getGunRegistry(List<String> guns) throws IOException, DocumentException {
-
-
         String fileName = "Lista_broni_w_magazynie_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
-
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment, true));
+        setAttToDoc(fileName, document, true, false);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -3359,17 +2661,7 @@ public class FilesService {
         }
         document.close();
 
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -3378,18 +2670,12 @@ public class FilesService {
 
     }
 
+    // list przewozowy
     public FilesEntity getGunTransportCertificate(List<String> guns, LocalDate date, LocalDate date1) throws
             IOException, DocumentException {
-
-
         String fileName = "Lista_broni_do_przewozu_na_dzień" + LocalDate.now().format(dateFormat()) + ".pdf";
-
         Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-        writer.setPageEvent(new PageStamper(environment, false));
+        setAttToDoc(fileName, document, true, false);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -3520,18 +2806,7 @@ public class FilesService {
         }
 
         document.close();
-
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -3539,15 +2814,11 @@ public class FilesService {
         return filesEntity;
     }
 
+    // lista osób skreślonych - z zakresu dat
     public FilesEntity getAllErasedMembers(LocalDate firstDate, LocalDate secondDate) throws IOException, DocumentException {
-
-
         String fileName = "Lista osób skreślonych od " + firstDate + " do" + secondDate + ".pdf";
-
         Document document = new Document(PageSize.A4.rotate());
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        setAttToDoc(fileName, document, false, true);
+        setAttToDoc(fileName, document, true, true);
         Paragraph title = new Paragraph("Lista osób skreślonych od " + firstDate.format(dateFormat()) + " do " + secondDate.format(dateFormat()), font(14, 1));
         Paragraph newLine = new Paragraph("\n", font(14, 0));
 
@@ -3619,18 +2890,7 @@ public class FilesService {
 
 
         document.close();
-
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -3639,14 +2899,11 @@ public class FilesService {
 
     }
 
+    // raport sędziowania - z zakresu dat
     public FilesEntity getJudgingReportInChosenTime(LocalDate firstDate, LocalDate secondDate) throws IOException, DocumentException {
         String fileName = "raport sędziowania.pdf";
         Document document = new Document(PageSize.A4);
-        document.setMargins(35F, 35F, 50F, 50F);
-        System.out.println(document.bottomMargin());
-        PdfWriter writer = PdfWriter.getInstance(document,
-                new FileOutputStream(fileName));
-//        writer.setPageEvent(new PageStamper(environment));
+        setAttToDoc(fileName, document, true, false);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -3691,18 +2948,7 @@ public class FilesService {
 
 
         document.close();
-
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
 
@@ -3711,6 +2957,7 @@ public class FilesService {
         return filesEntity;
     }
 
+    // rejestr pobytu na strzelnicy - z zakresu dat
     public FilesEntity getEvidenceBookInChosenTime(LocalDate firstDate, LocalDate secondDate) throws IOException, DocumentException {
         String fileName = "Książka pobytu na strzelnicy od " + firstDate + " do " + secondDate + ".pdf";
         Document document = new Document(PageSize.A4);
@@ -3793,6 +3040,7 @@ public class FilesService {
         return filesEntity;
     }
 
+    // raport czasu pracy
     public FilesEntity getWorkTimeReport(int year, String month, String workType, boolean detailed) throws IOException, DocumentException {
         int reportNumber = 1;
         List<IFile> collect = filesRepository.findAllByNameContains("%" + month.toLowerCase() + "%", "%" + year + "%", "%" + workType + "%");
@@ -3965,24 +3213,14 @@ public class FilesService {
         );
 
         document.close();
-        System.out.println(reportNumber);
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .version(reportNumber)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
         file.delete();
         return filesEntity;
     }
 
+    // lista osób z licencjami
     public FilesEntity generateMembersListWithLicense() throws IOException, DocumentException {
 
         String fileName = "Lista osób z licencjami.pdf";
@@ -4093,16 +3331,7 @@ public class FilesService {
 
         }
         document.close();
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.APPLICATION_PDF))
-                .size(data.length)
-                .build();
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
+        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
         File file = new File(fileName);
         file.delete();
@@ -4718,19 +3947,35 @@ public class FilesService {
         return filesEntity;
     }
 
+
+    private FilesModel getFilesModelPNG(String fileName, byte[] data) {
+        return FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.IMAGE_PNG))
+                .size(data.length)
+                .build();
+    }
+
+    private FilesModel getFilesModelPDF(String fileName, byte[] data) {
+        return FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
+                .build();
+    }
+
     private Collator pl() {
         return Collator.getInstance(Locale.forLanguageTag("pl"));
     }
 
     private void setAttToDoc(String fileName, Document document, boolean pageEvents, boolean isPageNumberStamp) throws DocumentException, FileNotFoundException {
-        document.setMargins(35F, 35F, 50F, 50F);
-        // to musi zostać by spowolnić program bo inaczej nie robi tego co powinien
-        System.out.println(document.bottomMargin());
+        document.setMargins(35F, 35F, 50F, 60F);
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
-        if (pageEvents) {
-            writer.setPageEvent(new PageStamper(environment, isPageNumberStamp));
-        }
+        writer.setPageEvent(new PageStamper(environment, isPageNumberStamp, pageEvents));
+
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -4785,90 +4030,6 @@ public class FilesService {
 
     private Integer sumIntFromString(String sequence, int substringStart, int substringEnd) {
         return Integer.parseInt(sequence.substring(substringStart, substringEnd));
-    }
-
-    public List<?> getAllFilesList(Pageable page) {
-
-        page = PageRequest.of(page.getPageNumber(), page.getPageSize(), Sort.by("date").and(Sort.by("time")).descending());
-        return filesRepository.findAllByDateIsNotNullAndTimeIsNotNull(page)
-                .stream()
-//                .map(Mapping::map)
-//                .sorted(Comparator.comparing(FilesModel::getDate).thenComparing(FilesModel::getTime).reversed())
-//                .sorted(Comparator.comparing(FileWithNoData::getDate).thenComparing(FileWithNoData::getTime).reversed())
-                .collect(Collectors.toList());
-
-    }
-
-    public FilesEntity getFile(String uuid) {
-        if (filesRepository.existsById(uuid))
-            return filesRepository.getOne(uuid);
-        else LOG.warn("plik nie istnieje");
-        return null;
-    }
-
-    public FilesEntity getGunImg(String gunUUID) {
-        LOG.error(gunRepository.getOne(gunUUID).getImgUUID());
-        if (gunRepository.getOne(gunUUID).getImgUUID() != null && filesRepository.existsById(gunRepository.getOne(gunUUID).getImgUUID()))
-            return filesRepository.getOne(gunRepository.getOne(gunUUID).getImgUUID());
-        else LOG.warn("plik nie istnieje");
-        return null;
-    }
-
-    public String store(MultipartFile file, MemberEntity member) throws IOException {
-//        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-        String name = member.getLegitimationNumber().toString() + member.getSecondName().toUpperCase() + member.getFirstName().toUpperCase();
-        FilesModel build = FilesModel.builder()
-                .name(name)
-                .type(String.valueOf(file.getContentType()))
-                .data(file.getBytes())
-                .size(file.getSize())
-
-                .build();
-        FilesEntity fileEntity = createFileEntity(build);
-
-        member.setImageUUID(fileEntity.getUuid());
-        memberRepository.save(member);
-
-        return fileEntity.getUuid();
-    }
-
-    public List<FilesModel> getAllImages() {
-        List<FilesEntity> image = filesRepository.findAll().stream().filter(f -> f.getType().contains("image")).collect(Collectors.toList());
-
-        List<FilesModel> model = new ArrayList<>();
-
-        image.forEach(e -> {
-                    FilesModel map = Mapping.map(e);
-                    gunRepository.findAll().stream().filter(f -> f.getImgUUID() != null).filter(f -> f.getImgUUID().equals(e.getUuid())).findFirst().ifPresent(gunEntity -> map.setGun(Mapping.map(gunEntity)));
-                    model.add(map);
-                }
-        );
-        model.sort(Comparator.comparing(FilesModel::getDate).thenComparing(FilesModel::getTime).reversed());
-        return model;
-    }
-
-    public ResponseEntity<?> delete(String uuid) {
-
-        if (filesRepository.existsById(uuid)) {
-
-            MemberEntity memberEntity = memberRepository.findAll()
-                    .stream()
-                    .filter(f -> f.getImageUUID() != null)
-                    .filter(f -> f.getImageUUID().equals(uuid))
-                    .findFirst()
-                    .orElse(null);
-            if (memberEntity != null) {
-                memberEntity.setImageUUID(null);
-                memberRepository.save(memberEntity);
-            }
-
-            filesRepository.deleteById(uuid);
-            LOG.info("Usunięto plik");
-            return ResponseEntity.ok("Usunięto plik");
-        } else {
-            return ResponseEntity.badRequest().body("Nie udało się usunąć");
-        }
-
     }
 
     private String getSex(String pesel) {
@@ -5001,117 +4162,75 @@ public class FilesService {
         return arbiterClass;
     }
 
+    private String arabicToRomanNumberConverter(int arabicNumber) {
+        String romanNumber;
+        switch (arabicNumber) {
+            case 0:
+                romanNumber = "";
+                break;
+            case 1:
+                romanNumber = "I";
+                break;
+            case 2:
+                romanNumber = "II";
+                break;
+            case 3:
+                romanNumber = "III";
+                break;
+            case 4:
+                romanNumber = "IV";
+                break;
+            case 5:
+                romanNumber = "V";
+                break;
+            case 6:
+                romanNumber = "VI";
+                break;
+            case 7:
+                romanNumber = "VII";
+                break;
+            case 8:
+                romanNumber = "VIII";
+                break;
+            case 9:
+                romanNumber = "IX";
+                break;
+            case 10:
+                romanNumber = "X";
+                break;
+            default:
+                romanNumber = "error";
+                break;
+        }
+        return romanNumber;
+    }
+
     private DateTimeFormatter dateFormat() {
         String europeanDatePattern = "dd.MM.yyyy";
         return DateTimeFormatter.ofPattern(europeanDatePattern);
     }
 
-    public List<?> getAllMemberFiles(String uuid) {
-
-        return filesRepository.findAllByBelongToMemberUUIDEquals(uuid);
+    private String getPartOfDate(LocalDate date) {
+        String month, year;
+        month = date.getMonthValue() < 10 ? "0" + date.getMonthValue() : String.valueOf(date.getMonthValue());
+        year = String.valueOf(date.getYear());
+        return month + "/" + year;
     }
 
-    public ResponseEntity<?> removeImageFromGun(String gunUUID) {
-        GunEntity one = gunRepository.getOne(gunUUID);
-        try {
-            filesRepository.deleteById(one.getImgUUID());
-        } catch (EmptyResultDataAccessException e) {
-            System.out.println("plik nie istnieje");
+    private String getDisciplinesFromShootingPatentOrLicense(ShootingPatentEntity patent, LicenseEntity license) {
+        String pistol = null, rifle = null, shotgun = null;
+        if (patent != null) {
+            pistol = patent.getPistolPermission() ? "pistolet" : "";
+            rifle = patent.getRiflePermission() ? "karabin" : "";
+            shotgun = patent.getShotgunPermission() ? "strzelba gładkolufowa" : "";
         }
-        one.setImgUUID(null);
-        gunRepository.save(one);
-        return ResponseEntity.ok("usunięto zdjęcie");
+        if (license != null) {
+            pistol = license.isPistolPermission() ? "pistolet" : "";
+            rifle = license.isRiflePermission() ? "karabin" : "";
+            shotgun = license.isShotgunPermission() ? "strzelba gładkolufowa" : "";
+        }
+        return pistol + " " + rifle + " " + shotgun;
     }
 
-    public ResponseEntity<?> countPages() {
-        return ResponseEntity.ok(filesRepository.countAllRecordsDividedBy50());
-    }
-
-    static class PageStamper extends PdfPageEventHelper {
-        private final Environment environment;
-        private final Boolean isPageNumberStamp;
-        int pages;
-
-        PageStamper(Environment environment, Boolean isPageNumberStamp) {
-            this.environment = environment;
-            this.isPageNumberStamp = isPageNumberStamp;
-        }
-
-        @Override
-        public void onOpenDocument(PdfWriter writer, Document document) {
-//            pages = writer.getDirectContent().createTemplate(30, 12);
-        }
-
-        @Override
-        public void onCloseDocument(PdfWriter writer, Document document) {
-            pages = writer.getPageNumber();
-        }
-
-        @Override
-        public void onStartPage(PdfWriter writer, Document document) {
-        }
-
-        @Override
-        public void onEndPage(PdfWriter writer, Document document) {
-            try {
-                document.setMargins(35F, 35F, 50F, 50F);
-                System.out.println(document.bottomMargin());
-                // to działa w miejscu docelowym - nie ruszać tego
-                Rectangle pageSize = document.getPageSize();
-                PdfContentByte directContent = writer.getDirectContent();
-                document.addAuthor("Igor Żebrowski");
-                if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-                    String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/pełna-nazwa(małe).bmp";
-                    Image image = Image.getInstance(source);
-                    int multiplicity = 7;
-                    image.scaleAbsolute(new Rectangle(16 * multiplicity, 9 * multiplicity));
-                    float pw = pageSize.getWidth() / 2;
-                    float iw = image.getScaledWidth() / 2;
-                    float[] position = {pw - iw, -5};
-
-                    image.setAbsolutePosition(position[0], position[1]);
-
-
-                    directContent.addImage(image);
-                    final int currentPageNumber = writer.getCurrentPageNumber();
-                    document.setMargins(35F, 35F, 30F, 50F);
-                    document.addAuthor("Igor Żebrowski");
-                    pageSize = document.getPageSize();
-                    directContent = writer.getDirectContent();
-
-                    directContent.setColorFill(BaseColor.BLACK);
-                    directContent.setFontAndSize(BaseFont.createFont(), 10);
-                    if (isPageNumberStamp) {
-                        PdfTextArray pdfTextArray = new PdfTextArray(String.valueOf(currentPageNumber));
-                        directContent.setTextMatrix(pageSize.getRight(40), pageSize.getBottom(25));
-                        directContent.showText(pdfTextArray);
-                    }
-                }
-                if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
-                    String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/logo-panaszew.jpg";
-                    Image image = Image.getInstance(source);
-                    int multiplicity = 7;
-                    image.scaleAbsolute(new Rectangle(20 * multiplicity, 15 * multiplicity));
-
-                    image.setAbsolutePosition(pageSize.getLeft(50), pageSize.getTop(140));
-                    directContent.addImage(image);
-
-//                    source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/footer-panaszew.png";
-//                    image = Image.getInstance(source);
-//                    image.setBorder(0);
-//                    image.scaleAbsolute(new Rectangle(pageSize.getWidth(), image.getScaledHeight() / 2));
-//                    float pw = pageSize.getWidth();
-//                    float iw = image.getScaledWidth();
-//                    float[] position = {pw - iw, 30};
-//
-//                    image.setAbsolutePosition(position[0], position[1]);
-//                    directContent.addImage(image);
-
-                }
-
-            } catch (DocumentException | IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 }
+

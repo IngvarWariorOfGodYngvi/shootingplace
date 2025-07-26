@@ -450,14 +450,6 @@ public class ArmoryService {
 
     }
 
-    public List<UsedHistoryEntity> getGunInTournament(String tournamentUUID) {
-        return usedHistoryRepository.findAll()
-                .stream()
-                .filter(f -> f.getEvidenceUUID() != null)
-                .filter(f -> f.getEvidenceUUID().equals(tournamentUUID))
-                .collect(Collectors.toList());
-    }
-
     public ResponseEntity<?> addGunToList(List<String> gunUUIDList, LocalDate date, LocalTime time) {
         List<GunEntity> entities = new ArrayList<>();
         gunUUIDList.forEach(e -> entities.add(gunRepository.getOne(e)));

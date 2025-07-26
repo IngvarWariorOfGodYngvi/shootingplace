@@ -79,7 +79,7 @@ public class FilesController {
         String message;
         try {
             MemberEntity member = memberService.getMember(uuid);
-            String store = filesService.store(file, member);
+            filesService.store(file, member);
 
             message = "Uploaded the file successfully: " + file.getName();
             return ResponseEntity.status(HttpStatus.OK).body(message);
@@ -157,7 +157,7 @@ public class FilesController {
             @RequestParam String issuingAuthority,
             @RequestParam String IDDate,
             @RequestParam String licenseDate,
-            @Nullable @RequestParam String city)
+            @RequestParam String city)
             throws IOException, DocumentException {
         LocalDate parseIDDate = LocalDate.parse(IDDate);
         LocalDate parselicenseDate = LocalDate.parse(licenseDate);
@@ -201,7 +201,7 @@ public class FilesController {
     // lista klubowiczów
     @GetMapping("/downloadAllMembers")
     public ResponseEntity<byte[]> getAllMembersToTable(@RequestParam boolean condition) throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.generateMembersListWithCondition(condition);
+        FilesEntity filesEntity = filesService.generateMembersListByAdult(condition);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
@@ -209,7 +209,7 @@ public class FilesController {
     }
 
     @GetMapping("/downloadAllMembersXLSXFile")
-    public ResponseEntity<byte[]> getAllMembersToTableXLSXFile(@RequestParam boolean condition) throws IOException, DocumentException {
+    public ResponseEntity<byte[]> getAllMembersToTableXLSXFile(@RequestParam boolean condition) throws IOException {
         FilesEntity filesEntity = xlsxFiles.getAllMembersToTableXLSXFile(condition);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
@@ -228,7 +228,7 @@ public class FilesController {
     }
     // zgłoszenie do katowic
     @GetMapping("/downloadAllMembersWithLicenseXlsx")
-    public ResponseEntity<byte[]> getAllMembersWithLicenseXlsx() throws IOException, DocumentException {
+    public ResponseEntity<byte[]> getAllMembersWithLicenseXlsx() throws IOException {
         FilesEntity filesEntity = xlsxFiles.getAllMembersWithLicenseXlsx();
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
@@ -268,20 +268,10 @@ public class FilesController {
                 .body(filesEntity.getData());
     }
     @GetMapping("/downloadAllErasedMembersXlsx")
-    public ResponseEntity<byte[]> getAllErasedMembersXlsx(@RequestParam String firstDate, @RequestParam String secondDate) throws DocumentException, IOException {
+    public ResponseEntity<byte[]> getAllErasedMembersXlsx(@RequestParam String firstDate, @RequestParam String secondDate) throws IOException {
         LocalDate parseFirstDate = LocalDate.parse(firstDate);
         LocalDate parseSecondDate = LocalDate.parse(secondDate);
         FilesEntity filesEntity = xlsxFiles.getAllErasedMembersXlsx(parseFirstDate,parseSecondDate);
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
-                .body(filesEntity.getData());
-    }
-
-    // lista osób z licencją i bez składek - bezsensowne; do skasowania
-    @GetMapping("/downloadAllMembersWithValidLicenseNoContribution")
-    public ResponseEntity<byte[]> getAllMembersWithLicenceValidAndContributionNotValid() throws IOException, DocumentException {
-        FilesEntity filesEntity = filesService.getAllMembersWithLicenceValidAndContributionNotValid();
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
@@ -298,7 +288,7 @@ public class FilesController {
                 .body(filesEntity.getData());
     }
     @GetMapping("/downloadAllMembersToErasedXlsx")
-    public ResponseEntity<byte[]> getAllMembersToErasedXlsx() throws IOException, DocumentException {
+    public ResponseEntity<byte[]> getAllMembersToErasedXlsx() throws IOException {
         FilesEntity filesEntity = xlsxFiles.generateAllMembersToErasedListXlsx();
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
@@ -317,7 +307,7 @@ public class FilesController {
     }
     // spis broni
     @GetMapping("/downloadGunRegistryXlsx")
-    public ResponseEntity<byte[]> getGunRegistryXlsx(@RequestParam List<String> guns) throws IOException, DocumentException {
+    public ResponseEntity<byte[]> getGunRegistryXlsx(@RequestParam List<String> guns) throws IOException {
         FilesEntity filesEntity = xlsxFiles.getGunRegistryXlsx(guns);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
@@ -392,7 +382,7 @@ public class FilesController {
                 .body(filesEntity.getData());
     }
 
-    // r=lista sędziów na zawodach
+    // lista sędziów na zawodach
     @GetMapping("/downloadJudge/{tournamentUUID}")
     public ResponseEntity<byte[]> getJudge(@PathVariable String tournamentUUID) throws IOException, DocumentException {
 
@@ -424,26 +414,9 @@ public class FilesController {
         return ResponseEntity.ok(filesService.getAllFilesList(page));
     }
 
-    @GetMapping("/getAllImages")
-    public ResponseEntity<?> getAllImages() {
-        return ResponseEntity.ok(filesService.getAllImages());
-    }
-
     @GetMapping("/getFile")
     public ResponseEntity<byte[]> getFile(@RequestParam String uuid) {
         FilesEntity filesEntity = filesService.getFile(uuid);
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(filesEntity.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
-                .body(filesEntity.getData());
-    }
-
-    @GetMapping("/getGunImg")
-    public ResponseEntity<?> getGunImg(@RequestParam String gunUUID) {
-        FilesEntity filesEntity = filesService.getGunImg(gunUUID);
-        if(filesEntity == null) {
-            return ResponseEntity.ok().body("");
-        }
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")
