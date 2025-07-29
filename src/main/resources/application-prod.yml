@@ -10,7 +10,7 @@ spring:
   jooq:
     sql-dialect: org.hibernate.dialect.MySQL8Dialect
 licenseDate: "2026-08-09"
-dateTime: LocalDateTime.now()
+dateTime: ""
 server:
   compression:
     enabled: true

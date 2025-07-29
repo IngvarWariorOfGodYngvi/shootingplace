@@ -48,7 +48,7 @@ public class AmmoEvidenceController {
     }
 
     @GetMapping("/oneEvidence")
-    public ResponseEntity<AmmoEvidenceEntity> getEvidence(@RequestParam String uuid) {
+    public ResponseEntity<?> getEvidence(@RequestParam String uuid) {
         return ResponseEntity.ok(ammoEvidenceService.getEvidence(uuid));
     }
     @GetMapping("/notLockedEvidences")

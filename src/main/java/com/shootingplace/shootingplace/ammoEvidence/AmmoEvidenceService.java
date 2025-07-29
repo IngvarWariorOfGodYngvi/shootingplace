@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.ammoEvidence;
 
-import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.HistoryService;
 import org.apache.logging.log4j.LogManager;
@@ -42,8 +42,8 @@ public class AmmoEvidenceService {
 //        return ammoEvidenceRepository.findAllByOpenTrue().size() > 0 ? ResponseEntity.ok(Mapping.map(ammoEvidenceRepository.findAllByOpenTrue().get(0))) : ResponseEntity.ok(new ArrayList<>());
     }
 
-    public AmmoEvidenceEntity getEvidence(String uuid) {
-        return ammoEvidenceRepository.getOne(uuid);
+    public AmmoEvidenceDTO getEvidence(String uuid) {
+        return Mapping.map(ammoEvidenceRepository.getOne(uuid));
     }
 
     public void automationCloseEvidence() {

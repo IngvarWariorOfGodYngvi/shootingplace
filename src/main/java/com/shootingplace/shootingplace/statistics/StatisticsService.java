@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.statistics;
 
 import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
-import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoUsedToEvidenceEntity;

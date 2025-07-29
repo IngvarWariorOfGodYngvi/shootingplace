@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.armory;
 
-import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.*;
 import com.shootingplace.shootingplace.exceptions.NoPersonToAmmunitionException;
 import com.shootingplace.shootingplace.member.*;

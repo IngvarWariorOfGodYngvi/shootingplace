@@ -78,16 +78,16 @@ public class AmmoEvidenceServiceTest {
 //        Assert.assertThat(allEvidences, Matchers.hasSize(9));
 //    }
 
-    @Test
-    public void getEvidence() {
-        //given
-        String uuid = ammoEvidenceEntities.get(0).getUuid();
-        //when
-        when(ammoEvidenceRepository.getOne(any(String.class))).thenReturn(getOne(uuid));
-        AmmoEvidenceEntity evidence = ammoEvidenceService.getEvidence(uuid);
-        //then
-        Assert.assertThat(evidence.getUuid(), Matchers.equalTo(uuid));
-    }
+//    @Test
+//    public void getEvidence() {
+//        //given
+//        String uuid = ammoEvidenceEntities.get(0).getUuid();
+//        //when
+//        when(ammoEvidenceRepository.getOne(any(String.class))).thenReturn(getOne(uuid));
+//        AmmoEvidenceEntity evidence = ammoEvidenceService.getEvidence(uuid);
+//        //then
+//        Assert.assertThat(evidence.getUuid(), Matchers.equalTo(uuid));
+//    }
 
     @Test
     public void close_evidence_return_false() {

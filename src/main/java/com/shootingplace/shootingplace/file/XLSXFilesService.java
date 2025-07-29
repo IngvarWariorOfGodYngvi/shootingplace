@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.file;
 
-import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.armory.GunEntity;
 import com.shootingplace.shootingplace.armory.GunRepository;
 import com.shootingplace.shootingplace.armory.GunStoreEntity;

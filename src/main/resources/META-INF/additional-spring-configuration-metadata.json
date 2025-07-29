@@ -1,13 +1,13 @@
 {
-  "dateTime": {
-    "dateTime": "ActualDateTime",
-    "type": "java.time.LocalDateTime",
-    "description": "Actual date time."
-  },
   "properties": [
     {
       "name": "licenseDate",
       "type": "java.lang.String",
       "description": "Valid Date for program."
-  }
-] }
+    },
+    {
+      "name": "dateTime",
+      "type": "java.lang.String",
+      "description": "ActualDateTime."
+    }
+  ] }

@@ -1,6 +1,6 @@
 package com.shootingplace.shootingplace.armory;
 
-import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;

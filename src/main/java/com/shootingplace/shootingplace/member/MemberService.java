@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.member;
 
 import com.google.common.hash.Hashing;
-import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;

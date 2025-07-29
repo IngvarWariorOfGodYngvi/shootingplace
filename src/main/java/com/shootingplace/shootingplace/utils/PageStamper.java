@@ -51,17 +51,14 @@ public class PageStamper extends PdfPageEventHelper {
                 image.scaleAbsolute(new Rectangle(16 * multiplicity, 9 * multiplicity));
                 float pw = pageSize.getWidth() / 2;
                 float iw = image.getScaledWidth() / 2;
-                float[] position = {pw - iw, -10};
-
+                float[] position = {pw - iw, 0};
                 image.setAbsolutePosition(position[0], position[1]);
-
                 directContent.addImage(image);
             }
             if (isPageNumberStamp) {
                 final int currentPageNumber = writer.getCurrentPageNumber();
                 pageSize = document.getPageSize();
                 directContent = writer.getDirectContent();
-
                 directContent.setColorFill(BaseColor.BLACK);
                 directContent.setFontAndSize(BaseFont.createFont(), 10);
                 PdfTextArray pdfTextArray = new PdfTextArray(String.valueOf(currentPageNumber));

@@ -3,7 +3,7 @@ package com.shootingplace.shootingplace.file;
 import com.google.common.hash.Hashing;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
-import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
@@ -405,24 +405,22 @@ public class FilesService {
         Paragraph p = new Paragraph(clubFullName + "\n", font(14, 1));
         Paragraph p1 = new Paragraph("Potwierdzenie opłacenia składki członkowskiej", font(11, 2));
         Paragraph h1 = new Paragraph("Grupa ", font(11, 0));
-        Phrase h2 = new Phrase(group, font(14, 1));
+        Phrase h2 = new Phrase(group, font(13, 1));
         Paragraph p2 = new Paragraph("\nNazwisko i Imię : ", font(11, 0));
         Paragraph p211 = new Paragraph("Numer Legitymacji : ", font(11, 0));
-        Phrase p3 = new Phrase(memberEntity.getSecondName() + " " + memberEntity.getFirstName(), font(18, 1));
-        Phrase p5 = new Phrase(String.valueOf(memberEntity.getLegitimationNumber()), font(14, 1));
+        Phrase p3 = new Phrase(memberEntity.getSecondName() + " " + memberEntity.getFirstName(), font(15, 1));
+        Phrase p5 = new Phrase(String.valueOf(memberEntity.getLegitimationNumber()), font(13, 1));
         Paragraph p6 = new Paragraph("\nData opłacenia składki : ", font(11, 0));
         Phrase p7 = new Phrase(String.valueOf(contribution), font(11, 1));
         Paragraph p8 = new Paragraph("Składka ważna do : ", font(11, 0));
         Phrase p9 = new Phrase(String.valueOf(validThru), font(11, 1));
         Paragraph p10 = new Paragraph(getSex(memberEntity.getPesel()) + " " + memberEntity.getFullName() + " dnia : " + contribution + " " + status + " " + counter + " w wysokości " + contributionLevel + "zł.", font(11, 0));
-
         Paragraph p14 = new Paragraph("", font(11, 0));
-
-        Paragraph p16 = new Paragraph("\n\n", font(11, 0));
-        Paragraph p19 = new Paragraph("               pieczęć klubu", font(11, 0));
+        Paragraph p16 = new Paragraph("\n", font(15, 0));
+        Paragraph p19 = new Paragraph("               pieczęć klubu", font(10, 0));
         Phrase p20 = new Phrase("                                                  ");
         Phrase p21 = new Phrase("podpis osoby przyjmującej składkę");
-        Paragraph p200 = new Paragraph("dołącz do naszej grupy na Facebooku", font(11, 0));
+        Paragraph p200 = new Paragraph("dołącz do naszej grupy na Facebooku", font(9, 0));
         p.setAlignment(1);
         p1.setAlignment(1);
         h1.add(h2);
@@ -451,9 +449,10 @@ public class FilesService {
         document.add(p19);
         document.add(newLine);
         document.add(newLine);
-        document.add(newLine);
-        document.add(img);
-        document.add(p200);
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+            document.add(img);
+            document.add(p200);
+        }
         document.close();
         FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
 
@@ -3971,7 +3970,7 @@ public class FilesService {
     }
 
     private void setAttToDoc(String fileName, Document document, boolean pageEvents, boolean isPageNumberStamp) throws DocumentException, FileNotFoundException {
-        document.setMargins(35F, 35F, 50F, 60F);
+        document.setMargins(35F, 35F, 50F, 70F);
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper(environment, isPageNumberStamp, pageEvents));

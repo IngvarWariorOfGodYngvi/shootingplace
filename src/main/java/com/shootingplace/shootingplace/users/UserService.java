@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.users;
 
 import com.google.common.hash.Hashing;
-import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;

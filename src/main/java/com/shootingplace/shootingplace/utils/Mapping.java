@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace;
+package com.shootingplace.shootingplace.utils;
 
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
@@ -586,6 +586,7 @@ public class Mapping {
                 .number(a.getNumber())
                 .date(a.getDate())
                 .open(a.isOpen())
+                .locked(a.isLocked())
                 .forceOpen(a.isForceOpen())
                 .ammoInEvidenceDTOList(a.getAmmoInEvidenceEntityList().stream().map(Mapping::map).collect(Collectors.toList()))
                 .build();

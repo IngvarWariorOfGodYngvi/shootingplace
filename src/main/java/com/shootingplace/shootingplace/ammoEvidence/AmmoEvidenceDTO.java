@@ -24,5 +24,6 @@ public class AmmoEvidenceDTO {
     private boolean open;
 
     private boolean forceOpen;
+    private boolean locked;
 
 }

@@ -1,7 +1,7 @@
 package com.shootingplace.shootingplace.workingTimeEvidence;
 
 import com.google.common.hash.Hashing;
-import com.shootingplace.shootingplace.Mapping;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
 import com.shootingplace.shootingplace.users.UserSubType;
