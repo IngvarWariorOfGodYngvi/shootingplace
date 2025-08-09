@@ -18,7 +18,7 @@ import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
 import com.shootingplace.shootingplace.competition.CompetitionRepository;
-import com.shootingplace.shootingplace.configurations.ProfilesEnum;
+import com.shootingplace.shootingplace.enums.ProfilesEnum;
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.enums.CountingMethod;
@@ -441,7 +441,7 @@ public class FilesService {
         document.add(p211);
         document.add(p6);
         document.add(p8);
-        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
             document.add(p10);
         }
         document.add(p14);
@@ -449,7 +449,7 @@ public class FilesService {
         document.add(p19);
         document.add(newLine);
         document.add(newLine);
-        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
             document.add(img);
             document.add(p200);
         }
@@ -471,7 +471,7 @@ public class FilesService {
         Document document = new Document(PageSize.A4);
         setAttToDoc(fileName, document, true, false);
         String s = "", s1 = "", s2 = "", s3 = "", s4 = "", s5 = "";
-        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
             s = "Klubu Strzeleckiego „Dziesiątka” Ligi Obrony Kraju w Łodzi";
             s1 = "Klub Strzelecki „Dziesiątka”";
             s2 = "biuro@ksdziesiatka.pl";
@@ -547,7 +547,7 @@ public class FilesService {
             }
             p19 = new Paragraph("\n\n\n\n.............................................", font(9, 0));
         } else {
-            String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź, " : "Panaszew, ";
+            String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName()) ? "Łódź, " : "Panaszew, ";
             p19 = new Paragraph(city + " " + LocalDate.now() + "..............................", font(9, 0));
         }
         Phrase p20 = new Phrase("                                                                                                 ");
@@ -786,10 +786,10 @@ public class FilesService {
         MemberEntity memberEntity = memberRepository.getOne(memberUUID);
 
         String fileName = "Wniosek " + memberEntity.getFullName() + ".pdf";
-
+        // dlacego to się uzupełnia 2 razy?
         Document document = new Document(PageSize.A4);
+        document.setMargins(35F, 35F, 50F, 50F);
         PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(fileName));
-        setAttToDoc(fileName, document, true, false);
         document.open();
         document.addTitle(fileName);
         document.addCreationDate();
@@ -950,7 +950,7 @@ public class FilesService {
             counter++;
             PdfPCell cell = new PdfPCell(new Paragraph(collectPistol.get(i).getName() + "\n" + club.getShortName(), font(fontSize, 0)));
             PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectPistol.get(i).getDate().toString(), font(fontSize, 0)));
-            PdfPCell cell2 = new PdfPCell(new Paragraph(activeProfile.equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : activeProfile.equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
+            PdfPCell cell2 = new PdfPCell(new Paragraph(activeProfile.equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName()) ? "Łódź" : activeProfile.equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
             PdfPCell cell3 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
             PdfPCell cell4 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
             PdfPCell cell5 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
@@ -989,7 +989,7 @@ public class FilesService {
 
             PdfPCell cell = new PdfPCell(new Paragraph(collectRifle.get(i).getName() + "\n" + club.getShortName(), font(fontSize, 0)));
             PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectRifle.get(i).getDate().toString(), font(fontSize, 0)));
-            PdfPCell cell2 = new PdfPCell(new Paragraph(activeProfile.equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : activeProfile.equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
+            PdfPCell cell2 = new PdfPCell(new Paragraph(activeProfile.equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName()) ? "Łódź" : activeProfile.equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
             PdfPCell cell3 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
             PdfPCell cell4 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
             PdfPCell cell5 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
@@ -1028,7 +1028,7 @@ public class FilesService {
 
             PdfPCell cell = new PdfPCell(new Paragraph(collectShotgun.get(i).getName() + "\n" + club.getShortName(), font(fontSize, 0)));
             PdfPCell cell1 = new PdfPCell(new Paragraph(" " + collectShotgun.get(i).getDate().toString(), font(fontSize, 0)));
-            PdfPCell cell2 = new PdfPCell(new Paragraph(activeProfile.equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : activeProfile.equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
+            PdfPCell cell2 = new PdfPCell(new Paragraph(activeProfile.equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName()) ? "Łódź" : activeProfile.equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "", font(fontSize, 0)));
             PdfPCell cell3 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
             PdfPCell cell4 = new PdfPCell(new Paragraph(" ", font(fontSize, 0)));
             PdfPCell cell5 = new PdfPCell(new Paragraph("X", font(fontSize, 1)));
@@ -1062,8 +1062,17 @@ public class FilesService {
         }
         document.close();
 
-        FilesEntity filesEntity = createFileEntity(getFilesModelPDF(fileName, convertToByteArray(fileName)));
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .belongToMemberUUID(memberUUID)
+                .data(data)
+                .type(String.valueOf(MediaType.APPLICATION_PDF))
+                .size(data.length)
+                .build();
 
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
         File file = new File(fileName);
 
         file.delete();
@@ -1082,7 +1091,7 @@ public class FilesService {
         Paragraph newLine = new Paragraph("\n", font(12, 0));
 
         String[] choice = {"ZAŚWIADCZENIE ZWYKŁE", "ZAŚWIADCZENIE DO WPA",};
-        Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "") + ", " + LocalDate.now().format(dateFormat()), font(12, 0));
+        Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "") + ", " + LocalDate.now().format(dateFormat()), font(12, 0));
         date.setAlignment(2);
         document.add(date);
         Paragraph title = new Paragraph("\n\nZaświadczenie\n", font(14, 1));
@@ -1202,7 +1211,7 @@ public class FilesService {
         setAttToDoc(fileName, document, true, true);
         Paragraph newLine = new Paragraph("\n", font(10, 0));
 
-        Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "") + ", " + LocalDate.now().format(dateFormat()), font(10, 0));
+        Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "") + ", " + LocalDate.now().format(dateFormat()), font(10, 0));
         date.setAlignment(2);
         document.add(date);
         Paragraph memberNames = new Paragraph(member.getFirstName() + ' ' + thirdName + ' ' + member.getSecondName(), font(10, 0));
@@ -1498,7 +1507,7 @@ public class FilesService {
             }
         }
 
-        Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "") + ", " + LocalDate.now().format(dateFormat()), font(12, 0));
+        Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "") + ", " + LocalDate.now().format(dateFormat()), font(12, 0));
         date.setAlignment(2);
         Paragraph police = new Paragraph(policeAddress, font(12, 0));
         police.setAlignment(2);
@@ -1740,7 +1749,7 @@ public class FilesService {
             if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
                 t2points = new float[]{25F, 25F, 10F, 10F, 10F};
             }
-            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
                 t2points = new float[]{33F, 33F, 33F, 0F, 0F};
             }
             PdfPTable table2 = new PdfPTable(t2points);
@@ -1768,7 +1777,7 @@ public class FilesService {
             p3t2.setAlignment(0);
             p4t2.setAlignment(0);
 
-            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
                 p3t2 = new Paragraph(" ", font(12, 0));
                 p4t2 = new Paragraph(" ", font(12, 0));
             }
@@ -1792,7 +1801,7 @@ public class FilesService {
             cell6t2.setBorderWidth(0);
             cell7t2.setBorderWidth(0);
 
-            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
                 cell3t2.setBorderWidth(0);
                 cell4t2.setBorderWidth(0);
                 cell8t2.setBorderWidth(0);
@@ -2197,7 +2206,7 @@ public class FilesService {
         document.addTitle(fileName);
         document.addCreationDate();
         Paragraph title = new Paragraph(tournamentEntity.getName().toUpperCase(), font(13, 1));
-        Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ?
+        Paragraph date = new Paragraph((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName()) ?
                 "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ?
                 "Panaszew" : "") + ", " + monthFormat(tournamentEntity.getDate()), font(10, 2));
 
@@ -3500,7 +3509,7 @@ public class FilesService {
         Paragraph p = new Paragraph("Proszę o przyjęcie mnie w poczet członków Stowarzyszenia Liga Obrony Kraju.", font(fs, 0));
         p.setIndentationLeft(55);
         p.setLeading(ls);
-        document.add(newLine);
+//        document.add(newLine);
         document.add(p);
         Paragraph p1 = new Paragraph("1.     Po zapoznaniu się ze Statutem Stowarzyszenia Liga Obrony Kraju w szczególności z§ 21, § 22.1,2,\n" +
                 "§23, §24.1, §27, §29 i §32 oświadczam, że:", font(fs, 0));
@@ -3694,8 +3703,6 @@ public class FilesService {
         document.add(p4f);
         document.add(p4g);
         document.add(newLine);
-        document.add(newLine);
-        document.add(newLine);
 
         PdfPTable table5 = new PdfPTable(2);
         Paragraph p5 = new Paragraph("........................................ dnia " + LocalDate.now().format(dateFormat()), font(fs, 0));
@@ -3885,7 +3892,7 @@ public class FilesService {
         document.add(newLine);
 
         table5 = new PdfPTable(2);
-        String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "";
+        String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName()) ? "Łódź" : environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName()) ? "Panaszew" : "";
         p5 = new Paragraph(".............. " + city + " .............. dnia ...........................", font(fs, 0));
         p5.setLeading(ls);
         cell5 = new PdfPCell();

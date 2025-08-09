@@ -2,7 +2,7 @@ package com.shootingplace.shootingplace.contributions;
 
 
 import com.google.common.hash.Hashing;
-import com.shootingplace.shootingplace.configurations.ProfilesEnum;
+import com.shootingplace.shootingplace.enums.ProfilesEnum;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
@@ -50,13 +50,21 @@ public class ContributionService {
         ResponseEntity<?> response = null;
         contributionCount = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? contributionCount : 1;
         for (int i = 0; i < contributionCount; i++) {
-        MemberEntity memberEntity = memberRepository.getOne(memberUUID);
-        List<ContributionEntity> contributionEntityList = memberEntity.getHistory().getContributionList();
+            MemberEntity memberEntity = memberRepository.getOne(memberUUID);
+            List<ContributionEntity> contributionEntityList = memberEntity.getHistory().getContributionList();
             ContributionEntity contributionEntity = ContributionEntity.builder()
                     .paymentDay(null)
                     .validThru(null)
                     .acceptedBy(userRepository.findByPinCode(pin).getFullName())
                     .build();
+            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
+                contributionEntity.setPaymentDay(contributionPaymentDay);
+                if (contributionEntityList.size() < 1) {
+                    contributionEntity.setValidThru(contributionPaymentDay.plusMonths(3));
+                } else {
+                    contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusMonths(3));
+                }
+            }
             if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
                 contributionEntity.setPaymentDay(contributionPaymentDay);
                 if (contributionEntityList.size() < 1) {
@@ -73,15 +81,7 @@ public class ContributionService {
                     contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusYears(1));
                 }
             }
-            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.RPARMS.getName())) {
-                contributionEntity.setPaymentDay(contributionPaymentDay);
-                if (contributionEntityList.size() < 1) {
-                    contributionEntity.setValidThru(contributionPaymentDay.plusYears(1));
-                } else {
-                    contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusYears(1));
-                }
-            }
-                contributionRepository.save(contributionEntity);
+            contributionRepository.save(contributionEntity);
             response = historyService.getStringResponseEntity(pinCode, contributionEntity, HttpStatus.OK, "Dodaj Składkę", "Przedłużono składkę " + memberEntity.getFullName());
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 historyService.addContribution(memberUUID, contributionEntity);

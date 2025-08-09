@@ -7,7 +7,7 @@ import com.shootingplace.shootingplace.armory.GunStoreEntity;
 import com.shootingplace.shootingplace.armory.GunStoreRepository;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
-import com.shootingplace.shootingplace.configurations.ProfilesEnum;
+import com.shootingplace.shootingplace.enums.ProfilesEnum;
 import com.shootingplace.shootingplace.contributions.Contribution;
 import com.shootingplace.shootingplace.enums.CountingMethod;
 import com.shootingplace.shootingplace.member.IMemberDTO;
@@ -147,7 +147,7 @@ public class XLSXFilesService {
             sheet.setColumnWidth(i, 18 * 128);
         }
         cell.setCellValue(tournamentEntity.getName().toUpperCase() + " " + c.getShortName());
-        cell1.setCellValue((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? "Łódź, " : "Panaszew, ") + dateFormat(tournamentEntity.getDate()));
+        cell1.setCellValue((environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName()) ? "Łódź, " : "Panaszew, ") + dateFormat(tournamentEntity.getDate()));
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
         sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 6));
 
@@ -769,11 +769,11 @@ public class XLSXFilesService {
         XSSFRow row1 = sheet.createRow(rc++);
 
         XSSFCell cell01 = row1.createCell(0);
-        XSSFCell cell11 = row1.createCell(1);
-        XSSFCell cell21 = row1.createCell(2);
-        XSSFCell cell31 = row1.createCell(3);
-        XSSFCell cell41 = row1.createCell(4);
-        XSSFCell cell51 = row1.createCell(5);
+        XSSFCell cell11;
+        XSSFCell cell21;
+        XSSFCell cell31;
+        XSSFCell cell41;
+        XSSFCell cell51;
 
         sheet.addMergedRegion(new CellRangeAddress(rc - 1, rc - 1, 0, 5));
         cell01.setCellValue("Wykaz członków Ligi Obrony Kraju Klubu: " + collect.get(0).getClub().getFullName());

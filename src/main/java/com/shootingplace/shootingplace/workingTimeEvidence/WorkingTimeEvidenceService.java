@@ -498,7 +498,7 @@ public class WorkingTimeEvidenceService {
         return msg;
     }
 
-    String openWTEByPin(UserEntity user) {
+    public String openWTEByPin(UserEntity user) {
         String msg;
         if (user == null) {
             msg = "nie znaleziono osoby o tym numerze karty";

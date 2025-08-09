@@ -4,6 +4,9 @@ import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
+import com.shootingplace.shootingplace.users.UserEntity;
+import com.shootingplace.shootingplace.users.UserRepository;
+import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
 import com.shootingplace.shootingplace.wrappers.ImageOtherPersonWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,11 +28,15 @@ public class RegistrationRecordsService {
     private final MemberRepository memberRepo;
     private final RegistrationRecordRepository registrationRepo;
     private final OtherPersonRepository otherPersonRepository;
+    private final WorkingTimeEvidenceService workingTimeEvidenceService;
+    private final UserRepository userRepository;
 
-    public RegistrationRecordsService(MemberRepository memberRepo, RegistrationRecordRepository registrationRepo, OtherPersonRepository otherPersonRepository) {
+    public RegistrationRecordsService(MemberRepository memberRepo, RegistrationRecordRepository registrationRepo, OtherPersonRepository otherPersonRepository, WorkingTimeEvidenceService workingTimeEvidenceService, UserRepository userRepository) {
         this.memberRepo = memberRepo;
         this.registrationRepo = registrationRepo;
         this.otherPersonRepository = otherPersonRepository;
+        this.workingTimeEvidenceService = workingTimeEvidenceService;
+        this.userRepository = userRepository;
     }
 
     public ResponseEntity<?> createRecordInBook(String pesel, String imageUUID) {
@@ -41,6 +48,11 @@ public class RegistrationRecordsService {
                 LOG.info("Osoba znajduje się już na liście");
                 return ResponseEntity.badRequest().body("Osoba znajduje się już na liście");
             } else {
+                // jeśli klubowicz jest również użytokwnikiem to włączam mu czas pracy
+                UserEntity userEntity = userRepository.findByMemberUuid(member.getUuid()).orElse(null);
+                if (userEntity != null && userEntity.getMember() != null) {
+                    workingTimeEvidenceService.openWTEByPin(userEntity);
+                }
                 r.setFirstName(member.getFirstName());
                 r.setSecondName(member.getSecondName());
                 r.setDataProcessingAgreement(true);
@@ -51,7 +63,6 @@ public class RegistrationRecordsService {
                 } else {
                     r.setWeaponPermission(member.getWeaponPermission().getNumber());
                 }
-
                 r.setDateTime(LocalDateTime.now());
                 r.setImageUUID(imageUUID);
                 r.setPeselOrID(member.getPesel());

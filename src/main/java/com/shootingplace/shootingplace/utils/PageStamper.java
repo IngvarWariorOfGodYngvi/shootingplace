@@ -2,7 +2,7 @@ package com.shootingplace.shootingplace.utils;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
-import com.shootingplace.shootingplace.configurations.ProfilesEnum;
+import com.shootingplace.shootingplace.enums.ProfilesEnum;
 import org.springframework.core.env.Environment;
 
 import java.io.IOException;
@@ -40,7 +40,7 @@ public class PageStamper extends PdfPageEventHelper {
             document.addAuthor("Igor Żebrowski");
             if (isPageStampEvent) {
                 String source = "";
-                if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+                if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
                     source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/pełna-nazwa(małe).bmp";
                 }
                 if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {

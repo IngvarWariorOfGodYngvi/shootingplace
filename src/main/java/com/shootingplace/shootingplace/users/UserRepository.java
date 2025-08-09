@@ -21,5 +21,8 @@ public interface UserRepository {
 
     boolean existsBySecondName(String secondName);
 
+    Optional<UserEntity> findByMemberUuid (String memberUUID);
+
+
     void delete(UserEntity entity);
 }
