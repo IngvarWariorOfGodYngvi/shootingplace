@@ -235,10 +235,10 @@ public class FilesService {
     // podpis rejestr pobytu - klubowicz
     public String storeImageEvidenceBookMember(String imageString, String pesel) {
         String s = imageString.split(",")[1];
-        MemberEntity memberEntity = memberRepository.findByPesel(pesel.replaceAll(" ", "")).orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.findAllByErasedFalse().stream().filter(f->f.getPesel().equals(pesel)).findFirst().orElseThrow(EntityNotFoundException::new);
         String fullName = memberEntity.getFullName();
 
-        String fileName = fullName + "evidence.png";
+        String fileName = fullName + " evidence.png";
         FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
     }
@@ -253,7 +253,7 @@ public class FilesService {
             fullName = other.getOther().getFullName();
         }
 
-        String fileName = fullName + "evidence.png";
+        String fileName = fullName + " evidence.png";
         FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
     }

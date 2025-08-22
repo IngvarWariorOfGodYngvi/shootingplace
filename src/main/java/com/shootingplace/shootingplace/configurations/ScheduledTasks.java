@@ -4,7 +4,6 @@ import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceService;
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardService;
 import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordsService;
-import com.shootingplace.shootingplace.users.UserSubType;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberService;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
@@ -54,12 +53,12 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "0 0 23,0-6 * * *")
     public void sendAllWorkersGoHome() {
-        workServ.closeAllActiveWorkTime(UserSubType.WORKER.getName());
+        workServ.closeAllActiveWorkTime();
     }
 
     @Scheduled(cron = "0 0 1-9 * * *")
     public void sendAllManagementGoHome() {
-        workServ.closeAllActiveWorkTime(UserSubType.MANAGEMENT.getName());
+        workServ.closeAllActiveWorkTime();
     }
 
     @Scheduled(cron = "0 0 20 * * *")
@@ -74,11 +73,11 @@ public class ScheduledTasks {
         historyServ.checkStarts();
     }
 
-    @Scheduled(cron = "0 0 21-23 ? * *")
-    @Transactional
-    public void deactivateCard() {
-        barCodeCardServ.deactivateNotMasterCard();
-    }
+//    @Scheduled(cron = "0 0 21-23 ? * *")
+//    @Transactional
+//    public void deactivateCard() {
+//        barCodeCardServ.deactivateNotMasterCard();
+//    }
 
     @Scheduled(cron = "0 30 11 ? * *")
     @Transactional

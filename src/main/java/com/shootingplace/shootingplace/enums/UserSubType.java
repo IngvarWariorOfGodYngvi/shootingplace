@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.users;
+package com.shootingplace.shootingplace.enums;
 
 public enum UserSubType {
     ADMIN("Admin"),

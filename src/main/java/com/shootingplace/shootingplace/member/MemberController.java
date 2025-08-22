@@ -4,7 +4,7 @@ package com.shootingplace.shootingplace.member;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
-import com.shootingplace.shootingplace.users.UserSubType;
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.wrappers.MemberWithAddressWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

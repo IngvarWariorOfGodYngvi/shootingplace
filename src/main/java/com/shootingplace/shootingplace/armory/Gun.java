@@ -244,4 +244,8 @@ public class Gun {
     public String getBasisOfRemoved() {
         return basisOfRemoved;
     }
+
+    public String getFullName() {
+        return this.modelName + " " + this.serialNumber;
+    }
 }

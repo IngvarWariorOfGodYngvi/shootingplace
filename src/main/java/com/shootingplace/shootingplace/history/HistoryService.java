@@ -5,6 +5,7 @@ import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceEntity;
 import com.shootingplace.shootingplace.armory.CaliberEntity;
 import com.shootingplace.shootingplace.armory.GunEntity;
 import com.shootingplace.shootingplace.armory.ShootingPacketEntity;
+import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
@@ -569,6 +570,15 @@ public class HistoryService {
     public ResponseEntity<?> getStringResponseEntity(String pinCode, AmmoInEvidenceEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
         ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
         ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "lista z kalibrem " + methodName, entity.getUuid());
+        if (stringResponseEntity != null) {
+            response = stringResponseEntity;
+        }
+        return response;
+    }
+    // BarCodeCard
+    public ResponseEntity<?> getStringResponseEntity(String pinCode, BarCodeCardEntity entity, HttpStatus status, String methodName, Object body) throws NoUserPermissionException {
+        ResponseEntity<?> response = ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        ResponseEntity<String> stringResponseEntity = changeHistoryService.addRecordToChangeHistory(pinCode, "Karta " + methodName, entity.getUuid());
         if (stringResponseEntity != null) {
             response = stringResponseEntity;
         }

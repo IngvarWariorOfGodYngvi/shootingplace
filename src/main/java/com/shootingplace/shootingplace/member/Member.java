@@ -238,4 +238,9 @@ public class Member extends Person {
     public void setImage(String image) {
         this.image = image;
     }
+
+    public String getFullName() {
+        return this.getSecondName().replaceAll(" ", "") + ' ' +
+                this.getFirstName().replaceAll(" ", "");
+    }
 }

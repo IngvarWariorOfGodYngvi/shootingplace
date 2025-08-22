@@ -1,15 +1,15 @@
 package com.shootingplace.shootingplace.workingTimeEvidence;
 
 import com.google.common.hash.Hashing;
-import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardEntity;
 import com.shootingplace.shootingplace.barCodeCards.BarCodeCardRepository;
-import com.shootingplace.shootingplace.users.UserSubType;
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.file.FilesEntity;
 import com.shootingplace.shootingplace.file.FilesRepository;
 import com.shootingplace.shootingplace.file.IFile;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
+import com.shootingplace.shootingplace.utils.Mapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -47,10 +47,10 @@ public class WorkingTimeEvidenceService {
 
     public ResponseEntity<?> createNewWTE(String number) {
         String msg;
-        if (!barCodeCardRepo.existsByBarCode(number)) {
+        BarCodeCardEntity barCode = barCodeCardRepo.findByBarCode(number);
+        if (barCode == null) {
             return ResponseEntity.badRequest().body("Brak takiego numeru");
         }
-        BarCodeCardEntity barCode = barCodeCardRepo.findByBarCode(number);
         if (!barCode.isActive()) {
             msg = "Karta jest nieaktywna i nie można jej użyć ponownie";
             log.info(msg);
@@ -59,7 +59,7 @@ public class WorkingTimeEvidenceService {
         String belongsTo = barCode.getBelongsTo();
 
         // szukam osoby do której należy karta
-        UserEntity user = userRepository.findById(belongsTo).orElse(null);
+        UserEntity user = userRepository.getOne(belongsTo);
 
         // biorę wszystkie niezamknięte wiersze z obecnego miesiąca gdzie występuje osoba
         WorkingTimeEvidenceEntity entity1 = workRepo.findAll()
@@ -69,22 +69,10 @@ public class WorkingTimeEvidenceService {
                 .filter(f -> f.getUser().equals(user))
                 .findFirst().orElse(null);
 
-        // jeżeli jedna osoba jest zalogowana jako pracownik a odbije się jako zarząd to pracownika ma zamykać a otwierać zarząd
-
-
         if (entity1 != null) {
-            if (!barCode.getSubType().equals(entity1.getWorkType())) {
-                msg = closeWTE(entity1, false, barCode);
-                String msg1 = openWTE(barCode, number);
-                return ResponseEntity.ok(msg + " " + msg1);
-            } else {
-
-                return ResponseEntity.ok(closeWTE(entity1, false, barCode));
-            }
-
+            return ResponseEntity.ok(closeWTE(entity1, false, barCode));
         } else {
-            msg = openWTE(barCode, number);
-            return ResponseEntity.ok(msg);
+            return ResponseEntity.ok(openWTE(barCode, number));
         }
     }
 
@@ -128,13 +116,12 @@ public class WorkingTimeEvidenceService {
         return list1;
     }
 
-    public void closeAllActiveWorkTime(String workType) {
+    public void closeAllActiveWorkTime() {
         log.info("zamykam to co jest otwarte");
         List<WorkingTimeEvidenceEntity> allByCloseFalse = workRepo.findAllByIsCloseFalse();
         allByCloseFalse
                 .stream()
                 .filter(f -> !f.isClose())
-                .filter(f -> f.getWorkType().equals(workType))
                 .collect(Collectors.toList())
                 .forEach(e ->
                 {
@@ -217,7 +204,6 @@ public class WorkingTimeEvidenceService {
         workType = workType == null || workType.equals("null") ? null : workType;
         List<UserWithWorkingTimeList> userWithWorkingTimeListList = new ArrayList<>();
         String finalMonth = month;
-        String finalWorkType = workType;
         List<WorkingTimeEvidenceEntity> pl1;
         if (workType != null) {
             pl1 = workRepo.findAll()
@@ -225,7 +211,6 @@ public class WorkingTimeEvidenceService {
                     .filter(WorkingTimeEvidenceEntity::isClose)
                     .filter(f -> f.getStart() != null && f.getStop() != null)
                     .filter(f -> f.getStart().getYear() == year)
-                    .filter(f -> f.getWorkType().contains(finalWorkType))
                     .filter(f -> f.getStart().getMonth().getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pl")).equals(finalMonth.toLowerCase(Locale.ROOT)))
                     .collect(Collectors.toList());
         } else {
@@ -466,28 +451,26 @@ public class WorkingTimeEvidenceService {
         if (entity1 != null) {
             return ResponseEntity.ok("użutkownik znajduje się już na liście");
         } else {
-            msg = openWTEByPin( user);
+            msg = openWTEByPin(user);
             return ResponseEntity.ok(msg);
         }
     }
+
     String openWTE(BarCodeCardEntity barCode, String number) {
         String msg;
         String belongsTo = barCode.getBelongsTo();
-        UserEntity user = userRepository.findById(belongsTo).orElse(null);
+        UserEntity user = userRepository.getOne(belongsTo);
         if (user == null) {
             msg = "nie znaleziono osoby o tym numerze karty";
         } else {
             LocalDateTime start = LocalDateTime.now();
-
-            String subType = barCode.getSubType();
 
             WorkingTimeEvidenceEntity entity = WorkingTimeEvidenceEntity.builder()
                     .start(start)
                     .stop(null)
                     .cardNumber(number)
                     .isClose(false)
-                    .user(user)
-                    .workType(subType).build();
+                    .user(user).build();
 
             workRepo.save(entity);
             msg = user.getFirstName() + " " + user.getSecondName() + " Witaj w Pracy";
@@ -503,18 +486,25 @@ public class WorkingTimeEvidenceService {
         if (user == null) {
             msg = "nie znaleziono osoby o tym numerze karty";
         } else {
-            LocalDateTime start = LocalDateTime.now();
 
-            WorkingTimeEvidenceEntity entity = WorkingTimeEvidenceEntity.builder()
-                    .start(start)
-                    .stop(null)
-                    .cardNumber(user.getBarCodeCardList().get(0).getBarCode())
-                    .isClose(false)
-                    .user(user)
-                    .workType(user.getBarCodeCardList().get(0).getSubType()).build();
+            List<WorkingTimeEvidenceEntity> collect = workRepo.findAll().stream().filter(f -> LocalDate.of(f.getStart().getYear(), f.getStart().getMonth(), f.getStart().getDayOfMonth()).equals(LocalDate.now())).collect(Collectors.toList());
+            collect.forEach(System.out::println);
+            if (collect.isEmpty()) {
 
-            workRepo.save(entity);
-            msg = user.getFirstName() + " " + user.getSecondName() + " Witaj w Pracy";
+                LocalDateTime start = LocalDateTime.now();
+
+                WorkingTimeEvidenceEntity entity = WorkingTimeEvidenceEntity.builder()
+                        .start(start)
+                        .stop(null)
+                        .cardNumber(user.getBarCodeCardList().get(0).getBarCode())
+                        .isClose(false)
+                        .user(user).build();
+
+                workRepo.save(entity);
+                msg = user.getFirstName() + " " + user.getSecondName() + " Witaj w Pracy";
+            } else {
+                msg = "Osoba już jest w pracy";
+            }
         }
         log.info(msg);
         return msg;

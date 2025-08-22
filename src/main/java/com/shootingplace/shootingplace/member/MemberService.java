@@ -633,7 +633,7 @@ public class MemberService {
 
     public ResponseEntity<?> getMemberByPESELNumber(String PESELNumber) {
         PESELNumber.replaceAll(" ", "");
-        MemberEntity member = memberRepository.findByPesel(PESELNumber).orElse(null);
+        MemberEntity member = memberRepository.findAllByErasedFalse().stream().filter(f->f.getPesel().equals(PESELNumber)).findFirst().orElse(null);
         return member != null ? ResponseEntity.ok(Mapping.map(member)) : ResponseEntity.badRequest().body("Brak numeru w Bazie");
     }
 

@@ -1,9 +1,9 @@
 package com.shootingplace.shootingplace.license;
 
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
-import com.shootingplace.shootingplace.users.UserSubType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;

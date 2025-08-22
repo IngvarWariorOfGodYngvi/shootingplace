@@ -74,7 +74,7 @@ public class XLSXFilesService {
         this.statisticsService = statisticsService;
     }
 
-
+    // rezultaty z zawodów
     public FilesEntity createAnnouncementInXLSXType(String tournamentUUID) throws IOException {
         TournamentEntity tournamentEntity = tournamentRepository.findById(tournamentUUID).orElseThrow(EntityNotFoundException::new);
         ClubEntity c = clubRepository.getOne(1);
@@ -487,9 +487,103 @@ public class XLSXFilesService {
 
         return filesEntity;
     }
+    // lista składek w wybranym okresie
+    public FilesEntity getContributions(LocalDate firstDate, LocalDate secondDate) throws IOException {
+        String fileName = "Lista_składek_od_" + firstDate + "_do_" + secondDate + ".xlsx";
+        List<MemberWithContributionWrapper> collect = statisticsService.getContributionSum(firstDate, secondDate);
 
+        int rc = 0;
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+
+        XSSFSheet sheet = workbook.createSheet("lista");
+
+        XSSFFont fontNormal = workbook.createFont();
+        fontNormal.setFontHeightInPoints((short) 10);
+        fontNormal.setFontName("Calibri");
+        XSSFCellStyle cellStyleTitle = workbook.createCellStyle();
+        XSSFFont fontTitle = workbook.createFont();
+
+        fontTitle.setBold(true);
+        fontTitle.setFontHeightInPoints((short) 14);
+        fontTitle.setFontName("Calibri");
+        cellStyleTitle.setFont(fontTitle);
+        cellStyleTitle.setAlignment(HorizontalAlignment.CENTER);
+        cellStyleTitle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        XSSFCellStyle cellStyleNormalCenterAlignment = workbook.createCellStyle();
+        cellStyleNormalCenterAlignment.setAlignment(HorizontalAlignment.CENTER);
+        cellStyleNormalCenterAlignment.setFont(fontNormal);
+
+        XSSFCellStyle cellStyleNormalLeftAlignment = workbook.createCellStyle();
+        cellStyleNormalCenterAlignment.setAlignment(HorizontalAlignment.LEFT);
+        cellStyleNormalCenterAlignment.setFont(fontNormal);
+
+        XSSFRow row2 = sheet.createRow(rc++);
+        XSSFCell cell7 = row2.createCell(0);
+        cell7.setCellValue("Lista zapisów od " + firstDate + " do " + secondDate);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+        cell7.setCellStyle(cellStyleTitle);
+        XSSFRow row = sheet.createRow(rc++);
+
+        XSSFCell cell = row.createCell(0);
+        XSSFCell cell1 = row.createCell(1);
+        XSSFCell cell2 = row.createCell(2);
+        XSSFCell cell3 = row.createCell(3);
+
+        cell.setCellValue("lp");
+        cell1.setCellValue("Nazwisko i Imię");
+        cell2.setCellValue("Numer Legitymacji");
+        cell3.setCellValue("Data Składki");
+
+        cell.setCellStyle(cellStyleNormalCenterAlignment);
+        cell1.setCellStyle(cellStyleNormalCenterAlignment);
+        cell2.setCellStyle(cellStyleNormalCenterAlignment);
+        cell3.setCellStyle(cellStyleNormalCenterAlignment);
+
+
+        for (int i = 0; i < collect.size(); i++) {
+            IMemberDTO member = collect.get(i).getMember();
+            Contribution contribution = collect.get(i).getContribution();
+            int cc = 0;
+            XSSFRow row1 = sheet.createRow(rc++);
+            cell = row1.createCell(cc++);
+            cell1 = row1.createCell(cc++);
+            cell2 = row1.createCell(cc++);
+            cell3 = row1.createCell(cc);
+
+            cell.setCellStyle(cellStyleNormalCenterAlignment);
+            cell1.setCellStyle(cellStyleNormalLeftAlignment);
+            cell2.setCellStyle(cellStyleNormalCenterAlignment);
+            cell3.setCellStyle(cellStyleNormalCenterAlignment);
+
+            cell.setCellValue(i + 1);
+            cell1.setCellValue(member.getSecond_name().replaceAll(" ", "") + ' ' +
+                    member.getFirst_name().replaceAll(" ", ""));
+            cell2.setCellValue(member.getLegitimation_number());
+            cell3.setCellValue(contribution.getPaymentDay().toString());
+        }
+
+        sheet.autoSizeColumn(0);
+        sheet.autoSizeColumn(1);
+        sheet.autoSizeColumn(2);
+        sheet.autoSizeColumn(3);
+        try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
+            workbook.write(outputStream);
+        }
+        workbook.close();
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = getFilesModel(fileName, data);
+        FilesEntity filesEntity = createFileEntity(filesModel);
+        File file = new File(fileName);
+        file.delete();
+        LOG.info("Pobrano plik " + fileName);
+
+        return filesEntity;
+    }
+    // lista zapisów w wybranym okresie
     public FilesEntity getJoinDateSum(LocalDate firstDate, LocalDate secondDate) throws IOException {
-
         String fileName = "lista klubowiczów zapisanych od " + firstDate.toString() + " do " + secondDate.toString() + ".xlsx";
 
         List<MemberDTO> collect = memberRepository.findAll().stream()
@@ -505,9 +599,9 @@ public class XLSXFilesService {
 
         XSSFSheet sheet = workbook.createSheet("lista");
 
-        XSSFFont fontNormalCenterAlignment = workbook.createFont();
-        fontNormalCenterAlignment.setFontHeightInPoints((short) 10);
-        fontNormalCenterAlignment.setFontName("Calibri");
+        XSSFFont fontNormal = workbook.createFont();
+        fontNormal.setFontHeightInPoints((short) 10);
+        fontNormal.setFontName("Calibri");
         XSSFCellStyle cellStyleTitle = workbook.createCellStyle();
         XSSFFont fontTitle = workbook.createFont();
 
@@ -520,7 +614,12 @@ public class XLSXFilesService {
 
         XSSFCellStyle cellStyleNormalCenterAlignment = workbook.createCellStyle();
         cellStyleNormalCenterAlignment.setAlignment(HorizontalAlignment.CENTER);
-        cellStyleNormalCenterAlignment.setFont(fontNormalCenterAlignment);
+        cellStyleNormalCenterAlignment.setFont(fontNormal);
+
+        XSSFCellStyle cellStyleNormalLeftAlignment = workbook.createCellStyle();
+        cellStyleNormalCenterAlignment.setAlignment(HorizontalAlignment.LEFT);
+        cellStyleNormalCenterAlignment.setFont(fontNormal);
+
         XSSFRow row2 = sheet.createRow(rc++);
         XSSFCell cell7 = row2.createCell(0);
         cell7.setCellValue("Lista zapisów od " + firstDate + " do " + secondDate);
@@ -554,7 +653,7 @@ public class XLSXFilesService {
             cell3 = row1.createCell(cc);
 
             cell.setCellStyle(cellStyleNormalCenterAlignment);
-            cell1.setCellStyle(cellStyleNormalCenterAlignment);
+            cell1.setCellStyle(cellStyleNormalLeftAlignment);
             cell2.setCellStyle(cellStyleNormalCenterAlignment);
             cell3.setCellStyle(cellStyleNormalCenterAlignment);
 
@@ -582,68 +681,92 @@ public class XLSXFilesService {
 
         return filesEntity;
     }
-
+    // lista skreślonych w wybranym okresie
     public FilesEntity getErasedSum(LocalDate firstDate, LocalDate secondDate) throws IOException {
-        String fileName = "lista klubowiczów usuniętych od " + firstDate.toString() + " do " + secondDate.toString() + ".xlsx";
+        String fileName = "lista klubowiczów skreślonych od " + firstDate.toString() + " do " + secondDate.toString() + ".xlsx";
 
         List<MemberDTO> collect = memberRepository.findAllByErasedTrue().stream()
                 .filter(f -> f.getErasedEntity() != null)
                 .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1)))
                 .filter(f -> f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
                 .map(Mapping::map2DTO)
-                .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()).reversed())
+                .sorted(Comparator.comparing(MemberDTO::getJoinDate).thenComparing(MemberDTO::getSecondName).thenComparing(MemberDTO::getFirstName))
                 .collect(Collectors.toList());
 
         int rc = 0;
 
         XSSFWorkbook workbook = new XSSFWorkbook();
 
-        XSSFSheet sheet = workbook.createSheet("lista usuniętych");
+        XSSFSheet sheet = workbook.createSheet("lista");
 
-        XSSFFont fontNormalCenterAlignment = workbook.createFont();
-        fontNormalCenterAlignment.setFontHeightInPoints((short) 10);
-        fontNormalCenterAlignment.setFontName("Calibri");
+        XSSFFont fontNormal = workbook.createFont();
+        fontNormal.setFontHeightInPoints((short) 10);
+        fontNormal.setFontName("Calibri");
+        XSSFCellStyle cellStyleTitle = workbook.createCellStyle();
+        XSSFFont fontTitle = workbook.createFont();
+
+        fontTitle.setBold(true);
+        fontTitle.setFontHeightInPoints((short) 14);
+        fontTitle.setFontName("Calibri");
+        cellStyleTitle.setFont(fontTitle);
+        cellStyleTitle.setAlignment(HorizontalAlignment.CENTER);
+        cellStyleTitle.setVerticalAlignment(VerticalAlignment.CENTER);
 
         XSSFCellStyle cellStyleNormalCenterAlignment = workbook.createCellStyle();
         cellStyleNormalCenterAlignment.setAlignment(HorizontalAlignment.CENTER);
-        cellStyleNormalCenterAlignment.setFont(fontNormalCenterAlignment);
+        cellStyleNormalCenterAlignment.setFont(fontNormal);
 
+        XSSFCellStyle cellStyleNormalLeftAlignment = workbook.createCellStyle();
+        cellStyleNormalCenterAlignment.setAlignment(HorizontalAlignment.LEFT);
+        cellStyleNormalCenterAlignment.setFont(fontNormal);
+
+        XSSFRow row2 = sheet.createRow(rc++);
+        XSSFCell cell7 = row2.createCell(0);
+        cell7.setCellValue("Lista zapisów od " + firstDate + " do " + secondDate);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+        cell7.setCellStyle(cellStyleTitle);
         XSSFRow row = sheet.createRow(rc++);
 
-        sheet.setColumnWidth(0, 5000);
-        sheet.setColumnWidth(1, 5000);
-        sheet.setColumnWidth(2, 5000);
-
         XSSFCell cell = row.createCell(0);
-        cell.setCellStyle(cellStyleNormalCenterAlignment);
-        cell.setCellValue("Nazwisko i Imię");
         XSSFCell cell1 = row.createCell(1);
-        cell1.setCellValue("Numer Legitymacji");
-        cell1.setCellStyle(cellStyleNormalCenterAlignment);
         XSSFCell cell2 = row.createCell(2);
-        cell2.setCellValue("Data Skreślenia");
+        XSSFCell cell3 = row.createCell(3);
+
+        cell.setCellValue("lp");
+        cell1.setCellValue("Nazwisko i Imię");
+        cell2.setCellValue("Numer Legitymacji");
+        cell3.setCellValue("Data Skreślenia");
+
+        cell.setCellStyle(cellStyleNormalCenterAlignment);
+        cell1.setCellStyle(cellStyleNormalLeftAlignment);
         cell2.setCellStyle(cellStyleNormalCenterAlignment);
+        cell3.setCellStyle(cellStyleNormalCenterAlignment);
 
 
-        for (MemberDTO memberDTO : collect) {
+        for (int i = 0; i < collect.size(); i++) {
+            MemberDTO memberDTO = collect.get(i);
             int cc = 0;
-            sheet.setColumnWidth(0, 5000);
-            sheet.setColumnWidth(1, 5000);
-            sheet.setColumnWidth(2, 5000);
             XSSFRow row1 = sheet.createRow(rc++);
-            XSSFCell cell3 = row1.createCell(cc++);
-            XSSFCell cell4 = row1.createCell(cc++);
-            XSSFCell cell5 = row1.createCell(cc);
+            cell = row1.createCell(cc++);
+            cell1 = row1.createCell(cc++);
+            cell2 = row1.createCell(cc++);
+            cell3 = row1.createCell(cc);
 
+            cell.setCellStyle(cellStyleNormalCenterAlignment);
+            cell1.setCellStyle(cellStyleNormalCenterAlignment);
+            cell2.setCellStyle(cellStyleNormalCenterAlignment);
             cell3.setCellStyle(cellStyleNormalCenterAlignment);
-            cell4.setCellStyle(cellStyleNormalCenterAlignment);
-            cell5.setCellStyle(cellStyleNormalCenterAlignment);
 
-            cell3.setCellValue(memberDTO.getFullName());
-            cell4.setCellValue(memberDTO.getLegitimationNumber());
-            cell5.setCellValue(memberDTO.getErasedEntity().getDate().toString());
-
+            cell.setCellValue(i + 1);
+            cell1.setCellValue(memberDTO.getFullName());
+            cell2.setCellValue(memberDTO.getLegitimationNumber());
+            cell3.setCellValue(memberDTO.getErasedEntity().getDate().toString());
         }
+
+        sheet.autoSizeColumn(0);
+        sheet.autoSizeColumn(1);
+        sheet.autoSizeColumn(2);
+        sheet.autoSizeColumn(3);
         try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
             workbook.write(outputStream);
         }
@@ -848,15 +971,6 @@ public class XLSXFilesService {
         return filesEntity;
     }
 
-    private FilesModel getFilesModel(String fileName, byte[] data) {
-        return FilesModel.builder()
-                .name(fileName)
-                .data(data)
-                .type(String.valueOf(MediaType.TEXT_XML))
-                .size(data.length)
-                .build();
-    }
-
     public FilesEntity getGunRegistryXlsx(List<String> guns) throws IOException {
 
         String fileName = "Lista_broni_w_magazynie_na_dzień" + LocalDate.now().format(dateFormat()) + ".xlsx";
@@ -988,105 +1102,13 @@ public class XLSXFilesService {
         return filesEntity;
     }
 
-    public FilesEntity getContributions(LocalDate firstDate, LocalDate secondDate) throws IOException {
-
-        String fileName = "Lista_składek_od_" + firstDate + "_do_" + secondDate + ".xlsx";
-
-        List<MemberWithContributionWrapper> list = statisticsService.getContributionSum(firstDate, secondDate);
-        int rc = 0;
-
-        XSSFWorkbook workbook = new XSSFWorkbook();
-        XSSFSheet sheet = workbook.createSheet("Lista_składek_od_" + firstDate + "_do_" + secondDate + ".xlsx");
-
-        XSSFCellStyle cellStyleNormal = workbook.createCellStyle();
-        cellStyleNormal.setAlignment(HorizontalAlignment.CENTER);
-        XSSFCellStyle cellStyleTitle = workbook.createCellStyle();
-        XSSFFont fontTitle = workbook.createFont();
-
-        fontTitle.setBold(true);
-        fontTitle.setFontHeightInPoints((short) 14);
-        fontTitle.setFontName("Calibri");
-        cellStyleTitle.setFont(fontTitle);
-        cellStyleTitle.setAlignment(HorizontalAlignment.CENTER);
-        cellStyleTitle.setVerticalAlignment(VerticalAlignment.CENTER);
-
-        XSSFRow row2 = sheet.createRow(rc++);
-        XSSFCell cell5 = row2.createCell(0);
-        cell5.setCellValue("Lista składek od " + firstDate + " do " + secondDate);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4));
-        cell5.setCellStyle(cellStyleTitle);
-
-        XSSFRow row = sheet.createRow(rc++);
-
-        XSSFCell cell = row.createCell(0);
-        XSSFCell cell1 = row.createCell(1);
-        XSSFCell cell2 = row.createCell(2);
-        XSSFCell cell3 = row.createCell(3);
-        XSSFCell cell4 = row.createCell(4);
-        cell.setCellStyle(cellStyleNormal);
-        cell2.setCellStyle(cellStyleNormal);
-        cell3.setCellStyle(cellStyleNormal);
-
-        cell.setCellValue("lp");
-        cell1.setCellValue("Nazwisko i Imię");
-        cell2.setCellValue("Numer Legitymacji");
-        cell3.setCellValue("Data Składki");
-        cell4.setCellValue("Grupa");
-
-        for (int i = 0; i < list.size(); i++) {
-
-            IMemberDTO member = list.get(i).getMember();
-            Contribution contribution = list.get(i).getContribution();
-            XSSFRow row1 = sheet.createRow(rc++);
-
-            cell = row1.createCell(0);
-            cell1 = row1.createCell(1);
-            cell2 = row1.createCell(2);
-            cell3 = row1.createCell(3);
-            cell4 = row1.createCell(4);
-
-            cell.setCellValue(i + 1);
-            cell1.setCellValue(member.getSecond_name() + " " + member.getFirst_name());
-            cell2.setCellValue(member.getLegitimation_number());
-            cell3.setCellValue(contribution.getPaymentDay().toString());
-            cell4.setCellValue(member.getAdult() ? "Ogólna" : "Młodzieżowa");
-
-            cell.setCellStyle(cellStyleNormal);
-            cell2.setCellStyle(cellStyleNormal);
-            cell3.setCellStyle(cellStyleNormal);
-        }
-
-        sheet.autoSizeColumn(0);
-        sheet.autoSizeColumn(1);
-        sheet.autoSizeColumn(2);
-        sheet.autoSizeColumn(3);
-        sheet.autoSizeColumn(4);
-
-
-        try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
-            workbook.write(outputStream);
-        }
-        workbook.close();
-
-        byte[] data = convertToByteArray(fileName);
-        FilesModel filesModel = getFilesModel(fileName, data);
-
-        FilesEntity filesEntity =
-                createFileEntity(filesModel);
-        File file = new File(fileName);
-        file.delete();
-        LOG.info("Pobrano plik " + fileName);
-
-        return filesEntity;
-    }
-
     public FilesEntity getAllErasedMembersXlsx(LocalDate firstDate, LocalDate secondDate) throws IOException {
 
         String fileName = "Lista osób skreślonych od " + firstDate + " do" + secondDate + ".pdf";
         List<MemberEntity> list = memberRepository.findAllByErasedTrue().stream()
                 .filter(f -> f.getErasedEntity() != null)
                 .filter(f -> f.getErasedEntity().getDate().isAfter(firstDate.minusDays(1)) && f.getErasedEntity().getDate().isBefore(secondDate.plusDays(1)))
-                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
+                .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))).thenComparing(MemberEntity::getFirstName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .collect(Collectors.toList());
         int rc = 0;
         XSSFWorkbook workbook = new XSSFWorkbook();
@@ -1334,6 +1356,15 @@ public class XLSXFilesService {
         FilesEntity filesEntity = Mapping.map(filesModel);
         return filesRepository.save(filesEntity);
 
+    }
+
+    private FilesModel getFilesModel(String fileName, byte[] data) {
+        return FilesModel.builder()
+                .name(fileName)
+                .data(data)
+                .type(String.valueOf(MediaType.TEXT_XML))
+                .size(data.length)
+                .build();
     }
 
     private String dateFormat(LocalDate date) {

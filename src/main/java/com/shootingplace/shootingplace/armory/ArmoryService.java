@@ -1,11 +1,11 @@
 package com.shootingplace.shootingplace.armory;
 
 import com.google.common.hash.Hashing;
-import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceRepository;
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.file.FilesRepository;
 import com.shootingplace.shootingplace.history.HistoryService;
@@ -15,7 +15,7 @@ import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
-import com.shootingplace.shootingplace.users.UserSubType;
+import com.shootingplace.shootingplace.utils.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;

@@ -41,7 +41,7 @@ public class RegistrationRecordsService {
 
     public ResponseEntity<?> createRecordInBook(String pesel, String imageUUID) {
         RegistrationRecordEntity r = new RegistrationRecordEntity();
-        MemberEntity member = memberRepo.findByPesel(pesel).orElse(null);
+        MemberEntity member = memberRepo.findAllByErasedFalse().stream().filter(f->f.getPesel().equals(pesel)).findFirst().orElse(null);
         if (member != null && !member.getErased()) {
             if (registrationRepo.findAll().stream().anyMatch(f ->
                     LocalDate.of(f.getDateTime().getYear(), f.getDateTime().getMonth(), f.getDateTime().getDayOfMonth()).equals(LocalDate.now()) && f.getPeselOrID().equals(member.getPesel()))) {
@@ -49,8 +49,8 @@ public class RegistrationRecordsService {
                 return ResponseEntity.badRequest().body("Osoba znajduje się już na liście");
             } else {
                 // jeśli klubowicz jest również użytokwnikiem to włączam mu czas pracy
-                UserEntity userEntity = userRepository.findByMemberUuid(member.getUuid()).orElse(null);
-                if (userEntity != null && userEntity.getMember() != null) {
+                UserEntity userEntity = userRepository.findByMemberUuid(member.getUuid());
+                if (userEntity != null) {
                     workingTimeEvidenceService.openWTEByPin(userEntity);
                 }
                 r.setFirstName(member.getFirstName());

@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.users;
 
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import org.springframework.http.HttpStatus;

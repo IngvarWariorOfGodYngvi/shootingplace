@@ -1,10 +1,10 @@
 package com.shootingplace.shootingplace.history;
 
 import com.google.common.hash.Hashing;
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
-import com.shootingplace.shootingplace.users.UserSubType;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,13 +40,13 @@ public class ChangeHistoryService {
                 .build());
     }
 
-    public ResponseEntity<?> comparePinCode(String pinCode, List<String> acceptedPermission) throws NoUserPermissionException {
+    public ResponseEntity<?> comparePinCode(String pinCode, List<String> acceptedPermissions) throws NoUserPermissionException {
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity userEntity = userRepository.findByPinCode(pin);
-        if (userEntity != null && userEntity.getUserPermissionsList().stream().noneMatch(acceptedPermission::contains)) {
+        if (userEntity != null && userEntity.getUserPermissionsList().stream().noneMatch(acceptedPermissions::contains)) {
             throw new NoUserPermissionException();
         }
-        if (userEntity != null && acceptedPermission.contains(UserSubType.ADMIN.getName()) && userEntity.getUserPermissionsList().contains(UserSubType.ADMIN.getName())) {
+        if (userEntity != null && acceptedPermissions.contains(UserSubType.ADMIN.getName()) && userEntity.getUserPermissionsList().contains(UserSubType.ADMIN.getName())) {
             return ResponseEntity.ok().build();
         }
         boolean inWork;

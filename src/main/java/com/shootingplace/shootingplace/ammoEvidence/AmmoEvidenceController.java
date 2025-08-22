@@ -1,10 +1,10 @@
 package com.shootingplace.shootingplace.ammoEvidence;
 
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.exceptions.NoPersonToAmmunitionException;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
-import com.shootingplace.shootingplace.users.UserSubType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

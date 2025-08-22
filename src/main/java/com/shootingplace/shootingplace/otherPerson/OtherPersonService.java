@@ -110,36 +110,29 @@ public class OtherPersonService {
     }
 
     public OtherPersonEntity addPerson(String club, OtherPerson person) {
-        System.out.println(club);
         boolean match = clubRepository.findAll().stream().anyMatch(a -> a.getShortName().equals(club));
         ClubEntity clubEntity;
         if (club.isEmpty()) {
             clubEntity = clubRepository.getOne(2);
         } else {
-        if (match) {
-            clubEntity = clubRepository
-                    .findAll()
-                    .stream()
-                    .filter(f -> f.getShortName()
-                            .equals(club))
-                    .findFirst()
-                    .orElseThrow(EntityNotFoundException::new);
-        } else {
-            List<ClubEntity> all = clubRepository.findAll();
-            all.sort(Comparator.comparing(ClubEntity::getId).reversed());
-            Integer id = (all.get(0).getId()) + 1;
-            clubEntity = ClubEntity.builder()
-                    .id(id)
-                    .shortName(club).build();
-            clubRepository.save(clubEntity);
-        }}
-        AddressEntity addressEntity = addressRepository.save(AddressEntity.builder()
-                .zipCode(person.getAddress().getZipCode())
-                .postOfficeCity(person.getAddress().getPostOfficeCity())
-                .street(person.getAddress().getStreet())
-                .streetNumber(person.getAddress().getStreetNumber())
-                .flatNumber(person.getAddress().getFlatNumber())
-                .build());
+            if (match) {
+                clubEntity = clubRepository
+                        .findAll()
+                        .stream()
+                        .filter(f -> f.getShortName()
+                                .equals(club))
+                        .findFirst()
+                        .orElseThrow(EntityNotFoundException::new);
+            } else {
+                List<ClubEntity> all = clubRepository.findAll();
+                all.sort(Comparator.comparing(ClubEntity::getId).reversed());
+                Integer id = (all.get(0).getId()) + 1;
+                clubEntity = ClubEntity.builder()
+                        .id(id)
+                        .shortName(club).build();
+                clubRepository.save(clubEntity);
+            }
+        }
         List<OtherPersonEntity> all = otherPersonRepository.findAll();
         int id;
         if (all.isEmpty()) {
@@ -156,11 +149,21 @@ public class OtherPersonService {
                 .active(true)
                 .email(person.getEmail())
                 .permissionsEntity(null)
-                .weaponPermissionNumber(person.getWeaponPermissionNumber() != null ? person.getWeaponPermissionNumber().toUpperCase(Locale.ROOT) : null)
-                .address(addressEntity)
                 .creationDate(LocalDateTime.now())
                 .club(clubEntity)
                 .build();
+        if (person.getWeaponPermissionNumber().isEmpty()) {
+           AddressEntity addressEntity = addressRepository.save(AddressEntity.builder()
+                    .zipCode(person.getAddress().getZipCode())
+                    .postOfficeCity(person.getAddress().getPostOfficeCity())
+                    .street(person.getAddress().getStreet())
+                    .streetNumber(person.getAddress().getStreetNumber())
+                    .flatNumber(person.getAddress().getFlatNumber())
+                    .build());
+            otherPersonEntity.setAddress(addressEntity);
+        } else {
+            otherPersonEntity.setWeaponPermissionNumber(person.getWeaponPermissionNumber());
+        }
         otherPersonEntity.setCreationDate();
         LOG.info("Zapisano nową osobę " + otherPersonEntity.getFirstName() + " " + otherPersonEntity.getSecondName());
         return otherPersonRepository.save(otherPersonEntity);
@@ -251,7 +254,7 @@ public class OtherPersonService {
         a2.setFlatNumber(a1.getFlatNumber() != null ? a1.getFlatNumber() : a2.getFlatNumber());
         AddressEntity save1 = addressRepository.save(a2);
         one.setAddress(save1);
-        if ((clubName!=null && !clubName.isEmpty())&&!one.getClub().getShortName().equals(clubName)) {
+        if ((clubName != null && !clubName.isEmpty()) && !one.getClub().getShortName().equals(clubName)) {
             ClubEntity clubEntity = clubRepository.findAll().stream().filter(f -> f.getShortName().equals(clubName)).findFirst().orElse(null);
             if (clubEntity == null) {
                 {

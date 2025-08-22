@@ -1,9 +1,9 @@
 package com.shootingplace.shootingplace.users;
 
 import com.google.common.hash.Hashing;
-import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.license.LicenseRepository;
@@ -12,6 +12,7 @@ import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import com.shootingplace.shootingplace.tournament.TournamentService;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
 import org.apache.logging.log4j.LogManager;

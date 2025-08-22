@@ -33,8 +33,6 @@ public class BarCodeCardEntity {
      */
     private String type;
 
-    private String subType;
-
     private boolean isMaster;
 
     private int useCounter;
@@ -75,14 +73,6 @@ public class BarCodeCardEntity {
 
     public String getBelongsTo() {
         return belongsTo;
-    }
-
-    public String getSubType() {
-        return subType;
-    }
-
-    public void setSubType(String subType) {
-        this.subType = subType;
     }
 
     public boolean isMaster() {

@@ -1,9 +1,9 @@
 package com.shootingplace.shootingplace.competition;
 
-import com.shootingplace.shootingplace.score.ScoreService;
+import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
-import com.shootingplace.shootingplace.users.UserSubType;
+import com.shootingplace.shootingplace.score.ScoreService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
