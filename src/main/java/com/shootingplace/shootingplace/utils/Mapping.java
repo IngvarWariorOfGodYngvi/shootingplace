@@ -4,6 +4,7 @@ import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.ammoEvidence.*;
 import com.shootingplace.shootingplace.armory.*;
+import com.shootingplace.shootingplace.armory.gunRepresentation.GunRepresentationEntity;
 import com.shootingplace.shootingplace.club.Club;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.contributions.Contribution;
@@ -14,6 +15,8 @@ import com.shootingplace.shootingplace.history.*;
 import com.shootingplace.shootingplace.license.License;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.member.*;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissions;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissionsEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.score.Score;
 import com.shootingplace.shootingplace.score.ScoreEntity;
@@ -39,6 +42,7 @@ public class Mapping {
 
     public static Member map(MemberEntity e) {
         return Member.builder()
+                .uuid(e.getUuid())
                 .joinDate(e.getJoinDate())
                 .legitimationNumber(e.getLegitimationNumber())
                 .firstName(e.getFirstName())
@@ -61,6 +65,7 @@ public class Mapping {
                 .pzss(checkBool(e.getPzss()))
                 .erasedEntity(e.getErasedEntity())
                 .image(e.getImageUUID())
+                .note(e.getNote())
                 .build();
     }
 
@@ -95,6 +100,7 @@ public class Mapping {
                 .pzss(e.getPzss())
                 .erasedEntity(e.getErasedEntity())
                 .history(map(e.getHistory()))
+                .note(e.getNote())
                 .build();
     }
 
@@ -107,6 +113,7 @@ public class Mapping {
                 .legitimationNumber(e.getLegitimationNumber())
                 .isAdult(e.getAdult())
                 .image(e.getImageUUID())
+                .note(e.getNote())
                 .declarationLOK(e.getDeclarationLOK()).build();
     }
 
@@ -119,6 +126,7 @@ public class Mapping {
                 .isActive(e.getActive())
                 .legitimationNumber(e.getLegitimationNumber())
                 .isAdult(e.getAdult())
+                .note(e.getNote())
                 .arbiterClass(e.getMemberPermissions()!=null?e.getMemberPermissions().getArbiterClass():null)
                 .declarationLOK(e.getDeclarationLOK()).build();
     }
@@ -139,6 +147,7 @@ public class Mapping {
                 .joinDate(e.getJoinDate())
                 .memberPermissions(map(e.getMemberPermissions()))
                 .club(map(e.getClub()))
+                .note(e.getNote())
                 .build();
     }
 
@@ -667,6 +676,36 @@ public class Mapping {
                 .adnotation(g.getAdnotation())
                 .usedDate(g.getUsedDate())
                 .usedTime(g.getUsedTime())
+                .gunRepresentation(g.getGunRepresentationEntity())
+                .build();
+    }
+
+    public static GunRepresentationEntity mapToRepresentation(GunEntity g) {
+        return GunRepresentationEntity.builder()
+                .gunUUID(g.getUuid())
+                .additionalEquipment(g.getAdditionalEquipment())
+                .basisForPurchaseOrAssignment(g.getBasisForPurchaseOrAssignment())
+                .caliber(g.getCaliber())
+                .comment(g.getComment())
+                .gunCertificateSerialNumber(g.getGunCertificateSerialNumber())
+                .gunType(g.getGunType())
+                .modelName(g.getModelName())
+                .available(g.isAvailable())
+                .imgUUID(g.getImgUUID())
+                .numberOfMagazines(g.getNumberOfMagazines())
+                .productionYear(g.getProductionYear())
+                .recordInEvidenceBook(g.getRecordInEvidenceBook())
+                .serialNumber(g.getSerialNumber())
+                .addedDate(g.getAddedDate())
+                .addedDate(g.getAddedDate())
+                .addedBy(g.getAddedBy())
+                .addedSign(g.getAddedSign())
+                .addedUserUUID(g.getAddedUserUUID())
+                .removedBy(g.getRemovedBy())
+                .removedSign(g.getRemovedSign())
+                .removedUserUUID(g.getRemovedUserUUID())
+                .removedDate(g.getRemovedDate())
+                .basisOfRemoved(g.getBasisOfRemoved())
                 .build();
     }
 }

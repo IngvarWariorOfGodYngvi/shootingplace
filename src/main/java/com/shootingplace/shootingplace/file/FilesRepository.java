@@ -31,8 +31,8 @@ public interface FilesRepository {
     @Query(nativeQuery = true, value = "SELECT uuid, belong_to_memberuuid, name, type, date, time, size, version FROM shootingplace.files_entity where belong_to_memberuuid like (:uuid)")
     List<IFile> findAllByBelongToMemberUUIDEquals(@Param("uuid") String uuid);
 
-    @Query(nativeQuery = true, value = "SELECT uuid, belong_to_memberuuid, name, type, date, time, size, version FROM shootingplace.files_entity where name like '%raport_pracy%' and name like (:monthName) and name like (:workType) and name like (:year)")
-    List<IFile> findAllByNameContains(@Param("monthName") String month, @Param("year") String year, @Param("workType") String workType);
+    @Query(nativeQuery = true, value = "SELECT uuid, belong_to_memberuuid, name, type, date, time, size, version FROM shootingplace.files_entity where name like '%raport_pracy%' and name like (:monthName) and name like (:year)")
+    List<IFile> findAllByNameContains(@Param("monthName") String month, @Param("year") String year);
 
     FilesEntity getOne(String uuid);
 }

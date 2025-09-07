@@ -5,6 +5,7 @@ import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoInEvidenceRepository;
+import com.shootingplace.shootingplace.armory.gunRepresentation.GunRepresentationRepository;
 import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.file.FilesRepository;
@@ -50,9 +51,10 @@ public class ArmoryService {
 
     private final Logger LOG = LogManager.getLogger();
     private final GunUsedRepository gunUsedRepository;
+    private final GunRepresentationRepository gunRepresentationRepository;
 
 
-    public ArmoryService(AmmoEvidenceRepository ammoEvidenceRepository, CaliberService caliberService, CaliberRepository caliberRepository, CaliberUsedRepository caliberUsedRepository, CalibersAddedRepository calibersAddedRepository, GunRepository gunRepository, GunStoreRepository gunStoreRepository, FilesRepository filesRepository, UsedHistoryRepository usedHistoryRepository, HistoryService historyService, UserRepository userRepository, AmmoInEvidenceRepository ammoInEvidenceRepository, MemberRepository memberRepository, GunUsedRepository gunUsedRepository) {
+    public ArmoryService(AmmoEvidenceRepository ammoEvidenceRepository, CaliberService caliberService, CaliberRepository caliberRepository, CaliberUsedRepository caliberUsedRepository, CalibersAddedRepository calibersAddedRepository, GunRepository gunRepository, GunStoreRepository gunStoreRepository, FilesRepository filesRepository, UsedHistoryRepository usedHistoryRepository, HistoryService historyService, UserRepository userRepository, AmmoInEvidenceRepository ammoInEvidenceRepository, MemberRepository memberRepository, GunUsedRepository gunUsedRepository, GunRepresentationRepository gunRepresentationRepository) {
         this.ammoEvidenceRepository = ammoEvidenceRepository;
         this.caliberService = caliberService;
         this.caliberRepository = caliberRepository;
@@ -67,6 +69,7 @@ public class ArmoryService {
         this.ammoInEvidenceRepository = ammoInEvidenceRepository;
         this.memberRepository = memberRepository;
         this.gunUsedRepository = gunUsedRepository;
+        this.gunRepresentationRepository = gunRepresentationRepository;
     }
 
     public List<Caliber> getSumFromAllAmmoList(LocalDate firstDate, LocalDate secondDate) {
@@ -462,6 +465,7 @@ public class ArmoryService {
                     response.add("Broń już znajduje się na liście " + e.getModelName() + " " + e.getSerialNumber());
                 } else {
                     GunUsedEntity build = GunUsedEntity.builder()
+                            .gunRepresentationEntity(Mapping.mapToRepresentation(e))
                             .usedDate(LocalDate.now())
                             .usedTime(LocalTime.now())
                             .issuanceDate(date)
@@ -535,6 +539,7 @@ public class ArmoryService {
         return gunUsedRepository.findAll().stream().filter(f -> (f.getIssuanceSign() == null || f.getGunTakerSign() == null) && (f.getAcceptanceSign() == null && f.getGunReturnerSign() == null)).map(m -> {
             GunUsedDTO dto = Mapping.map(m);
             dto.setGun(Mapping.map(gunRepository.getOne(m.getGunUUID())));
+            dto.setGunRepresentation(gunRepresentationRepository.getOne(m.getGunRepresentationEntity().getUuid()));
             return dto;
         }).sorted(Comparator.comparing(GunUsedDTO::getIssuanceDate).thenComparing(GunUsedDTO::getIssuanceTime).reversed()).collect(Collectors.toList());
     }

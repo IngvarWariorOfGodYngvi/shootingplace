@@ -4,6 +4,7 @@ import com.shootingplace.shootingplace.club.Club;
 import com.shootingplace.shootingplace.domain.Person;
 import com.shootingplace.shootingplace.enums.ErasedType;
 import com.shootingplace.shootingplace.license.License;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissions;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -30,6 +31,7 @@ public class MemberDTO extends Person {
     private Boolean erased = false;
     private Club club;
     private Boolean declarationLOK = false;
+    private String note;
 
     public Club getClub() {
         return club;
@@ -138,6 +140,14 @@ public class MemberDTO extends Person {
 
     public void setMemberPermissions(MemberPermissions memberPermissions) {
         this.memberPermissions = memberPermissions;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public boolean getDeclarationLOK() {

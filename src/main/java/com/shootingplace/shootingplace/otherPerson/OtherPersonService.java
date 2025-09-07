@@ -1,6 +1,5 @@
 package com.shootingplace.shootingplace.otherPerson;
 
-import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.address.AddressEntity;
 import com.shootingplace.shootingplace.address.AddressRepository;
@@ -9,9 +8,10 @@ import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberInfo;
-import com.shootingplace.shootingplace.member.MemberPermissions;
-import com.shootingplace.shootingplace.member.MemberPermissionsEntity;
-import com.shootingplace.shootingplace.member.MemberPermissionsRepository;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissions;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissionsEntity;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissionsRepository;
+import com.shootingplace.shootingplace.utils.Mapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -225,23 +225,23 @@ public class OtherPersonService {
     public ResponseEntity<?> updatePerson(String id, OtherPerson oP, String clubName) {
         OtherPersonEntity one = otherPersonRepository.getOne(Integer.valueOf(id));
         if ((oP.getEmail() != null && !oP.getEmail().isEmpty()) && !one.getEmail().equals(oP.getEmail())) {
-            LOG.info("Osobie" + one.getFullName() + " Zmieniono email");
+            LOG.info("Osobie " + one.getFullName() + " Zmieniono email");
             one.setEmail(oP.getEmail());
         }
         if ((oP.getPhoneNumber() != null && !oP.getPhoneNumber().isEmpty()) && !one.getPhoneNumber().equals(oP.getPhoneNumber())) {
-            LOG.info("Osobie" + one.getFullName() + " Zmieniono numer telefonu");
+            LOG.info("Osobie " + one.getFullName() + " Zmieniono numer telefonu");
             one.setPhoneNumber(oP.getPhoneNumber().replaceAll(" ", ""));
         }
         if ((oP.getFirstName() != null && !oP.getFirstName().isEmpty()) && !(one.getFirstName().substring(0, 1).toUpperCase() + one.getFirstName().substring(1).toLowerCase()).equals(oP.getFirstName())) {
-            LOG.info("Osobie" + one.getFullName() + " Zmieniono Imię");
+            LOG.info("Osobie " + one.getFullName() + " Zmieniono Imię");
             one.setFirstName(oP.getFirstName());
         }
         if ((oP.getSecondName() != null && !oP.getSecondName().isEmpty()) && !one.getSecondName().toUpperCase().equals(oP.getSecondName())) {
-            LOG.info("Osobie" + one.getFullName() + " Zmieniono nazwisko");
+            LOG.info("Osobie " + one.getFullName() + " Zmieniono nazwisko");
             one.setSecondName(oP.getSecondName());
         }
         if ((oP.getWeaponPermissionNumber() != null && !oP.getWeaponPermissionNumber().isEmpty()) && !one.getWeaponPermissionNumber().equals(oP.getWeaponPermissionNumber())) {
-            LOG.info("Osobie" + one.getFullName() + " Zmieniono numer Pozwolenia na broń");
+            LOG.info("Osobie " + one.getFullName() + " Zmieniono numer Pozwolenia na broń");
             one.setWeaponPermissionNumber(oP.getWeaponPermissionNumber());
         }
         Address a1 = oP.getAddress();

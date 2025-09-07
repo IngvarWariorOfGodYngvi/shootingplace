@@ -103,4 +103,13 @@ public class ShootingPatentService {
     private static Collator pl() {
         return Collator.getInstance(Locale.forLanguageTag("pl"));
     }
+
+    public List<MemberDTO> getMembersWithShootingPatentAndNoLicense() {
+        return memberRepository.findAllWhereClubEquals1ErasedFalsePzssTrue().stream()
+                .filter(f -> f.getShootingPatent() != null && f.getShootingPatent().getPatentNumber() != null)
+                .filter(f->f.getLicense() != null && f.getLicense().getNumber() == null)
+                .map(Mapping::map2DTO)
+                .sorted(Comparator.comparing(MemberDTO::getSecondName, pl()).thenComparing(MemberDTO::getFirstName, pl()))
+                .collect(Collectors.toList());
+    }
 }

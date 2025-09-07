@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.armory;
 
+import com.shootingplace.shootingplace.armory.gunRepresentation.GunRepresentationEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,8 @@ public class GunUsedEntity {
     @GenericGenerator(name = "id", strategy = "org.hibernate.id.UUIDGenerator")
     private String uuid;
     private String gunUUID;
+    @OneToOne(orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private GunRepresentationEntity gunRepresentationEntity;
     private LocalDate usedDate;
     private LocalTime usedTime;
     private LocalDate issuanceDate;
@@ -169,4 +172,11 @@ public class GunUsedEntity {
         this.adnotation = adnotation;
     }
 
+    public GunRepresentationEntity getGunRepresentationEntity() {
+        return gunRepresentationEntity;
+    }
+
+    public void setGunRepresentationEntity(GunRepresentationEntity gunRepresentationEntity) {
+        this.gunRepresentationEntity = gunRepresentationEntity;
+    }
 }

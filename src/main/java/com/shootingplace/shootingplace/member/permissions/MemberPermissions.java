@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.member;
+package com.shootingplace.shootingplace.member.permissions;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

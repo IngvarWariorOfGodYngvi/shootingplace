@@ -158,7 +158,11 @@ public class MemberController {
             return code;
         }
     }
-
+    @PostMapping("/note")
+    @Transactional
+    public ResponseEntity<?> addNote(@RequestParam String uuid, @RequestBody String note) {
+        return memberService.addNote(uuid, note);
+    }
     @PutMapping("/{uuid}" )
     public ResponseEntity<?> updateMember(@PathVariable String uuid, @RequestBody @Valid Member member, @RequestParam String pinCode) throws NoUserPermissionException {
         List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName());

@@ -27,7 +27,7 @@ import com.shootingplace.shootingplace.history.CompetitionHistoryEntity;
 import com.shootingplace.shootingplace.history.JudgingHistoryEntity;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.member.MemberPermissions;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissions;
 import com.shootingplace.shootingplace.member.MemberRepository;
 import com.shootingplace.shootingplace.otherPerson.OtherPerson;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
@@ -319,7 +319,7 @@ public class FilesService {
         String s = imageString.split(",")[1];
         String code = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         UserEntity user = userRepository.findByPinCode(code);
-        String fileName = user.getFullName() + " ReturnerGun.png";
+        String fileName = user.getFullName() + " AddGun.png";
         FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
     }
@@ -1641,9 +1641,42 @@ public class FilesService {
 
         FilesEntity filesEntity =
                 createFileEntity(filesModel);
-
-
         file.delete();
+        return filesEntity;
+    }
+    // plik .csv maile do klubowiczów
+    public FilesEntity getMemberEmailCSV() throws IOException {
+        List<MemberEntity> all = memberRepository.findAllByErasedFalse();
+        String fileName = LocalDate.now() + " mailing.csv";
+
+        StringBuilder csvContent = new StringBuilder();
+
+        all.forEach(e -> csvContent.append(e.getEmail()).append(",").append("\n"));
+        FileWriter fw = new FileWriter(fileName);
+        try {
+            fw.write(String.valueOf(csvContent));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+        fw.close();
+
+
+        byte[] data = convertToByteArray(fileName);
+        FilesModel filesModel = FilesModel.builder()
+                .name(fileName)
+                .belongToMemberUUID(null)
+                .data(data)
+                .type(String.valueOf(MediaType.TEXT_XML))
+                .size(data.length)
+                .build();
+
+        FilesEntity filesEntity =
+                createFileEntity(filesModel);
+        File file = new File(fileName);
+        file.delete();
+        LOG.info("Pobrano plik " + fileName);
+
         return filesEntity;
     }
 
@@ -1676,11 +1709,8 @@ public class FilesService {
         competitions.stream().map(m -> competitionRepository.getOne(m).getName()).filter(competition -> competition.contains(" pneumatyczny ") || competition.contains(" pneumatyczna ")).sorted().forEach(comp::add);
         Paragraph newLine = new Paragraph("\n", font(9, 0));
         for (int j = 0; j < comp.size(); j++) {
-
             int d = Integer.parseInt(startNumber);
-
             int finalJ = j;
-
             ScoreEntity score = tournamentEntity.getCompetitionsList()
                     .stream()
                     .filter(f -> f.getName().equals(comp.get(finalJ)))
@@ -1698,7 +1728,7 @@ public class FilesService {
                 numberOfShots = competitionEntity.getNumberOfShots();
             }
             //  nazwa zawodów, tytuł i data
-            Paragraph par1 = new Paragraph(tournamentEntity.getName().toUpperCase() + "    " + clubEntity.getShortName() + " " + tournamentEntity.getDate(), font(11, 1));
+            Paragraph par1 = new Paragraph(tournamentEntity.getName().toUpperCase() + "    " + clubEntity.getShortName() + " " + tournamentEntity.getDate().format(dateFormat()), font(11, 1));
             par1.setAlignment(1);
             String a = "";
             String b = "";
@@ -1710,11 +1740,11 @@ public class FilesService {
                 b = "B";
             }
             // nazwisko klub i numer startowy
-            Chunk nameChunk = new Chunk(name, font(11, 1));
-            Chunk clubChunk = new Chunk(" " + club, font(11, 1));
+            Chunk nameChunk = new Chunk(name, font(10, 1));
+            Chunk clubChunk = new Chunk(" " + club, font(10, 1));
             Chunk numberChunk = new Chunk(a + " " + b + "  Nr. " + startNumber, font(13, 1));
             // nazwa konkurencji
-            Paragraph par3 = new Paragraph(comp.get(j), font(11, 1));
+            Paragraph par3 = new Paragraph(comp.get(j), font(10, 1));
             par3.setAlignment(1);
 
             Paragraph par4 = new Paragraph("Podpis sędziego .............................", font(11, 0));
@@ -1763,8 +1793,8 @@ public class FilesService {
             Paragraph p0t2 = new Paragraph(nameChunk);
             Paragraph p1t2 = new Paragraph(clubChunk);
             Paragraph p2t2 = new Paragraph(numberChunk);
-            Paragraph p3t2 = new Paragraph("BW", font(12, 0));
-            Paragraph p4t2 = new Paragraph("BK", font(12, 0));
+            Paragraph p3t2 = new Paragraph("BW", font(8, 0));
+            Paragraph p4t2 = new Paragraph("BK", font(8, 0));
             Paragraph p5t2 = new Paragraph(" ", font(12, 0));
             Paragraph p6t2 = new Paragraph(" ", font(12, 0));
             Paragraph p7t2 = new Paragraph(" ", font(12, 0));
@@ -1778,8 +1808,8 @@ public class FilesService {
             p4t2.setAlignment(0);
 
             if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
-                p3t2 = new Paragraph(" ", font(12, 0));
-                p4t2 = new Paragraph(" ", font(12, 0));
+                p3t2 = new Paragraph(" ", font(10, 0));
+                p4t2 = new Paragraph(" ", font(10, 0));
             }
 
             PdfPCell cell0t2 = new PdfPCell(p0t2);
@@ -1823,7 +1853,6 @@ public class FilesService {
             document.add(new Paragraph("\n", font(4, 0))); // nowa linia
             document.add(table2); // nazwisko klub i numer startowy
             document.add(par3); // nazwa konkurencji
-
             document.add(new Paragraph("\n", font(4, 0))); // nowa linia
             if (competitionEntity.getCountingMethod().equals(CountingMethod.POJEDYNEK.getName())) {
                 for (int i = 0; i < pointColumnWidths.length; i++) {
@@ -2013,7 +2042,7 @@ public class FilesService {
             }
             Paragraph par5 = new Paragraph("_______________________________________________________________________________________", font(12, 0));
 
-            document.add(newLine);
+//            document.add(newLine);
             document.add(par4);
             document.add(par5);
             if ((j + 1) % 4 == 0) {
@@ -2967,13 +2996,13 @@ public class FilesService {
 
     // rejestr pobytu na strzelnicy - z zakresu dat
     public FilesEntity getEvidenceBookInChosenTime(LocalDate firstDate, LocalDate secondDate) throws IOException, DocumentException {
-        String fileName = "Książka pobytu na strzelnicy od " + firstDate + " do " + secondDate + ".pdf";
+        String fileName = "Książka rejestru pobytu na strzelnicy od " + firstDate + " do " + secondDate + ".pdf";
         Document document = new Document(PageSize.A4);
         setAttToDoc(fileName, document, false, true);
         List<RegistrationRecordEntity> collect = registrationRepo.findAll().stream().filter(f -> f.getDateTime().toLocalDate().isAfter(firstDate.minusDays(1)) && f.getDateTime().toLocalDate().isBefore(secondDate.plusDays(1))).sorted(Comparator.comparing(RegistrationRecordEntity::getDateTime).reversed()).collect(Collectors.toList());
 
 
-        Paragraph title = new Paragraph("Książka pobytu na strzelnicy od " + firstDate + " do " + secondDate, font(13, 1));
+        Paragraph title = new Paragraph("Książka rejestru pobytu na strzelnicy od " + firstDate + " do " + secondDate, font(13, 1));
 
         document.add(title);
         document.add(new Phrase("\n"));
@@ -3049,28 +3078,24 @@ public class FilesService {
     }
 
     // raport czasu pracy
-    public FilesEntity getWorkTimeReport(int year, String month, String workType, boolean detailed) throws IOException, DocumentException {
+    public FilesEntity getWorkTimeReport(int year, String month, boolean detailed) throws IOException, DocumentException {
         int reportNumber = 1;
-        List<IFile> collect = filesRepository.findAllByNameContains("%" + month.toLowerCase() + "%", "%" + year + "%", "%" + workType + "%");
+        List<IFile> collect = filesRepository.findAllByNameContains("%" + month.toLowerCase() + "%", "%" + year + "%");
         if (!collect.isEmpty()) {
             reportNumber = collect.stream().max(Comparator.comparing(IFile::getVersion)).orElseThrow(EntityNotFoundException::new).getVersion();
         }
 
-        String fileName = "raport_pracy_" + month.toLowerCase() + "_" + reportNumber + "_" + year + "_" + workType + ".pdf";
+        String fileName = "raport_pracy_" + month.toLowerCase() + "_" + reportNumber + "_" + year + "_" + ".pdf";
         Document document = new Document(PageSize.A4);
         setAttToDoc(fileName, document, true, true);
 
         String finalMonth = month.toLowerCase(Locale.ROOT);
         int pl = number(finalMonth);
 
-        List<WorkingTimeEvidenceEntity> evidenceEntities = workRepo.findAllByStopQuery(year, pl)
-                .stream()
-                .filter(f -> f.getWorkType().equals(workType))
-                .collect(Collectors.toList());
+        List<WorkingTimeEvidenceEntity> evidenceEntities = new ArrayList<>(workRepo.findAllByStopQuery(year, pl));
 
         List<UserEntity> userEntityList = evidenceEntities
                 .stream()
-                .filter(f -> f.getWorkType().equals(workType))
                 .map(WorkingTimeEvidenceEntity::getUser)
                 .distinct()
                 .collect(Collectors.toList());
@@ -3977,7 +4002,7 @@ public class FilesService {
     }
 
     private void setAttToDoc(String fileName, Document document, boolean pageEvents, boolean isPageNumberStamp) throws DocumentException, FileNotFoundException {
-        document.setMargins(35F, 35F, 50F, 70F);
+        document.setMargins(35F, 35F, 35F, 70F);
         PdfWriter writer = PdfWriter.getInstance(document,
                 new FileOutputStream(fileName));
         writer.setPageEvent(new PageStamper(environment, isPageNumberStamp, pageEvents));

@@ -50,7 +50,7 @@ public class WorkingTimeEvidenceController {
             return ResponseEntity.badRequest().body("Musisz podać Rok i Miesiąc aby wyświetlić wyniki");
         }
         int year1 = Integer.parseInt(year);
-        return ResponseEntity.ok(workService.getAllWorkingTimeEvidenceInMonth(year1, month, workType));
+        return ResponseEntity.ok(workService.getAllWorkingTimeEvidenceInMonth(year1, month));
     }
 
     @GetMapping("/workType")

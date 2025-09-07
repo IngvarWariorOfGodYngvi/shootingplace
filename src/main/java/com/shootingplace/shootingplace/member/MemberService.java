@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.member;
 
 import com.google.common.hash.Hashing;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissionsService;
 import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.club.ClubEntity;
@@ -621,6 +622,7 @@ public class MemberService {
                 .map(Mapping::map)
                 .collect(Collectors.toList());
     }
+
     public List<Member> getMembersToReportToPoliceView(LocalDate firstDate, LocalDate secondDate) {
         return memberRepository.findAllByErasedTrue().stream()
                 .filter(f -> f.getErasedEntity() != null)
@@ -633,7 +635,7 @@ public class MemberService {
 
     public ResponseEntity<?> getMemberByPESELNumber(String PESELNumber) {
         PESELNumber.replaceAll(" ", "");
-        MemberEntity member = memberRepository.findAllByErasedFalse().stream().filter(f->f.getPesel().equals(PESELNumber)).findFirst().orElse(null);
+        MemberEntity member = memberRepository.findAllByErasedFalse().stream().filter(f -> f.getPesel().equals(PESELNumber)).findFirst().orElse(null);
         return member != null ? ResponseEntity.ok(Mapping.map(member)) : ResponseEntity.badRequest().body("Brak numeru w Bazie");
     }
 
@@ -703,5 +705,14 @@ public class MemberService {
         );
         memberRepository.save(one);
         return ResponseEntity.ok("Oznaczono, że " + one.getFullName() + " " + (b ? "" : "nie ") + "jest wpisan" + (sex ? "a" : "y") + " do portalu PZSS");
+    }
+
+    public ResponseEntity<?> addNote(String uuid, String note) {
+        if (note.equals("null")){
+            note = null;
+        }
+        String msg = note == null ? "Usunięto notatkę" : "Dodano notatkę";
+        memberRepository.getOne(uuid).setNote(note);
+        return ResponseEntity.ok().body(msg);
     }
 }

@@ -2,6 +2,8 @@ package com.shootingplace.shootingplace.configurations;
 
 import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
+import com.shootingplace.shootingplace.armory.GunUsedRepository;
+import com.shootingplace.shootingplace.armory.gunRepresentation.GunRepresentationService;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.enums.UserSubType;
@@ -28,14 +30,18 @@ public class StartConfiguration {
     private final ClubRepository clubRepository;
     private final AmmoUsedService ammoUsedService;
     private final Environment environment;
+    private final GunRepresentationService gunRepresentationService;
+    private final GunUsedRepository gunUsedRepository;
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public StartConfiguration(UserRepository userRepository, ClubRepository clubRepository, AmmoUsedService ammoUsedService, Environment environment) {
+    public StartConfiguration(UserRepository userRepository, ClubRepository clubRepository, AmmoUsedService ammoUsedService, Environment environment, GunRepresentationService gunRepresentationService, GunUsedRepository gunUsedRepository) {
         this.userRepository = userRepository;
         this.clubRepository = clubRepository;
         this.ammoUsedService = ammoUsedService;
         this.environment = environment;
+        this.gunRepresentationService = gunRepresentationService;
+        this.gunUsedRepository = gunUsedRepository;
     }
 
     @Bean
@@ -43,12 +49,12 @@ public class StartConfiguration {
         System.setProperty("dateTime", LocalDateTime.now().toString());
         LOG.info("dateTime property: " + environment.getProperty("dateTime"));
     }
-
-    @Transactional
-    @Bean
-    public void recountAmmo() {
-        ammoUsedService.recountAmmo();
-    }
+//
+//    @Transactional
+//    @Bean
+//    public void recountAmmo() {
+//        ammoUsedService.recountAmmo();
+//    }
 
     @Bean
     public void createAdmin() {
@@ -119,6 +125,11 @@ public class StartConfiguration {
             e.printStackTrace();
         }
 
+    }
+    @Bean
+    @Transactional
+    public void function() {
+        gunUsedRepository.findAll().forEach(gunRepresentationService::function);
     }
 
 }

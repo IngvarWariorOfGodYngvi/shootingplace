@@ -90,6 +90,15 @@ public class FilesController {
     }
 
     // składka członkowska
+    @GetMapping("/downloadMemberEmailCSV")
+    public ResponseEntity<byte[]> getMemberEmailCSV() throws IOException, DocumentException {
+        FilesEntity filesEntity = filesService.getMemberEmailCSV();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(filesEntity.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().trim() + "\"")
+                .body(filesEntity.getData());
+    }
+    // składka członkowska
     @GetMapping("/downloadContribution/{memberUUID}")
     public ResponseEntity<byte[]> getContributionFile(@PathVariable String memberUUID, @RequestParam String contributionUUID,@Nullable @RequestParam Boolean a5rotate) throws IOException, DocumentException {
         FilesEntity filesEntity = filesService.contributionConfirm(memberUUID, contributionUUID,a5rotate);
@@ -370,12 +379,12 @@ public class FilesController {
 
     // raport pracy
     @GetMapping("/downloadWorkReport")
-    public ResponseEntity<byte[]> getWorkTimeReport(@Nullable @RequestParam String year, @Nullable @RequestParam String month, @RequestParam String workType, @RequestParam boolean detailed) throws DocumentException, IOException {
+    public ResponseEntity<byte[]> getWorkTimeReport(@Nullable @RequestParam String year, @Nullable @RequestParam String month, @RequestParam boolean detailed) throws DocumentException, IOException {
         if (year == null || year.equals("null") || month == null || month.equals("null")) {
             ResponseEntity.badRequest().body("Musisz podać Rok i Miesiąc aby pobrać wyniki");
         }
         int year1 = Integer.parseInt(year);
-        FilesEntity filesEntity = filesService.getWorkTimeReport(year1, month, workType, detailed);
+        FilesEntity filesEntity = filesService.getWorkTimeReport(year1, month, detailed);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(filesEntity.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment:filename=\"" + filesEntity.getName().replaceAll(" ", "") + "\"")

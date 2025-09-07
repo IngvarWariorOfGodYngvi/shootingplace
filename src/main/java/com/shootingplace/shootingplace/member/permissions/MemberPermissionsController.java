@@ -1,4 +1,4 @@
-package com.shootingplace.shootingplace.member;
+package com.shootingplace.shootingplace.member.permissions;
 
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonService;

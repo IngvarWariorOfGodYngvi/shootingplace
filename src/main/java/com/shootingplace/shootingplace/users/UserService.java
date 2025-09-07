@@ -292,7 +292,7 @@ public class UserService {
                     .filter(f -> !f.isClose())
                     .findFirst()
                     .orElse(null);
-            if ((workingTimeEvidenceEntity != null && user.getUserPermissionsList().contains("Zarząd")) || user.getUserPermissionsList().contains("Admin")) {
+            if ((workingTimeEvidenceEntity != null && user.getUserPermissionsList().contains(UserSubType.MANAGEMENT.getName())) || user.getUserPermissionsList().contains(UserSubType.ADMIN.getName()) || user.getUserPermissionsList().contains(UserSubType.SUPER_USER.getName())) {
                 response = ResponseEntity.ok().build();
                 changeHistoryService.addRecordToChangeHistory(pin, "uzyskaj dostęp", user.getMember() != null ? user.getMember().getUuid() : null);
             } else {

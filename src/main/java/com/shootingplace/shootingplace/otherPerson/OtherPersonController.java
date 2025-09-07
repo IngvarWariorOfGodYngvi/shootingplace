@@ -5,7 +5,7 @@ import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
 import com.shootingplace.shootingplace.member.MemberInfo;
-import com.shootingplace.shootingplace.member.MemberPermissions;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissions;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;

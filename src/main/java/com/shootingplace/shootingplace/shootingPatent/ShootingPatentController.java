@@ -18,6 +18,10 @@ public class ShootingPatentController {
     public ResponseEntity<?> getMembersWithNoShootingPatent(){
         return ResponseEntity.ok(shootingPatentService.getMembersWithNoShootingPatent());
     }
+    @GetMapping("/noLicense")
+    public ResponseEntity<?> getMembersWithShootingPatentAndNoLicense(){
+        return ResponseEntity.ok(shootingPatentService.getMembersWithShootingPatentAndNoLicense());
+    }
 
     @PutMapping("/{memberUUID}")
     public ResponseEntity<?> updatePatent(@PathVariable String memberUUID, @RequestBody ShootingPatent shootingPatent) {

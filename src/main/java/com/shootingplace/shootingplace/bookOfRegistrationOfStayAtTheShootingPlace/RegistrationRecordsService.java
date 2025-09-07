@@ -51,7 +51,7 @@ public class RegistrationRecordsService {
                 // jeśli klubowicz jest również użytokwnikiem to włączam mu czas pracy
                 UserEntity userEntity = userRepository.findByMemberUuid(member.getUuid());
                 if (userEntity != null) {
-                    workingTimeEvidenceService.openWTEByPin(userEntity);
+                    workingTimeEvidenceService.openWTEByUser(userEntity);
                 }
                 r.setFirstName(member.getFirstName());
                 r.setSecondName(member.getSecondName());

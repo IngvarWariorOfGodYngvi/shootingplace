@@ -57,7 +57,7 @@ public interface MemberRepository {
 
     void delete(MemberEntity one);
 
-    @Query(nativeQuery = true, value = "SELECT uuid, first_name, second_name, imageuuid, active, adult, erased, pzss, legitimation_number, join_date from shootingplace.member_entity WHERE history_uuid = (:historyUUID)")
+    @Query(nativeQuery = true, value = "SELECT uuid, first_name, second_name, imageuuid, active, adult, erased, pzss, legitimation_number, join_date, note from shootingplace.member_entity WHERE history_uuid = (:historyUUID)")
     IMemberDTO getByHistoryUUID(@Param("historyUUID") String historyUUID);
 
     MemberEntity findByHistoryUuid(String historyUUID);

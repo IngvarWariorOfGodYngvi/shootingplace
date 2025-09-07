@@ -78,7 +78,7 @@ public class SettingsController {
     public ResponseEntity<?> updateProgram(@RequestParam String pinCode) throws IOException, NoUserPermissionException {
         List<String> acceptedPermissions = Arrays.asList(UserSubType.ADMIN.getName(), UserSubType.SUPER_USER.getName(), UserSubType.CEO.getName());
         ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
-        new RunPowerShell(code);
+        new RunPowerShell(environment, code);
         return code;
 
 

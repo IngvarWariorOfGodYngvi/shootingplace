@@ -22,4 +22,5 @@ public class MemberInfo {
     boolean isAdult;
     boolean declarationLOK;
     String image;
+    String note;
 }

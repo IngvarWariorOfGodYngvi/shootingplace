@@ -6,6 +6,7 @@ import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.domain.Person;
 import com.shootingplace.shootingplace.history.History;
 import com.shootingplace.shootingplace.license.License;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissions;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatent;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermission;
 import lombok.AllArgsConstructor;
@@ -20,7 +21,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Member extends Person {
-
+    private String uuid;
     private LocalDate joinDate;
     private Integer legitimationNumber;
     private String firstName;
@@ -48,6 +49,7 @@ public class Member extends Person {
     private PersonalEvidence personalEvidence;
     private boolean pzss;
     private ErasedEntity erasedEntity;
+    private String note;
 
     private List<BarCodeCardDTO> barCodeCardList;
 
@@ -237,6 +239,24 @@ public class Member extends Person {
 
     public void setImage(String image) {
         this.image = image;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    @Override
+    public String getUuid() {
+        return uuid;
+    }
+
+    @Override
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 
     public String getFullName() {

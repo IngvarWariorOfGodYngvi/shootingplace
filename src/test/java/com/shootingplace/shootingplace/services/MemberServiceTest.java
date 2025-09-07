@@ -15,6 +15,8 @@ import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.license.LicenseService;
 import com.shootingplace.shootingplace.member.*;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissionsEntity;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissionsService;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentService;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;

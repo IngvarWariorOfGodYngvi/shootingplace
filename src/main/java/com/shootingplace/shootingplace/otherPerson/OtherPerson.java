@@ -2,7 +2,7 @@ package com.shootingplace.shootingplace.otherPerson;
 
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.club.Club;
-import com.shootingplace.shootingplace.member.MemberPermissions;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissions;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

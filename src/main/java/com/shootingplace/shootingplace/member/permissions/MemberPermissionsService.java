@@ -1,6 +1,8 @@
-package com.shootingplace.shootingplace.member;
+package com.shootingplace.shootingplace.member.permissions;
 
 import com.shootingplace.shootingplace.enums.ArbiterClass;
+import com.shootingplace.shootingplace.member.MemberEntity;
+import com.shootingplace.shootingplace.member.MemberRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;

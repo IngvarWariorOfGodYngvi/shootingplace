@@ -7,6 +7,7 @@ public interface IMemberDTO {
     String getFirst_name();
     String getSecond_name();
     String getImageuuid();
+    String getNote();
     boolean getActive();
     boolean getAdult();
     boolean getErased();

@@ -1,5 +1,6 @@
 package com.shootingplace.shootingplace.armory;
 
+import com.shootingplace.shootingplace.armory.gunRepresentation.GunRepresentationEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -13,6 +14,7 @@ public class GunUsedDTO {
 
     private String uuid;
     private Gun gun;
+    private GunRepresentationEntity gunRepresentation;
     private LocalDate usedDate;
     private LocalTime usedTime;
     private LocalDate issuanceDate;
@@ -164,5 +166,13 @@ public class GunUsedDTO {
 
     public void setAdnotation(String adnotation) {
         this.adnotation = adnotation;
+    }
+
+    public GunRepresentationEntity getGunRepresentation() {
+        return gunRepresentation;
+    }
+
+    public void setGunRepresentation(GunRepresentationEntity gunRepresentation) {
+        this.gunRepresentation = gunRepresentation;
     }
 }
