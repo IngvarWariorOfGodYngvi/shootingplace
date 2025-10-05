@@ -522,7 +522,7 @@ public class FilesService {
         Phrase p6 = new Phrase(String.valueOf(memberEntity.getLegitimationNumber()), font(18, 1));
         Paragraph p7 = new Paragraph("\nData Wstąpienia : ", font(11, 0));
         Phrase p8 = new Phrase(String.valueOf(memberEntity.getJoinDate()), font(15, 0));
-        Paragraph p9 = new Paragraph("\nData Urodzenia : ", font(11, 0));
+        Paragraph p9 = new Paragraph("Data Urodzenia : ", font(11, 0));
         Phrase p10 = new Phrase(String.valueOf(birthDate), font(11, 0));
         Paragraph p11 = new Paragraph("PESEL : " + memberEntity.getPesel(), font(11, 0));
         Paragraph p12 = new Paragraph("", font(11, 0));
@@ -535,23 +535,23 @@ public class FilesService {
         String phoneSplit = split + split1 + split2 + split3;
         Paragraph p14 = new Paragraph("Telefon Kontaktowy : " + phoneSplit, font(11, 0));
         Paragraph p15 = new Paragraph("", font(11, 0));
-        Paragraph p16 = new Paragraph("\n\nAdres Zamieszkania", font(11, 0));
+        Paragraph p16 = new Paragraph("\nAdres Zamieszkania", font(11, 0));
         Paragraph p17 = new Paragraph("", font(11, 0));
-        Paragraph p18 = new Paragraph("\n\n" + statement, font(11, 0));
-        Paragraph p18_5 = new Paragraph("\n\n\n\n" + ((memberEntity.getSignBy() != null ? memberEntity.getSignBy() : "") + "                       " + "\n\n"), font(11, 0));
+        Paragraph p18 = new Paragraph("\n" + statement, font(11, 0));
+        Paragraph p18_5 = new Paragraph("\n\n" + ((memberEntity.getSignBy() != null ? memberEntity.getSignBy() : "") + "                       " + "\n\n"), font(11, 0));
         p18_5.setAlignment(2);
         Paragraph p19;
         if (!memberEntity.getAdult()) {
             if (LocalDate.now().minusYears(18).isBefore(birthDate)) {
                 p18 = new Paragraph("\n\n" + statement + "\n" + adultAcceptation + "\n\n     Podpis Rodzica / Opiekuna Prawnego\n         ..................................................", font(11, 0));
             }
-            p19 = new Paragraph("\n\n\n\n.............................................", font(9, 0));
+            p19 = new Paragraph("\n\n.............................................", font(9, 0));
         } else {
             String city = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName()) ? "Łódź, " : "Panaszew, ";
             p19 = new Paragraph(city + " " + LocalDate.now() + "..............................", font(9, 0));
         }
         Phrase p20 = new Phrase("                                                                                                 ");
-        Phrase p21 = new Phrase("...................................");
+        Phrase p21 = new Phrase(".............................................");
         Paragraph p22 = new Paragraph("miejscowość, data i podpis Klubowicza", font(11, 0));
         Phrase p23 = new Phrase("                                                                 ");
         Phrase p24 = new Phrase("podpis przyjmującego");
@@ -564,7 +564,6 @@ public class FilesService {
         p5.add(p6);
         p3.add(p5);
         p7.add(p8);
-        p7.add("\n");
         p9.add(p10);
         if (memberEntity.getAdult()) {
             p12.add("Numer Dowodu Osobistego : ");
@@ -572,7 +571,6 @@ public class FilesService {
             p12.add("Numer Legitymacji Szkolnej / Numer Dowodu Osobistego : ");
         }
         p12.add(p13);
-        p12.add("\n\n\n");
         if (memberEntity.getEmail() != null) {
             p15.add("Email : " + memberEntity.getEmail());
         } else {
@@ -589,7 +587,6 @@ public class FilesService {
         } else {
             p17.add("Kod pocztowy : ");
         }
-        p17.add("\n");
         if (memberEntity.getAddress().getStreet() != null) {
             p17.add("Ulica : " + memberEntity.getAddress().getStreet());
             if (memberEntity.getAddress().getStreetNumber() != null) {
@@ -600,7 +597,6 @@ public class FilesService {
         } else {
             p17.add("Ulica : ");
         }
-        p17.add("\n");
         if (memberEntity.getAddress().getFlatNumber() != null) {
             p17.add("Numer Mieszkania : " + memberEntity.getAddress().getFlatNumber());
         } else {

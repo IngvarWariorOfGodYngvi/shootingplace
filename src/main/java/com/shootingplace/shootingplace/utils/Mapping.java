@@ -9,6 +9,7 @@ import com.shootingplace.shootingplace.club.Club;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.contributions.Contribution;
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
+import com.shootingplace.shootingplace.email.*;
 import com.shootingplace.shootingplace.file.FilesEntity;
 import com.shootingplace.shootingplace.file.FilesModel;
 import com.shootingplace.shootingplace.history.*;
@@ -19,6 +20,7 @@ import com.shootingplace.shootingplace.member.permissions.MemberPermissions;
 import com.shootingplace.shootingplace.member.permissions.MemberPermissionsEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.score.Score;
+import com.shootingplace.shootingplace.score.ScoreDTO;
 import com.shootingplace.shootingplace.score.ScoreEntity;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatent;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentEntity;
@@ -127,9 +129,10 @@ public class Mapping {
                 .legitimationNumber(e.getLegitimationNumber())
                 .isAdult(e.getAdult())
                 .note(e.getNote())
-                .arbiterClass(e.getMemberPermissions()!=null?e.getMemberPermissions().getArbiterClass():null)
+                .arbiterClass(e.getMemberPermissions() != null ? e.getMemberPermissions().getArbiterClass() : null)
                 .declarationLOK(e.getDeclarationLOK()).build();
     }
+
     public static MemberDTO map2DTO(MemberEntity e) {
         return MemberDTO.builder()
                 .uuid(e.getUuid())
@@ -139,7 +142,7 @@ public class Mapping {
                 .adult(e.getAdult())
                 .active(e.getActive())
                 .erased(e.getErased())
-                .erasedEntity(e.getErasedEntity() != null?map(e.getErasedEntity()):null)
+                .erasedEntity(e.getErasedEntity() != null ? map(e.getErasedEntity()) : null)
                 .pzss(e.getPzss())
                 .declarationLOK(e.getDeclarationLOK())
                 .legitimationNumber(e.getLegitimationNumber())
@@ -160,6 +163,7 @@ public class Mapping {
                 .legitimationNumber(e.getLegitimationNumber())
                 .build();
     }
+
     public static MemberAmmo map4(OtherPersonEntity e) {
         return MemberAmmo.builder()
                 .uuid(String.valueOf(e.getId()))
@@ -387,8 +391,9 @@ public class Mapping {
 
     public static Score map(ScoreEntity s) {
         return Score.builder()
-                .name(s.getName())
+                .name(s.getMember() != null ? s.getMember().getFullName() : s.getOtherPersonEntity() != null ? s.getOtherPersonEntity().getFullName() : s.getName())
                 .member(s.getMember() == null ? null : map2DTO(s.getMember()))
+                .otherPersonEntity(s.getOtherPersonEntity() == null ? null : s.getOtherPersonEntity())
                 .ammunition(s.isAmmunition())
                 .gun(s.isGun())
                 .metricNumber(s.getMetricNumber())
@@ -405,7 +410,6 @@ public class Mapping {
                 .miss(s.getMiss())
                 .series(s.getSeries() != null ? s.getSeries() : null)
                 .procedures(s.getProcedures())
-                .otherPersonEntity(s.getOtherPersonEntity())
                 .score(s.getScore())
                 .competitionMembersListEntityUUID(s.getCompetitionMembersListEntityUUID())
                 .uuid(s.getUuid())
@@ -706,6 +710,39 @@ public class Mapping {
                 .removedUserUUID(g.getRemovedUserUUID())
                 .removedDate(g.getRemovedDate())
                 .basisOfRemoved(g.getBasisOfRemoved())
+                .build();
+    }
+
+    public static ScoreDTO mapScoreDTO(ScoreEntity el) {
+        return ScoreDTO.builder()
+                .name(el.getMember() != null ? el.getMember().getFullName() : el.getOtherPersonEntity() != null ? el.getOtherPersonEntity().getFullName() : el.getName())
+                .metricNumber(el.getMetricNumber())
+                .full(el.getName() + " " + el.getMetricNumber())
+                .build();
+    }
+
+    public static EmailQueue map(EmailRequest request, String mailType, MemberEntity memberEntity) {
+        return EmailQueue.builder().request(request).mailType(mailType).memberEntity(memberEntity).build();
+    }
+    public static SentEmailDTO map(SentEmail e) {
+        return SentEmailDTO.builder()
+                .uuid(e.getUuid())
+                .sentAt(e.getSentAt())
+                .content(e.getContent())
+                .errorMessage(e.getErrorMessage())
+                .success(e.isSuccess())
+                .subject(e.getSubject())
+                .mailType(e.getMailType())
+                .recipient(e.getRecipient()).build();
+    }
+    public static ScheduledEmailDTO map(ScheduledEmail e) {
+        return ScheduledEmailDTO.builder()
+                .uuid(e.getUuid())
+                .recipient(e.getRecipient())
+                .htmlContent(e.getHtmlContent())
+                .subject(e.getSubject())
+                .scheduledFor(e.getScheduledFor())
+                .mailType(e.getMailType())
                 .build();
     }
 }

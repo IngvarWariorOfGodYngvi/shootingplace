@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.license;
 
 import com.google.common.hash.Hashing;
+import com.shootingplace.shootingplace.email.EmailService;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.*;
 import com.shootingplace.shootingplace.member.MemberEntity;
@@ -28,16 +29,19 @@ public class LicensePaymentService {
     private final HistoryRepository historyRepository;
     private final HistoryService historyService;
 
+    private final EmailService emailService;
+
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public LicensePaymentService(MemberRepository memberRepository, UserRepository userRepository, LicenseRepository licenseRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, HistoryRepository historyRepository, HistoryService historyService) {
+    public LicensePaymentService(MemberRepository memberRepository, UserRepository userRepository, LicenseRepository licenseRepository, LicensePaymentHistoryRepository licensePaymentHistoryRepository, HistoryRepository historyRepository, HistoryService historyService, EmailService emailService) {
         this.memberRepository = memberRepository;
         this.userRepository = userRepository;
         this.licenseRepository = licenseRepository;
         this.licensePaymentHistoryRepository = licensePaymentHistoryRepository;
         this.historyRepository = historyRepository;
         this.historyService = historyService;
+        this.emailService = emailService;
     }
 
     public ResponseEntity<?> addLicenseHistoryPayment(String memberUUID, String pinCode) throws NoUserPermissionException {
@@ -69,6 +73,7 @@ public class LicensePaymentService {
 
             LOG.info("Dodano wpis o nowej płatności za licencję " + LocalDate.now());
             historyRepository.save(historyEntity);
+            emailService.sendLicensePaymentConfirmation(memberUUID);
 
         } else {
             return ResponseEntity.badRequest().body("Licencja na ten moment jest opłacona");

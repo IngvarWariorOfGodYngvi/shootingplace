@@ -94,7 +94,7 @@ public class HistoryService {
         contributionList.add(contribution);
         contributionList
                 .sort(Comparator.comparing(ContributionEntity::getPaymentDay).thenComparing(ContributionEntity::getValidThru).reversed());
-        historyEntity.setContributionsList(contributionList);
+        historyEntity.setContributionList(contributionList);
 
         LOG.info("Dodano rekord w historii składek");
         historyRepository.save(historyEntity);

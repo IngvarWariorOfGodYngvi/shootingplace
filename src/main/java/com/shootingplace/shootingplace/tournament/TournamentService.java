@@ -843,19 +843,13 @@ public class TournamentService {
     }
 
     public List<ScoreDTO> getShootersNamesList(String tournamentUUID) {
-
         List<ScoreDTO> list = new ArrayList<>();
-
         tournamentRepository.getOne(tournamentUUID)
                 .getCompetitionsList()
                 .forEach(e -> e.getScoreList()
                         .forEach(el -> {
                             if (list.stream().noneMatch(r -> el.getMetricNumber() == (r.getMetricNumber()))) {
-                                list.add(ScoreDTO.builder()
-                                        .name(el.getName())
-                                        .metricNumber(el.getMetricNumber())
-                                        .full(el.getName() + " " + el.getMetricNumber())
-                                        .build());
+                                list.add(Mapping.mapScoreDTO(el));
                             }
                         }));
 

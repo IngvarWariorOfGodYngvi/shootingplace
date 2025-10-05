@@ -1,12 +1,11 @@
 package com.shootingplace.shootingplace.statistics;
 
-import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
-import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoUsedToEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoUsedToEvidenceEntityRepository;
 import com.shootingplace.shootingplace.armory.Caliber;
+import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordRepository;
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.history.CompetitionHistoryEntity;
@@ -14,7 +13,11 @@ import com.shootingplace.shootingplace.history.LicensePaymentHistoryDTO;
 import com.shootingplace.shootingplace.history.LicensePaymentHistoryEntity;
 import com.shootingplace.shootingplace.history.LicensePaymentHistoryRepository;
 import com.shootingplace.shootingplace.member.*;
-import com.shootingplace.shootingplace.tournament.*;
+import com.shootingplace.shootingplace.tournament.CompetitionMembersListEntity;
+import com.shootingplace.shootingplace.tournament.CompetitionMembersListRepository;
+import com.shootingplace.shootingplace.tournament.TournamentEntity;
+import com.shootingplace.shootingplace.tournament.TournamentRepository;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.wrappers.MemberWithContributionWrapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -22,8 +25,8 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityNotFoundException;
 import java.text.Collator;
 import java.time.LocalDate;
+import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -109,7 +112,7 @@ public class StatisticsService {
     }
 
     public String getMaxLegNumber() {
-        return String.valueOf(memberRepository.findAll().size() == 0? 0:memberRepository.getMaxLegitimationNumber());
+        return String.valueOf(memberRepository.findAll().size() == 0 ? 0 : memberRepository.getMaxLegitimationNumber());
     }
 
     public String getActualYearMemberCounts() {
@@ -196,7 +199,6 @@ public class StatisticsService {
                                                 Caliber caliber = memberAmmo.getCaliber().stream().filter(f -> f.getName().equals(g.getCaliberName())).findFirst().orElseThrow(EntityNotFoundException::new);
                                                 Integer quantity = caliber.getQuantity();
                                                 caliber.setQuantity(quantity + h.getCounter());
-
                                             } else {
                                                 Caliber caliber = Caliber.builder()
                                                         .name(g.getCaliberName())
@@ -205,7 +207,6 @@ public class StatisticsService {
                                                 List<Caliber> list = memberAmmo.getCaliber();
                                                 list.add(caliber);
                                                 memberAmmo.setCaliber(list);
-
                                             }
                                         }
                                     }
@@ -493,13 +494,12 @@ public class StatisticsService {
 
     public List<MemberInfo> getWeekBirthdayList() {
         List<MemberEntity> allByErasedFalse = memberRepository.findAllByErasedFalse();
-        int pl = LocalDate.now().get(WeekFields.of(Locale.forLanguageTag("pl")).weekOfYear());
+        int pl = LocalDate.now().get(ChronoField.ALIGNED_WEEK_OF_YEAR);
         return allByErasedFalse.stream()
                 .filter(f -> {
                     LocalDate date = birthDay(f.getPesel());
                     LocalDate of = LocalDate.of(LocalDate.now().getYear(), date.getMonthValue(), date.getDayOfMonth());
-                    int pl2 = of.get(WeekFields.of(Locale.forLanguageTag("pl")).weekOfYear());
-                    return pl2 == pl;
+                    return of.get(ChronoField.ALIGNED_WEEK_OF_YEAR) == pl;
                 })
                 .sorted(Comparator.comparing(MemberEntity::getSecondName, Collator.getInstance(Locale.forLanguageTag("pl"))))
                 .map(Mapping::map2).collect(Collectors.toList());

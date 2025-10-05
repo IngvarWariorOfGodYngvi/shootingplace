@@ -11,4 +11,6 @@ public interface HistoryRepository{
     List<HistoryEntity> findAll();
 
     void delete(HistoryEntity e);
+
+    HistoryEntity getByUuid(String uuid);
 }

@@ -284,7 +284,8 @@ public class CompetitionMembersListService {
         return competitionMembersListRepository.getOne(uuid)
                 .getScoreList()
                 .stream()
-                .filter(f -> f.getMetricNumber() == Integer.parseInt(startNumber)).collect(Collectors.toList()).stream().findFirst();
+                .filter(f -> f.getMetricNumber() == Integer.parseInt(startNumber))
+                .collect(Collectors.toList()).stream().findFirst();
     }
 
     public CompetitionMembersList getCompetitionDTOByUUID(String uuid) {

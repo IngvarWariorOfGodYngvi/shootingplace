@@ -26,6 +26,8 @@ public interface MemberRepository {
 
     List<MemberEntity> findAll();
 
+    List<MemberEntity> findAllByJoinDate(LocalDate localDate);
+
     MemberEntity save(MemberEntity entity);
 
     boolean existsById(String uuid);
@@ -44,6 +46,8 @@ public interface MemberRepository {
     List<MemberEntity> findAllWhereCLubEquals1ErasedFalsePzssTrueLicenseValidFalse();
 
     List<MemberEntity> findAllByErasedFalseAndActiveFalse();
+
+    List<MemberEntity> findAllByErasedFalseAndActiveTrue();
 
     Page<MemberEntity> findAllByErasedFalse(Pageable pageable);
 

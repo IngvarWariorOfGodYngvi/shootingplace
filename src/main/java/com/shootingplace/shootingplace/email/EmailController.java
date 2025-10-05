@@ -1,0 +1,87 @@
+package com.shootingplace.shootingplace.email;
+
+import com.shootingplace.shootingplace.enums.UserSubType;
+import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
+import com.shootingplace.shootingplace.history.ChangeHistoryService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import javax.mail.MessagingException;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
+
+@RestController
+@RequestMapping("/email")
+@CrossOrigin
+public class EmailController {
+    private final EmailService emailService;
+    private final ChangeHistoryService changeHistoryService;
+
+    public EmailController(EmailService emailService, ChangeHistoryService changeHistoryService) {
+        this.emailService = emailService;
+        this.changeHistoryService = changeHistoryService;
+    }
+    @GetMapping
+    public ResponseEntity<?> getConnections() {
+        return emailService.getAllConnections();
+    }
+    @GetMapping("/scheduled")
+    public ResponseEntity<?> getScheduledEmails() {
+        return emailService.getScheduledEmails();
+    }
+    @GetMapping("/sent")
+    public ResponseEntity<?> getSentEmails(@RequestParam String firstDate,@RequestParam String secondDate) {
+        LocalDate parsedFirstDate = LocalDate.parse(firstDate);
+        LocalDate parsedSecondDate = LocalDate.parse(secondDate);
+
+        return emailService.getSentEmails(parsedFirstDate, parsedSecondDate);
+    }
+    @DeleteMapping
+    public ResponseEntity<?> deleteScheduledMail(@RequestParam String uuid) {
+        return emailService.deleteScheduledMail(uuid);
+    }
+    @Transactional
+    @PostMapping("/save")
+    public ResponseEntity<?> saveScheduledEmail(@RequestBody EmailRequest request, @RequestParam String uuid){
+        return emailService.saveScheduledEmail(request,uuid);
+    }
+    @Transactional
+    @PostMapping("/test")
+    public ResponseEntity<?> sendTestEmail(@RequestBody EmailRequest request) throws MessagingException {
+//        return emailService.sendTestEmail(request);
+        emailService.sendRemindersForActiveOneMonthBefore();
+        return ResponseEntity.ok("ok");
+    }
+    @Transactional
+    @PostMapping("/test1")
+    public ResponseEntity<?> sendTestEmail1(@RequestBody EmailRequest request) throws MessagingException {
+//        return emailService.sendTestEmail(request);
+        emailService.sendRemindersForNonActive();
+        return ResponseEntity.ok("ok");
+    }
+
+    @PutMapping
+    public ResponseEntity<?> saveConnection(@RequestBody EmailConfig emailConfig, @RequestParam String pinCode) throws NoUserPermissionException {
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName(), UserSubType.ADMIN.getName(), UserSubType.SUPER_USER.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
+        ResponseEntity<?> result = ResponseEntity.badRequest().body("Połączenie odrzucone");
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            result = emailService.saveConnection(emailConfig);
+        }
+        return result;
+    }
+    @PutMapping("/edit")
+    public ResponseEntity<?> editConnection(@RequestBody EmailConfig emailConfig, @RequestParam String pinCode, @RequestParam String uuid) throws NoUserPermissionException {
+        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName(), UserSubType.ADMIN.getName(), UserSubType.SUPER_USER.getName());
+        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode, acceptedPermissions);
+        ResponseEntity<?> result = ResponseEntity.badRequest().body("Połączenie odrzucone");
+        if (code.getStatusCode().equals(HttpStatus.OK)) {
+            result = emailService.editConnection(emailConfig, uuid);
+        }
+        return result;
+    }
+
+}

@@ -2,6 +2,8 @@ package com.shootingplace.shootingplace.member;
 
 import com.google.common.hash.Hashing;
 import com.shootingplace.shootingplace.member.permissions.MemberPermissionsService;
+import com.shootingplace.shootingplace.email.EmailScheduler;
+import com.shootingplace.shootingplace.email.EmailService;
 import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.club.ClubEntity;
@@ -55,6 +57,9 @@ public class MemberService {
     private final ErasedRepository erasedRepository;
     private final Environment environment;
 
+    private final EmailScheduler emailScheduler;
+
+    private final EmailService emailService;
 
     private final UserRepository userRepository;
 
@@ -70,7 +75,7 @@ public class MemberService {
                          MemberPermissionsService memberPermissionsService,
                          ClubRepository clubRepository,
                          ErasedRepository erasedRepository,
-                         Environment environment, UserRepository userRepository) {
+                         Environment environment, EmailScheduler emailScheduler, EmailService emailService, UserRepository userRepository) {
         this.memberRepository = memberRepository;
         this.licenseService = licenseService;
         this.licenseRepository = licenseRepository;
@@ -82,6 +87,8 @@ public class MemberService {
         this.clubRepository = clubRepository;
         this.erasedRepository = erasedRepository;
         this.environment = environment;
+        this.emailScheduler = emailScheduler;
+        this.emailService = emailService;
         this.userRepository = userRepository;
     }
 
@@ -103,6 +110,7 @@ public class MemberService {
         members.forEach(e -> {
             if (e.getHistory().getContributionList().isEmpty() || e.getHistory().getContributionList() == null) {
                 e.setActive(false);
+                LOG.info("zmieniono " + e.getSecondName());
                 memberRepository.save(e);
             } else {
                 if (e.getHistory().getContributionList().get(0).getValidThru().isBefore(LocalDate.now())) {
@@ -235,7 +243,8 @@ public class MemberService {
             if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                 UserEntity user = userRepository.findByPinCode(Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString());
                 memberEntity.setSignBy(user.getFullName());
-                memberRepository.save(memberEntity);
+                MemberEntity save = memberRepository.save(memberEntity);
+                emailService.sendRegistrationConfirmation(save.getUuid());
                 historyService.addContribution(memberEntity.getUuid(),
                         contributionService.addFirstContribution(LocalDate.now(), pinCode));
                 if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
@@ -708,7 +717,7 @@ public class MemberService {
     }
 
     public ResponseEntity<?> addNote(String uuid, String note) {
-        if (note.equals("null")){
+        if (note.equals("null")) {
             note = null;
         }
         String msg = note == null ? "Usunięto notatkę" : "Dodano notatkę";

@@ -1,6 +1,5 @@
 package com.shootingplace.shootingplace.tournament;
 
-import com.shootingplace.shootingplace.armory.ArmoryService;
 import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.ChangeHistoryService;
@@ -21,12 +20,10 @@ public class TournamentController {
 
     private final TournamentService tournamentService;
     private final ChangeHistoryService changeHistoryService;
-    private final ArmoryService armoryService;
 
-    public TournamentController(TournamentService tournamentService, ChangeHistoryService changeHistoryService, ArmoryService armoryService) {
+    public TournamentController(TournamentService tournamentService, ChangeHistoryService changeHistoryService) {
         this.tournamentService = tournamentService;
         this.changeHistoryService = changeHistoryService;
-        this.armoryService = armoryService;
     }
 
     @GetMapping("/openTournament")

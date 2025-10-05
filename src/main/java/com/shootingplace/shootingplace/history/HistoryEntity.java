@@ -1,6 +1,7 @@
 package com.shootingplace.shootingplace.history;
 
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
+import com.shootingplace.shootingplace.email.SentEmail;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @AllArgsConstructor
@@ -41,16 +43,27 @@ public class HistoryEntity {
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("date DESC")
     private List<JudgingHistoryEntity> judgingHistory;
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OrderBy("sentAt DESC")
+    private Set<SentEmail> sentEmailsHistory;
 
     public String getUuid() {
         return uuid;
+    }
+
+    public Set<SentEmail> getSentEmailsHistory() {
+        return sentEmailsHistory;
+    }
+
+    public void setSentEmailsHistory(Set<SentEmail> sentEmailsHistory) {
+        this.sentEmailsHistory = sentEmailsHistory;
     }
 
     public List<ContributionEntity> getContributionList() {
         return contributionList;
     }
 
-    public void setContributionsList(List<ContributionEntity> contributionsList) {
+    public void setContributionList(List<ContributionEntity> contributionsList) {
         this.contributionList = contributionsList;
     }
 

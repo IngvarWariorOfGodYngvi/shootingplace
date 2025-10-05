@@ -156,19 +156,29 @@ public class XLSXFilesService {
             if (!tournamentEntity.getCompetitionsList().get(i).getScoreList().isEmpty()) {
                 CompetitionMembersListEntity competitionMembersListEntity = tournamentEntity.getCompetitionsList().get(i);
 
-                List<ScoreEntity> scoreList = competitionMembersListEntity.getScoreList().stream()
-                        .filter(f -> !f.isDsq() && !f.isDnf() && !f.isPk())
-                        .sorted(Comparator.comparing(ScoreEntity::getScore)
-                                .thenComparing(ScoreEntity::getInnerTen)
-                                .thenComparing(ScoreEntity::getOuterTen).reversed())
-                        .collect(Collectors.toList());
-
+                List<ScoreEntity> scoreList;
                 List<ScoreEntity> collect = competitionMembersListEntity.getScoreList().stream()
                         .filter(f -> f.isDnf() || f.isDsq() || f.isPk())
                         .sorted(Comparator.comparing(ScoreEntity::getScore)
                                 .thenComparing(ScoreEntity::getInnerTen)
                                 .thenComparing(ScoreEntity::getOuterTen).reversed())
                         .collect(Collectors.toList());
+
+                if (competitionMembersListEntity.getCountingMethod().equals(CountingMethod.TIME.getName())) {
+                    scoreList = competitionMembersListEntity.getScoreList().stream()
+                            .filter(f -> !f.isDsq() && !f.isDnf() && !f.isPk())
+                            .sorted(Comparator.comparing(ScoreEntity::getScore)
+                                    .thenComparing(ScoreEntity::getInnerTen)
+                                    .thenComparing(ScoreEntity::getOuterTen))
+                            .collect(Collectors.toList());
+                } else {
+                    scoreList = competitionMembersListEntity.getScoreList().stream()
+                            .filter(f -> !f.isDsq() && !f.isDnf() && !f.isPk())
+                            .sorted(Comparator.comparing(ScoreEntity::getScore)
+                                    .thenComparing(ScoreEntity::getInnerTen)
+                                    .thenComparing(ScoreEntity::getOuterTen).reversed())
+                            .collect(Collectors.toList());
+                }
 
                 scoreList.addAll(collect);
                 XSSFRow row2 = sheet.createRow(rc);
@@ -303,7 +313,10 @@ public class XLSXFilesService {
                         o2 = scoreOuterTen = "";
                     }
                     String result;
-                    if (countingMethod.equals(CountingMethod.COMSTOCK.getName()) || countingMethod.equals(CountingMethod.IPSC.getName()) || countingMethod.equals(CountingMethod.DYNAMIKADZIESIATKA.getName())) {
+                    if (countingMethod.equals(CountingMethod.COMSTOCK.getName()) ||
+                            countingMethod.equals(CountingMethod.TIME.getName()) ||
+                            countingMethod.equals(CountingMethod.IPSC.getName()) ||
+                            countingMethod.equals(CountingMethod.DYNAMIKADZIESIATKA.getName())) {
                         if (countingMethod.equals(CountingMethod.TIME.getName())) {
                             result = String.format("%.2f", score);
                         } else {
@@ -487,6 +500,7 @@ public class XLSXFilesService {
 
         return filesEntity;
     }
+
     // lista składek w wybranym okresie
     public FilesEntity getContributions(LocalDate firstDate, LocalDate secondDate) throws IOException {
         String fileName = "Lista_składek_od_" + firstDate + "_do_" + secondDate + ".xlsx";
@@ -582,6 +596,7 @@ public class XLSXFilesService {
 
         return filesEntity;
     }
+
     // lista zapisów w wybranym okresie
     public FilesEntity getJoinDateSum(LocalDate firstDate, LocalDate secondDate) throws IOException {
         String fileName = "lista klubowiczów zapisanych od " + firstDate.toString() + " do " + secondDate.toString() + ".xlsx";
@@ -681,6 +696,7 @@ public class XLSXFilesService {
 
         return filesEntity;
     }
+
     // lista skreślonych w wybranym okresie
     public FilesEntity getErasedSum(LocalDate firstDate, LocalDate secondDate) throws IOException {
         String fileName = "lista klubowiczów skreślonych od " + firstDate.toString() + " do " + secondDate.toString() + ".xlsx";

@@ -262,4 +262,33 @@ public class ScoreEntity {
     public void setCreateDate(LocalDateTime createDate) {
         this.createDate = createDate;
     }
+
+    @Override
+    public String toString() {
+        return "ScoreEntity{" +
+                "uuid='" + uuid + '\'' +
+                ", score=" + score +
+                ", series='" + series + '\'' +
+                ", alfa=" + alfa +
+                ", charlie=" + charlie +
+                ", delta=" + delta +
+                ", miss=" + miss +
+                ", innerTen=" + innerTen +
+                ", outerTen=" + outerTen +
+                ", hf=" + hf +
+                ", procedures=" + procedures +
+                ", name='" + name + '\'' +
+                ", metricNumber=" + metricNumber +
+                ", ammunition=" + ammunition +
+                ", gun=" + gun +
+                ", dnf=" + dnf +
+                ", dsq=" + dsq +
+                ", pk=" + pk +
+                ", edited=" + edited +
+                ", createDate=" + createDate +
+                ", competitionMembersListEntityUUID='" + competitionMembersListEntityUUID + '\'' +
+                ", member=" + member +
+                ", otherPersonEntity=" + otherPersonEntity +
+                '}';
+    }
 }

@@ -7,6 +7,7 @@ import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.member.MemberEntity;
 import com.shootingplace.shootingplace.member.MemberRepository;
+import com.shootingplace.shootingplace.email.EmailService;
 import com.shootingplace.shootingplace.users.UserRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,25 +31,28 @@ public class ContributionService {
     private final HistoryService historyService;
     private final Environment environment;
     private final UserRepository userRepository;
+
+    private final EmailService emailService;
+
     private final Logger LOG = LogManager.getLogger(getClass());
 
 
-    public ContributionService(ContributionRepository contributionRepository, MemberRepository memberRepository, HistoryService historyService, Environment environment, UserRepository userRepository) {
+    public ContributionService(ContributionRepository contributionRepository, MemberRepository memberRepository, HistoryService historyService, Environment environment, UserRepository userRepository, EmailService emailService) {
         this.contributionRepository = contributionRepository;
         this.memberRepository = memberRepository;
         this.historyService = historyService;
         this.environment = environment;
         this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     public ResponseEntity<?> addContribution(String memberUUID, LocalDate contributionPaymentDay, String pinCode, Integer contributionCount) throws NoUserPermissionException {
         if (!memberRepository.existsById(memberUUID)) {
             return ResponseEntity.badRequest().body("Nie znaleziono Klubowicza");
         }
-
         String pin = Hashing.sha256().hashString(pinCode, StandardCharsets.UTF_8).toString();
         ResponseEntity<?> response = null;
-        contributionCount = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) ? contributionCount : 1;
+        contributionCount = environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName()) ? contributionCount : 1;
         for (int i = 0; i < contributionCount; i++) {
             MemberEntity memberEntity = memberRepository.getOne(memberUUID);
             List<ContributionEntity> contributionEntityList = memberEntity.getHistory().getContributionList();
@@ -57,15 +61,7 @@ public class ContributionService {
                     .validThru(null)
                     .acceptedBy(userRepository.findByPinCode(pin).getFullName())
                     .build();
-            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
-                contributionEntity.setPaymentDay(contributionPaymentDay);
-                if (contributionEntityList.size() < 1) {
-                    contributionEntity.setValidThru(contributionPaymentDay.plusMonths(3));
-                } else {
-                    contributionEntity.setValidThru(contributionEntityList.get(0).getValidThru().plusMonths(3));
-                }
-            }
-            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
+            if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
                 contributionEntity.setPaymentDay(contributionPaymentDay);
                 if (contributionEntityList.size() < 1) {
                     contributionEntity.setValidThru(contributionPaymentDay.plusMonths(3));
@@ -90,6 +86,7 @@ public class ContributionService {
                 memberRepository.save(memberEntity);
             }
         }
+        emailService.sendContributionConfirmation(memberUUID);
         return response;
     }
 

@@ -1,7 +1,6 @@
 package com.shootingplace.shootingplace.configurations;
 
 import com.google.common.hash.Hashing;
-import com.shootingplace.shootingplace.armory.AmmoUsedService;
 import com.shootingplace.shootingplace.armory.GunUsedRepository;
 import com.shootingplace.shootingplace.armory.gunRepresentation.GunRepresentationService;
 import com.shootingplace.shootingplace.club.ClubEntity;
@@ -28,17 +27,15 @@ public class StartConfiguration {
 
     private final UserRepository userRepository;
     private final ClubRepository clubRepository;
-    private final AmmoUsedService ammoUsedService;
     private final Environment environment;
     private final GunRepresentationService gunRepresentationService;
     private final GunUsedRepository gunUsedRepository;
+
     private final Logger LOG = LogManager.getLogger(getClass());
 
-
-    public StartConfiguration(UserRepository userRepository, ClubRepository clubRepository, AmmoUsedService ammoUsedService, Environment environment, GunRepresentationService gunRepresentationService, GunUsedRepository gunUsedRepository) {
+    public StartConfiguration(UserRepository userRepository, ClubRepository clubRepository, Environment environment, GunRepresentationService gunRepresentationService, GunUsedRepository gunUsedRepository) {
         this.userRepository = userRepository;
         this.clubRepository = clubRepository;
-        this.ammoUsedService = ammoUsedService;
         this.environment = environment;
         this.gunRepresentationService = gunRepresentationService;
         this.gunUsedRepository = gunUsedRepository;
@@ -49,12 +46,6 @@ public class StartConfiguration {
         System.setProperty("dateTime", LocalDateTime.now().toString());
         LOG.info("dateTime property: " + environment.getProperty("dateTime"));
     }
-//
-//    @Transactional
-//    @Bean
-//    public void recountAmmo() {
-//        ammoUsedService.recountAmmo();
-//    }
 
     @Bean
     public void createAdmin() {
@@ -114,18 +105,15 @@ public class StartConfiguration {
 
     @Bean
     public void checkIP() {
-        InetAddress ip;
-        String hostname;
         try {
-            ip = InetAddress.getLocalHost();
-            hostname = ip.getHostName();
-            System.out.println("Your current IP address : " + ip);
-            System.out.println("Your current Hostname : " + hostname);
+            System.out.println("Your current IP address : " + InetAddress.getLocalHost());
+            System.out.println("Your current Hostname : " + InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
 
     }
+
     @Bean
     @Transactional
     public void function() {

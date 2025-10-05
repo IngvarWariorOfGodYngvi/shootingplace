@@ -2,11 +2,12 @@ package com.shootingplace.shootingplace.configurations;
 
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceService;
 import com.shootingplace.shootingplace.armory.AmmoUsedService;
-import com.shootingplace.shootingplace.barCodeCards.BarCodeCardService;
 import com.shootingplace.shootingplace.bookOfRegistrationOfStayAtTheShootingPlace.RegistrationRecordsService;
-import com.shootingplace.shootingplace.history.HistoryService;
+import com.shootingplace.shootingplace.email.EmailService;
+import com.shootingplace.shootingplace.enums.ProfilesEnum;
 import com.shootingplace.shootingplace.member.MemberService;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceService;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,30 +15,28 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class ScheduledTasks {
 
-    private final WorkingTimeEvidenceService workServ;
-    private final MemberService memberServ;
-    private final HistoryService historyServ;
-    private final BarCodeCardService barCodeCardServ;
+    private final Environment environment;
+
+    private final WorkingTimeEvidenceService workingTimeEvidenceService;
+    private final MemberService memberService;
     private final AmmoEvidenceService ammoEvidenceService;
     private final AmmoUsedService ammoUsedService;
     private final RegistrationRecordsService registrationRecordsService;
+    private final EmailService emailService;
 
-    public ScheduledTasks(WorkingTimeEvidenceService workRepo,
-                          MemberService memberServ,
-                          HistoryService historyServ,
-                          BarCodeCardService barCodeCardServ,
+    public ScheduledTasks(Environment environment, WorkingTimeEvidenceService workRepo,
+                          MemberService memberService,
                           AmmoEvidenceService ammoEvidenceService,
                           AmmoUsedService ammoUsedService,
-                          RegistrationRecordsService registrationRecordsService
-                          ) {
-        this.workServ = workRepo;
-        this.memberServ = memberServ;
-        this.historyServ = historyServ;
-        this.barCodeCardServ = barCodeCardServ;
+                          RegistrationRecordsService registrationRecordsService,
+                          EmailService emailService) {
+        this.environment = environment;
+        this.workingTimeEvidenceService = workRepo;
+        this.memberService = memberService;
         this.ammoEvidenceService = ammoEvidenceService;
         this.ammoUsedService = ammoUsedService;
         this.registrationRecordsService = registrationRecordsService;
-
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -46,50 +45,51 @@ public class ScheduledTasks {
         ammoUsedService.recountAmmo();
     }
 
+    @Transactional
     @Scheduled(cron = "0 1 23 * * *")
     public void closeOpenedAmmoList() {
         ammoEvidenceService.automationCloseEvidence();
     }
 
-    @Scheduled(cron = "0 0 23,0-6 * * *")
+    @Transactional
+    @Scheduled(cron = "0 0 22-23,0-6 * * *")
     public void sendAllWorkersGoHome() {
-        workServ.closeAllActiveWorkTime();
+        workingTimeEvidenceService.closeAllActiveWorkTime();
     }
 
-    @Scheduled(cron = "0 0 1-9 * * *")
-    public void sendAllManagementGoHome() {
-        workServ.closeAllActiveWorkTime();
-    }
-
-    @Scheduled(cron = "0 0 20 * * *")
     @Transactional
+    @Scheduled(cron = "0 0 13 * * *")
     public void checkMembers() {
-        memberServ.checkMembers();
+        memberService.checkMembers();
     }
 
-    @Scheduled(cron = "0 0 20 * * *")
     @Transactional
-    public void checkStarts() {
-        historyServ.checkStarts();
-    }
-
-//    @Scheduled(cron = "0 0 21-23 ? * *")
-//    @Transactional
-//    public void deactivateCard() {
-//        barCodeCardServ.deactivateNotMasterCard();
-//    }
-
     @Scheduled(cron = "0 30 11 ? * *")
-    @Transactional
     public void setEndTimeToAllRegistrationRecordEntity() {
         registrationRecordsService.setEndTimeToAllRegistrationRecordEntity();
     }
 
-//    @Scheduled(cron = "0/30 * * * * ?")
-//    public void runPowerShell() throws InterruptedException, IOException {
-//
-//
-//
-//    }
+    @Transactional
+    @Scheduled(cron = "0 0 15 * * *")
+    public void sendRemindersForNonActive() {
+        if (!environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
+            emailService.sendRemindersForNonActive();
+        }
+    }
+
+    @Transactional
+    @Scheduled(cron = "0 0 15 * * *")
+    public void sendRemindersForActiveOneMonthBefore() {
+        if (!environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
+            emailService.sendRemindersForActiveOneMonthBefore();
+        }
+    }
+    @Transactional
+    @Scheduled(cron = "0 0 13 * * *")
+    public void sendCongratulationsOnTheAnniversary() {
+        if (!environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
+            emailService.sendCongratulationsOnTheAnniversary();
+        }
+    }
 
 }
