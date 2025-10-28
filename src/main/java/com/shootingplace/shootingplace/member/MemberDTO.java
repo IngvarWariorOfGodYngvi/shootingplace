@@ -20,6 +20,7 @@ public class MemberDTO extends Person {
     private Integer legitimationNumber;
     private String firstName;
     private String secondName;
+    private String email;
     private ErasedType erasedType;
     private Erased erasedEntity;
     private License license;
@@ -100,6 +101,14 @@ public class MemberDTO extends Person {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public Boolean getErased() {

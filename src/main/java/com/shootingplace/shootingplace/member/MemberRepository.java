@@ -56,12 +56,12 @@ public interface MemberRepository {
     @Query(nativeQuery = true, value = "Select count(*) from shootingplace.member_entity WHERE (join_date BETWEEN (:start) AND (:stop)) ")
     int countActualYearMemberCounts(@Param("start") LocalDate start, @Param("stop") LocalDate stop);
 
-    @Query(nativeQuery = true, value = "SELECT uuid, first_name, second_name, imageuuid, active, adult, erased, pzss, legitimation_number, join_date from shootingplace.member_entity WHERE (join_date BETWEEN (:firstDate) AND (:secondDate)) order by join_date")
+    @Query(nativeQuery = true, value = "SELECT uuid, first_name, second_name, imageuuid, active, adult, erased, pzss, legitimation_number, join_date, note, email from shootingplace.member_entity WHERE (join_date BETWEEN (:firstDate) AND (:secondDate)) order by join_date")
     List<IMemberDTO> getMemberBetweenJoinDate(@Param("firstDate") LocalDate firstDate, @Param("secondDate") LocalDate secondDate);
 
     void delete(MemberEntity one);
 
-    @Query(nativeQuery = true, value = "SELECT uuid, first_name, second_name, imageuuid, active, adult, erased, pzss, legitimation_number, join_date, note from shootingplace.member_entity WHERE history_uuid = (:historyUUID)")
+    @Query(nativeQuery = true, value = "SELECT uuid, first_name, second_name, imageuuid, active, adult, erased, pzss, legitimation_number, join_date, note, email from shootingplace.member_entity WHERE history_uuid = (:historyUUID)")
     IMemberDTO getByHistoryUUID(@Param("historyUUID") String historyUUID);
 
     MemberEntity findByHistoryUuid(String historyUUID);

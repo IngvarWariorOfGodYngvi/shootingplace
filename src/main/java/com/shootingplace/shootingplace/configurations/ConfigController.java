@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @RestController
@@ -31,7 +33,10 @@ public class ConfigController {
     }
     @GetMapping("/env")
     public ResponseEntity<?> env() {
-        return ResponseEntity.ok(environment.getActiveProfiles()[0]);
+        List<String> env = new ArrayList<>();
+        env.add(environment.getActiveProfiles()[0]);
+        env.add(environment.getProperty("shootingPlaceName"));
+        return ResponseEntity.ok(env);
     }
     @GetMapping("/fs")
     public ResponseEntity<?> fs() { return userService.checkFirstStart(); }

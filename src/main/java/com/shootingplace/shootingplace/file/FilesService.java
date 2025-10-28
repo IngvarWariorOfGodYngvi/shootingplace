@@ -3,7 +3,6 @@ package com.shootingplace.shootingplace.file;
 import com.google.common.hash.Hashing;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
-import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceEntity;
 import com.shootingplace.shootingplace.ammoEvidence.AmmoEvidenceRepository;
@@ -18,17 +17,17 @@ import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
 import com.shootingplace.shootingplace.competition.CompetitionEntity;
 import com.shootingplace.shootingplace.competition.CompetitionRepository;
-import com.shootingplace.shootingplace.enums.ProfilesEnum;
 import com.shootingplace.shootingplace.contributions.ContributionEntity;
 import com.shootingplace.shootingplace.contributions.ContributionRepository;
 import com.shootingplace.shootingplace.enums.CountingMethod;
 import com.shootingplace.shootingplace.enums.Discipline;
+import com.shootingplace.shootingplace.enums.ProfilesEnum;
 import com.shootingplace.shootingplace.history.CompetitionHistoryEntity;
 import com.shootingplace.shootingplace.history.JudgingHistoryEntity;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.member.MemberEntity;
-import com.shootingplace.shootingplace.member.permissions.MemberPermissions;
 import com.shootingplace.shootingplace.member.MemberRepository;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissions;
 import com.shootingplace.shootingplace.otherPerson.OtherPerson;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonEntity;
 import com.shootingplace.shootingplace.otherPerson.OtherPersonRepository;
@@ -39,6 +38,7 @@ import com.shootingplace.shootingplace.tournament.TournamentEntity;
 import com.shootingplace.shootingplace.tournament.TournamentRepository;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.utils.PageStamper;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceRepository;
@@ -60,6 +60,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.constraints.NotNull;
 import java.io.*;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.Collator;
@@ -235,9 +236,12 @@ public class FilesService {
     // podpis rejestr pobytu - klubowicz
     public String storeImageEvidenceBookMember(String imageString, String pesel) {
         String s = imageString.split(",")[1];
-        MemberEntity memberEntity = memberRepository.findAllByErasedFalse().stream().filter(f->f.getPesel().equals(pesel)).findFirst().orElseThrow(EntityNotFoundException::new);
+        MemberEntity memberEntity = memberRepository.findAllByErasedFalse()
+                .stream()
+                .filter(f -> f.getPesel().equals(pesel))
+                .findFirst()
+                .orElseThrow(EntityNotFoundException::new);
         String fullName = memberEntity.getFullName();
-
         String fileName = fullName + " evidence.png";
         FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
@@ -252,7 +256,6 @@ public class FilesService {
         } else {
             fullName = other.getOther().getFullName();
         }
-
         String fileName = fullName + " evidence.png";
         FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
         return fileEntity.getUuid();
@@ -299,7 +302,8 @@ public class FilesService {
 
     // podpis osoby oddającej broń
     public String storeImageReturnerGun(String imageString, Integer memberLeg) {
-        MemberEntity one = memberRepository.findByLegitimationNumber(memberLeg).orElseThrow(EntityNotFoundException::new);
+        MemberEntity one = memberRepository.findByLegitimationNumber(memberLeg)
+                .orElseThrow(EntityNotFoundException::new);
         String s = imageString.split(",")[1];
         String fileName = one.getFullName() + " ReturnerGun.png";
         FilesEntity fileEntity = createFileEntity(getFilesModelPNG(fileName, Base64.getMimeDecoder().decode(s)));
@@ -338,7 +342,6 @@ public class FilesService {
         LocalDate contribution = contributionEntity.getPaymentDay();
         LocalDate validThru = contributionEntity.getValidThru();
         String fileName = "Składka_" + memberEntity.getFullName() + "_" + LocalDate.now().format(dateFormat()) + ".pdf";
-        String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/fbg_10_qrcode.jpg";
         String clubFullName = club.getFullName().toUpperCase();
         a5rotate = a5rotate != null && a5rotate;
         Document document = new Document(a5rotate ? PageSize.A5.rotate() : PageSize.A4);
@@ -347,7 +350,10 @@ public class FilesService {
         document.addTitle(fileName);
         document.addCreationDate();
 
-        Image img = Image.getInstance(source);
+        // używane tylko dla Dziesiątki i TEST
+        URL resource = getClass().getClassLoader().getResource("fbg_10_qrcode.jpg");
+        assert resource != null;
+        Image img = Image.getInstance(resource);
         img.scaleAbsolute(50, 50);
         String group;
         if (memberEntity.getAdult()) {
@@ -483,9 +489,17 @@ public class FilesService {
             s = "Klubu Strzeleckiego RCS Panaszew w Panaszewie";
             s1 = "Klubu Strzeleckiego RCS Panaszew";
             s2 = "biuro@rcspanaszew.pl";
-            s3 = "Stowarzyszenie Klub Strzelecki RCS Panaszew mające siedzibę w Panaszewie pod asresem: ";
+            s3 = "Stowarzyszenie Klub Strzelecki RCS Panaszew mające siedzibę w Panaszewie pod adresem: ";
             s4 = "ul. Panaszew 4A, 99-200 Poddębice";
             s5 = "KS „RCS” Panaszew";
+        }
+        if (environment.getActiveProfiles()[0].equals(ProfilesEnum.MECHANIK.getName())) {
+            s = "Uczniowskiego Klubu Sportowego Mechanik w Tomaszowie Mazowieckim";
+            s1 = "Uczniowski Klub Sportowy Mechanik w TOmaszowie Mazowieckim";
+            s2 = "biuro@uksmechanik.com";
+            s3 = "Uczniowski Klub Sportowy MECHANIK mający siedzibę w Tomaszowie Mazowieckim pod adresem: ";
+            s4 = "ul. Św. Antoniego 29, 93-200 Tomaszów Mazowiecki";
+            s5 = "UKS „Mechanik” Tomaszów Mazowiecki";
         }
         document.open();
         document.addTitle(fileName);
@@ -535,9 +549,9 @@ public class FilesService {
         String phoneSplit = split + split1 + split2 + split3;
         Paragraph p14 = new Paragraph("Telefon Kontaktowy : " + phoneSplit, font(11, 0));
         Paragraph p15 = new Paragraph("", font(11, 0));
-        Paragraph p16 = new Paragraph("\nAdres Zamieszkania", font(11, 0));
+        Paragraph p16 = new Paragraph("Adres Zamieszkania", font(11, 0));
         Paragraph p17 = new Paragraph("", font(11, 0));
-        Paragraph p18 = new Paragraph("\n" + statement, font(11, 0));
+        Paragraph p18 = new Paragraph(statement, font(11, 0));
         Paragraph p18_5 = new Paragraph("\n\n" + ((memberEntity.getSignBy() != null ? memberEntity.getSignBy() : "") + "                       " + "\n\n"), font(11, 0));
         p18_5.setAlignment(2);
         Paragraph p19;
@@ -577,30 +591,25 @@ public class FilesService {
             p15.add("Email : Nie podano");
         }
         if (memberEntity.getAddress().getPostOfficeCity() != null) {
-            p17.add("Miasto : " + memberEntity.getAddress().getPostOfficeCity());
+            p17.add("Miasto : " + memberEntity.getAddress().getPostOfficeCity() + "\n");
         } else {
-            p17.add("Miasto : ");
+            p17.add("Miasto : \n");
         }
-        p17.add("\n");
         if (memberEntity.getAddress().getZipCode() != null) {
-            p17.add("Kod pocztowy : " + memberEntity.getAddress().getZipCode());
+            p17.add("Kod pocztowy : " + memberEntity.getAddress().getZipCode() + "\n");
         } else {
-            p17.add("Kod pocztowy : ");
+            p17.add("Kod pocztowy : \n");
         }
         if (memberEntity.getAddress().getStreet() != null) {
-            p17.add("Ulica : " + memberEntity.getAddress().getStreet());
-            if (memberEntity.getAddress().getStreetNumber() != null) {
-                p17.add(" " + memberEntity.getAddress().getStreetNumber());
-            } else {
-                p17.add(" ");
-            }
+            String streetNumber = memberEntity.getAddress().getStreetNumber() != null ? memberEntity.getAddress().getStreetNumber() : "";
+            p17.add("Ulica : " + streetNumber + "\n");
         } else {
-            p17.add("Ulica : ");
+            p17.add("Ulica : \n");
         }
         if (memberEntity.getAddress().getFlatNumber() != null) {
-            p17.add("Numer Mieszkania : " + memberEntity.getAddress().getFlatNumber());
+            p17.add("Numer Mieszkania : " + memberEntity.getAddress().getFlatNumber() + "\n");
         } else {
-            p17.add("Numer Mieszkania : ");
+            p17.add("Numer Mieszkania : \n");
         }
         p20.add(p21);
         p19.add(p20);
@@ -1640,6 +1649,7 @@ public class FilesService {
         file.delete();
         return filesEntity;
     }
+
     // plik .csv maile do klubowiczów
     public FilesEntity getMemberEmailCSV() throws IOException {
         List<MemberEntity> all = memberRepository.findAllByErasedFalse();
@@ -3372,8 +3382,10 @@ public class FilesService {
         MemberEntity member = memberRepository.getOne(uuid);
 
         String fileName = "Deklaracja Członkowska LOK " + member.getFullName() + ".pdf";
-        String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/logo_LOK.png";
-        Image img = Image.getInstance(source);
+        URL resource = getClass().getClassLoader().getResource("logo_LOK.png");
+//        String source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/logo_LOK.png";
+        assert resource != null;
+        Image img = Image.getInstance(resource);
         int fs = 10;
         int ls = 11;
         Document document = new Document(PageSize.A4);

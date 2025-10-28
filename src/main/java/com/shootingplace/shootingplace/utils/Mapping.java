@@ -37,6 +37,7 @@ import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionEntity;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceDTO;
 import com.shootingplace.shootingplace.workingTimeEvidence.WorkingTimeEvidenceEntity;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -140,6 +141,7 @@ public class Mapping {
                 .secondName(e.getSecondName())
                 .image(e.getImageUUID())
                 .adult(e.getAdult())
+                .email(e.getEmail())
                 .active(e.getActive())
                 .erased(e.getErased())
                 .erasedEntity(e.getErasedEntity() != null ? map(e.getErasedEntity()) : null)

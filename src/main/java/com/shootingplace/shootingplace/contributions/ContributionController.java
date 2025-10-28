@@ -26,18 +26,6 @@ public class ContributionController {
     }
 
     @Transactional
-    @PostMapping("/history/{memberUUID}")
-    public ResponseEntity<?> addHistoryContributionRecord(@PathVariable String memberUUID, @RequestParam String date, @RequestParam String pinCode) throws NoUserPermissionException {
-        List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName());
-        ResponseEntity<?> code = changeHistoryService.comparePinCode(pinCode,acceptedPermissions);
-        if (code.getStatusCode().equals(HttpStatus.OK)) {
-            return contributionService.addContributionRecord(memberUUID, LocalDate.parse(date), pinCode);
-        } else {
-            return code;
-        }
-    }
-
-    @Transactional
     @PatchMapping("/{memberUUID}")
     public ResponseEntity<?> addContribution(@PathVariable String memberUUID, @RequestParam String pinCode, @RequestParam Integer contributionCount) throws NoUserPermissionException {
         List<String> acceptedPermissions = Arrays.asList(UserSubType.MANAGEMENT.getName(), UserSubType.WORKER.getName());

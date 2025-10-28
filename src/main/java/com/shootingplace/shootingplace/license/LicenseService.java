@@ -287,6 +287,7 @@ public class LicenseService {
                     .paymentUuid(e.getUuid())
                     .firstName(member.getFirstName())
                     .secondName(member.getSecondName())
+                    .email(member.getEmail())
                     .active(member.getActive())
                     .adult(member.getAdult())
                     .legitimationNumber(member.getLegitimationNumber())

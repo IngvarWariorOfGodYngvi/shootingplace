@@ -14,6 +14,7 @@ import javax.persistence.EntityNotFoundException;
 
 @Service
 public class AddressService {
+
     private final AddressRepository addressRepository;
     private final MemberRepository memberRepository;
     private final HistoryService historyService;

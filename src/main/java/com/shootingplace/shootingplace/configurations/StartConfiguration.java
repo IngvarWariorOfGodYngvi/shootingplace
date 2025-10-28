@@ -5,6 +5,8 @@ import com.shootingplace.shootingplace.armory.GunUsedRepository;
 import com.shootingplace.shootingplace.armory.gunRepresentation.GunRepresentationService;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
+import com.shootingplace.shootingplace.email.EmailService;
+import com.shootingplace.shootingplace.enums.ProfilesEnum;
 import com.shootingplace.shootingplace.enums.UserSubType;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
@@ -20,6 +22,7 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -31,20 +34,52 @@ public class StartConfiguration {
     private final GunRepresentationService gunRepresentationService;
     private final GunUsedRepository gunUsedRepository;
 
+    private final EmailService emailService;
+
     private final Logger LOG = LogManager.getLogger(getClass());
 
-    public StartConfiguration(UserRepository userRepository, ClubRepository clubRepository, Environment environment, GunRepresentationService gunRepresentationService, GunUsedRepository gunUsedRepository) {
+    public StartConfiguration(UserRepository userRepository, ClubRepository clubRepository, Environment environment, GunRepresentationService gunRepresentationService, GunUsedRepository gunUsedRepository, EmailService emailService) {
         this.userRepository = userRepository;
         this.clubRepository = clubRepository;
         this.environment = environment;
         this.gunRepresentationService = gunRepresentationService;
         this.gunUsedRepository = gunUsedRepository;
+        this.emailService = emailService;
     }
 
     @Bean
-    public void setDateTimeProperty() {
+    public void setProperties() {
         System.setProperty("dateTime", LocalDateTime.now().toString());
+        String activeProfile = environment.getActiveProfiles()[0];
+
+        ProfilesEnum profile = Arrays.stream(ProfilesEnum.values())
+                .filter(p -> p.getName().equalsIgnoreCase(activeProfile))
+                .findFirst()
+                .orElse(null);
+
+        if (profile != null) {
+            switch (profile) {
+                case MECHANIK:
+                    System.setProperty("sendMail", "false");
+                    System.setProperty("shootingPlaceName", "MECHANIKTOMASZÓW");
+                    break;
+                case PANASZEW:
+                    System.setProperty("sendMail", "true");
+                    System.setProperty("shootingPlaceName", "RCSPANASZEW");
+                    break;
+                case DZIESIATKA:
+                    System.setProperty("sendMail", "true");
+                    System.setProperty("shootingPlaceName", "DZIESIĄTKAŁÓDŹ");
+                    break;
+                default:
+                    System.setProperty("sendMail", "true");
+                    System.setProperty("shootingPlaceName", "TEST");
+                    break;
+
+            }
+        }
         LOG.info("dateTime property: " + environment.getProperty("dateTime"));
+        LOG.info("sendMail property: " + environment.getProperty("sendMail"));
     }
 
     @Bean

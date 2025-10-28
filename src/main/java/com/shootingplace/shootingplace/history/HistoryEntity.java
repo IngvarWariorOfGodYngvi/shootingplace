@@ -36,14 +36,14 @@ public class HistoryEntity {
     private Integer pistolCounter;
     private Integer rifleCounter;
     private Integer shotgunCounter;
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("date DESC")
     private List<CompetitionHistoryEntity> competitionHistory;
 
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("date DESC")
     private List<JudgingHistoryEntity> judgingHistory;
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("sentAt DESC")
     private Set<SentEmail> sentEmailsHistory;
 

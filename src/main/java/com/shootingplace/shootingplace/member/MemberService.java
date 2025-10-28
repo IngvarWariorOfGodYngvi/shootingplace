@@ -1,28 +1,25 @@
 package com.shootingplace.shootingplace.member;
 
 import com.google.common.hash.Hashing;
-import com.shootingplace.shootingplace.member.permissions.MemberPermissionsService;
-import com.shootingplace.shootingplace.email.EmailScheduler;
-import com.shootingplace.shootingplace.email.EmailService;
-import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.address.Address;
 import com.shootingplace.shootingplace.club.ClubEntity;
 import com.shootingplace.shootingplace.club.ClubRepository;
-import com.shootingplace.shootingplace.enums.ProfilesEnum;
 import com.shootingplace.shootingplace.contributions.ContributionService;
+import com.shootingplace.shootingplace.email.EmailService;
 import com.shootingplace.shootingplace.enums.ErasedType;
 import com.shootingplace.shootingplace.exceptions.NoUserPermissionException;
 import com.shootingplace.shootingplace.history.HistoryService;
 import com.shootingplace.shootingplace.license.LicenseEntity;
 import com.shootingplace.shootingplace.license.LicenseRepository;
 import com.shootingplace.shootingplace.license.LicenseService;
+import com.shootingplace.shootingplace.member.permissions.MemberPermissionsService;
 import com.shootingplace.shootingplace.shootingPatent.ShootingPatentService;
 import com.shootingplace.shootingplace.users.UserEntity;
 import com.shootingplace.shootingplace.users.UserRepository;
+import com.shootingplace.shootingplace.utils.Mapping;
 import com.shootingplace.shootingplace.weaponPermission.WeaponPermissionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.core.env.Environment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -55,16 +52,12 @@ public class MemberService {
     private final MemberPermissionsService memberPermissionsService;
     private final ClubRepository clubRepository;
     private final ErasedRepository erasedRepository;
-    private final Environment environment;
-
-    private final EmailScheduler emailScheduler;
 
     private final EmailService emailService;
 
     private final UserRepository userRepository;
 
     private final Logger LOG = LogManager.getLogger();
-
 
     public MemberService(MemberRepository memberRepository,
                          LicenseService licenseService, LicenseRepository licenseRepository,
@@ -75,7 +68,7 @@ public class MemberService {
                          MemberPermissionsService memberPermissionsService,
                          ClubRepository clubRepository,
                          ErasedRepository erasedRepository,
-                         Environment environment, EmailScheduler emailScheduler, EmailService emailService, UserRepository userRepository) {
+                         EmailService emailService, UserRepository userRepository) {
         this.memberRepository = memberRepository;
         this.licenseService = licenseService;
         this.licenseRepository = licenseRepository;
@@ -86,8 +79,6 @@ public class MemberService {
         this.memberPermissionsService = memberPermissionsService;
         this.clubRepository = clubRepository;
         this.erasedRepository = erasedRepository;
-        this.environment = environment;
-        this.emailScheduler = emailScheduler;
         this.emailService = emailService;
         this.userRepository = userRepository;
     }
@@ -247,9 +238,6 @@ public class MemberService {
                 emailService.sendRegistrationConfirmation(save.getUuid());
                 historyService.addContribution(memberEntity.getUuid(),
                         contributionService.addFirstContribution(LocalDate.now(), pinCode));
-                if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName())) {
-                    contributionService.addContribution(memberEntity.getUuid(), LocalDate.now(), pinCode, 1);
-                }
                 response = ResponseEntity.status(201).body(memberEntity.getUuid());
             }
             return response;

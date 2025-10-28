@@ -62,6 +62,7 @@ public class StatisticsService {
                     .paymentUuid(e.getUuid())
                     .firstName(member.getFirstName())
                     .secondName(member.getSecondName())
+                    .email(member.getEmail())
                     .active(member.getActive())
                     .adult(member.getAdult())
                     .legitimationNumber(member.getLegitimationNumber())
@@ -117,7 +118,6 @@ public class StatisticsService {
 
     public String getActualYearMemberCounts() {
         int count = memberRepository.countActualYearMemberCounts(LocalDate.of(LocalDate.now().getYear(), 1, 1), LocalDate.of(LocalDate.now().getYear(), 12, 31));
-
         return String.valueOf(count);
     }
 

@@ -6,6 +6,7 @@ import com.shootingplace.shootingplace.enums.ProfilesEnum;
 import org.springframework.core.env.Environment;
 
 import java.io.IOException;
+import java.net.URL;
 
 public class PageStamper extends PdfPageEventHelper {
     private final Environment environment;
@@ -39,14 +40,21 @@ public class PageStamper extends PdfPageEventHelper {
             PdfContentByte directContent = writer.getDirectContent();
             document.addAuthor("Igor Żebrowski");
             if (isPageStampEvent) {
-                String source = "";
+//                String source = "";
+                URL resource = null;
                 if (environment.getActiveProfiles()[0].equals(ProfilesEnum.DZIESIATKA.getName()) || environment.getActiveProfiles()[0].equals(ProfilesEnum.TEST.getName())) {
-                    source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/pełna-nazwa(małe).bmp";
+                    resource = getClass().getClassLoader().getResource("pełna-nazwa(małe).bmp");
+//                    source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/pełna-nazwa(małe).bmp";
                 }
                 if (environment.getActiveProfiles()[0].equals(ProfilesEnum.PANASZEW.getName())) {
-                    source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/logo-panaszew.jpg";
+                    resource = getClass().getClassLoader().getResource("logo-panaszew.jpg");
+//                    source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/logo-panaszew.jpg";
                 }
-                Image image = Image.getInstance(source);
+                if (environment.getActiveProfiles()[0].equals(ProfilesEnum.MECHANIK.getName())) {
+                    resource = getClass().getClassLoader().getResource("logo-uks.jpg");
+//                    source = "C:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/shootingplace-1.0/WEB-INF/classes/logo-uks.jpg";
+                }
+                Image image = Image.getInstance(resource);
                 int multiplicity = 7;
                 image.scaleAbsolute(new Rectangle(16 * multiplicity, 9 * multiplicity));
                 float pw = pageSize.getWidth() / 2;

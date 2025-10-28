@@ -3,7 +3,8 @@ package com.shootingplace.shootingplace.enums;
 public enum ProfilesEnum {
     DZIESIATKA("prod"),
     TEST("test"),
-    PANASZEW("rcs");
+    PANASZEW("rcs"),
+    MECHANIK("uks");
 
     private final String name;
 
@@ -14,6 +15,4 @@ public enum ProfilesEnum {
     public String getName() {
         return name;
     }
-
-
 }

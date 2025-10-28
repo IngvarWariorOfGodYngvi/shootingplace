@@ -12,10 +12,9 @@ public class EmailQueueService {
     private final Queue<EmailQueue> queue = new ConcurrentLinkedQueue<>();
     private final Logger LOG = LogManager.getLogger(getClass());
 
-    public String enqueue(EmailQueue item) {
+    public void enqueue(EmailQueue item) {
         queue.add(item);
         LOG.info("Dodano do kolejki wysyłania: " + item.getRequest().getTo());
-        return "Dodano do kolejki wysyłania: " + item.getRequest().getTo();
     }
 
     EmailQueue dequeue() {

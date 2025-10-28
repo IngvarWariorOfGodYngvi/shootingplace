@@ -7,6 +7,7 @@ public enum MailType {
     CONTRIBUTION_CONFIRMATION("Potwierdzenie Składki"),
     LICENSE_PAYMENT_CONFIRMATION("Potwierdzenie Opłacenia Licencji"),
     CONGRATULATIONS_ANNIVERSSARY("Gratulacje Rocznicy"),
+    CUSTOM("Własny"),
     REGISTRATION_CONFIRMATION("Potwierdzenie zapisu");
     private final String name;
 
